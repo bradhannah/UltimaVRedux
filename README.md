@@ -11,6 +11,48 @@ Playing requires files from your own copy of the original game.
 This is a free, non-commercial fan project. Project-authored source code remains
 MIT-licensed; bundled media has separate terms described in [Asset credits](ASSET_CREDITS.md).
 
+## A look at Britannia
+
+Classic pixel art, a refreshed game interface, and a world to rediscover.
+Select any screenshot to view it at full size.
+
+<p align="center">
+  <a href="docs/assets/2026-10-12_07-51-06.png">
+    <img src="docs/assets/2026-10-12_07-51-06.png" alt="Ultima V Redux title screen and main menu" width="720">
+  </a>
+</p>
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="docs/assets/2026-10-12_07-50-28.png">
+        <img src="docs/assets/2026-10-12_07-50-28.png" alt="The party battles trolls on a bridge, with turn order and a battle report alongside the combat map" width="360">
+      </a>
+      <br><strong>Battle on the bridge</strong>
+    </td>
+    <td align="center">
+      <a href="docs/assets/2026-10-12_07-52-13.png">
+        <img src="docs/assets/2026-10-12_07-52-13.png" alt="Exploring Britain at night, with illuminated buildings and the party status panel" width="360">
+      </a>
+      <br><strong>Britain after dark</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="docs/assets/2026-09-28_19-23-43.png">
+        <img src="docs/assets/2026-09-28_19-23-43.png" alt="The party explores the wooded coastline of West Winds by torchlight" width="360">
+      </a>
+      <br><strong>Exploring West Winds</strong>
+    </td>
+    <td align="center">
+      <a href="docs/assets/2026-10-02_20-29-50.png">
+        <img src="docs/assets/2026-10-02_20-29-50.png" alt="The map of Britannia with the moonstone category selected and a location highlighted near the Deep Forest" width="360">
+      </a>
+      <br><strong>Mapping Britannia</strong>
+    </td>
+  </tr>
+</table>
+
 ## Installation
 
 Install the latest patch of **Go 1.27** or newer, then install and start the preview:
