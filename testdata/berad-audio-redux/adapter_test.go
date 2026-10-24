@@ -18,6 +18,9 @@ import (
 	audio "github.com/bradhannah/berad-sdk/modules/berad-audio"
 )
 
+// fireCue is the authored ambient cue this bridge fixture recalibrates and routes.
+const fireCue = "ambient/AmbientFire"
+
 // Retain Redux's actual authored identities, taxonomy and routing while replacing
 // payloads with one generated WAV. Neither original-game files nor production
 // audio bytes enter the bridge library; null recording slots remain null.
@@ -46,18 +49,18 @@ func project(t *testing.T) (*gameaudio.Library, fstest.MapFS) {
 		recording.CalibrationTargetDB = nil
 		document.Recordings[identity] = recording
 	}
-	fire := document.Cues[string(gameaudio.AmbientFire)]
+	fire := document.Cues[fireCue]
 	fire.VolumeModifier = 0.5
-	document.Cues[string(gameaudio.AmbientFire)] = fire
+	document.Cues[fireCue] = fire
 	recording := document.Recordings[fire.RecordingID]
 	calibration := 6.0
 	recording.CalibrationGainDB = &calibration
 	recording.PlaybackWindow = &gameaudio.PlaybackWindow{StartMs: 20, EndMs: 40}
 	document.Recordings[fire.RecordingID] = recording
-	document.Routing.Ambient[string(gameaudio.AmbientFire)] = gameaudio.AmbientProfile{RadiusTiles: 8, FadeInMs: 1000, FadeOutMs: 1000}
+	document.Routing.Ambient[fireCue] = gameaudio.AmbientProfile{RadiusTiles: 8, FadeInMs: 1000, FadeOutMs: 1000}
 	key := strconv.Itoa(int(indexes.CanonicalAnimationSprite(indexes.FireLogs)))
 	assignment := document.Routing.Tiles[key]
-	assignment.AmbientCue = string(gameaudio.AmbientFire)
+	assignment.AmbientCue = fireCue
 	assignment.Gain = new(2.0)
 	document.Routing.Tiles[key] = assignment
 	data, err = json.Marshal(document)
@@ -118,7 +121,7 @@ func TestReduxLighthouseAndProjectedDynamicIdentityRemainGameOwned(t *testing.T)
 	if err != nil || len(plan) != 1 || plan[0].ID != string(gameaudio.AmbientLighthouse) || plan[0].Gain != 1 {
 		t.Fatal(plan, err)
 	}
-	source := makeSource(string(gameaudio.AmbientFire), "moongate")
+	source := makeSource(fireCue, "moongate")
 	source.Position.X = -1
 	left, err := planner.Sources(references.Position{}, nil, []gameaudio.AmbientSoundSource{source})
 	if err != nil {
@@ -135,7 +138,7 @@ func TestReduxLighthouseAndProjectedDynamicIdentityRemainGameOwned(t *testing.T)
 	source.MaxDistance = 0
 	source.Position.X = 100
 	bed, err := planner.Sources(references.Position{}, nil, []gameaudio.AmbientSoundSource{source})
-	if err != nil || bed[0].ID != "background/"+string(gameaudio.AmbientFire) || bed[0].Gain != 1 {
+	if err != nil || bed[0].ID != "background/"+fireCue || bed[0].Gain != 1 {
 		t.Fatal(bed, err)
 	}
 	// Redux's ambient profile: full within one tile, 1 - (distance/radius)^2 beyond,
@@ -172,7 +175,7 @@ func TestReduxProjectionPreservesNullSlotsAndOrderedVariants(t *testing.T) {
 			}
 		}
 	}
-	fire := document.Cues[string(gameaudio.AmbientFire)]
+	fire := document.Cues[fireCue]
 	window := definition.Recordings[audio.RecordingID(fire.RecordingID)].Window
 	if window.Start != 20*time.Millisecond || window.End != 40*time.Millisecond {
 		t.Fatal(window)

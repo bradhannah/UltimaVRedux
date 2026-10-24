@@ -107,7 +107,7 @@ func TestGameAudioLivePreferencesPreviewDisableAndClose(t *testing.T) {
 	manager.Update()
 	require.True(t, manager.music.IsPlaying())
 	require.NoError(t, manager.SetAmbientVolume(0.5))
-	require.InDelta(t, manager.library.document.Cues["ambient/AmbientForest"].VolumeModifier*0.5,
+	require.InDelta(t, manager.library.document.Cues[string(ambientPreviewCue)].VolumeModifier*0.5,
 		manager.preview.Snapshot()[0].Gain, 1e-9)
 	configuration := manager.GetConfiguration()
 	configuration.MusicVolume = 0

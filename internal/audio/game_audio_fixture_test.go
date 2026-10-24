@@ -11,6 +11,13 @@ import (
 	"github.com/bradhannah/berad-sdk/modules/berad-audio/authoring"
 )
 
+// Tests name these authored cues; game code reads them from the library's routing.
+const (
+	AmbientFire     AmbientSoundType = "ambient/AmbientFire"
+	AmbientFountain AmbientSoundType = "ambient/AmbientFountain"
+	AmbientBard     AmbientSoundType = "ambient/AmbientBard"
+)
+
 // conformanceDevice is only a controlled transport for the live SDK-backed
 // adapter. Playback, gain, windowing, ownership and retirement stay in the SDK.
 type conformanceDevice struct {

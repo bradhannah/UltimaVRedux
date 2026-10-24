@@ -7,6 +7,9 @@ import (
 	berad "github.com/bradhannah/berad-sdk/modules/berad-audio"
 )
 
+// ambientPreviewCue is the loop the settings screen plays to audition ambience volume.
+const ambientPreviewCue berad.CueID = "ambient/AmbientForest"
+
 // SetSoundEffectVolume updates live SFX and game preference state together.
 func (manager *GameAudioManager) SetSoundEffectVolume(volume float64) error {
 	manager.mutex.Lock()
@@ -84,12 +87,12 @@ func (manager *GameAudioManager) PlayAmbientSoundPreview() error {
 	}
 	options := berad.DefaultPlayOptions()
 	options.Loop, options.Slot = true, "settings"
-	result, err := manager.previewOwner.Play("ambient/AmbientForest", options)
+	result, err := manager.previewOwner.Play(ambientPreviewCue, options)
 	if err != nil {
 		return gameAudioError("play ambient preview", err)
 	}
 	if result.Outcome == berad.Empty {
-		return gameAudioError("stop empty preview", manager.preview.StopCue("ambient/AmbientForest", 0))
+		return gameAudioError("stop empty preview", manager.preview.StopCue(ambientPreviewCue, 0))
 	}
 
 	return nil
@@ -97,7 +100,7 @@ func (manager *GameAudioManager) PlayAmbientSoundPreview() error {
 
 // StopAmbientSoundPreview only stops the preview lane.
 func (manager *GameAudioManager) StopAmbientSoundPreview() error {
-	return gameAudioError("stop ambient preview", manager.preview.StopCue("ambient/AmbientForest", 0))
+	return gameAudioError("stop ambient preview", manager.preview.StopCue(ambientPreviewCue, 0))
 }
 
 // GetMusicManager exposes Redux's existing game-specific policy controller.

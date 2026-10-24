@@ -155,7 +155,7 @@ func (manager *GameAudioManager) SetEnabled(enabled bool) {
 		for _, voice := range manager.sfx.Snapshot() {
 			manager.report(manager.sfx.StopCue(voice.Cue, 0))
 		}
-		manager.report(manager.preview.StopCue("ambient/AmbientForest", 0))
+		manager.report(manager.preview.StopCue(ambientPreviewCue, 0))
 	}
 	manager.report(manager.ambience.SetEnabled(enabled && !manager.ambientSuppressed))
 }

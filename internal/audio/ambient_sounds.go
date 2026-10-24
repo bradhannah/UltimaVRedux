@@ -14,21 +14,9 @@ import (
 // AmbientSoundType is a game-owned cue identity, not an engine enum.
 type AmbientSoundType string
 
-// Built-in identities support the game's code-owned emitters and authored routes.
-const (
-	AmbientFire       AmbientSoundType = "ambient/AmbientFire"
-	AmbientWater      AmbientSoundType = "ambient/AmbientWater"
-	AmbientWind       AmbientSoundType = "ambient/AmbientWind"
-	AmbientMechanical AmbientSoundType = "ambient/AmbientMechanical"
-	AmbientMagical    AmbientSoundType = "ambient/AmbientMagical"
-	AmbientStream     AmbientSoundType = "ambient/AmbientStream"
-	AmbientOcean      AmbientSoundType = "ambient/AmbientOcean"
-	AmbientLighthouse AmbientSoundType = "ambient/AmbientLighthouse"
-	AmbientForest     AmbientSoundType = "ambient/AmbientForest"
-	AmbientHum        AmbientSoundType = "ambient/AmbientHum"
-	AmbientBard       AmbientSoundType = "ambient/AmbientBard"
-	AmbientFountain   AmbientSoundType = "ambient/AmbientFountain"
-)
+// AmbientLighthouse is the only ambient cue game code names; the library's routing
+// supplies every other one.
+const AmbientLighthouse AmbientSoundType = "ambient/AmbientLighthouse"
 
 // AmbientSoundDefinition is derived game routing data. BaseVolume includes cue
 // gain/calibration; AmbientPlanner separates those factors before module playback.
