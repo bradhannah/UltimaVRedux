@@ -22,25 +22,18 @@ func (manager *GameAudioManager) AmbientScanRadius() int {
 	return int(math.Ceil(radius))
 }
 
-// GetAmbientSoundDefinition resolves Redux-owned source settings without playback.
-func (manager *GameAudioManager) GetAmbientSoundDefinition(kind AmbientSoundType) (AmbientSoundDefinition, bool) {
-	definition, exists := manager.planner.definitions[kind]
-
-	return definition, exists
-}
-
-// AmbientEmitterDefinition resolves code-owned game roles, not generic engine roles.
-func (manager *GameAudioManager) AmbientEmitterDefinition(emitter string) AmbientSoundDefinition {
+// EmitterAmbientSource places a code-owned game emitter (bard, moongate) at a
+// position; the library chooses its cue, which supplies everything else.
+func (manager *GameAudioManager) EmitterAmbientSource(
+	emitter string, position references.Position, volume float64,
+) AmbientSoundSource {
 	cue, exists := manager.library.document.Routing.Emitters[emitter]
 	if !exists {
 		panic("unknown game ambient emitter: " + emitter)
 	}
-	definition, exists := manager.GetAmbientSoundDefinition(AmbientSoundType(cue))
-	if !exists {
-		panic("validated ambient emitter has no definition")
-	}
 
-	return definition
+	return AmbientSoundSource{ID: "", Emitter: emitter, Position: position, SoundType: AmbientSoundType(cue),
+		Background: false, VolumeModifier: volume}
 }
 
 // DungeonAmbientSource retains a non-spatial cue-owned dungeon-visit background.
@@ -85,7 +78,7 @@ func (manager *GameAudioManager) UpdateAmbientSoundsWithDynamicSources(listener 
 	for _, plan := range plans {
 		sourceID := berad.SourceID(plan.ID)
 		sources = append(sources, berad.AmbientSource{ID: sourceID, Cue: berad.CueID(plan.CueID), Gain: plan.Gain,
-			Loop: plan.Loop, FadeIn: plan.FadeIn, FadeOut: plan.FadeOut})
+			Loop: true, FadeIn: plan.FadeIn, FadeOut: plan.FadeOut})
 		desired[sourceID] = plan
 	}
 	manager.report(manager.ambience.Reconcile(sources))

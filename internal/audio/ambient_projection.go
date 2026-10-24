@@ -11,14 +11,14 @@ import (
 	berad "github.com/bradhannah/berad-sdk/modules/berad-audio"
 )
 
-// AmbientSourcePlan is Redux's neutral presentation intent. Gain contains only
-// source overrides/intensity/distance, never cue gain or recording calibration.
-// Emitter is game policy metadata (for example bard precedence), not an engine role.
+// AmbientSourcePlan is Redux's neutral presentation intent for one looping voice.
+// Gain contains only source overrides/intensity/distance, never cue gain or
+// recording calibration. Emitter is game policy metadata (for example bard
+// precedence), not an engine role.
 type AmbientSourcePlan struct {
 	ID           string
 	CueID        string
 	Gain         float64
-	Loop         bool
 	FadeIn       time.Duration
 	FadeOut      time.Duration
 	Emitter      string
@@ -66,10 +66,8 @@ func (planner *AmbientPlanner) Sources(listener references.Position,
 		definition := candidate.definition
 		cueID := string(definition.SoundType)
 		cue, exists := planner.library.document.Cues[cueID]
-		_, ambient := planner.definitions[definition.SoundType]
-		if !exists || !ambient || cue.RecordingID == "" ||
-			definition.FileName != planner.library.recordingPath(cue.RecordingID) {
-			return nil, fmt.Errorf("%w: ambient source %s overrides its cue's recording", ErrAudioLibrary, sourceID)
+		if _, ambient := planner.definitions[definition.SoundType]; !exists || !ambient {
+			return nil, fmt.Errorf("%w: ambient source %s has no ambient cue", ErrAudioLibrary, sourceID)
 		}
 		authored := cue.VolumeModifier * planner.library.document.recordingCalibration(cue.RecordingID)
 		sourceGain := 0.0
@@ -82,7 +80,7 @@ func (planner *AmbientPlanner) Sources(listener references.Position,
 			return nil, fmt.Errorf("%w: ambient source %s gain must be in [0,2]", ErrAudioLibrary, sourceID)
 		}
 		plans = append(plans, AmbientSourcePlan{ID: string(sourceID), CueID: cueID, Gain: gain,
-			Loop: definition.LoopSound, FadeIn: definition.FadeInTime, FadeOut: definition.FadeOutTime,
+			FadeIn: definition.FadeInTime, FadeOut: definition.FadeOutTime,
 			Emitter: candidate.emitter, SourceGain: sourceGain, DistanceGain: distanceGain, Intensity: candidate.modifier})
 	}
 	slices.SortFunc(plans, func(left, right AmbientSourcePlan) int { return cmp.Compare(left.ID, right.ID) })

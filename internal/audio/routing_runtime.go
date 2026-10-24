@@ -9,21 +9,16 @@ func dungeonAmbientSource(library *Library, definitions map[AmbientSoundType]Amb
 	location references.Location, listener references.Position,
 ) (AmbientSoundSource, bool) {
 	// TODO(audio): Supply cave/brick recordings; loop through floors/combat, fade on exit.
-	id := library.document.Routing.dungeonCue(location)
-	if id == "" {
+	cue := AmbientSoundType(library.document.Routing.dungeonCue(location))
+	if cue == "" {
 		return AmbientSoundSource{}, false //nolint:exhaustruct // Explicit or inherited silence.
 	}
-	definition, exists := definitions[AmbientSoundType(id)]
-	if !exists {
+	if _, exists := definitions[cue]; !exists {
 		panic("validated dungeon background has no definition")
 	}
 
-	return AmbientSoundSource{
-		ID:      "",
-		Emitter: "", Position: listener, SoundType: definition.SoundType, IsActive: true, IsDynamic: true,
-		SoundFile: definition.FileName, MaxDistance: 0, baseVolume: definition.BaseVolume,
-		VolumeModifier: 1, FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime,
-	}, true
+	return AmbientSoundSource{ID: "", Emitter: "", Position: listener, SoundType: cue,
+		Background: true, VolumeModifier: 1}, true
 }
 
 func navalAmbientSource(
@@ -37,15 +32,10 @@ func navalAmbientSource(
 	if cue == nil {
 		return AmbientSoundSource{}, false //nolint:exhaustruct // Authored silence.
 	}
-	definition, exists := definitions[AmbientSoundType(*cue)]
-	if !exists {
+	if _, exists := definitions[AmbientSoundType(*cue)]; !exists {
 		panic("validated naval background has no definition")
 	}
 
-	return AmbientSoundSource{
-		ID:      "",
-		Emitter: vessel, Position: listener, SoundType: definition.SoundType, IsActive: true, IsDynamic: true,
-		SoundFile: definition.FileName, MaxDistance: 0, baseVolume: definition.BaseVolume,
-		VolumeModifier: 1, FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime,
-	}, true
+	return AmbientSoundSource{ID: "", Emitter: vessel, Position: listener, SoundType: AmbientSoundType(*cue),
+		Background: true, VolumeModifier: 1}, true
 }

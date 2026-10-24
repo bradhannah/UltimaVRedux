@@ -36,7 +36,6 @@ func TestProductionDungeonAudioFollowsStyleFloorsAndCombatOwner(t *testing.T) {
 			combat, exists := manager.DungeonAmbientSource(scene.dungeonAudioLocation(), references.Position{X: 10, Y: 10})
 			require.True(t, exists)
 			require.Equal(t, exploration.SoundType, combat.SoundType, "combat retains the persistent playback key")
-			require.Equal(t, exploration.SoundFile, combat.SoundFile)
 			state.MapState.PlayerLocation = state.CombatScene.PreCombatPlayerLocation
 			state.CombatScene = nil
 			returned, exists := manager.DungeonAmbientSource(scene.dungeonAudioLocation(), state.MapState.PlayerLocation.Position)

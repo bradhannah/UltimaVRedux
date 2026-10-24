@@ -288,7 +288,10 @@ SDK applies them exactly once. Relative level up to 200% is preserved. Plans car
 game emitter roles, not engine semantics.
 
 `GameScene.updateAmbientSounds` gathers terrain plus visible moongates/seated bards.
-Occupants do not hide terrain. Scan radius includes authored overrides. Dynamic IDs
+Occupants do not hide terrain. Scan radius includes authored overrides. A dynamic
+source names only its cue, position, emitter role, intensity and whether it is a
+background; the planner takes the recording, radius, level and fades from the
+cue. `EmitterAmbientSource` resolves the bard and moongate cues. Dynamic IDs
 bind map, floor, emitter and canonical position before projection. Missing explicit
 IDs retain emitter/cue/position fallback. Crossing a seam changes attenuation without
 duplicating voices; bard precedence follows role, not ID spelling.

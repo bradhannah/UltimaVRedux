@@ -41,7 +41,7 @@ func TestReduxAdapterUsesItsInjectedLibraryAcrossLanes(t *testing.T) {
 	*now = now.Add(musicFadeDuration)
 	manager.Update()
 	require.InDelta(t, 0.23*math.Pow(10, musicInitialDB/20), manager.music.Snapshot().Voice.Gain, 1e-9)
-	definition, exists := manager.GetAmbientSoundDefinition(AmbientFire)
+	definition, exists := manager.planner.definitions[AmbientFire]
 	require.True(t, exists)
 	require.InDelta(t, 0.13, definition.BaseVolume, 1e-9)
 	require.NoError(t, manager.PlayMusicForLocation(references.Britain))
@@ -109,16 +109,17 @@ func TestGameAudioRequestValidationAndAdmissionOutcomes(t *testing.T) {
 }
 
 func TestRuntimeLanesShareMonotonicPresentationTime(t *testing.T) {
-	manager, _, now := gameAudioFixture(t)
+	manager, _, now := gameAudioDocumentFixture(t, func(document *LibraryDocument) {
+		hum := document.Routing.Ambient[document.Routing.Emitters["moongate"]]
+		hum.FadeInMs = 1000 // Match the SFX fade so both lanes reach half together.
+		document.Routing.Ambient[document.Routing.Emitters["moongate"]] = hum
+	})
 	start := *now
 	require.NoError(t, manager.PlaySound(game_state.SoundPlaybackRequest{Effect: game_state.SoundEarthquake,
 		Mode: game_state.SoundPlaybackLoop, Volume: 1, FadeInMs: 1000}))
 	require.NoError(t, manager.PlayMusicForLocation(references.Britain))
-	definition := manager.AmbientEmitterDefinition("moongate")
-	source := AmbientSoundSource{ID: "gate", SoundType: definition.SoundType, SoundFile: definition.FileName,
-		IsActive: true, IsDynamic: true, MaxDistance: definition.MaxDistance, VolumeModifier: 1,
-		FadeInTime: time.Second, FadeOutTime: time.Second}
-	source.SetBaseVolume(definition.BaseVolume)
+	source := manager.EmitterAmbientSource("moongate", references.Position{}, 1)
+	source.ID = "gate"
 	manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, []AmbientSoundSource{source})
 	*now = now.Add(500 * time.Millisecond)
 	manager.Update()

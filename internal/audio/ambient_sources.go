@@ -11,12 +11,11 @@ import (
 type ambientCandidate struct {
 	emitter            string
 	definition         AmbientSoundDefinition
-	position           references.Position
 	distance, modifier float64
 }
 
-// collectAmbientSources is Redux's world-to-soundscape policy. Both the existing
-// manager and the staged module adapter use this same grouping/identity logic.
+// collectAmbientSources is Redux's world-to-soundscape policy: the strongest tile
+// per cue, then the game's code-owned sources with their stable identities.
 func collectAmbientSources(tileDefinitions map[indexes.SpriteIndex]AmbientSoundDefinition,
 	definitions map[AmbientSoundType]AmbientSoundDefinition, position references.Position,
 	tiles []TileWithPosition, dynamic []AmbientSoundSource,
@@ -31,8 +30,7 @@ func collectAmbientSources(tileDefinitions map[indexes.SpriteIndex]AmbientSoundD
 		previous, exists := sources[definition.SoundType]
 		if strongerAmbientSource(definition, distance, previous.definition, previous.distance, exists) {
 			sources[definition.SoundType] = ambientCandidate{
-				emitter:    "",
-				definition: definition, position: tile.Position, distance: distance, modifier: 1,
+				emitter: "", definition: definition, distance: distance, modifier: 1,
 			}
 		}
 	}
@@ -47,14 +45,10 @@ func collectDynamicAmbientSource(
 	sources map[AmbientSoundType]ambientCandidate, definitions map[AmbientSoundType]AmbientSoundDefinition,
 	listener references.Position, source AmbientSoundSource,
 ) {
-	if !source.IsActive {
-		return
-	}
-	base := definitions[source.SoundType]
-	definition := AmbientSoundDefinition{
-		SoundType: source.SoundType, FileName: source.SoundFile, MaxDistance: source.MaxDistance,
-		BaseVolume: source.GetBaseVolume(), LoopSound: base.LoopSound,
-		FadeInTime: source.FadeInTime, FadeOutTime: source.FadeOutTime,
+	definition := definitions[source.SoundType]
+	definition.SoundType = source.SoundType // An unknown cue keeps its name for the planner's error.
+	if source.Background {
+		definition.MaxDistance = 0
 	}
 	distance := ambientSourceDistance(listener, source.Position)
 	if definition.MaxDistance == 0 {
@@ -62,10 +56,6 @@ func collectDynamicAmbientSource(
 	}
 	if distance > definition.MaxDistance {
 		return
-	}
-	modifier := source.VolumeModifier
-	if !source.IsDynamic && modifier == 0 && definition.BaseVolume > 0 {
-		modifier = 1
 	}
 	key := AmbientSoundType(fmt.Sprintf("source/%s/%s/%d/%d",
 		source.Emitter, source.SoundType, source.Position.X, source.Position.Y))
@@ -81,8 +71,7 @@ func collectDynamicAmbientSource(
 	previous, exists := sources[key]
 	if !exists || distance < previous.distance || source.Emitter == lighthouseEmitter {
 		sources[key] = ambientCandidate{
-			emitter:    source.Emitter,
-			definition: definition, position: source.Position, distance: distance, modifier: modifier,
+			emitter: source.Emitter, definition: definition, distance: distance, modifier: source.VolumeModifier,
 		}
 	}
 }

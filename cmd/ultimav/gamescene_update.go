@@ -116,12 +116,12 @@ func (g *GameScene) updateAmbientSounds() {
 	nearbyTiles := g.getNearbyTilesForAmbientSound(playerPos, g.audioManager.AmbientScanRadius())
 
 	// Get dynamic ambient sources from various systems
-	moongateSourcess := g.getMoongateAmbientSources()
+	moongateSources := g.getMoongateAmbientSources()
 	bardSources := g.getBardAmbientSources()
 
 	// Merge all dynamic sources
-	dynamicSources := make([]audio.AmbientSoundSource, 0, len(moongateSourcess)+len(bardSources))
-	dynamicSources = append(dynamicSources, moongateSourcess...)
+	dynamicSources := make([]audio.AmbientSoundSource, 0, len(moongateSources)+len(bardSources))
+	dynamicSources = append(dynamicSources, moongateSources...)
 	dynamicSources = append(dynamicSources, bardSources...)
 	if source, exists := g.audioManager.DungeonAmbientSource(g.dungeonAudioLocation(), playerPos); exists {
 		dynamicSources = append(dynamicSources, source)
@@ -158,22 +158,8 @@ func (g *GameScene) getMoongateAmbientSources() []audio.AmbientSoundSource {
 	activeRenderers := g.moongateVisualSystem.GetActiveRenderers()
 	sources := make([]audio.AmbientSoundSource, 0, len(activeRenderers))
 	for _, renderer := range activeRenderers {
-		baseDef := g.audioManager.AmbientEmitterDefinition("moongate")
-		source := audio.AmbientSoundSource{
-			ID:             "",
-			Emitter:        "moongate",
-			Position:       renderer.GetPosition(),
-			SoundType:      baseDef.SoundType,
-			IsActive:       true,
-			IsDynamic:      true,
-			SoundFile:      baseDef.FileName,
-			MaxDistance:    baseDef.MaxDistance,
-			VolumeModifier: moongateVolumeForStage(g.gameState.MoongateStage()),
-			FadeInTime:     baseDef.FadeInTime,
-			FadeOutTime:    baseDef.FadeOutTime,
-		}
-		source.SetBaseVolume(baseDef.BaseVolume)
-		sources = append(sources, source)
+		sources = append(sources, g.audioManager.EmitterAmbientSource("moongate", renderer.GetPosition(),
+			moongateVolumeForStage(g.gameState.MoongateStage())))
 	}
 
 	return sources
@@ -197,28 +183,10 @@ func (g *GameScene) getBardAmbientSources() []audio.AmbientSoundSource {
 		return nil
 	}
 
-	// Get base definition for AmbientBard
 	// TODO(audio): Supply tavern_lute_01; existing seated-bard proximity/fade lifecycle owns its loop.
-	baseDef := g.audioManager.AmbientEmitterDefinition("bard")
-
 	sources := make([]audio.AmbientSoundSource, 0, len(bardPositions))
-
 	for _, pos := range bardPositions {
-		source := audio.AmbientSoundSource{
-			ID:             "",
-			Emitter:        "bard",
-			Position:       pos,
-			SoundType:      baseDef.SoundType,
-			IsActive:       true,
-			IsDynamic:      true,
-			SoundFile:      baseDef.FileName,
-			MaxDistance:    baseDef.MaxDistance,
-			VolumeModifier: 1.0, // Full volume when playing
-			FadeInTime:     baseDef.FadeInTime,
-			FadeOutTime:    baseDef.FadeOutTime,
-		}
-		source.SetBaseVolume(baseDef.BaseVolume)
-		sources = append(sources, source)
+		sources = append(sources, g.audioManager.EmitterAmbientSource("bard", pos, 1)) // Full volume when playing
 	}
 
 	return sources

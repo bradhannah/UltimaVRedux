@@ -23,7 +23,6 @@ func TestFountainAmbientAndDrinkingUseSeparateCues(t *testing.T) {
 	ambient := defaultAmbientSoundDefinitions()[AmbientFountain]
 	require.Equal(t, library.recordingPath("fountain_gurgle_01"), ambient.FileName)
 	require.NotEmpty(t, ambient.FileName)
-	require.True(t, ambient.LoopSound)
 	for _, sprite := range []indexes.SpriteIndex{
 		indexes.Fountain1, indexes.Fountain2, indexes.Fountain3, indexes.Fountain4,
 	} {

@@ -2,10 +2,8 @@
 package audio
 
 import (
-	"math"
 	"time"
 
-	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	berad "github.com/bradhannah/berad-sdk/modules/berad-audio"
@@ -25,7 +23,6 @@ type AmbientSoundDefinition struct {
 	FileName    string
 	MaxDistance float64
 	BaseVolume  float64
-	LoopSound   bool
 	FadeInTime  time.Duration
 	FadeOutTime time.Duration
 }
@@ -36,37 +33,16 @@ type TileWithPosition struct {
 	Position references.Position
 }
 
-// AmbientSoundSource is game world intent; the planner handles roles, grouping
-// and projection before passing neutral source requests to Berad Audio.
+// AmbientSoundSource is game world intent: which cue sounds, where and how
+// strongly. The planner takes the cue's recording, radius, level and fades from
+// the library. A background source has no position or distance falloff.
 type AmbientSoundSource struct {
 	ID             string
 	Emitter        string
 	Position       references.Position
 	SoundType      AmbientSoundType
-	IsActive       bool
-	IsDynamic      bool
-	SoundFile      string
-	MaxDistance    float64
-	baseVolume     float64
+	Background     bool
 	VolumeModifier float64
-	FadeInTime     time.Duration
-	FadeOutTime    time.Duration
-}
-
-// GetBaseVolume exposes the derived authored coefficient without mutable access.
-func (source *AmbientSoundSource) GetBaseVolume() float64 { return source.baseVolume }
-
-// SetBaseVolume bounds the calibrated game source coefficient.
-func (source *AmbientSoundSource) SetBaseVolume(volume float64) {
-	const maximum = 4.0
-	if math.IsNaN(volume) || math.IsInf(volume, 0) {
-		logging.Warnf(logging.CategoryAudio, "Invalid non-finite ambient base volume")
-		volume = 0
-	} else if volume < 0 || volume > maximum {
-		logging.Warnf(logging.CategoryAudio, "Attempted to set invalid base volume %.2f, clamping to [0, 4]", volume)
-		volume = math.Max(0, math.Min(maximum, volume))
-	}
-	source.baseVolume = volume
 }
 
 func defaultAmbientSoundDefinitions() map[AmbientSoundType]AmbientSoundDefinition {
@@ -88,7 +64,7 @@ func buildAmbientDefinitions(library *audioLibrary,
 		kind := AmbientSoundType(id)
 		definitions[kind] = AmbientSoundDefinition{SoundType: kind, FileName: recordingPath(cue.RecordingID),
 			MaxDistance: profile.RadiusTiles, BaseVolume: cue.VolumeModifier * library.recordingCalibration(cue.RecordingID),
-			LoopSound: true, FadeInTime: time.Duration(profile.FadeInMs) * time.Millisecond,
+			FadeInTime:  time.Duration(profile.FadeInMs) * time.Millisecond,
 			FadeOutTime: time.Duration(profile.FadeOutMs) * time.Millisecond}
 	}
 

@@ -191,11 +191,8 @@ func TestGameAudioSailingCombatVictoryPreserveGamePolicy(t *testing.T) {
 func TestGameAudioBardPrecedenceIncludesInitialEnvelopeAndTail(t *testing.T) {
 	manager, _, now := gameAudioFixture(t)
 	require.NoError(t, manager.PlayMusicForLocation(references.Britain))
-	definition := manager.AmbientEmitterDefinition("bard")
-	source := AmbientSoundSource{ID: "stable-bard", Emitter: "bard", SoundType: definition.SoundType,
-		IsActive: true, IsDynamic: true, SoundFile: definition.FileName, MaxDistance: definition.MaxDistance,
-		VolumeModifier: 1, FadeInTime: time.Second, FadeOutTime: time.Second}
-	source.SetBaseVolume(definition.BaseVolume)
+	source := manager.EmitterAmbientSource("bard", references.Position{}, 1)
+	source.ID = "stable-bard"
 	manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, []AmbientSoundSource{source})
 	manager.Update()
 	require.Equal(t, berad.VoicePaused, manager.music.Snapshot().Voice.State)

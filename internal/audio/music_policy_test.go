@@ -456,13 +456,8 @@ func TestMusicPolicyBardOwnershipIncludesReleaseTailAndExcludesMutedBard(t *test
 	policy, player, advance := newPolicyTest(t)
 	manager.policy.policy = policy
 	require.NoError(t, manager.PlayMusicForLocation(references.Britain))
-	definition := manager.AmbientEmitterDefinition("bard")
-	source := AmbientSoundSource{
-		Emitter: "bard", SoundType: AmbientBard, IsActive: true, IsDynamic: true,
-		SoundFile: definition.FileName, MaxDistance: definition.MaxDistance,
-		VolumeModifier: 1, FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime,
-	}
-	source.SetBaseVolume(definition.BaseVolume)
+	definition := manager.planner.definitions[AmbientBard]
+	source := manager.EmitterAmbientSource("bard", references.Position{}, 1)
 	manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, []AmbientSoundSource{source})
 	require.True(t, manager.hasLocalMusic(), "initial fade-in already owns local music")
 	manager.Update()

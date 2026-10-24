@@ -11,16 +11,10 @@ func lighthouseAmbientSource(definitions map[AmbientSoundType]AmbientSoundDefini
 		location != references.Greyhaven && location != references.Waveguide {
 		return AmbientSoundSource{}, false //nolint:exhaustruct // No lighthouse location source.
 	}
-	definition, exists := definitions[AmbientLighthouse]
-	if !exists {
+	if _, exists := definitions[AmbientLighthouse]; !exists {
 		panic("lighthouse ambient cue has no definition")
 	}
 
-	return AmbientSoundSource{
-		ID:      "",
-		Emitter: lighthouseEmitter, Position: listener, SoundType: definition.SoundType,
-		IsActive: true, IsDynamic: true, SoundFile: definition.FileName, MaxDistance: 0,
-		baseVolume: definition.BaseVolume, VolumeModifier: 1,
-		FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime,
-	}, true
+	return AmbientSoundSource{ID: "", Emitter: lighthouseEmitter, Position: listener, SoundType: AmbientLighthouse,
+		Background: true, VolumeModifier: 1}, true
 }

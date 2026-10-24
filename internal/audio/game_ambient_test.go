@@ -63,20 +63,15 @@ func TestLiveAmbientProjectionAppliesCalibrationAndWindowExactlyOnce(t *testing.
 	require.Empty(t, manager.ambience.Snapshot().Sources)
 }
 
-func dynamicFixtureSource(manager *GameAudioManager, kind AmbientSoundType, id string) AmbientSoundSource {
-	definition, _ := manager.GetAmbientSoundDefinition(kind)
-	source := AmbientSoundSource{ID: id, SoundType: kind, SoundFile: definition.FileName, IsActive: true,
-		IsDynamic: true, MaxDistance: definition.MaxDistance, VolumeModifier: 1,
-		FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime}
-	source.SetBaseVolume(definition.BaseVolume)
-	return source
+func dynamicFixtureSource(kind AmbientSoundType, id string) AmbientSoundSource {
+	return AmbientSoundSource{ID: id, SoundType: kind, VolumeModifier: 1}
 }
 
 func TestLiveAmbientAdapterPreservesStableIDsAndBudget(t *testing.T) {
 	manager, backend, now := gameAudioFixture(t)
 	sources := make([]AmbientSoundSource, 32)
 	for index := range sources {
-		sources[index] = dynamicFixtureSource(manager, AmbientFire, fmt.Sprintf("source/%03d", index))
+		sources[index] = dynamicFixtureSource(AmbientFire, fmt.Sprintf("source/%03d", index))
 	}
 	manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, sources)
 	require.Len(t, backend.players, AmbientVoiceLimit)
@@ -150,7 +145,7 @@ func TestFountainFramesAndStrongestFireRetainLiveVoices(t *testing.T) {
 
 func TestLighthouseSharesTileVoiceAcrossMovementFloorAndExit(t *testing.T) {
 	manager, backend, now := gameAudioFixture(t)
-	definition, exists := manager.GetAmbientSoundDefinition(AmbientLighthouse)
+	definition, exists := manager.planner.definitions[AmbientLighthouse]
 	require.True(t, exists)
 	require.Equal(t, 10.0, definition.MaxDistance)
 	require.Equal(t, "seagulls_01", productionLibrary().Cues[string(AmbientLighthouse)].RecordingID)
@@ -164,7 +159,7 @@ func TestLighthouseSharesTileVoiceAcrossMovementFloorAndExit(t *testing.T) {
 			tiles[0].Position = listener
 			source, active := manager.LighthouseAmbientSource(location, listener)
 			require.True(t, active)
-			require.Zero(t, source.MaxDistance)
+			require.True(t, source.Background)
 			manager.UpdateAmbientSoundsWithDynamicSources(listener, tiles, []AmbientSoundSource{source})
 			manager.Update()
 			require.Len(t, backend.players, 1)
@@ -202,7 +197,7 @@ func TestDungeonAndNavalBedsUseGameRoutingAndLiveLifecycle(t *testing.T) {
 			source, exists := production.DungeonAmbientSource(location, references.Position{})
 			require.True(t, exists)
 			require.Equal(t, AmbientSoundType(test.cue), source.SoundType)
-			require.Empty(t, source.SoundFile)
+			require.Empty(t, production.planner.definitions[source.SoundType].FileName)
 			production.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, []AmbientSoundSource{source})
 		}
 	}
@@ -238,10 +233,11 @@ func TestDungeonAndNavalBedsUseGameRoutingAndLiveLifecycle(t *testing.T) {
 		t.Run(source.name, func(t *testing.T) {
 			bed, exists := source.resolve(references.Position{})
 			require.True(t, exists)
-			require.Zero(t, bed.MaxDistance)
+			require.True(t, bed.Background)
+			definition := manager.planner.definitions[bed.SoundType]
 			manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, []AmbientSoundSource{bed})
 			count := len(backend.players)
-			*now = now.Add(bed.FadeInTime)
+			*now = now.Add(definition.FadeInTime)
 			manager.Update()
 			for _, point := range []references.Position{{X: 7, Y: 7}, {X: 200, Y: 100}} {
 				bed.Position = point
@@ -254,10 +250,10 @@ func TestDungeonAndNavalBedsUseGameRoutingAndLiveLifecycle(t *testing.T) {
 			require.NoError(t, manager.SetAmbientVolume(0.5))
 			require.NoError(t, manager.SetSoundEffectVolume(0))
 			manager.Update()
-			require.InDelta(t, bed.GetBaseVolume()*0.5, manager.ambience.Snapshot().Sources[0].Voice.Gain, 1e-9)
+			require.InDelta(t, definition.BaseVolume*0.5, manager.ambience.Snapshot().Sources[0].Voice.Gain, 1e-9)
 			manager.UpdateAmbientSoundsWithDynamicSources(references.Position{}, nil, nil)
 			require.Equal(t, berad.VoiceReleasing, manager.ambience.Snapshot().Sources[0].Voice.State)
-			*now = now.Add(bed.FadeOutTime)
+			*now = now.Add(definition.FadeOutTime)
 			manager.Update()
 			require.False(t, backend.players[count-1].IsPlaying())
 		})

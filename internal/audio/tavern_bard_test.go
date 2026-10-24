@@ -29,17 +29,12 @@ func TestTavernBardsHaveDedicatedSilentSlotAndCampingKeepsRecording(t *testing.T
 	require.NoError(t, manager.PlayMusicForLocation(references.Britain))
 	manager.Update()
 	require.True(t, score.playing)
-	definition := manager.AmbientEmitterDefinition("bard")
+	definition := manager.planner.definitions[AmbientBard]
 	require.Empty(t, definition.FileName)
 	require.Equal(t, 10.0, definition.MaxDistance)
 	require.Equal(t, 800*time.Millisecond, definition.FadeInTime)
 	require.Equal(t, time.Second, definition.FadeOutTime)
-	source := AmbientSoundSource{
-		Emitter: "bard", SoundType: definition.SoundType, IsActive: true, IsDynamic: true,
-		Position: references.Position{}, SoundFile: definition.FileName, MaxDistance: definition.MaxDistance,
-		baseVolume: definition.BaseVolume, VolumeModifier: 1,
-		FadeInTime: definition.FadeInTime, FadeOutTime: definition.FadeOutTime,
-	}
+	source := manager.EmitterAmbientSource("bard", references.Position{}, 1)
 	manager.UpdateAmbientSoundsWithDynamicSources(source.Position, nil, []AmbientSoundSource{source})
 	require.False(t, manager.hasLocalMusic(), "silence must not suppress the score")
 	manager.Update()

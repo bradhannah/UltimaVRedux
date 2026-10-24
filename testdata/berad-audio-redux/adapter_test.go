@@ -98,24 +98,12 @@ func TestReduxLighthouseAndProjectedDynamicIdentityRemainGameOwned(t *testing.T)
 	if err != nil {
 		t.Fatal(err)
 	}
-	document := library.Document()
 	makeSource := func(cueID, role string) gameaudio.AmbientSoundSource {
-		cue := document.Cues[cueID]
-		recording := document.Recordings[cue.RecordingID]
-		gain := cue.VolumeModifier
-		if recording.CalibrationGainDB != nil {
-			gain *= math.Pow(10, *recording.CalibrationGainDB/20)
-		}
-		source := gameaudio.AmbientSoundSource{ID: "map/floor/entity", Emitter: role, SoundType: gameaudio.AmbientSoundType(cueID),
-			IsActive: true, IsDynamic: true, VolumeModifier: 1, MaxDistance: 8, FadeInTime: time.Second, FadeOutTime: time.Second}
-		if recording.File != nil {
-			source.SoundFile = *recording.File
-		}
-		source.SetBaseVolume(gain)
-		return source
+		return gameaudio.AmbientSoundSource{ID: "map/floor/entity", Emitter: role,
+			SoundType: gameaudio.AmbientSoundType(cueID), VolumeModifier: 1}
 	}
 	lighthouse := makeSource(string(gameaudio.AmbientLighthouse), "lighthouse")
-	lighthouse.MaxDistance = 0
+	lighthouse.Background = true
 	tiles := []gameaudio.TileWithPosition{{Tile: &references.Tile{Index: 27}}}
 	plan, err := planner.Sources(references.Position{}, tiles, []gameaudio.AmbientSoundSource{lighthouse})
 	if err != nil || len(plan) != 1 || plan[0].ID != string(gameaudio.AmbientLighthouse) || plan[0].Gain != 1 {
@@ -135,7 +123,7 @@ func TestReduxLighthouseAndProjectedDynamicIdentityRemainGameOwned(t *testing.T)
 	if left[0].ID != right[0].ID || right[0].Emitter != "moongate" {
 		t.Fatal(left, right)
 	}
-	source.MaxDistance = 0
+	source.Background = true
 	source.Position.X = 100
 	bed, err := planner.Sources(references.Position{}, nil, []gameaudio.AmbientSoundSource{source})
 	if err != nil || bed[0].ID != "background/"+fireCue || bed[0].Gain != 1 {
