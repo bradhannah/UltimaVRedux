@@ -263,12 +263,14 @@ reported and are not silently rewritten; correct them in the editor and recheck.
 
 The existing setup contract distinguishes first-run recovery from changing a
 working installation: first-run selection continues startup; changing the data
-folder from the title menu takes effect on the next launch. Follow the displayed
+folder from the title menu (**Configure**, then **Set Data Directory**) takes
+effect on the next launch. Follow the displayed
 restart instructions.
 
 ## Import an original save
 
-**Import from Legacy** on the title menu reads the exact `SAVED.GAM`/`SAVED.OOL`
+**Import from Legacy**, under **New Game** on the title menu, reads the exact
+`SAVED.GAM`/`SAVED.OOL`
 pair in the **active game-data directory**. It does not search other providers,
 previous locations, or a pending data-folder change. If the pair is missing or
 unusable, the recovery menu offers **Check Again** and **Back**. There is no

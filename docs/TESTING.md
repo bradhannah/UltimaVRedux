@@ -80,7 +80,7 @@ scene, keyboard handling, configuration dialog, and rendering. Its dedicated
 it does not replace the normal native test suite.
 
 The host sends Enter to skip the title presentation, navigates to Configure,
-tabs from Display to Gameplay, toggles Repeated Monster Division, cancels,
+opens its sub-menu on Display, tabs from Display to Gameplay, toggles Repeated Monster Division, cancels,
 reopens, and returns to Gameplay. Each press and release receives a completed
 guest tick. Assertions check the scene, menu choice, dialog identity, staged
 and live values, and unchanged configuration-file bytes. Real host-rendered

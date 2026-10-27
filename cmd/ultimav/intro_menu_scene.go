@@ -41,13 +41,16 @@ const (
 	introWorkflowName          = "intro_presentation"
 	introChoiceJourney         = 0
 	introChoiceLoad            = 1
-	introChoiceImport          = 2
-	introChoiceData            = 3
-	introChoiceCreate          = 4
-	introChoiceConfigure       = 5
-	introChoiceNarrative       = 6
-	introChoiceAcknowledgments = 7
-	introChoiceReturnView      = 8
+	introChoiceNewGame         = 2
+	introChoiceConfigure       = 3
+	introChoiceNarrative       = 4
+	introChoiceAcknowledgments = 5
+	introChoiceReturnView      = 6
+	introNewGameCreate         = 0
+	introNewGameImport         = 1
+	introConfigureDisplay      = 0
+	introConfigureAudio        = 1
+	introConfigureData         = 2
 	introNoticeLineCount       = 2
 	introOriginFullY           = 45
 	introTitleFizzHeight       = 100
@@ -65,6 +68,8 @@ type IntroMenuScene struct {
 	introSprites        *sprites.IntroSprites
 	borderSprites       *sprites.BorderSprites
 	ultimaFont          *text.UltimaFont
+	menuRenderer        *text.IntroMenuRenderer
+	noticeFont          *text.UltimaFont
 	noticeOutput        *text.Output
 	versionOutput       *text.Output
 	keyboard            *input.Keyboard
@@ -90,6 +95,8 @@ type IntroMenuScene struct {
 	flameAnimationStartMs   int64
 	menuIdleStartedMs       int64
 	nCurrentSelection       int
+	submenuOpen             bool
+	submenuSelection        int
 	notice                  string
 	showVersion             bool
 	journeyOnwardEnabled    bool
@@ -174,13 +181,19 @@ func newIntroMenuState(
 	font *text.UltimaFont,
 ) *IntroMenuScene {
 	var navigation input.ListNavigation
+	noticeFont := text.NewUltimaFont(text.GetIntroNoticeFontSize())
+	noticeOutput := text.NewOutput(
+		noticeFont, noticeFont.TextFace.Metrics().HAscent*1.2, introNoticeLineCount, 80,
+	)
 
 	return &IntroMenuScene{
 		navigation:              navigation,
 		introSprites:            introSprites,
 		borderSprites:           sprites.NewBorderSprites(),
 		ultimaFont:              font,
-		noticeOutput:            text.NewOutput(font, font.TextFace.Metrics().HAscent*1.2, introNoticeLineCount, 80),
+		menuRenderer:            text.NewIntroMenuRenderer(font),
+		noticeFont:              noticeFont,
+		noticeOutput:            noticeOutput,
 		versionOutput:           newIntroVersionOutput(),
 		keyboard:                input.NewKeyboard(250),
 		config:                  gameConfig,
@@ -204,6 +217,8 @@ func newIntroMenuState(
 		flameAnimationStartMs:   0,
 		menuIdleStartedMs:       0,
 		nCurrentSelection:       introChoiceLoad,
+		submenuOpen:             false,
+		submenuSelection:        0,
 		notice:                  "",
 		showVersion:             false,
 		journeyOnwardEnabled:    false,
@@ -274,7 +289,9 @@ func (m *IntroMenuScene) Dispose() {
 
 func (m *IntroMenuScene) InvalidateResolution() {
 	m.ultimaFont = text.NewUltimaFont(text.GetIntroFontSize())
-	m.noticeOutput.SetFont(m.ultimaFont, m.ultimaFont.TextFace.Metrics().HAscent*1.2)
+	m.menuRenderer = text.NewIntroMenuRenderer(m.ultimaFont)
+	m.noticeFont = text.NewUltimaFont(text.GetIntroNoticeFontSize())
+	m.noticeOutput.SetFont(m.noticeFont, m.noticeFont.TextFace.Metrics().HAscent*1.2)
 	versionFont := newIntroVersionFont()
 	m.versionOutput.SetFont(versionFont, versionFont.TextFace.Metrics().HAscent*1.2)
 }
@@ -344,25 +361,29 @@ func (m *IntroMenuScene) Update(game *Game) error {
 		return nil
 	}
 	m.menuIdleStartedMs = m.elapsedMs
-	if !m.keyboard.TryToRegisterKeyPress(*pressedKey) {
-		return nil
-	}
-
-	if *pressedKey == ebiten.KeyEscape {
-		m.showExitConfirmation(game)
-
-		return nil
-	}
-	if *pressedKey == ebiten.KeyV {
-		m.showVersion = !m.showVersion
-
-		return nil
-	}
-	if *pressedKey == ebiten.KeyEnter || *pressedKey == ebiten.KeyNumpadEnter {
-		m.activateSelection(game)
+	if m.keyboard.TryToRegisterKeyPress(*pressedKey) {
+		m.handleMenuKey(game, *pressedKey)
 	}
 
 	return nil
+}
+
+// handleMenuKey runs one registered title-menu key. Escape backs out of an
+// open sub-menu before it offers to exit the game.
+func (m *IntroMenuScene) handleMenuKey(game *Game, key ebiten.Key) {
+	switch key { //nolint:exhaustive // Only the bound title keys reach this switch.
+	case ebiten.KeyEscape:
+		if m.submenuOpen {
+			m.closeSubmenu()
+
+			return
+		}
+		m.showExitConfirmation(game)
+	case ebiten.KeyV:
+		m.showVersion = !m.showVersion
+	case ebiten.KeyEnter, ebiten.KeyNumpadEnter:
+		m.activateSelection(game)
+	}
 }
 
 // showExitConfirmation gives keyboard-only players a way out of the title menu.
@@ -377,7 +398,7 @@ func (m *IntroMenuScene) showExitConfirmation(game *Game) {
 }
 
 func (m *IntroMenuScene) updateMenuNavigation() bool {
-	key, owned := m.navigation.Poll(m.keyboard)
+	key, owned := m.navigation.Poll(m.keyboard, ebiten.KeyUp, ebiten.KeyDown, ebiten.KeyLeft, ebiten.KeyRight)
 	if owned && key != nil {
 		switch *key { //nolint:exhaustive // The compact intro menu has no paging action.
 		case ebiten.KeyUp:
@@ -387,10 +408,51 @@ func (m *IntroMenuScene) updateMenuNavigation() bool {
 		case ebiten.KeyDown:
 			m.moveIntroSelection(1)
 			m.notice = ""
+		case ebiten.KeyRight:
+			// Right opens the selected sub-menu, mirroring its chevron.
+			if !m.submenuOpen && m.selectedChoiceHasChildren() {
+				m.openSubmenu()
+			}
+		case ebiten.KeyLeft:
+			if m.submenuOpen {
+				m.closeSubmenu()
+			}
 		}
 	}
 
 	return owned
+}
+
+func (m *IntroMenuScene) selectedChoiceHasChildren() bool {
+	return m.introChoiceEnabled(m.nCurrentSelection) && len(text.IntroChoices[m.nCurrentSelection].Children) > 0
+}
+
+// openSubmenu moves the cursor into the selected choice's children; the
+// parent stays lit so the player can see which door they walked through.
+func (m *IntroMenuScene) openSubmenu() {
+	m.submenuOpen = true
+	m.submenuSelection = 0
+	m.notice = ""
+}
+
+func (m *IntroMenuScene) closeSubmenu() {
+	m.submenuOpen = false
+	m.submenuSelection = 0
+	m.notice = ""
+}
+
+func (m *IntroMenuScene) introMenuState() text.IntroMenuState {
+	enabledChoices := make([]bool, len(text.IntroChoices))
+	for choice := range enabledChoices {
+		enabledChoices[choice] = m.introChoiceEnabled(choice)
+	}
+
+	return text.IntroMenuState{
+		Selection:        m.nCurrentSelection,
+		Enabled:          enabledChoices,
+		SubmenuOpen:      m.submenuOpen,
+		SubmenuSelection: m.submenuSelection,
+	}
 }
 
 func (m *IntroMenuScene) updatePresentationInput() {
@@ -450,19 +512,21 @@ func (m *IntroMenuScene) activateSelection(game *Game) {
 	if !m.introChoiceEnabled(m.nCurrentSelection) {
 		return
 	}
+	if m.submenuOpen {
+		m.activateSubmenuSelection(game)
+
+		return
+	}
+	if m.selectedChoiceHasChildren() {
+		m.openSubmenu()
+
+		return
+	}
 	switch m.nCurrentSelection {
 	case introChoiceJourney:
 		m.continueLatestPlayerSave(game)
 	case introChoiceLoad:
 		m.openPlayerSaveBrowser(game, playerSaveBrowserLoad, nil)
-	case introChoiceImport:
-		m.startActiveLegacySaveImport(game)
-	case introChoiceData:
-		m.startDataDirectorySetup(game)
-	case introChoiceCreate:
-		m.startCharacterCreation(game)
-	case introChoiceConfigure:
-		m.openConfigurationDialog()
 	case introChoiceNarrative:
 		m.startNarrativeIntroduction()
 	case introChoiceAcknowledgments:
@@ -470,7 +534,27 @@ func (m *IntroMenuScene) activateSelection(game *Game) {
 	case introChoiceReturnView:
 		m.startReturnToView()
 	default:
-		m.notice = text.IntroChoices[m.nCurrentSelection] + " is not yet available."
+		m.notice = text.IntroChoices[m.nCurrentSelection].Label + " is not yet available."
+	}
+}
+
+// activateSubmenuSelection dispatches the child under the cursor. The
+// sub-menu stays open afterwards so a returning player lands where they left.
+func (m *IntroMenuScene) activateSubmenuSelection(game *Game) {
+	switch {
+	case m.nCurrentSelection == introChoiceNewGame && m.submenuSelection == introNewGameCreate:
+		m.startCharacterCreation(game)
+	case m.nCurrentSelection == introChoiceNewGame && m.submenuSelection == introNewGameImport:
+		m.startActiveLegacySaveImport(game)
+	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureDisplay:
+		m.openConfigurationDialogForTab(audioSettingsDisplayTab)
+	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureAudio:
+		m.openConfigurationDialogForTab(audioSettingsAudioTab)
+	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureData:
+		m.startDataDirectorySetup(game)
+	default:
+		children := text.IntroChoices[m.nCurrentSelection].Children
+		m.notice = children[m.submenuSelection] + " is not yet available."
 	}
 }
 
@@ -510,7 +594,9 @@ func (m *IntroMenuScene) startCharacterCreation(game *Game) {
 	}
 }
 
-func (m *IntroMenuScene) openConfigurationDialog() {
+// openConfigurationDialogForTab opens Configuration on the chosen tab while the
+// title hands its audio ownership to the dialog.
+func (m *IntroMenuScene) openConfigurationDialogForTab(tab int) {
 	m.notice = ""
 	if m.audioManager != nil {
 		m.audioManager.GetMusicManager().SetSuppressed(audio.MusicMenu, true)
@@ -542,7 +628,7 @@ func (m *IntroMenuScene) openConfigurationDialog() {
 		onDismiss,
 		m.config,
 		configurationAudioManager,
-		audioSettingsDisplayTab,
+		tab,
 	)
 	m.dialogStack.PushModalDialog(configurationDialog)
 }
@@ -668,6 +754,12 @@ func (m *IntroMenuScene) introChoiceEnabled(choice int) bool {
 }
 
 func (m *IntroMenuScene) moveIntroSelection(direction int) {
+	if m.submenuOpen {
+		children := text.IntroChoices[m.nCurrentSelection].Children
+		m.submenuSelection = min(max(m.submenuSelection+direction, 0), len(children)-1)
+
+		return
+	}
 	for next := m.nCurrentSelection + direction; next >= 0 && next < len(text.IntroChoices); next += direction {
 		if m.introChoiceEnabled(next) {
 			m.nCurrentSelection = next
@@ -1278,11 +1370,19 @@ func (m *IntroMenuScene) drawMenu(screen *ebiten.Image) {
 		text.IntroMenuFramePlacement(),
 	)
 	screen.DrawImage(menuBorder, menuBorderOp)
-	enabledChoices := make([]bool, len(text.IntroChoices))
-	for choice := range enabledChoices {
-		enabledChoices[choice] = m.introChoiceEnabled(choice)
+	if m.menuRenderer == nil {
+		m.menuRenderer = text.NewIntroMenuRenderer(m.ultimaFont)
 	}
-	m.ultimaFont.DrawIntroChoices(screen, m.nCurrentSelection, enabledChoices)
+	state := m.introMenuState()
+	m.menuRenderer.DrawChoices(screen, state)
+	if state.SubmenuOpen {
+		panelBorder, panelBorderOp := m.borderSprites.VeryPixelatedRoundedBlueWhite.CreateSizedAndScaledBorderSprite(
+			text.IntroSubmenuBorderIdealWidth,
+			m.menuRenderer.SubmenuPanelPlacement(screen.Bounds(), state),
+		)
+		screen.DrawImage(panelBorder, panelBorderOp)
+		m.menuRenderer.DrawSubmenu(screen, state)
+	}
 	m.drawNotice(screen)
 	if m.showVersion {
 		m.drawVersion(screen)
@@ -1360,7 +1460,7 @@ func (m *IntroMenuScene) drawNotice(screen *ebiten.Image) {
 
 func (m *IntroMenuScene) prepareNotice(bounds image.Rectangle) {
 	m.noticeOutput.Reset()
-	m.noticeOutput.SetMaxCharsPerLine(max(1, m.ultimaFont.CharsForWidth(bounds.Dx()*8/10)))
+	m.noticeOutput.SetMaxCharsPerLine(max(1, m.noticeFont.CharsForWidth(bounds.Dx()*8/10)))
 	if m.notice != "" {
 		line := m.noticeOutput.AppendLine().WithAlignment(textv2.AlignCenter).Yellow(m.notice)
 		if m.legacyPrepareActive {

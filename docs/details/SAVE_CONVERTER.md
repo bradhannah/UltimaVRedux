@@ -160,7 +160,8 @@ not change the native schema version.
 ## Title-menu import instead
 
 For a pair already in the active game-data directory, use **Import from Legacy**
-on the title menu. It reads only that active directory, then offers native slot,
+under **New Game** on the title menu. It reads only that active directory, then
+offers native slot,
 description, and overwrite review. Missing-pair recovery offers **Check Again**
 and **Back**. A pending data-folder change takes effect next launch, so it does
 not redirect an import in the current session. Use this converter when an

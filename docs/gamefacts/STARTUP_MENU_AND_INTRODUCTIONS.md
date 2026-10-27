@@ -26,13 +26,19 @@ New pass selects Journey. Idle expiry is 200 scan iterations with temporary spee
 275; a ten-second comment is not independently measured timing. Creation/Transfer/
 Introduction/credits return to menu; attract repeats until input.
 
-**REDUX DEVIATION: INTRO-0001:** Redux provides nine choices including native save
-selection, legacy import, data directory, and Configure/Display alongside creation
-and presentations. Its navigation differs from original wrap and title interruption
-requires Enter. V shows or hides the build version on the menu frame's lower
-border; it is hidden by default and selects nothing. These support current
-setup/save workflows and bug reports. Unavailable flip/fizz
-driver operations use deterministic substitutes rather than claimed original pixels.
+**REDUX DEVIATION: INTRO-0001:** Redux shows seven top-level choices: Journey
+Onward, Select Save Game, New Game, Configure, Ultima V Introduction,
+Acknowledgments and Return to the View. New Game opens a sub-menu holding Create
+New Character and Import from Legacy; Configure opens Display, Audio and Set Data
+Directory. Enter or Right opens a sub-menu panel beside the column, Escape or Left
+closes it, and the parent stays lit while its panel is open. The selected row is
+drawn in yellow between two cursor triangles rather than on an inverted bar, and
+Acknowledgments and Return to the View rest in light grey. Navigation clamps
+instead of wrapping and title interruption requires Enter. V shows or hides the
+build version on the menu frame's lower border; it is hidden by default and
+selects nothing. These support current setup/save workflows and bug reports.
+Unavailable flip/fizz driver operations use deterministic substitutes rather than
+claimed original pixels.
 
 **Implementation:** `cmd/ultimav/intro_menu_scene.go`
 
