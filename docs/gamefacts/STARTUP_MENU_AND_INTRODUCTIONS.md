@@ -29,8 +29,9 @@ Introduction/credits return to menu; attract repeats until input.
 **REDUX DEVIATION: INTRO-0001:** Redux shows seven top-level choices: Journey
 Onward, Select Save Game, New Game, Configure, Ultima V Introduction,
 Acknowledgments and Return to the View. New Game opens a sub-menu holding Create
-New Character and Import from Legacy; Configure opens Display, Audio and Set Data
-Directory. Enter or Right opens a sub-menu panel beside the column, Escape or Left
+New Character and Import from Legacy; Configure opens Display, Audio, Gameplay
+and Set Data Directory. Enter or Right opens a sub-menu panel beside the column,
+Escape or Left
 closes it, and the parent stays lit while its panel is open. The selected row is
 drawn in yellow between two cursor triangles rather than on an inverted bar, and
 Acknowledgments and Return to the View rest in light grey. Navigation clamps

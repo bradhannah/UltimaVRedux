@@ -279,7 +279,7 @@ It never becomes a second modal or an extra command Help entry. See
 `ConfigurationDialog` is a keyboard-only modal available from both the title
 menu and the in-game Escape menu. It keeps detached original and staged copies
 of Sound, Display, and Gameplay settings. The title menu's Configure sub-menu
-opens it on Display or Sound; the Escape-menu route opens on Sound. Sound changes may preview through the
+opens it on Display, Sound or Gameplay; the Escape-menu route opens on Sound. Sound changes may preview through the
 audio manager, but no persisted configuration model changes before Apply. Tab
 and Shift+Tab change section in either direction; Up/Down changes the active row;
 Left/Right changes stepped Gameplay values, Sound values or Display choices;

@@ -50,7 +50,8 @@ const (
 	introNewGameImport         = 1
 	introConfigureDisplay      = 0
 	introConfigureAudio        = 1
-	introConfigureData         = 2
+	introConfigureGameplay     = 2
+	introConfigureData         = 3
 	introNoticeLineCount       = 2
 	introOriginFullY           = 45
 	introTitleFizzHeight       = 100
@@ -550,6 +551,8 @@ func (m *IntroMenuScene) activateSubmenuSelection(game *Game) {
 		m.openConfigurationDialogForTab(audioSettingsDisplayTab)
 	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureAudio:
 		m.openConfigurationDialogForTab(audioSettingsAudioTab)
+	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureGameplay:
+		m.openConfigurationDialogForTab(audioSettingsGameplayTab)
 	case m.nCurrentSelection == introChoiceConfigure && m.submenuSelection == introConfigureData:
 		m.startDataDirectorySetup(game)
 	default:

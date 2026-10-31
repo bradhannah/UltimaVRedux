@@ -33,7 +33,7 @@ var IntroChoices = []IntroChoice{
 	{Label: "Journey Onward", Children: nil, Muted: false},
 	{Label: "Select Save Game", Children: nil, Muted: false},
 	{Label: "New Game", Children: []string{"Create New Character", "Import from Legacy"}, Muted: false},
-	{Label: "Configure", Children: []string{"Display", "Audio", "Set Data Directory"}, Muted: false},
+	{Label: "Configure", Children: []string{"Display", "Audio", "Gameplay", "Set Data Directory"}, Muted: false},
 	{Label: "Ultima V Introduction", Children: nil, Muted: false},
 	{Label: "Acknowledgments", Children: nil, Muted: true},
 	{Label: "Return to the View", Children: nil, Muted: true},
@@ -70,11 +70,13 @@ const (
 	introLogicalWidth        = 320
 	introLogicalHeight       = 200
 	// introMarkerWidthUnits and introMarkerHeightUnits size the cursor
-	// triangles in classic pixels; the parent chevron is narrower.
-	introMarkerWidthUnits  = 6
-	introMarkerHeightUnits = 7
-	introChevronWidthUnits = 4
-	introMarkerGapUnits    = 3
+	// triangles in classic pixels; the parent chevron is a smaller glyph
+	// that sits inside the text height.
+	introMarkerWidthUnits   = 6
+	introMarkerHeightUnits  = 7
+	introChevronWidthUnits  = 2
+	introChevronHeightUnits = 3
+	introMarkerGapUnits     = 3
 	// IntroSubmenuBorderIdealWidth scales the sub-menu panel border to half the
 	// title frame's band so the panel reads as a child of the frame.
 	IntroSubmenuBorderIdealWidth    = 800
@@ -97,7 +99,7 @@ var introMarkerRows = [introMarkerHeightUnits]int{2, 4, 5, 6, 5, 4, 2}
 // introChevronRows lists each row width of the parent chevron.
 //
 //nolint:gochecknoglobals // Immutable marker shape.
-var introChevronRows = [introMarkerHeightUnits]int{1, 2, 3, 4, 3, 2, 1}
+var introChevronRows = [introChevronHeightUnits]int{1, 2, 1}
 
 // IntroMenuFramePlacement returns the title-menu frame bounds.
 func IntroMenuFramePlacement() sprites.PercentBasedPlacement {
@@ -187,7 +189,9 @@ func fontLineHeight(font *UltimaFont) float64 {
 }
 
 // DrawChoices renders the top-level rows. While a sub-menu is open the column
-// moves left of the panel and dims, leaving only the open parent lit.
+// moves left of the panel and dims, leaving only the open parent lit. The
+// cursor triangles keep one span, set by the widest row, so they do not jump
+// as the selection moves.
 func (r *IntroMenuRenderer) DrawChoices(screen *ebiten.Image, state IntroMenuState) {
 	bounds := screen.Bounds()
 	unit := introClassicPixelUnit(bounds.Dx(), bounds.Dy())
@@ -200,6 +204,11 @@ func (r *IntroMenuRenderer) DrawChoices(screen *ebiten.Image, state IntroMenuSta
 		columnRight = float64(panel.Min.X) - float64(introSubmenuPanelGapUnits*unit)
 	}
 	centerX := (columnLeft + columnRight) / centerDivisor
+	widest := 0.0
+	for _, choice := range IntroChoices {
+		widest = max(widest, r.choiceGroupWidth(choice, unit))
+	}
+	markers := r.cursorMarkerColumns(centerX, widest, unit)
 
 	for index, choice := range IntroChoices {
 		enabled := index >= len(state.Enabled) || state.Enabled[index]
@@ -208,13 +217,41 @@ func (r *IntroMenuRenderer) DrawChoices(screen *ebiten.Image, state IntroMenuSta
 		row := r.layoutChoiceRow(choice, centerX, positions[index], unit)
 		r.drawLabel(screen, r.choiceFont, choice.Label, row.labelX, positions[index], ink)
 		if len(choice.Children) > 0 {
-			fillMarker(screen, introChevronRows[:], image.Pt(row.chevronX, row.markerY), unit, false, ink)
+			fillMarker(screen, introChevronRows[:], image.Pt(row.chevronX, row.chevronY), unit, false, ink)
 		}
 		if selected && !state.SubmenuOpen {
-			fillMarker(screen, introMarkerRows[:], image.Pt(row.leftMarkerX, row.markerY), unit, false, color.EGAWhite)
-			fillMarker(screen, introMarkerRows[:], image.Pt(row.rightMarkerX, row.markerY), unit, true, color.EGAWhite)
+			fillMarker(screen, introMarkerRows[:], image.Pt(markers.left, row.markerY), unit, false, color.EGAWhite)
+			fillMarker(screen, introMarkerRows[:], image.Pt(markers.right, row.markerY), unit, true, color.EGAWhite)
 		}
 	}
+}
+
+type introCursorColumns struct {
+	left  int
+	right int
+}
+
+// cursorMarkerColumns places the facing triangles one gap outside the widest
+// row group, symmetric about the column centre.
+func (*IntroMenuRenderer) cursorMarkerColumns(centerX, widest float64, unit int) introCursorColumns {
+	gap := float64(introMarkerGapUnits * unit)
+	markerWidth := float64(introMarkerWidthUnits * unit)
+	half := widest / centerDivisor
+
+	return introCursorColumns{
+		left:  int(math.Round(centerX - half - gap - markerWidth)),
+		right: int(math.Round(centerX + half + gap)),
+	}
+}
+
+// choiceGroupWidth measures a label plus its chevron, when it has one.
+func (r *IntroMenuRenderer) choiceGroupWidth(choice IntroChoice, unit int) float64 {
+	labelWidth, _ := r.choiceFont.MeasureString(choice.Label)
+	if len(choice.Children) > 0 {
+		labelWidth += float64((introMarkerGapUnits + introChevronWidthUnits) * unit)
+	}
+
+	return labelWidth
 }
 
 func introChoiceInk(choice IntroChoice, enabled, selected, submenuOpen bool) color.EGAColor {
@@ -233,32 +270,27 @@ func introChoiceInk(choice IntroChoice, enabled, selected, submenuOpen bool) col
 }
 
 type introChoiceRowLayout struct {
-	labelX       float64
-	chevronX     int
-	leftMarkerX  int
-	rightMarkerX int
-	markerY      int
+	labelX   float64
+	chevronX int
+	chevronY int
+	markerY  int
 }
 
-// layoutChoiceRow centres the label plus its chevron and places the cursor
-// triangles one gap outside that group.
+// layoutChoiceRow centres the label plus its chevron on the column and
+// centres both glyph shapes on the text's line height.
 func (r *IntroMenuRenderer) layoutChoiceRow(choice IntroChoice, centerX, top float64, unit int) introChoiceRowLayout {
 	labelWidth, _ := r.choiceFont.MeasureString(choice.Label)
 	gap := float64(introMarkerGapUnits * unit)
-	groupWidth := labelWidth
-	if len(choice.Children) > 0 {
-		groupWidth += gap + float64(introChevronWidthUnits*unit)
-	}
-	groupLeft := centerX - groupWidth/centerDivisor
-	markerWidth := float64(introMarkerWidthUnits * unit)
+	groupLeft := centerX - r.choiceGroupWidth(choice, unit)/centerDivisor
+	lineHeight := fontLineHeight(r.choiceFont)
 	markerHeight := float64(introMarkerHeightUnits * unit)
+	chevronHeight := float64(introChevronHeightUnits * unit)
 
 	return introChoiceRowLayout{
-		labelX:       math.Round(groupLeft),
-		chevronX:     int(math.Round(groupLeft + labelWidth + gap)),
-		leftMarkerX:  int(math.Round(groupLeft - gap - markerWidth)),
-		rightMarkerX: int(math.Round(groupLeft + groupWidth + gap)),
-		markerY:      int(math.Round(top + (fontLineHeight(r.choiceFont)-markerHeight)/centerDivisor)),
+		labelX:   math.Round(groupLeft),
+		chevronX: int(math.Round(groupLeft + labelWidth + gap)),
+		chevronY: int(math.Round(top + (lineHeight-chevronHeight)/centerDivisor)),
+		markerY:  int(math.Round(top + (lineHeight-markerHeight)/centerDivisor)),
 	}
 }
 

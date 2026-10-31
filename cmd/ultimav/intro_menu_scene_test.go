@@ -276,6 +276,18 @@ func TestIntroMenuConfigureAudioOpensSoundTab(t *testing.T) {
 	assert.Equal(t, audioSettingsAudioTab, dialog.GetActiveTab())
 }
 
+func TestIntroMenuConfigureGameplayOpensGameplayTab(t *testing.T) {
+	scene := newIntroInputTestScene()
+	openIntroSubmenu(scene, introChoiceConfigure, introConfigureGameplay)
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+
+	require.NoError(t, scene.Update(nil))
+
+	dialog, ok := scene.dialogStack.PeekTopModalDialog().(*ConfigurationDialog)
+	require.True(t, ok)
+	assert.Equal(t, audioSettingsGameplayTab, dialog.GetActiveTab())
+}
+
 func TestIntroMenuSubmenuNavigationClampsAndClosesWithLeft(t *testing.T) {
 	scene := newIntroInputTestScene()
 	scene.nCurrentSelection = introChoiceConfigure
@@ -291,7 +303,7 @@ func TestIntroMenuSubmenuNavigationClampsAndClosesWithLeft(t *testing.T) {
 	assert.Equal(t, introChoiceConfigure, scene.nCurrentSelection, "the parent does not move while open")
 	scene.keyboard.SimulateKeyPress(ebiten.KeyUp)
 	require.NoError(t, scene.Update(nil))
-	assert.Equal(t, introConfigureAudio, scene.submenuSelection)
+	assert.Equal(t, introConfigureGameplay, scene.submenuSelection)
 
 	scene.keyboard.SimulateKeyPress(ebiten.KeyLeft)
 	require.NoError(t, scene.Update(nil))

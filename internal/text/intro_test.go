@@ -55,7 +55,7 @@ func TestIntroMenuTreeKeepsSevenTopLevelRows(t *testing.T) {
 	}
 	wantChildren := map[string][]string{
 		"New Game":  {"Create New Character", "Import from Legacy"},
-		"Configure": {"Display", "Audio", "Set Data Directory"},
+		"Configure": {"Display", "Audio", "Gameplay", "Set Data Directory"},
 	}
 	for _, choice := range IntroChoices {
 		want, isParent := wantChildren[choice.Label]
@@ -125,8 +125,8 @@ func TestIntroMarkerBandsMirrorSymmetrically(t *testing.T) {
 		t.Fatalf("mirrored middle band = %v, want %v", mirrored[3], bands[3])
 	}
 	chevron := introMarkerBands(introChevronRows[:], origin, 1, false)
-	if chevron[3] != image.Rect(10, 23, 14, 24) {
-		t.Fatalf("chevron base = %v, want four units wide", chevron[3])
+	if len(chevron) != introChevronHeightUnits || chevron[1] != image.Rect(10, 21, 12, 22) {
+		t.Fatalf("chevron = %v, want a three-row glyph two units wide", chevron)
 	}
 }
 
@@ -136,8 +136,8 @@ func TestIntroSubmenuChildrenFollowTheOpenParent(t *testing.T) {
 		t.Fatalf("closed menu children = %v, want none", children)
 	}
 	configure := IntroMenuState{Selection: 3, Enabled: nil, SubmenuOpen: true, SubmenuSelection: 1}
-	if children := introSubmenuChildren(configure); len(children) != 3 || children[1] != "Audio" {
-		t.Fatalf("Configure children = %v, want Display, Audio, Set Data Directory", children)
+	if children := introSubmenuChildren(configure); len(children) != 4 || children[2] != "Gameplay" {
+		t.Fatalf("Configure children = %v, want Display, Audio, Gameplay, Set Data Directory", children)
 	}
 	leaf := IntroMenuState{Selection: 0, Enabled: nil, SubmenuOpen: true, SubmenuSelection: 0}
 	if children := introSubmenuChildren(leaf); len(children) != 0 {
