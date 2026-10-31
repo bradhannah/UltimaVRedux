@@ -98,26 +98,30 @@ func (proof *settingsVMGuest) Update() error {
 		if !proof.intro.menuVisible {
 			return fmt.Errorf("Enter did not reveal the title menu")
 		}
-	case 11:
-		if proof.intro.nCurrentSelection != introChoiceConfigure {
+	case 7:
+		if proof.intro.nCurrentSelection != introChoiceConfigure || proof.intro.submenuOpen {
 			return fmt.Errorf("keyboard navigation selected %d, want Configure", proof.intro.nCurrentSelection)
 		}
-	case 13:
+	case 9:
+		if dialog != nil || !proof.intro.submenuOpen || proof.intro.submenuSelection != introConfigureDisplay {
+			return fmt.Errorf("Enter did not open the Configure sub-menu on Display")
+		}
+	case 11:
 		if dialog == nil || dialog.currentTab != audioSettingsDisplayTab {
 			return fmt.Errorf("Enter did not open Configuration on Display")
 		}
 		proof.first = dialog
-	case 15, 17, 23:
+	case 13, 15, 21:
 		if dialog == nil || dialog.currentTab != audioSettingsGameplayTab ||
-			dialog.stagedGameplay.AllowRepeatedMonsterDivision != (proof.tick == 17) {
+			dialog.stagedGameplay.AllowRepeatedMonsterDivision != (proof.tick == 15) {
 			return fmt.Errorf("unexpected staged Gameplay state at tick %d", proof.tick)
 		}
-		if proof.tick == 23 && dialog == proof.first {
+		if proof.tick == 21 && dialog == proof.first {
 			return fmt.Errorf("cancel/reopen reused the old dialog")
 		}
-	case 19:
-		if dialog != nil || !proof.intro.menuVisible {
-			return fmt.Errorf("Escape did not return to the title menu")
+	case 17:
+		if dialog != nil || !proof.intro.menuVisible || !proof.intro.submenuOpen {
+			return fmt.Errorf("Escape did not return to the title menu's open Configure sub-menu")
 		}
 	}
 	persisted, err := os.ReadFile(proof.configPath)
@@ -133,7 +137,7 @@ func (proof *settingsVMGuest) Update() error {
 
 func (proof *settingsVMGuest) Draw(screen *ebiten.Image) {
 	proof.Game.Draw(screen)
-	if proof.tick != 15 && proof.tick != 17 && proof.tick != 23 {
+	if proof.tick != 13 && proof.tick != 15 && proof.tick != 21 {
 		return
 	}
 	dialog, ok := proof.intro.dialogStack.PeekTopModalDialog().(*ConfigurationDialog)
@@ -151,14 +155,14 @@ func (proof *settingsVMGuest) Draw(screen *ebiten.Image) {
 	pixels := make([]byte, row.Dx()*row.Dy()*4)
 	screen.SubImage(row).(*ebiten.Image).ReadPixels(pixels)
 	switch proof.tick {
-	case 15:
+	case 13:
 		proof.baseline = pixels
-	case 17:
+	case 15:
 		proof.changed = pixels
 		if len(proof.baseline) == 0 || bytes.Equal(proof.baseline, pixels) {
 			proof.drawErr = fmt.Errorf("toggling Gameplay did not change the rendered row")
 		}
-	case 23:
+	case 21:
 		if len(proof.changed) == 0 || bytes.Equal(proof.changed, pixels) || !bytes.Equal(proof.baseline, pixels) {
 			proof.drawErr = fmt.Errorf("reopened Gameplay row did not render the original value")
 			return

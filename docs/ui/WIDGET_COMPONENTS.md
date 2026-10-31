@@ -471,7 +471,7 @@ Paging and boundary exceptions are explicit:
 | Talk history / Tavern transcript / Command Help | Page the reader's text using its existing measured page boundaries. Talk's Shift+Up also opens history. |
 | Button menus | Page the selected description; arrows retain wraparound selection. |
 | Party selectors / New Order | No paging; repeating arrows retain wraparound selection and unavailable-row inspection. |
-| Intro menu / Configuration tabs | No paging; repeating arrows select bounded rows. Left/Right setting adjustment remains one-shot. |
+| Intro menu / Configuration tabs | No paging; repeating arrows select bounded rows. On the title menu Right opens and Left closes a sub-menu; Left/Right setting adjustment remains one-shot. |
 | Save slots; compact Guild, Reagent, Healer, Inn, and Tavern choice lists | No list paging; repeating arrows retain existing selection rules. Unsupported page chords do not fall through to row movement. |
 
 Combat HUD history remains on gameplay input routing, outside this modal-list

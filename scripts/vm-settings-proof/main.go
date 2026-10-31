@@ -197,13 +197,13 @@ func (driver *settingsDriver) Update() error {
 	if !driver.guest.WaitTicks() {
 		return fmt.Errorf("initialize VM guest: %w", driver.guest.Err())
 	}
-	// Title skip; Load -> Import -> Data -> Create -> Configure; Display ->
+	// Title skip; Load -> New Game -> Configure; open its sub-menu; Display ->
 	// Gameplay; toggle; cancel; reopen; Display -> Gameplay. Every press and
 	// release gets a completed tick, so asynchronous injection cannot coalesce.
 	keys := []ebiten.Key{
 		ebiten.KeyEnter,
-		ebiten.KeyDown, ebiten.KeyDown, ebiten.KeyDown, ebiten.KeyDown,
-		ebiten.KeyEnter, ebiten.KeyTab, ebiten.KeySpace,
+		ebiten.KeyDown, ebiten.KeyDown,
+		ebiten.KeyEnter, ebiten.KeyEnter, ebiten.KeyTab, ebiten.KeySpace,
 		ebiten.KeyEscape, ebiten.KeyEnter, ebiten.KeyTab,
 	}
 	for _, key := range keys {

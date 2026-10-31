@@ -24,7 +24,7 @@ func TestCharacterCreationMenuHandoffUsesFixedSeedAndDebouncesHeldEnter(t *testi
 	held := map[ebiten.Key]bool{ebiten.KeyEnter: true}
 	intro := newIntroInputTestScene()
 	intro.config.SavedConfigData.DataFilePath = t.TempDir()
-	intro.nCurrentSelection = introChoiceCreate
+	openIntroSubmenu(intro, introChoiceNewGame, introNewGameCreate)
 	intro.keyboard = input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool { return held[key] })
 	title := ebiten.NewImage(1, 1)
 	t.Cleanup(title.Deallocate)
@@ -123,7 +123,7 @@ func TestCharacterCreationMenuHandoffFailureLeavesMenuActive(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			intro := newIntroInputTestScene()
-			intro.nCurrentSelection = introChoiceCreate
+			openIntroSubmenu(intro, introChoiceNewGame, introNewGameCreate)
 			game := NewGame(intro)
 			builds := 0
 			test.configure(game, &builds)

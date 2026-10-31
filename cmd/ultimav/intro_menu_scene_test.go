@@ -214,7 +214,7 @@ func TestIntroMenuSetDataDirectoryStartsGuidedSetup(t *testing.T) {
 	t.Setenv("USERPROFILE", home)
 	scene := newIntroInputTestScene()
 	game := NewGame(scene)
-	scene.nCurrentSelection = introChoiceData
+	openIntroSubmenu(scene, introChoiceConfigure, introConfigureData)
 	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
 
 	require.NoError(t, scene.Update(game))
@@ -229,6 +229,12 @@ func TestIntroMenuSetDataDirectoryStartsGuidedSetup(t *testing.T) {
 func TestIntroMenuConfigureOpensDisplayAndReturnsToMenu(t *testing.T) {
 	scene := newIntroInputTestScene()
 	scene.nCurrentSelection = introChoiceConfigure
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+
+	require.NoError(t, scene.Update(nil))
+	assert.True(t, scene.submenuOpen, "Enter on Configure opens its sub-menu first")
+	assert.Equal(t, introConfigureDisplay, scene.submenuSelection)
+	require.Zero(t, scene.dialogStack.Count())
 	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
 
 	require.NoError(t, scene.Update(nil))
@@ -249,6 +255,86 @@ func TestIntroMenuConfigureOpensDisplayAndReturnsToMenu(t *testing.T) {
 	require.NoError(t, scene.Update(nil))
 	assert.Zero(t, scene.dialogStack.Count())
 	assert.True(t, scene.menuVisible)
+	assert.True(t, scene.submenuOpen, "closing the dialog returns to the open Configure sub-menu")
+
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEscape)
+	require.NoError(t, scene.Update(nil))
+	assert.False(t, scene.submenuOpen, "Escape closes the sub-menu before offering to exit")
+	assert.Zero(t, scene.dialogStack.Count())
+	assert.Equal(t, introChoiceConfigure, scene.nCurrentSelection)
+}
+
+func TestIntroMenuConfigureAudioOpensSoundTab(t *testing.T) {
+	scene := newIntroInputTestScene()
+	openIntroSubmenu(scene, introChoiceConfigure, introConfigureAudio)
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+
+	require.NoError(t, scene.Update(nil))
+
+	dialog, ok := scene.dialogStack.PeekTopModalDialog().(*ConfigurationDialog)
+	require.True(t, ok)
+	assert.Equal(t, audioSettingsAudioTab, dialog.GetActiveTab())
+}
+
+func TestIntroMenuConfigureGameplayOpensGameplayTab(t *testing.T) {
+	scene := newIntroInputTestScene()
+	openIntroSubmenu(scene, introChoiceConfigure, introConfigureGameplay)
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+
+	require.NoError(t, scene.Update(nil))
+
+	dialog, ok := scene.dialogStack.PeekTopModalDialog().(*ConfigurationDialog)
+	require.True(t, ok)
+	assert.Equal(t, audioSettingsGameplayTab, dialog.GetActiveTab())
+}
+
+func TestIntroMenuSubmenuNavigationClampsAndClosesWithLeft(t *testing.T) {
+	scene := newIntroInputTestScene()
+	scene.nCurrentSelection = introChoiceConfigure
+	scene.keyboard.SimulateKeyPress(ebiten.KeyRight)
+	require.NoError(t, scene.Update(nil))
+	require.True(t, scene.submenuOpen, "Right opens the selected sub-menu")
+
+	for range 5 {
+		scene.keyboard.SimulateKeyPress(ebiten.KeyDown)
+		require.NoError(t, scene.Update(nil))
+	}
+	assert.Equal(t, introConfigureData, scene.submenuSelection, "sub-menu rows clamp at the last child")
+	assert.Equal(t, introChoiceConfigure, scene.nCurrentSelection, "the parent does not move while open")
+	scene.keyboard.SimulateKeyPress(ebiten.KeyUp)
+	require.NoError(t, scene.Update(nil))
+	assert.Equal(t, introConfigureGameplay, scene.submenuSelection)
+
+	scene.keyboard.SimulateKeyPress(ebiten.KeyLeft)
+	require.NoError(t, scene.Update(nil))
+	assert.False(t, scene.submenuOpen, "Left closes the sub-menu")
+	assert.Zero(t, scene.submenuSelection)
+	assert.Zero(t, scene.dialogStack.Count())
+}
+
+func TestIntroMenuRightOnLeafDoesNothing(t *testing.T) {
+	scene := newIntroInputTestScene()
+	scene.nCurrentSelection = introChoiceLoad
+	scene.keyboard.SimulateKeyPress(ebiten.KeyRight)
+
+	require.NoError(t, scene.Update(nil))
+
+	assert.False(t, scene.submenuOpen)
+	assert.Equal(t, introChoiceLoad, scene.nCurrentSelection)
+}
+
+func TestIntroMenuNewGameImportStartsLegacyImport(t *testing.T) {
+	scene := newIntroInputTestScene()
+	game := NewGame(scene)
+	openIntroSubmenu(scene, introChoiceNewGame, introNewGameImport)
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+
+	require.NoError(t, scene.Update(game))
+
+	require.Equal(t, 1, scene.dialogStack.Count(), "an unset data folder reports the missing original save")
+	_, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.ButtonListModal)
+	assert.True(t, ok)
+	assert.True(t, scene.submenuOpen, "the New Game sub-menu stays open behind the report")
 }
 
 func TestIntroMenuConfigureRestoresTitleAudioOwnership(t *testing.T) {
@@ -258,7 +344,7 @@ func TestIntroMenuConfigureRestoresTitleAudioOwnership(t *testing.T) {
 	scene.audioManager = manager
 	t.Cleanup(func() { require.NoError(t, manager.Close()) })
 
-	scene.openConfigurationDialog()
+	scene.openConfigurationDialogForTab(audioSettingsDisplayTab)
 	assert.False(t, manager.PlaybackSnapshot().Enabled)
 	dialog, ok := scene.dialogStack.PeekTopModalDialog().(*ConfigurationDialog)
 	require.True(t, ok)
@@ -891,6 +977,14 @@ func fakeReturnViewData(t *testing.T) *minimap.ReturnViewData {
 		},
 		Script: script,
 	}
+}
+
+// openIntroSubmenu places the cursor on a child row as if the player had
+// opened its parent with Enter.
+func openIntroSubmenu(scene *IntroMenuScene, parent, child int) {
+	scene.nCurrentSelection = parent
+	scene.submenuOpen = true
+	scene.submenuSelection = child
 }
 
 func openIntroSaveBrowser(t *testing.T, game *Game, scene *IntroMenuScene, choice int) *widgets.SaveSlotBrowser {

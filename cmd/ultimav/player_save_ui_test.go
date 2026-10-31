@@ -137,9 +137,10 @@ func TestQuickLoadErrorsDescribeLoadRecoveryWithoutBrowserOrSaveClaims(t *testin
 func TestPlayerSaveIntroNoticesFit(t *testing.T) {
 	for _, size := range []image.Point{{X: 320, Y: 200}, {X: 1920, Y: 1080}} {
 		setTalkHistoryTestResolution(t, size.X, size.Y)
-		font := text.NewUltimaFont(text.GetIntroFontSize())
+		font := text.NewUltimaFont(text.GetIntroNoticeFontSize())
 		scene := &IntroMenuScene{
 			ultimaFont:   font,
+			noticeFont:   font,
 			noticeOutput: text.NewOutput(font, font.TextFace.Metrics().HAscent*1.2, introNoticeLineCount, 80),
 		}
 		for _, err := range []error{player_save.ErrStaleRevision, fs.ErrPermission, player_save.ErrSlotNotFound,
