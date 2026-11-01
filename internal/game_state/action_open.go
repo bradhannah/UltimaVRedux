@@ -313,6 +313,20 @@ func (g *GameState) ActionOpenCombatMap(direction references.Direction) CombatOp
 		}
 	}
 
+	// Tactical Open answers the same fixed terrain as the town path before
+	// trying doors: a footlocker is already open and a portcullis cannot be
+	// lifted. Both still spend the attempt. See ref:COMBAT-0010.
+	switch g.CombatScene.CombatMapRef.GetTileNumber(*targetPos) { //nolint:exhaustive // Only fixed Open responses.
+	case indexes.Box:
+		g.SystemCallbacks.Message.AddRowStr("It's open!")
+
+		return CombatOpenResult{Handled: true, RevealLines: nil}
+	case indexes.Portcullis:
+		g.SystemCallbacks.UI.ShowActionFeedback("Too heavy!", true)
+
+		return CombatOpenResult{Handled: true, RevealLines: nil}
+	}
+
 	switch map_state.OpenDoorAt(g.GetCurrentLayeredMap(), targetPos) {
 	case map_state.OpenDoorOpened:
 		g.setCombatTerrain(*targetPos, indexes.BrickFloor)

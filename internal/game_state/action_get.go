@@ -67,26 +67,25 @@ func (g *GameState) ActionGetSmallMap(direction references.Direction) bool {
 		return true
 
 	case indexes.RightSconce, indexes.LeftSconce:
-		if g.getTorchFromSconce(getThingPos, mapLayers) {
-			g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
-			g.SystemCallbacks.UI.ShowActionFeedback("Borrowed!", true)
-			g.AdvanceOrdinarySurfaceCommandMinutes(1)
+		mapLayers.SetTileByLayer(map_state.MapLayer, getThingPos, indexes.BrickFloor)
+		g.lightBorrowedWallTorch()
+		g.SystemCallbacks.UI.ShowActionFeedback(wallTorchBorrowedMessage, true)
+		g.AdvanceOrdinarySurfaceCommandMinutes(1)
 
-			return true
-		}
+		return true
 
 	case indexes.TableFoodBoth, indexes.TableFoodBottom, indexes.TableFoodTop:
-		if g.getFoodFromTable(direction, getThingPos, getThingTile, mapLayers) {
-			g.SystemCallbacks.UI.ShowActionFeedback("Mmmmm...! But that food isn't yours!", true)
-			g.PartyState.Inventory.Provisions.Food.IncrementByOne()
-			g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
-			g.AdjustPartyKarma(-1)
+		remaining, reachable := tableFoodAfterPickup(direction, getThingTile.Index)
+		if reachable {
+			mapLayers.SetTileByLayer(map_state.MapLayer, getThingPos, remaining)
+			g.SystemCallbacks.UI.ShowActionFeedback(tableFoodTakenMessage, true)
+			g.takeUnownedTableFood()
 			g.AdvanceOrdinarySurfaceCommandMinutes(1)
 
 			return true
 		}
 
-		g.SystemCallbacks.UI.ShowActionFeedback("Can't reach plate!", true)
+		g.SystemCallbacks.UI.ShowActionFeedback(tableFoodUnreachableMessage, true)
 
 		return false
 
@@ -251,50 +250,53 @@ func (g *GameState) removeSandalwoodBoxObject() {
 	g.CurrentNPCAIController.FreshenExistingNPCsOnMap()
 }
 
-// Helper function moved from GameScene to GameState
-func (g *GameState) getFoodFromTable(direction references.Direction, getThingPos *references.Position,
-	getThingTile *references.Tile, mapLayers *map_state.LayeredMap) bool {
-	var newTileIndex indexes.SpriteIndex
+const (
+	// wallTorchBorrowedMessage matches the original acknowledgement; the party is lit, nothing is pocketed.
+	wallTorchBorrowedMessage    = "Borrowed!"
+	tableFoodTakenMessage       = "Mmmmm...! But that food isn't yours!"
+	tableFoodUnreachableMessage = "Can't reach plate!"
+)
 
+// tableFoodAfterPickup resolves the plate a diner can reach from direction and
+// the table tile left behind. Plates are reachable only across the table's
+// north or south edge. See ref:KARMA-0006.
+func tableFoodAfterPickup(direction references.Direction, table indexes.SpriteIndex) (indexes.SpriteIndex, bool) {
 	//nolint:exhaustive // Table food can be taken only from its north or south edge.
 	switch direction {
 	case references.Down:
-		switch {
-		case getThingTile.Is(indexes.TableFoodBoth):
-			newTileIndex = indexes.TableFoodBottom
-		case getThingTile.Is(indexes.TableFoodTop):
-			newTileIndex = indexes.TableMiddle
-		default:
-			return false
+		switch table { //nolint:exhaustive // Only the plate tiles reach this helper.
+		case indexes.TableFoodBoth:
+			return indexes.TableFoodBottom, true
+		case indexes.TableFoodTop:
+			return indexes.TableMiddle, true
 		}
 	case references.Up:
-		switch {
-		case getThingTile.Is(indexes.TableFoodBoth):
-			newTileIndex = indexes.TableFoodTop
-		case getThingTile.Is(indexes.TableFoodBottom):
-			newTileIndex = indexes.TableMiddle
-		default:
-			return false
+		switch table { //nolint:exhaustive // Only the plate tiles reach this helper.
+		case indexes.TableFoodBoth:
+			return indexes.TableFoodTop, true
+		case indexes.TableFoodBottom:
+			return indexes.TableMiddle, true
 		}
-	default:
-		return false
 	}
 
-	mapLayers.SetTileByLayer(map_state.MapLayer, getThingPos, newTileIndex)
-
-	return true
+	return table, false
 }
 
-// getTorchFromSconce handles getting a torch from wall sconces
-// Replaces the sconce with brick floor and adds torch to inventory
-func (g *GameState) getTorchFromSconce(getThingPos *references.Position, mapLayers *map_state.LayeredMap) bool {
-	// Add torch to inventory
-	g.PartyState.Inventory.Provisions.Torches.IncrementByOne()
+// takeUnownedTableFood commits the shared food gain and karma loss of eating
+// from a plate that is not the party's. See ref:KARMA-0006.
+func (g *GameState) takeUnownedTableFood() {
+	g.PartyState.Inventory.Provisions.Food.IncrementByOne()
+	g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
+	g.AdjustPartyKarma(-1)
+}
 
-	// Replace sconce with brick floor
-	mapLayers.SetTileByLayer(map_state.MapLayer, getThingPos, indexes.BrickFloor)
-
-	return true
+// lightBorrowedWallTorch applies the shared effect of taking a wall torch: the
+// party carries a lit torch for a fixed burn and no inventory torch is gained.
+// Callers replace the sconce tile on their own map. See ref:LIGHT-0004.
+func (g *GameState) lightBorrowedWallTorch() {
+	g.MapState.Lighting.LightBorrowedWallTorch()
+	g.GetCurrentLayeredMap().InvalidateLightSourceCache()
+	g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
 }
 
 // getMoonstoneFromItemStack handles getting a found moonstone from an item stack
@@ -561,14 +563,17 @@ func (g *GameState) ActionGetLargeMap(direction references.Direction) bool {
 }
 
 // CombatPickupResult reports committed inventory movement for a compact receipt.
+// Succeeded distinguishes a pickup that changed the world without adding stock,
+// such as a borrowed wall torch, from a refusal.
 type CombatPickupResult struct {
-	Handled  bool
-	Message  string
-	Sprite   indexes.SpriteIndex
-	Acquired uint16
-	ItemType references.ItemType
-	ItemID   int
-	ItemName string
+	Handled   bool
+	Succeeded bool
+	Message   string
+	Sprite    indexes.SpriteIndex
+	Acquired  uint16
+	ItemType  references.ItemType
+	ItemID    int
+	ItemName  string
 }
 
 // getCombatItem retains original object ordering while returning truthful feedback.
@@ -585,7 +590,7 @@ func (g *GameState) getCombatItem(direction references.Direction) CombatPickupRe
 	}
 	object, found := g.CombatScene.firstGettableObjectAt(*targetPosition)
 	if !found {
-		return result
+		return g.getCombatTerrain(*targetPosition, direction, result)
 	}
 	result.Sprite = object.Sprite()
 	if object.IsChest() {
@@ -610,6 +615,7 @@ func (g *GameState) getCombatItem(direction references.Direction) CombatPickupRe
 		return result
 	}
 	result.Acquired = g.combatPickupQuantity(item.Item) - before
+	result.Succeeded = result.Acquired > 0
 	if _, unique := item.Item.(references.QuestItem); !unique {
 		name := g.GameReferences.InventoryItemReferences.GetReferenceByItem(item.Item).FullDisplayName()
 		message = fmt.Sprintf("Picked up %s +%d", name, result.Acquired)
@@ -627,6 +633,48 @@ func (g *GameState) getCombatItem(direction references.Direction) CombatPickupRe
 	g.SystemCallbacks.Message.AddRowStr(message)
 
 	result.Handled, result.Message = true, message
+
+	return result
+}
+
+// getCombatTerrain applies the shared terrain pickups to the tactical map once
+// no object claims the square: wall torches and reachable table food. Crops do
+// not occur on combat maps. See ref:COMBAT-0010, ref:LIGHT-0004, ref:KARMA-0006.
+func (g *GameState) getCombatTerrain(
+	target references.Position,
+	direction references.Direction,
+	result CombatPickupResult,
+) CombatPickupResult {
+	if !combatAdjacentPositionInBounds(target) {
+		return result
+	}
+	tile := g.CombatScene.CombatMapRef.GetTileNumber(target)
+	switch tile { //nolint:exhaustive // Only collectible terrain has a tactical Get handler.
+	case indexes.RightSconce, indexes.LeftSconce:
+		g.setCombatTerrain(target, indexes.BrickFloor)
+		g.lightBorrowedWallTorch()
+		result.Handled, result.Succeeded = true, true
+		result.Message, result.Sprite, result.ItemName = wallTorchBorrowedMessage, indexes.ItemTorch, "Wall torch"
+	case indexes.TableFoodBoth, indexes.TableFoodBottom, indexes.TableFoodTop:
+		remaining, reachable := tableFoodAfterPickup(direction, tile)
+		result.Handled = true
+		if !reachable {
+			result.Message = tableFoodUnreachableMessage
+
+			break
+		}
+		before := g.combatPickupQuantity(references.Food)
+		g.setCombatTerrain(target, remaining)
+		g.takeUnownedTableFood()
+		result.Succeeded, result.Message = true, tableFoodTakenMessage
+		result.Acquired = g.combatPickupQuantity(references.Food) - before
+		result.ItemType, result.ItemID = references.Food.Type(), references.Food.ID()
+		result.ItemName = g.GameReferences.InventoryItemReferences.GetReferenceByItem(references.Food).FullDisplayName()
+		result.Sprite = references.Food.GetSpriteIndex()
+	default:
+		return result
+	}
+	g.SystemCallbacks.Message.AddRowStr(result.Message)
 
 	return result
 }

@@ -145,7 +145,10 @@ forward adjacent door. Blackthorn's renewable key Search requires zero regular
 keys and no object at the search position; this is not a global duplicate-copy
 scan over every loaded object.
 
-Redux retains success-preserves/failure-consumes physical unlocking.
+Redux retains success-preserves/failure-consumes physical unlocking. On a
+tactical map, stocks and manacles hold no prisoner: a physical Jimmy with the
+door comparison clears the restraint to floor on success and consumes one key
+on failure, as the original's combat branch does.
 **REDUX DEVIATION: PROV-0004:** a chest the party already knows to be safe may
 refuse Jimmy harmlessly, avoiding a knowingly wasted key without revealing hidden
 trap state. Blind attempts keep the original cost. Direct character selection
@@ -154,7 +157,7 @@ every existing designation. Exhaustive search-renewal and all chest-context
 equivalence remain unverified.
 
 **Implementation:** `internal/game_state/action_jimmy.go`
-**Tests:** `internal/game_state/action_jimmy_prisoner_test.go`, `internal/game_state/combat_chest_assessment_test.go`
+**Tests:** `internal/game_state/action_jimmy_prisoner_test.go`, `internal/game_state/combat_chest_assessment_test.go`, `internal/game_state/combat_terrain_commands_test.go`
 
 ### PROV-0005
 

@@ -134,12 +134,42 @@ func (g *GameState) ActionJimmyCombatMapWithDisarm(direction references.Directio
 
 		return true, nil
 	}
+	if tile := g.CombatScene.CombatMapRef.GetTileNumber(*targetPos); tile == indexes.Stocks || tile == indexes.Manacles {
+		return g.jimmyCombatRestraint(*targetPos, combatant), nil
+	}
 	result := g.jimmyWorldDoorAt(g.GetCurrentLayeredMap(), targetPos, combatant)
 	if result == JimmyUnlocked {
 		g.setCombatTerrain(*targetPos, g.GetCurrentLayeredMap().GetTileTopMapOnlyTile(targetPos).Index)
 	}
 
 	return g.reportCombatJimmyResult(result), nil
+}
+
+// combatRestraintUnlockedMessage says what changed: the restraint is gone and
+// the square is open floor. No prisoner is involved on a tactical map.
+const combatRestraintUnlockedMessage = "Unlocked! The empty restraint falls open."
+
+// jimmyCombatRestraint picks the lock of stocks or manacles on a tactical map.
+// Tactical maps carry no prisoner, so success simply clears the restraint to
+// floor; the key and Dexterity rules match a locked door. See ref:PROV-0004.
+func (g *GameState) jimmyCombatRestraint(target references.Position, player *party_state.PlayerCharacter) bool {
+	keys := &g.PartyState.Inventory.Provisions.Keys
+	switch {
+	case !keys.HasSome():
+		g.SystemCallbacks.UI.ShowActionFeedback("No keys!", true)
+	case player == nil:
+		return false
+	case !g.isJimmySuccessful(player):
+		keys.DecrementByOne()
+		g.SystemCallbacks.Audio.PlaySoundEffect(SoundKeyBreak)
+		g.SystemCallbacks.UI.ShowActionFeedback("Key broke!", true)
+	default:
+		g.setCombatTerrain(target, indexes.BrickFloor)
+		g.SystemCallbacks.Audio.PlaySoundEffect(SoundUnlock)
+		g.SystemCallbacks.UI.ShowActionFeedback(combatRestraintUnlockedMessage, true)
+	}
+
+	return true
 }
 
 func (g *GameState) jimmyCombatChest(
