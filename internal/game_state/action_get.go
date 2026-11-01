@@ -251,8 +251,8 @@ func (g *GameState) removeSandalwoodBoxObject() {
 }
 
 const (
-	// wallTorchBorrowedMessage explains the effect: the party is lit, nothing is pocketed.
-	wallTorchBorrowedMessage    = "Borrowed! The wall torch lights thy way."
+	// wallTorchBorrowedMessage matches the original acknowledgement; the party is lit, nothing is pocketed.
+	wallTorchBorrowedMessage    = "Borrowed!"
 	tableFoodTakenMessage       = "Mmmmm...! But that food isn't yours!"
 	tableFoodUnreachableMessage = "Can't reach plate!"
 )

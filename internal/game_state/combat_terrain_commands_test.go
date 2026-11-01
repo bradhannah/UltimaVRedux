@@ -27,7 +27,7 @@ func TestCombatGetBorrowsWallTorchWithoutAddingStock(t *testing.T) {
 		require.True(t, result.Handled)
 		assert.True(t, result.Succeeded)
 		assert.Zero(t, result.Acquired)
-		assert.Equal(t, "Borrowed! The wall torch lights thy way.", result.Message)
+		assert.Equal(t, "Borrowed!", result.Message)
 		assertCombatPushTerrain(t, state, fixture.object, indexes.BrickFloor)
 		assert.Equal(t, uint16(3), state.PartyState.Inventory.Provisions.Torches.Get(),
 			"a borrowed wall torch is carried lit, not pocketed")
@@ -106,7 +106,7 @@ func TestActionGetSmallMapBorrowsWallTorchWithoutAddingStock(t *testing.T) {
 	assert.Equal(t, uint16(2), state.PartyState.Inventory.Provisions.Torches.Get())
 	// The town command then advances one minute, which burns one of the 100.
 	assert.Equal(t, map_state.BorrowedWallTorchDurationMinutes-1, state.MapState.Lighting.TorchMinutesRemaining())
-	assert.Contains(t, callbacks.Messages, "Borrowed! The wall torch lights thy way.")
+	assert.Contains(t, callbacks.Messages, "Borrowed!")
 	assert.Equal(t, []int{1}, callbacks.TimeAdvanced())
 }
 

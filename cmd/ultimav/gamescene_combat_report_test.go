@@ -218,13 +218,13 @@ func TestCombatReportDiscoveryRemainsAcknowledgedAndFitsBattlefield(t *testing.T
 
 func TestCombatPickupTextDistinguishesBorrowedTorchFromFailure(t *testing.T) {
 	borrowed := game_state.CombatPickupEvent{ActorName: "Mariah", Result: game_state.CombatPickupResult{
-		Handled: true, Succeeded: true, Message: "Borrowed! The wall torch lights thy way.",
+		Handled: true, Succeeded: true, Message: "Borrowed!",
 	}}
 	refused := game_state.CombatPickupEvent{ActorName: "Mariah", Result: game_state.CombatPickupResult{
 		Message: "Nothing to get!",
 	}}
 
-	assert.Equal(t, "PICKUP: Mariah: Borrowed! The wall torch lights thy way.", combatPickupText(borrowed))
+	assert.Equal(t, "PICKUP: Mariah: Borrowed!", combatPickupText(borrowed))
 	assert.Equal(t, "PICKUP FAILED: Mariah: Nothing to get!", combatPickupText(refused))
 	assert.Equal(t, "LOOT: Iolo collected Gold +38", combatPickupText(reportPickupEvent().Pickup))
 }
