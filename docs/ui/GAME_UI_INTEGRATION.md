@@ -428,7 +428,8 @@ existing owners. The scope and production Jimmy-to-Open handoff are exercised in
 
 Combat Get publishes one `CombatEventPickup` with a detached actor name, target
 position, item identity, and actual post-cap quantity. The full-sized **Battle
-Report** renders labelled `LOOT` or `PICKUP FAILED` entries instead of map-overlay
+Report** renders labelled `LOOT`, `PICKUP` (a map change that adds no stock, such
+as a borrowed wall torch) or `PICKUP FAILED` entries instead of map-overlay
 receipts. Ordinary player/enemy movement is discarded before admission to the
 64-event report history; teleportation, fleeing, and other consequences remain.
 Pickup gains already reported there are absorbed from the provision observer's

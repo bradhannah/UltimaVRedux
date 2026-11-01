@@ -12,6 +12,9 @@ const (
 	TorchTileDistance = 3
 	// DefaultTorchDurationMinutes is the initial fuel time of a lit torch.
 	DefaultTorchDurationMinutes = 240
+	// BorrowedWallTorchDurationMinutes is the burn a wall torch gives when taken
+	// from its sconce; it replaces rather than extends carried fuel. ref:LIGHT-0004
+	BorrowedWallTorchDurationMinutes = 100
 
 	// MoongateLightDistance is the radius in tiles of a moongate's mystical light.
 	MoongateLightDistance = 4
@@ -126,6 +129,12 @@ func (l *Lighting) HasAnyLight() bool {
 // LightTorch lights a torch with a full default fuel time.
 func (l *Lighting) LightTorch() {
 	l.torchMinutesRemaining = DefaultTorchDurationMinutes
+}
+
+// LightBorrowedWallTorch replaces carried torch fuel with a borrowed wall
+// torch's shorter burn. It never adds to the existing fuel. ref:LIGHT-0004
+func (l *Lighting) LightBorrowedWallTorch() {
+	l.torchMinutesRemaining = BorrowedWallTorchDurationMinutes
 }
 
 // ExtendTorchMinutes adds carried fuel and saturates at maximum.

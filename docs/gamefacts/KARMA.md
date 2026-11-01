@@ -188,10 +188,12 @@ if above zero. An unreachable plate does not enter this mutation branch. There
 is no additional ownership or map-1-32 gate inside these terrain branches.
 
 Redux follows the reviewed mutation order and gives explicit theft feedback.
-This scope does not establish every object-precedence or corrupted-map case.
+The same branch serves tactical maps through COMBAT-0010; a dungeon-room plate
+is still not the party's. This scope does not establish every object-precedence
+or corrupted-map case.
 
 **Implementation:** `internal/game_state/action_get.go`
-**Tests:** none
+**Tests:** `internal/game_state/combat_terrain_commands_test.go`
 
 ### KARMA-0007
 

@@ -136,10 +136,14 @@ in INV-0006; reaching a light effect is narrower than proving every cast path.
 
 Redux has an independent durable magical-light timer; `ActivateLightEffect`
 replaces it and updates light state without replacing the active duration effect.
-The In Lor/Vas Lor constants match 100/255. This narrow effect review does not
-certify every scroll, wall-torch pickup, save-hydration, or resource-commit path.
+The In Lor/Vas Lor constants match 100/255. Taking a wall torch is verified on
+both the town and tactical Get paths: the sconce becomes brick floor and carried
+torch fuel is replaced with 100, with no inventory torch gained. An earlier Redux
+town path pocketed a torch instead; that is corrected. This narrow effect review
+does not certify every scroll, save-hydration, or resource-commit path.
 
-**Implementation:** `internal/game_state/effect_spells.go`, `internal/game_state/turn.go`
+**Implementation:** `internal/game_state/effect_spells.go`, `internal/game_state/turn.go`, `internal/game_state/action_get.go`, `internal/map_state/lighting.go`
+**Tests:** `internal/game_state/combat_terrain_commands_test.go`
 
 ### LIGHT-0005
 

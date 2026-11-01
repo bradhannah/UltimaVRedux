@@ -490,7 +490,7 @@ proof of binary PRNG sequences or every malformed capacity edge.
 **Ground display, collection, and chest knowledge**
 
 **Kind:** rule
-**Uses:** INV-0004
+**Uses:** INV-0004, LIGHT-0004, KARMA-0006
 **Original:** Established
 **Redux:** Intentional deviation
 
@@ -508,6 +508,15 @@ RNG. Get skips noncollectible markers and selects chests/items by ascending orig
 slot; an unopened selected chest requires Open. Collection never removes the party
 body or changes the dead character. Each chest-generated item requires a free
 shared object slot.
+
+When no object claims the target square, tactical Get reaches the same terrain
+pickups as the town command: a wall torch leaves brick floor and lights the
+party for the borrowed burn in LIGHT-0004, and a reachable plate follows
+KARMA-0006. Crops do not occur on combat maps. Tactical Open answers a
+footlocker ("It's open!") and a portcullis ("Too heavy!") before trying doors.
+Every such attempt spends the action. Redux's Battle Report labels a pickup that
+changed the map without adding stock `PICKUP`, reserving `PICKUP FAILED` for a
+refusal; the original prints only the command text.
 
 Redux deliberately stores an honest party-shared assessment per encounter-local
 chest instead of repeated fallible inspection reports. Known-safe Jimmy refuses
@@ -527,8 +536,8 @@ slot. Delayed chest effects and feedback retain that lifetime rather than relyin
 on slot or position equality. These IDs and their allocator exist only in combat
 memory; no saved format, original slot ordering or gameplay RNG is changed.
 
-**Implementation:** `internal/game_state/combat_loot_presentation.go`, `internal/game_state/combat_collection.go`, `internal/game_state/combat_chest.go`, `internal/game_state/combat_object.go`
-**Tests:** `internal/game_state/combat_ground_display_test.go`, `internal/game_state/combat_chest_assessment_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_door_spell_test.go`
+**Implementation:** `internal/game_state/combat_loot_presentation.go`, `internal/game_state/combat_collection.go`, `internal/game_state/combat_chest.go`, `internal/game_state/combat_object.go`, `internal/game_state/action_get.go`, `internal/game_state/action_open.go`, `cmd/ultimav/gamescene_combat_report.go`
+**Tests:** `internal/game_state/combat_ground_display_test.go`, `internal/game_state/combat_chest_assessment_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_door_spell_test.go`, `internal/game_state/combat_terrain_commands_test.go`, `cmd/ultimav/gamescene_combat_report_test.go`
 
 ### COMBAT-0011
 
