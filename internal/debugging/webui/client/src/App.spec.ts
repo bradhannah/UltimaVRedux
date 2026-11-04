@@ -3000,20 +3000,45 @@ describe("debug workbench connection", () => {
     connection.message(combatEncounterOptionsCompletion(options.id))
     await flushUI()
 
-    const selects = root.querySelectorAll<HTMLSelectElement>(".encounter-form select")
-    setSelectValue(selects[2], "32")
-    setSelectValue(selects[3], "exact")
+    expect(root.querySelectorAll(".encounter-grid .encounter-cell")).toHaveLength(121)
+    setInputValue(root.querySelector<HTMLInputElement>('.count-control input[type="number"]'), "3")
+    setInputValue(root.querySelector<HTMLInputElement>('.encounter-contents input[inputmode="numeric"]'), "123")
     await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>('.encounter-form input[type="number"]'), "3")
-    setInputValue(root.querySelector<HTMLInputElement>('.encounter-form input[type="text"]'), "123")
-    await flushUI()
+    expect(root.querySelectorAll(".encounter-cell.slot")).toHaveLength(3)
     click('.composer-actions button[type="submit"]')
     expect(executionsForCommand(connection, "combat.encounter.start")).toHaveLength(0)
     click('.composer-actions button[type="submit"]')
 
     expect(executionForCommand(connection, "combat.encounter.start").payload.arguments).toEqual({
-      territory: "britannia", britanniaMap: 0, entryDirection: "west", monsterType: "32",
+      territory: "britannia", britanniaMap: 0, entryDirection: "west", contents: "custom", monsterType: "32",
       countMode: "exact", exactCount: 3, friends: true, seed: 123,
+    })
+  })
+
+  it("starts a placed dungeon room with its authored contents", async () => {
+    mountApp()
+    const connection = MockWebSocket.instances[0]
+    connection.open()
+    connection.message(sessionReady("session-1"))
+    connection.message(formCatalogSnapshot())
+    await flushUI()
+    await openWorkspace("commands")
+    click('button[data-command-select="combat.encounter.options"]')
+    await flushUI()
+    connection.message(combatEncounterOptionsCompletion(executionForCommand(connection, "combat.encounter.options").id))
+    await flushUI()
+
+    click('.encounter-browser [aria-label="Territory"] button:last-child')
+    await flushUI()
+    expect(root.querySelector(".authored-list")?.textContent).toContain("Ghost × 1")
+    expect(root.querySelectorAll(".encounter-cell.hidden.trigger")).toHaveLength(1)
+    click('[aria-label="Party enters from the north"]')
+    await flushUI()
+    click('.composer-actions button[type="submit"]')
+    click('.composer-actions button[type="submit"]')
+
+    expect(executionForCommand(connection, "combat.encounter.start").payload.arguments).toEqual({
+      territory: "dungeon", dungeon: 0, dungeonRoom: 0, entryDirection: "north", contents: "authored",
     })
   })
 
@@ -4045,11 +4070,26 @@ function spiritualityMoongateStatusCompletion(requestId: string): object {
   })
 }
 
+function combatEncounterPreview(entities: object[] = [], triggers: object[] = []): object {
+  const slots = (x: number) => Array.from({ length: 6 }, (_, y) => ({ x, y: y + 2 }))
+  return {
+    tiles: Array.from({ length: 121 }, (_, index) => (index === 53 ? 255 : 68)),
+    party: { west: slots(1), east: slots(9), north: slots(5), south: slots(5) },
+    monsterSlots: [{ x: 7, y: 3 }, { x: 7, y: 5 }, { x: 7, y: 7 }, { x: 8, y: 4 }],
+    entities,
+    triggers,
+  }
+}
+
 function combatEncounterOptionsCompletion(requestId: string): object {
   return successfulQueryCompletion(requestId, "combat.encounter.options", "Encounter options loaded.", {
-    britanniaMaps: [{ index: 0, name: "Camping" }],
-    dungeons: [{ id: 0, name: "Deceit", rooms: [0, 1] }],
-    entryDirections: [{ id: 0, name: "west" }, { id: 1, name: "east" }],
+    britanniaMaps: [{ index: 0, name: "Camping", preview: combatEncounterPreview() }],
+    dungeons: [{ id: 0, name: "Deceit", rooms: [
+      { room: 0, floor: 5, cell: { x: 3, y: 4 }, preview: combatEncounterPreview(
+        [{ kind: "monster", name: "Ghost", sprite: 400, x: 9, y: 4, concealed: true }], [{ x: 9, y: 4 }]) },
+      { room: 1, preview: combatEncounterPreview() },
+    ] }],
+    entryDirections: [{ id: 0, name: "west" }, { id: 1, name: "east" }, { id: 2, name: "north" }, { id: 3, name: "south" }],
     countModes: [{ id: 0, name: "automatic" }, { id: 1, name: "exact" }, { id: 2, name: "maximum" }],
     monsters: [{ id: 32, name: "Orc", strength: 12, dexterity: 10, intelligence: 6, armour: 2, damage: 8, hitPoints: 24, maxGroup: 8, friend: { id: 20, name: "Rat" } }],
   })

@@ -267,6 +267,36 @@ func TestAutomaticCombatEncounterCountUsesOriginalFixedNumericSizes(t *testing.T
 	assert.Equal(t, expected.GetRNG().Calls(), actual.GetRNG().Calls(), "Dragons roll their original maximum of two")
 }
 
+func TestAuthoredDungeonRoomStartsWhatItsPreviewShows(t *testing.T) {
+	gs, _ := NewIntegrationTestBuilder(t).Build()
+	room := CombatEncounterMap{Territory: references.DungeonCombatTerritory, Dungeon: references.CovetousDungeon, DungeonRoom: 12}
+	placement, placed := gs.DungeonRoomPlacement(room.Dungeon, room.DungeonRoom)
+	require.True(t, placed)
+	assert.Equal(t, DungeonRoomPlacement{Floor: 5, Cell: references.Position{X: 3, Y: 4}}, placement)
+	preview, err := gs.CombatEncounterPreview(room)
+	require.NoError(t, err)
+	require.NotEmpty(t, preview.Triggers, "the graves are push triggers")
+	monsters, objects := 0, 0
+	for _, entity := range preview.Entities {
+		if entity.Kind == CombatEncounterEntityMonster || entity.Kind == CombatEncounterEntityRandomMonster {
+			monsters++
+		} else {
+			objects++
+		}
+		if entity.Position == (references.Position{X: 9, Y: 4}) {
+			assert.True(t, entity.Concealed, "%s behind the grave starts hidden", entity.Name)
+		}
+	}
+
+	result, err := gs.StartCombatEncounter(CombatEncounterRequest{Map: room, EntryDirection: CombatEntryWest, Authored: true})
+
+	require.NoError(t, err)
+	assert.Nil(t, gs.CombatScene.DungeonRoomOrigin, "a Workbench room leaves save progress untouched")
+	assert.Equal(t, monsters, result.PrimaryCount)
+	assert.Equal(t, monsters, gs.CombatScene.MonsterManager.Count())
+	assert.Len(t, gs.CombatScene.objects, objects)
+}
+
 func newComposerRequest() CombatEncounterRequest {
 	return CombatEncounterRequest{
 		Map: CombatEncounterMap{

@@ -666,7 +666,7 @@ func secondBatchToolCommands() []CommandDefinition {
 		},
 		{
 			ID: CommandCombatEncounterStart, Category: categoryCombat, Name: "Start Encounter",
-			Description:      "Validate, compose, and synchronously start a tactical encounter.",
+			Description:      "Validate, compose, and synchronously start a tactical encounter, or load a fixed dungeon room as authored.",
 			ScenarioTerminal: true,
 			Parameters: []ParameterDefinition{
 				{ID: "territory", Name: "Territory", Kind: ParameterEnum, Required: true, Choices: []Choice{{Value: "britannia", Label: "Britannia"}, {Value: "dungeon", Label: "Dungeon"}}, ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
@@ -674,8 +674,9 @@ func secondBatchToolCommands() []CommandDefinition {
 				{ID: "dungeon", Name: "Dungeon", Kind: ParameterInteger, Minimum: &minimumDungeon, Maximum: &maximumDungeon, ControlHint: controlHintNumber},
 				{ID: "dungeonRoom", Name: "Dungeon Room", Kind: ParameterInteger, Minimum: &minimumRoom, Maximum: &maximumRoom, ControlHint: controlHintNumber},
 				{ID: "entryDirection", Name: "Entry Direction", Kind: ParameterEnum, Required: true, Choices: directionChoices(), ControlHint: controlHintSelect},
-				{ID: "monsterType", Name: "Monster", Kind: ParameterEnum, Required: true, Choices: monsterChoices(), ControlHint: controlHintSelect},
-				{ID: "countMode", Name: "Count Mode", Kind: ParameterEnum, Required: true, Choices: []Choice{{Value: "automatic", Label: "Automatic"}, {Value: "exact", Label: "Exact"}, {Value: "maximum", Label: "Maximum"}}, ControlHint: controlHintSelect},
+				{ID: "contents", Name: "Contents", Kind: ParameterEnum, Default: json.RawMessage(`"custom"`), Choices: []Choice{{Value: "custom", Label: "Custom monsters"}, {Value: "authored", Label: "Authored room"}}, ControlHint: controlHintSelect},
+				{ID: "monsterType", Name: "Monster", Kind: ParameterEnum, Choices: monsterChoices(), ControlHint: controlHintSelect},
+				{ID: "countMode", Name: "Count Mode", Kind: ParameterEnum, Choices: []Choice{{Value: "automatic", Label: "Automatic"}, {Value: "exact", Label: "Exact"}, {Value: "maximum", Label: "Maximum"}}, ControlHint: controlHintSelect},
 				{ID: "exactCount", Name: "Exact Count", Kind: ParameterInteger, Minimum: &minimumCount, Maximum: &maximumCount, ControlHint: controlHintNumber},
 				{ID: "friends", Name: "Include Friends", Kind: ParameterBoolean, Default: json.RawMessage(`true`), ControlHint: controlHintSelect},
 				{ID: "seed", Name: "Seed", Kind: ParameterInteger, Minimum: &minimumSeed, ControlHint: controlHintNumber},
@@ -789,7 +790,7 @@ func approvedToolCommands() []CommandDefinition {
 	minimumQuantity := 1
 	maximumQuantity := 999
 	minimumFloor := -1
-	maximumFloor := 3
+	maximumFloor := references.DungeonFloorCount - 1
 
 	coordinateParameter := func(id, name string) ParameterDefinition {
 		return ParameterDefinition{

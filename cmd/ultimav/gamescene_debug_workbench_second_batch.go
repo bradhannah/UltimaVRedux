@@ -15,13 +15,16 @@ const (
 	debugDirectionNorthName = "north"
 	debugDirectionSouthName = "south"
 	debugDirectionWestName  = "west"
-	debugVehicleNone        = "none"
-	debugVehicleHorse       = "horse"
-	debugVehicleCarpet      = "carpet"
-	debugVehicleSkiff       = "skiff"
-	debugVehicleFrigate     = "frigate"
-	debugVehicleAvatar      = "avatar"
-	debugVehicleDock        = "dock"
+
+	debugCombatContentsCustom   = "custom"
+	debugCombatContentsAuthored = "authored"
+	debugVehicleNone            = "none"
+	debugVehicleHorse           = "horse"
+	debugVehicleCarpet          = "carpet"
+	debugVehicleSkiff           = "skiff"
+	debugVehicleFrigate         = "frigate"
+	debugVehicleAvatar          = "avatar"
+	debugVehicleDock            = "dock"
 )
 
 var errInvalidSecondBatchDebugArgument = errors.New("invalid second-batch debug argument")
@@ -32,7 +35,7 @@ type debugPositionResult struct {
 }
 
 type combatEncounterOptionsResult struct {
-	BritanniaMaps   []combatMapSummary             `json:"britanniaMaps"`
+	BritanniaMaps   []combatEncounterMapResult     `json:"britanniaMaps"`
 	Dungeons        []combatEncounterDungeonResult `json:"dungeons"`
 	EntryDirections []debugOptionResult            `json:"entryDirections"`
 	CountModes      []debugOptionResult            `json:"countModes"`
@@ -44,10 +47,42 @@ type debugOptionResult struct {
 	Name string `json:"name"`
 }
 
+type combatEncounterMapResult struct {
+	Index   int                          `json:"index"`
+	Name    string                       `json:"name"`
+	Preview combatEncounterPreviewResult `json:"preview"`
+}
+
 type combatEncounterDungeonResult struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Rooms []int  `json:"rooms"`
+	ID    int                         `json:"id"`
+	Name  string                      `json:"name"`
+	Rooms []combatEncounterRoomResult `json:"rooms"`
+}
+
+// combatEncounterRoomResult omits floor and cell for rooms no dungeon level places.
+type combatEncounterRoomResult struct {
+	Room    int                          `json:"room"`
+	Floor   *int                         `json:"floor,omitempty"`
+	Cell    *debugPositionResult         `json:"cell,omitempty"`
+	Preview combatEncounterPreviewResult `json:"preview"`
+}
+
+// combatEncounterPreviewResult carries row-major tiles and party slots keyed by entry direction.
+type combatEncounterPreviewResult struct {
+	Tiles        []int                            `json:"tiles"`
+	Party        map[string][]debugPositionResult `json:"party"`
+	MonsterSlots []debugPositionResult            `json:"monsterSlots"`
+	Entities     []combatEncounterEntityResult    `json:"entities"`
+	Triggers     []debugPositionResult            `json:"triggers"`
+}
+
+type combatEncounterEntityResult struct {
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Sprite    int    `json:"sprite"`
+	X         int    `json:"x"`
+	Y         int    `json:"y"`
+	Concealed bool   `json:"concealed"`
 }
 
 type combatEncounterMonsterResult struct {
@@ -68,13 +103,15 @@ type combatEncounterFriendResult struct {
 	Name string `json:"name"`
 }
 
+// combatEncounterStartResult omits the monster for an authored room.
 type combatEncounterStartResult struct {
 	Territory    string                `json:"territory"`
+	Contents     string                `json:"contents"`
 	MapIndex     int                   `json:"mapIndex"`
 	Dungeon      int                   `json:"dungeon"`
 	DungeonRoom  int                   `json:"dungeonRoom"`
-	MonsterType  int                   `json:"monsterType"`
-	MonsterName  string                `json:"monsterName"`
+	MonsterType  *int                  `json:"monsterType,omitempty"`
+	MonsterName  string                `json:"monsterName,omitempty"`
 	Seed         *uint64               `json:"seed,omitempty"`
 	PrimaryCount int                   `json:"primaryCount"`
 	FriendCount  int                   `json:"friendCount"`
@@ -203,18 +240,14 @@ func executeSecondBatchStateDebugCommand(request debugging.Request, state *game_
 }
 
 func executeCombatEncounterOptions(request debugging.Request, state *game_state.GameState) debugging.Result {
-	if state.GameReferences == nil || state.GameReferences.EnemyReferences == nil {
-		return debugging.FailureResult(request, "combat_references_unavailable", "enemy references are not loaded")
+	if state.GameReferences == nil || state.GameReferences.EnemyReferences == nil ||
+		state.GameReferences.LocationReferences == nil {
+		return debugging.FailureResult(request, "combat_references_unavailable", "enemy or location references are not loaded")
 	}
 	result := combatEncounterOptionsResult{
-		BritanniaMaps: make([]combatMapSummary, 0, references.TotalCombatMaps),
-		Dungeons:      make([]combatEncounterDungeonResult, 0, references.MaxDungeonCombatIndex+1),
-		EntryDirections: []debugOptionResult{
-			{ID: int(game_state.CombatEntryWest), Name: debugDirectionWestName},
-			{ID: int(game_state.CombatEntryEast), Name: debugDirectionEastName},
-			{ID: int(game_state.CombatEntryNorth), Name: debugDirectionNorthName},
-			{ID: int(game_state.CombatEntrySouth), Name: debugDirectionSouthName},
-		},
+		BritanniaMaps:   make([]combatEncounterMapResult, 0, references.TotalCombatMaps),
+		Dungeons:        make([]combatEncounterDungeonResult, 0, references.MaxDungeonCombatIndex+1),
+		EntryDirections: make([]debugOptionResult, 0, references.NumDirections),
 		CountModes: []debugOptionResult{
 			{ID: int(game_state.CombatEncounterCountAutomatic), Name: "automatic"},
 			{ID: int(game_state.CombatEncounterCountExact), Name: "exact"},
@@ -222,14 +255,27 @@ func executeCombatEncounterOptions(request debugging.Request, state *game_state.
 		},
 		Monsters: make([]combatEncounterMonsterResult, 0),
 	}
+	for _, entry := range debugCombatEntryDirections() {
+		result.EntryDirections = append(result.EntryDirections, debugOptionResult{ID: int(entry.direction), Name: entry.name})
+	}
 	for index := range references.TotalCombatMaps {
-		combatMap := references.NewCombatMapReference(index, references.BritanniaCombatTerritory)
-		result.BritanniaMaps = append(result.BritanniaMaps, combatMapSummary{Index: index, Name: combatMap.MapName})
+		encounterMap := game_state.CombatEncounterMap{
+			Territory: references.BritanniaCombatTerritory, BritanniaMap: references.BritanniaCombatMap(index),
+			Dungeon: 0, DungeonRoom: 0,
+		}
+		preview, err := state.CombatEncounterPreview(encounterMap)
+		if err != nil {
+			return debugging.FailureResult(request, "combat_map_unavailable", err.Error())
+		}
+		name := references.NewCombatMapReference(index, references.BritanniaCombatTerritory).MapName
+		result.BritanniaMaps = append(result.BritanniaMaps, combatEncounterMapResult{
+			Index: index, Name: name, Preview: newCombatEncounterPreviewResult(preview),
+		})
 	}
 	for dungeon, name := range references.DungeonNames() {
-		rooms := make([]int, references.MaxDungeonRooms)
-		for room := range rooms {
-			rooms[room] = room
+		rooms, err := combatEncounterRooms(state, references.DungeonCombatIndex(dungeon))
+		if err != nil {
+			return debugging.FailureResult(request, "combat_map_unavailable", err.Error())
 		}
 		result.Dungeons = append(result.Dungeons, combatEncounterDungeonResult{ID: dungeon, Name: name, Rooms: rooms})
 	}
@@ -249,6 +295,65 @@ func executeCombatEncounterOptions(request debugging.Request, state *game_state.
 	}
 
 	return debugSuccessResult(request, "Combat encounter options loaded.", result)
+}
+
+func combatEncounterRooms(
+	state *game_state.GameState,
+	dungeon references.DungeonCombatIndex,
+) ([]combatEncounterRoomResult, error) {
+	rooms := make([]combatEncounterRoomResult, 0, references.MaxDungeonRooms)
+	for room := range references.MaxDungeonRooms {
+		preview, err := state.CombatEncounterPreview(game_state.CombatEncounterMap{
+			Territory: references.DungeonCombatTerritory, BritanniaMap: 0, Dungeon: dungeon, DungeonRoom: room,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("previewing dungeon %d room %d: %w", dungeon, room, err)
+		}
+		result := combatEncounterRoomResult{Room: room, Floor: nil, Cell: nil, Preview: newCombatEncounterPreviewResult(preview)}
+		if placement, placed := state.DungeonRoomPlacement(dungeon, room); placed {
+			floor, cell := int(placement.Floor), newDebugPosition(placement.Cell)
+			result.Floor, result.Cell = &floor, &cell
+		}
+		rooms = append(rooms, result)
+	}
+
+	return rooms, nil
+}
+
+func newCombatEncounterPreviewResult(preview game_state.CombatEncounterPreview) combatEncounterPreviewResult {
+	result := combatEncounterPreviewResult{
+		Tiles:        make([]int, 0, references.XCombatMapTiles*references.YCombatMapTiles),
+		Party:        make(map[string][]debugPositionResult, references.NumDirections),
+		MonsterSlots: make([]debugPositionResult, 0, len(preview.MonsterSlots)),
+		Entities:     make([]combatEncounterEntityResult, 0, len(preview.Entities)),
+		Triggers:     make([]debugPositionResult, 0, len(preview.Triggers)),
+	}
+	for _, row := range preview.Tiles {
+		for _, tile := range row {
+			result.Tiles = append(result.Tiles, int(tile))
+		}
+	}
+	for _, entry := range debugCombatEntryDirections() {
+		positions := make([]debugPositionResult, 0, references.MaxPlayersPerMap)
+		for _, position := range preview.PartyPositions[entry.direction] {
+			positions = append(positions, newDebugPosition(position))
+		}
+		result.Party[entry.name] = positions
+	}
+	for _, position := range preview.MonsterSlots {
+		result.MonsterSlots = append(result.MonsterSlots, newDebugPosition(position))
+	}
+	for _, entity := range preview.Entities {
+		result.Entities = append(result.Entities, combatEncounterEntityResult{
+			Kind: debugCombatEncounterEntityKindName(entity.Kind), Name: entity.Name, Sprite: int(entity.Sprite),
+			X: int(entity.Position.X), Y: int(entity.Position.Y), Concealed: entity.Concealed,
+		})
+	}
+	for _, position := range preview.Triggers {
+		result.Triggers = append(result.Triggers, newDebugPosition(position))
+	}
+
+	return result
 }
 
 func executeCombatEncounterStart(request debugging.Request, state *game_state.GameState) debugging.Result {
@@ -272,11 +377,17 @@ func executeCombatEncounterStart(request debugging.Request, state *game_state.Ga
 		positions = append(positions, newDebugPosition(position))
 	}
 	result := combatEncounterStartResult{
-		Territory: debugCombatTerritoryName(encounter.Territory), MapIndex: encounter.MapIndex,
-		Dungeon: int(encounter.Dungeon), DungeonRoom: encounter.DungeonRoom,
-		MonsterType: input.MonsterType.Index(), MonsterName: input.MonsterType.Name(), Seed: encounter.Seed,
+		Territory: debugCombatTerritoryName(encounter.Territory), Contents: debugCombatContentsCustom,
+		MapIndex: encounter.MapIndex, Dungeon: int(encounter.Dungeon), DungeonRoom: encounter.DungeonRoom,
+		MonsterType: nil, MonsterName: "", Seed: encounter.Seed,
 		PrimaryCount: encounter.PrimaryCount, FriendCount: encounter.FriendCount,
 		TotalCount: encounter.PrimaryCount + encounter.FriendCount, Positions: positions,
+	}
+	if input.Authored {
+		result.Contents = debugCombatContentsAuthored
+	} else {
+		monsterType := input.MonsterType.Index()
+		result.MonsterType, result.MonsterName = &monsterType, input.MonsterType.Name()
 	}
 	debugResult := debugSuccessResultWithMode(
 		request,
@@ -327,31 +438,21 @@ func combatEncounterRequestFromDebug(request debugging.Request) (game_state.Comb
 		return input, invalidSecondBatchArgument("unsupported combat entry direction")
 	}
 	input.EntryDirection = entry
-	monsterValue, err := strconv.Atoi(mustDebugStringArgument(request, "monsterType"))
-	if err != nil || !references.MonsterType(monsterValue).IsValid() {
-		return input, invalidSecondBatchArgument("invalid monster type")
-	}
-	input.MonsterType = references.MonsterType(monsterValue)
-	countMode, ok := debugCombatCountMode(mustDebugStringArgument(request, "countMode"))
-	if !ok {
-		return input, invalidSecondBatchArgument("unsupported combat count mode")
-	}
-	input.CountMode = countMode
-	exactCount, exactSet, err := optionalDebugIntegerArgument(request, "exactCount")
+	contents, _, err := optionalDebugStringArgument(request, "contents")
 	if err != nil {
 		return input, err
 	}
-	if countMode == game_state.CombatEncounterCountExact && !exactSet {
-		return input, invalidSecondBatchArgument("exact count mode requires exactCount")
+	switch contents {
+	case "", debugCombatContentsCustom:
+		err = applyCustomEncounterArguments(request, &input)
+	case debugCombatContentsAuthored:
+		input.Authored = true
+		err = rejectCustomEncounterArguments(request)
+	default:
+		err = invalidSecondBatchArgument("unsupported combat contents")
 	}
-	if countMode != game_state.CombatEncounterCountExact && exactSet {
-		return input, invalidSecondBatchArgument("exactCount is only valid with exact count mode")
-	}
-	input.ExactCount = exactCount
-	if friends, set, optionalErr := optionalDebugBooleanArgument(request, "friends"); optionalErr != nil {
-		return input, optionalErr
-	} else if set {
-		input.FriendsEnabled = friends
+	if err != nil {
+		return input, err
 	}
 	if seed, set, optionalErr := optionalDebugIntegerArgument(request, "seed"); optionalErr != nil {
 		return input, optionalErr
@@ -659,6 +760,92 @@ func debugCombatEntryDirection(value string) (game_state.CombatEntryDirection, b
 		return game_state.CombatEntrySouth, true
 	default:
 		return 0, false
+	}
+}
+
+// applyCustomEncounterArguments reads the monster family and count for custom contents.
+func applyCustomEncounterArguments(request debugging.Request, input *game_state.CombatEncounterRequest) error {
+	monsterArgument, monsterSet, err := optionalDebugStringArgument(request, "monsterType")
+	if err != nil {
+		return err
+	}
+	monsterValue, convertErr := strconv.Atoi(monsterArgument)
+	if !monsterSet || convertErr != nil || !references.MonsterType(monsterValue).IsValid() {
+		return invalidSecondBatchArgument("custom contents require a valid monsterType")
+	}
+	input.MonsterType = references.MonsterType(monsterValue)
+	countArgument, _, err := optionalDebugStringArgument(request, "countMode")
+	if err != nil {
+		return err
+	}
+	countMode, ok := debugCombatCountMode(countArgument)
+	if !ok {
+		return invalidSecondBatchArgument("custom contents require a supported countMode")
+	}
+	input.CountMode = countMode
+	exactCount, exactSet, err := optionalDebugIntegerArgument(request, "exactCount")
+	if err != nil {
+		return err
+	}
+	if countMode == game_state.CombatEncounterCountExact && !exactSet {
+		return invalidSecondBatchArgument("exact count mode requires exactCount")
+	}
+	if countMode != game_state.CombatEncounterCountExact && exactSet {
+		return invalidSecondBatchArgument("exactCount is only valid with exact count mode")
+	}
+	input.ExactCount = exactCount
+	friends, friendsSet, err := optionalDebugBooleanArgument(request, "friends")
+	if err != nil {
+		return err
+	}
+	if friendsSet {
+		input.FriendsEnabled = friends
+	}
+
+	return nil
+}
+
+// rejectCustomEncounterArguments keeps monster choices out of an authored room. The
+// catalog's default friends value is ignored there.
+func rejectCustomEncounterArguments(request debugging.Request) error {
+	for _, argumentID := range []string{"monsterType", "countMode", "exactCount"} {
+		if _, supplied := request.Arguments[argumentID]; supplied {
+			return invalidSecondBatchArgument(argumentID + " is only valid with custom contents")
+		}
+	}
+
+	return nil
+}
+
+func debugCombatEntryDirections() []struct {
+	direction game_state.CombatEntryDirection
+	name      string
+} {
+	return []struct {
+		direction game_state.CombatEntryDirection
+		name      string
+	}{
+		{game_state.CombatEntryWest, debugDirectionWestName},
+		{game_state.CombatEntryEast, debugDirectionEastName},
+		{game_state.CombatEntryNorth, debugDirectionNorthName},
+		{game_state.CombatEntrySouth, debugDirectionSouthName},
+	}
+}
+
+func debugCombatEncounterEntityKindName(kind game_state.CombatEncounterEntityKind) string {
+	switch kind {
+	case game_state.CombatEncounterEntityMonster:
+		return "monster"
+	case game_state.CombatEncounterEntityRandomMonster:
+		return "random"
+	case game_state.CombatEncounterEntityObject:
+		return "object"
+	case game_state.CombatEncounterEntityLoot:
+		return "loot"
+	case game_state.CombatEncounterEntityField:
+		return "field"
+	default:
+		panic("unknown combat encounter entity kind")
 	}
 }
 
