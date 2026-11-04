@@ -1,5 +1,5 @@
 // Command check-lint-config verifies the repository config and exercises errcheck.
-// Run from the repository root with a preprovisioned v2.12.2 golangci-lint binary:
+// Run from the repository root with a preprovisioned v2.15.0 golangci-lint binary:
 // go run ./scripts/check-lint-config /absolute/path/to/golangci-lint
 package main
 
@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	pinnedVersion = "2.12.2"
+	pinnedVersion = "2.15.0"
 	argumentCount = 2
 	checkTimeout  = 10 * time.Minute
 	fixtureMode   = 0o600

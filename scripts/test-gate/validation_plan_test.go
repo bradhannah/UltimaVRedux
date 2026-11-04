@@ -69,7 +69,8 @@ func TestBuildUsesShippedAssets(t *testing.T) {
 func TestQualityGateSchedulesRequiredScopesWithoutAggregateRepeat(t *testing.T) {
 	contents, err := os.ReadFile("../quality-gate.sh")
 	require.NoError(t, err)
-	plan := string(contents)
+	// Windows checkouts may convert line endings to CRLF.
+	plan := strings.ReplaceAll(string(contents), "\r\n", "\n")
 	for _, step := range []string{"make validate\n", "make web-build\n", "make web-test-browser\n"} {
 		require.Equal(t, 1, strings.Count(plan, step), "quality gate must schedule %q once", step)
 	}

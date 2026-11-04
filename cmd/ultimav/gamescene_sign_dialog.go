@@ -16,10 +16,10 @@ const (
 	signDialogEndY   = 0.80 // Bottom edge as percentage of game area
 	// Original sign fallback, including its data-defined frame (ref:SIGN-0004).
 	defaultSignText = "abbbbbbbbbbbbbbc\n" +
-		"g              g\n" +
+		"g              g\n" + //nolint:dupword // Frame glyph codes, not prose.
 		"g  LIVE@BY@[E  g\n" +
 		"g  EIGHT@LAWS  g\n" +
-		"g              g\n" +
+		"g              g\n" + //nolint:dupword // Frame glyph codes, not prose.
 		"deeeeeeeeeeeeeef\n"
 )
 

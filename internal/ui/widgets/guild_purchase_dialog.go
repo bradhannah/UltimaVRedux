@@ -393,5 +393,5 @@ func projectedGuildQuantity(quote game_state.GuildOfferQuote, bundleCount uint16
 	quantity := uint32(quote.QuantityBefore) + uint32(quote.BundleQuantity)*uint32(bundleCount)
 
 	// Saturation guarantees the conversion fits.
-	return uint16(min(quantity, uint32(party_state.ItemQuantitySmallMax))) //nolint:gosec
+	return uint16(min(quantity, uint32(party_state.ItemQuantitySmallMax)))
 }

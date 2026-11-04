@@ -12,7 +12,7 @@ type CreditParagraph struct {
 // original STARTSC.16 center panel, plus the Book of Lore music acknowledgment.
 // Evidence and contributor provenance: docs/gamefacts/STARTUP_MENU_AND_INTRODUCTIONS.md.
 //
-//nolint:exhaustruct // Content selects heading, prose, label/value, or blank spacing; other roles stay empty.
+//nolint:exhaustruct_v5 // Content selects heading, prose, label/value, or blank spacing; other roles stay empty.
 func OriginalAndReduxCredits() []CreditParagraph {
 	return []CreditParagraph{
 		{Heading: "Original Ultima V - Warriors of Destiny (1988)"},
@@ -37,7 +37,7 @@ func OriginalAndReduxCredits() []CreditParagraph {
 
 // SpecialThanksCredits closes the continuous document on a readable resting row.
 //
-//nolint:exhaustruct // Declarative heading/prose paragraphs intentionally leave the other roles empty.
+//nolint:exhaustruct_v5 // Declarative heading/prose paragraphs intentionally leave the other roles empty.
 func SpecialThanksCredits() []CreditParagraph {
 	return []CreditParagraph{
 		{Heading: "Special Thanks"},

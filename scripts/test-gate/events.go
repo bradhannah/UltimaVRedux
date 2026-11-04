@@ -173,7 +173,7 @@ func recordEvent(event testEvent, expected map[string]*packageResult) error {
 		if test != nil {
 			return fmt.Errorf("%w: duplicate test run for %s/%s", errGate, event.Package, event.Test)
 		}
-		result.tests[event.Test] = &testResult{} //nolint:exhaustruct // Test starts with no terminal or output.
+		result.tests[event.Test] = &testResult{} //nolint:exhaustruct_v5 // Test starts with no terminal or output.
 
 		return nil
 	}

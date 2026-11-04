@@ -35,7 +35,7 @@ type NPCEnemy struct {
 
 // NewEnemyNPC creates an enemy from its monster reference, numbered npcNum on its map.
 func NewEnemyNPC(enemyRef references.EnemyReference, npcNum int) NPCEnemy {
-	enemy := NPCEnemy{} //nolint:exhaustruct
+	enemy := NPCEnemy{} //nolint:exhaustruct_v5
 	enemy.EnemyReference = enemyRef
 	enemy.variant = enemyVariant(enemyRef)
 	enemy.currentHP = enemyRef.HitPoints

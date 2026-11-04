@@ -244,7 +244,7 @@ func NewArmsShopDialog(config ArmsShopDialogConfig) *ArmsShopDialog {
 		isKeyPressed = config.Keyboard.IsKeyHeld
 	}
 
-	dialog := &ArmsShopDialog{ //nolint:exhaustruct // Layout and transient input fields are initialized on demand.
+	dialog := &ArmsShopDialog{ //nolint:exhaustruct_v5 // Layout and transient input fields are initialized on demand.
 		navigation:      newNavigation(isKeyPressed),
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,

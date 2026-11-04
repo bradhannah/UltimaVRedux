@@ -21,6 +21,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/extractor"
 	conversationpatch "github.com/bradhannah/UltimaVRedux/internal/conversation/patch"
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
+	"github.com/bradhannah/UltimaVRedux/internal/repositoryfs"
 	"github.com/pmezard/go-difflib/difflib"
 )
 
@@ -473,7 +474,7 @@ func validateWorkspaceRoot(root string) error {
 	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("conversation workspace %q is not a directory or is a symlink", root)
 	}
-	if info.Mode().Perm()&0o077 != 0 {
+	if sharedWithOthers(info.Mode()) {
 		return fmt.Errorf("conversation workspace %q is accessible by group or other users", root)
 	}
 	allowed := map[string]struct{}{baseDirectory: {}, editedDirectory: {}}
@@ -544,7 +545,7 @@ func validateExactTree(
 		if info.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("tree contains symlink %q", path)
 		}
-		if info.Mode().Perm()&0o077 != 0 {
+		if sharedWithOthers(info.Mode()) {
 			return fmt.Errorf("tree path %q is accessible by group or other users", path)
 		}
 		if protected && info.Mode().Perm()&0o222 != 0 {
@@ -1109,17 +1110,8 @@ func syncTree(root string) error {
 }
 
 func syncDirectory(directory string) error {
-	file, err := os.Open(directory) //nolint:gosec // Callers own the directory trees being published.
-	if err != nil {
-		return fmt.Errorf("opening directory %q for sync: %w", directory, err)
-	}
-	syncErr := file.Sync()
-	closeErr := file.Close()
-	if syncErr != nil {
-		return fmt.Errorf("syncing directory %q: %w", directory, syncErr)
-	}
-	if closeErr != nil {
-		return fmt.Errorf("closing directory %q: %w", directory, closeErr)
+	if err := repositoryfs.SyncDirectory(directory); err != nil {
+		return fmt.Errorf("syncing directory %q: %w", directory, err)
 	}
 
 	return nil
@@ -1147,7 +1139,7 @@ func ensurePrivateDirectory(path string) error {
 	if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
 		return fmt.Errorf("workspace parent %q is not a directory or is a symlink", path)
 	}
-	if info.Mode().Perm()&0o077 != 0 {
+	if sharedWithOthers(info.Mode()) {
 		return fmt.Errorf("workspace parent %q is accessible by group or other users", path)
 	}
 

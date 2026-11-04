@@ -27,7 +27,7 @@ func newRootCommand() *cobra.Command {
 }
 
 func newRootCommandWithWorkspace(defaultWorkspace string) *cobra.Command {
-	root := &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	root := &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:           "conversation-tool",
 		Short:         "Conversation data maintenance tools",
 		SilenceUsage:  true,
@@ -44,7 +44,7 @@ func newRootCommandWithWorkspace(defaultWorkspace string) *cobra.Command {
 
 func newWorkspaceCommand(defaultWorkspace string) *cobra.Command {
 	options := conversationworkspace.Options{DataDir: "", Workspace: "", PatchDir: ""}
-	command := &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	command := &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "workspace",
 		Short: "Manage the private original-conversation editing workspace",
 		Args:  cobra.NoArgs,
@@ -82,7 +82,7 @@ func newWorkspaceCommand(defaultWorkspace string) *cobra.Command {
 }
 
 func newWorkspaceInitCommand(options *conversationworkspace.Options) *cobra.Command {
-	return &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	return &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "init",
 		Short: "Create and validate a new private conversation workspace",
 		Args:  cobra.NoArgs,
@@ -108,7 +108,7 @@ func newWorkspaceInitCommand(options *conversationworkspace.Options) *cobra.Comm
 }
 
 func newWorkspaceDiffCommand(options *conversationworkspace.Options) *cobra.Command {
-	return &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	return &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "diff",
 		Short: "Print validated base-to-edited conversation diffs",
 		Args:  cobra.NoArgs,
@@ -133,7 +133,7 @@ func newWorkspaceDiffCommand(options *conversationworkspace.Options) *cobra.Comm
 }
 
 func newWorkspaceCheckCommand(options *conversationworkspace.Options) *cobra.Command {
-	return &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	return &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "check",
 		Short: "Validate the protected base and complete edited catalog",
 		Args:  cobra.NoArgs,
@@ -151,7 +151,7 @@ func newWorkspaceCheckCommand(options *conversationworkspace.Options) *cobra.Com
 }
 
 func newWorkspacePatchesCommand(options *conversationworkspace.Options) *cobra.Command {
-	return &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	return &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "patches",
 		Short: "Atomically regenerate cumulative project conversation patches",
 		Args:  cobra.NoArgs,
@@ -203,7 +203,7 @@ func newWorkspacePatchesCommand(options *conversationworkspace.Options) *cobra.C
 }
 
 func newWorkspaceVerifyCommand(options *conversationworkspace.Options) *cobra.Command {
-	return &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	return &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "verify",
 		Short: "Prove project patches reproduce every edited conversation",
 		Args:  cobra.NoArgs,
@@ -229,7 +229,7 @@ func newWorkspaceVerifyCommand(options *conversationworkspace.Options) *cobra.Co
 
 func newExtractCommand() *cobra.Command {
 	var options extractor.Options
-	command := &cobra.Command{ //nolint:exhaustruct // Cobra command options are intentionally sparse.
+	command := &cobra.Command{ //nolint:exhaustruct_v5 // Cobra command options are intentionally sparse.
 		Use:   "extract",
 		Short: "Extract original TLK files into canonical semantic YAML",
 		Args:  cobra.NoArgs,

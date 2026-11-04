@@ -178,7 +178,7 @@ func newSemanticTalkDialog(gameScene *GameScene, npc *map_units.NPCFriendly) *Li
 	}
 	callbacks.SetNPCName(engine.ExtractNPCName())
 
-	return &LinearTalkDialog{ //nolint:exhaustruct // UI state is initialized immediately after construction.
+	return &LinearTalkDialog{ //nolint:exhaustruct_v5 // UI state is initialized immediately after construction.
 		gameScene: gameScene, npcReference: npcRef, actorID: npc.MapUnitDetails().NPCNum,
 		engine: engine, callbacks: callbacks,
 	}

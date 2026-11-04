@@ -9,7 +9,7 @@ func lighthouseAmbientSource(definitions map[AmbientSoundType]AmbientSoundDefini
 ) (AmbientSoundSource, bool) {
 	if location != references.Fogsbane && location != references.Stormcrow &&
 		location != references.Greyhaven && location != references.Waveguide {
-		return AmbientSoundSource{}, false //nolint:exhaustruct // No lighthouse location source.
+		return AmbientSoundSource{}, false //nolint:exhaustruct_v5 // No lighthouse location source.
 	}
 	if _, exists := definitions[AmbientLighthouse]; !exists {
 		panic("lighthouse ambient cue has no definition")

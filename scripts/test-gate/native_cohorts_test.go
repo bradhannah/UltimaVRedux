@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -80,6 +81,27 @@ func TestNativeCohortsBuildOnceAndExecuteDiscoveredWorkloadsExactlyOnce(t *testi
 	require.Equal(t, map[string]int{"TestCombatPaint": 1, "ExampleTerrain": 1, "FuzzPlain": 1}, seen)
 	require.Len(t, result.tests, 6)
 	require.Equal(t, actionPass, result.terminal)
+}
+
+func TestNativeSelectionPartsStayUnderLimitAndCoverEveryWorkloadOnce(t *testing.T) {
+	selected := make([]string, 0, 800)
+	for index := range 800 {
+		selected = append(selected, fmt.Sprintf("TestUserInterfaceWorkloadNumber%04dKeepsItsLongDescriptiveName", index))
+	}
+	parts := nativeSelectionParts(selected, nativeSelectionLimit)
+	require.Greater(t, len(parts), 1, "an oversized cohort must split")
+	var rejoined []string
+	for _, part := range parts {
+		require.NotEmpty(t, part)
+		require.LessOrEqual(t, len(nativeSelection(part)), nativeSelectionLimit)
+		rejoined = append(rejoined, part...)
+	}
+	require.Equal(t, selected, rejoined, "parts keep order and cover every workload exactly once")
+
+	require.Equal(t, [][]string{{"TestA", "TestB"}}, nativeSelectionParts([]string{"TestA", "TestB"}, 64))
+	long := "Test" + strings.Repeat("X", 100)
+	require.Equal(t, [][]string{{"TestA"}, {long}, {"TestB"}},
+		nativeSelectionParts([]string{"TestA", long, "TestB"}, 64), "an over-long name runs alone")
 }
 
 func TestNativeGCOnlyDefaultsForConstrainedProfile(t *testing.T) {

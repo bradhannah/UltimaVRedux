@@ -10,6 +10,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
+import site_hood_walkthrough as walkthrough
 from gamefacts_public import field, require
 from site_context import (
     Context,
@@ -170,6 +171,21 @@ def build_topic(ctx: Context, topic: Topic) -> list[str]:
         f'{inline(ctx.rules[i]["text"].split(chr(10))[2].strip("*"), resolve)}</a></li>'
         for i in identifiers
     )
+    rule_toc = (
+        '<nav class="toc" aria-label="Rules in this topic">'
+        f"<strong>In this topic</strong><ul>{toc}</ul></nav>"
+    )
+    walk = walkthrough.build(ctx, topic.slug, identifiers)
+    if walk is None:
+        intro = f'<div class="lede">{render(preamble, resolve)}</div>' + rule_toc
+    else:
+        intro = (
+            f'<p class="lede">{walk.lede}</p>'
+            '<nav class="toc" aria-label="On this page"><strong>On this page</strong>'
+            f"<ul>{walk.contents}</ul></nav>{walk.body}"
+            '<h2 class="reference" id="rule-reference">Rule reference</h2>'
+            f"{render(preamble, resolve)}{rule_toc}"
+        )
     body = (
         crumbs(
             ("The original game", "/original/"),
@@ -178,9 +194,7 @@ def build_topic(ctx: Context, topic: Topic) -> list[str]:
         )
         + '<p class="hood-note">FOR MODDERS AND HACKERS</p>'
         + f"<h1>{esc(topic.title)}</h1>"
-        + f'<div class="lede">{render(preamble, resolve)}</div>'
-        + '<nav class="toc" aria-label="In this topic"><strong>In this topic</strong>'
-        + f"<ul>{toc}</ul></nav>"
+        + intro
         + "".join(render_rule(ctx, i, resolve) for i in identifiers)
         + '<aside class="sources"><h2>Source</h2><p>This guide is generated from '
         f'<a href="{esc(github(source))}">{esc(source)}</a>. Offsets are in hex unless '

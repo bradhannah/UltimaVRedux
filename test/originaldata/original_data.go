@@ -51,7 +51,8 @@ func canonicalDirectory(directory string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("resolving original data directory %q: %w", directory, err)
 	}
-	info, err := os.Stat(canonical)
+	// The developer's own data path, already made absolute and symlink-free.
+	info, err := os.Stat(canonical) //nolint:gosec // G703: trusted local test configuration.
 	if err != nil {
 		return "", fmt.Errorf("reading original data directory %q: %w", canonical, err)
 	}

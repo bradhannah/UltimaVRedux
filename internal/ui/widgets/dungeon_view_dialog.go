@@ -63,7 +63,7 @@ type DungeonViewDialogConfig struct {
 // floor with solid walls, shared geometric artwork and plain paired wrap labels,
 // prioritizing navigation clarity without changing the 22x22 flood or disclosure.
 //
-//nolint:exhaustruct // Rendering resources are initialized together by rebuildLayout.
+//nolint:exhaustruct_v5 // Rendering resources are initialized together by rebuildLayout.
 func NewDungeonViewDialog(config DungeonViewDialogConfig) *DungeonViewDialog {
 	plan := buildDungeonViewRenderPlan(config.Model)
 	dialog := &DungeonViewDialog{
@@ -101,7 +101,7 @@ func newDungeonViewOutput(screenWidth int) *utext.Output {
 	return newDungeonViewOutputSized(screenWidth, FontSizeCompact)
 }
 
-//nolint:exhaustruct,mnd // A bounded text panel has room for wrapped headings and hints, even at compact widths.
+//nolint:exhaustruct_v5,mnd // A bounded text panel has room for wrapped headings and hints, even at compact widths.
 func newDungeonViewOutputSized(screenWidth int, size StandardFontSize) *utext.Output {
 	_, output := GetScaledFontWithOutputForWidth(FontConfig{
 		Size: size, LineSpacingMultiplier: 1.1, MaxLines: 16, MaxChars: 120,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -155,7 +156,9 @@ func validateManifestFiles(field string, files []string) error {
 	}
 	seen := make(map[string]struct{}, len(files))
 	for index, name := range files {
-		if name == "" || filepath.IsAbs(name) || filepath.Clean(name) != name ||
+		// Entries are portable slash paths: clean them with package path, because
+		// filepath.Clean would rewrite them with backslashes on Windows.
+		if name == "" || filepath.IsAbs(name) || path.IsAbs(name) || path.Clean(name) != name ||
 			name == ".." || strings.HasPrefix(name, "../") || strings.ContainsRune(name, '\\') {
 			return fmt.Errorf("%s[%d] is not a clean relative slash path", field, index)
 		}

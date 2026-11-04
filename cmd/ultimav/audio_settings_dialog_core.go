@@ -150,7 +150,7 @@ func newConfigurationDialogForTab(
 ) *ConfigurationDialog {
 	validateConfigurationDialogInputs(placement, keyboard, onDismiss, ultimaConfig, initialTab)
 
-	dialog := &ConfigurationDialog{ //nolint:exhaustruct // Remaining fields are presentation state with valid zero values.
+	dialog := &ConfigurationDialog{ //nolint:exhaustruct_v5 // Other fields are presentation state with valid zeros.
 		placement:        placement,
 		keyboard:         keyboard,
 		onDismiss:        onDismiss,

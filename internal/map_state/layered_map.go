@@ -76,7 +76,7 @@ func newLayeredMap(xMax references.Coordinate,
 	yVisibleTiles int,
 	bWrappingMap bool,
 ) *LayeredMap {
-	layeredMap := LayeredMap{ //nolint:exhaustruct
+	layeredMap := LayeredMap{ //nolint:exhaustruct_v5
 		xVisibleTiles:   xVisibleTiles,
 		yVisibleTiles:   yVisibleTiles,
 		XMaxTilesPerMap: xMax,

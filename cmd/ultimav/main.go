@@ -143,7 +143,7 @@ func runApplication() error {
 		go func() {
 			const profilerHeaderTimeout = 10 * time.Second
 			logging.Infof(logging.CategorySystem, "Profiling server: http://localhost:6060/debug/pprof")
-			//nolint:exhaustruct // Loopback diagnostic server uses standard defaults except header/idle deadlines.
+			//nolint:exhaustruct_v5 // Loopback diagnostic server uses standard defaults except header/idle deadlines.
 			server := &http.Server{Addr: "localhost:6060", ReadHeaderTimeout: profilerHeaderTimeout, IdleTimeout: time.Minute}
 			logging.Debugf(logging.CategorySystem, "pprof server result: %v", server.ListenAndServe())
 		}()

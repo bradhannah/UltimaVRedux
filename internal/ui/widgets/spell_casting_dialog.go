@@ -44,7 +44,7 @@ func NewSpellCastingDialog(keyboard *input.Keyboard, party *party_state.PartySta
 	if keyboard == nil || party == nil || validate == nil {
 		panic("SpellCastingDialog: keyboard, party and validation are required")
 	}
-	//nolint:exhaustruct // Optional intents and selection state start empty; layout initializes presentation.
+	//nolint:exhaustruct_v5 // Optional intents and selection state start empty; layout initializes presentation.
 	d := &SpellCastingDialog{keyboard: keyboard, partyState: party, currentContext: context,
 		browser: newSpellBrowser(catalog), validate: validate}
 	d.ensureLayout()
@@ -183,7 +183,7 @@ func (d *SpellCastingDialog) appendCastDetails(output *text.Output) {
 }
 
 func (d *SpellCastingDialog) spellAvailable(spell game_state.ZStatsSpell) bool {
-	//nolint:exhaustruct // List readiness validates prerequisites without selecting a target or spending resources.
+	//nolint:exhaustruct_v5 // List readiness validates prerequisites without selecting a target or spending resources.
 	result := d.validate(game_state.CastRequest{Spell: references.Spell(spell.ID), CasterIdx: d.selectedCasterIdx})
 
 	return result.Valid
@@ -257,7 +257,7 @@ func (d *SpellCastingDialog) getSpellValidationStatus() (bool, string) {
 	if d.GetSelectedSpell() == references.InvalidSpell {
 		return false, "No spell selected"
 	}
-	//nolint:exhaustruct // Targeting is collected by the workflow after this prerequisite check.
+	//nolint:exhaustruct_v5 // Targeting is collected by the workflow after this prerequisite check.
 	result := d.validate(game_state.CastRequest{Spell: d.GetSelectedSpell(), CasterIdx: d.selectedCasterIdx})
 
 	return result.Valid, result.ErrorMsg
@@ -269,7 +269,7 @@ func (d *SpellCastingDialog) attemptCast() {
 
 		return
 	}
-	//nolint:exhaustruct // Targeting follows selection; absorption feedback remains workflow-owned.
+	//nolint:exhaustruct_v5 // Targeting follows selection; absorption feedback remains workflow-owned.
 	request := game_state.CastRequest{Spell: d.GetSelectedSpell(), CasterIdx: d.selectedCasterIdx}
 	result := d.validate(request)
 	if !result.Valid && !result.IsAbsorb {

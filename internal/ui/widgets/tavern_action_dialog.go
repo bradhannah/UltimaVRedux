@@ -72,7 +72,7 @@ func NewTavernActionDialog(config TavernActionDialogConfig) *TavernActionDialog 
 	if config.Intent.Action == TavernActionProvision {
 		footerMinimumLines = tavernActionFooterLines
 	}
-	dialog := &TavernActionDialog{ //nolint:exhaustruct // Resolution-dependent presentation fields initialize on demand.
+	dialog := &TavernActionDialog{ //nolint:exhaustruct_v5 // Resolution-dependent display fields initialize on demand.
 		quantityInput:   newQuantityInput(config.Keyboard, isKeyPressed, ebiten.KeyM, ebiten.KeyUp, ebiten.KeyDown),
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,

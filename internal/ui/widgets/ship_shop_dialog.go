@@ -146,7 +146,7 @@ func NewShipShopDialog(config ShipShopDialogConfig) *ShipShopDialog {
 	if isKeyPressed == nil {
 		isKeyPressed = ebiten.IsKeyPressed
 	}
-	dialog := &ShipShopDialog{ //nolint:exhaustruct // Layout and transient intent fields initialize on demand.
+	dialog := &ShipShopDialog{ //nolint:exhaustruct_v5 // Layout and transient intent fields initialize on demand.
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,
 		state:           config.State,

@@ -7,10 +7,27 @@ against the Game Facts, so stale content fails instead of shipping.
 
 ## Publishing
 
-`.github/workflows/pages.yml` builds the site on every push to `main` and on manual
-dispatch, then deploys it with `actions/deploy-pages`. A repository owner must
-select **Settings, Pages, Build and deployment, Source: GitHub Actions** once;
-the workflow cannot enable Pages itself.
+GitHub Pages serves the `gh-pages` branch (**Settings, Pages, Build and
+deployment: Deploy from a branch, `gh-pages`, `/ (root)`**). That branch holds
+only built output; never edit it by hand.
+
+Publish by hand from an up-to-date `main` checkout, which is the normal path:
+
+```sh
+make site-publish   # builds, commits to gh-pages, pushes (needs push access)
+```
+
+[`scripts/publish_site.py`](../scripts/publish_site.py) refuses uncommitted
+changes under `site/`, `docs/gamefacts/` and `scripts/`, builds into a temporary
+directory, and records the result as the next `gh-pages` commit ("Publish site
+from <commit>") through a private Git index. It does not touch your working tree,
+index or current branch. An unchanged site pushes nothing. The push only
+fast-forwards, so if someone published in the meantime it fails and you run it
+again.
+
+`.github/workflows/pages.yml` runs the same script on every push to `main` when
+GitHub Actions is available. Nothing depends on it: when Actions does not run,
+publish by hand.
 
 To preview locally:
 
@@ -54,6 +71,7 @@ Rules for every page:
 | Path | Purpose |
 | --- | --- |
 | [`scripts/build_site.py`](../scripts/build_site.py) | Entry point: `python scripts/build_site.py OUTPUT_DIR`. |
+| [`scripts/publish_site.py`](../scripts/publish_site.py) | Builds and pushes to `gh-pages` (`make site-publish`); tested by `scripts/test_publish_site.py`. |
 | `scripts/site_data.py`, `scripts/site_data_play.py` | Build datasets from Game Facts tables. |
 | `scripts/site_markdown.py` | Small Markdown renderer for the Game Facts subset. |
 | `scripts/site_context.py` | Shared state, layout and HTML helpers. |
@@ -70,6 +88,20 @@ ID) and `blocks`. Block types are `p`, `h2`, `ul`, `steps`, `stats`, `callout`,
 Facts (`level_table`, `ambush_table`); add new ones in
 `scripts/site_pages_content.py`. Verify every number against the cited rule.
 Links inside content use site-absolute paths such as `/original/levels/`.
+
+**A walkthrough for an Under the hood guide.** Add `site/content/hood/<slug>.json`,
+named after the guide's slug in `scripts/site_pages_hood.py`. It holds `intro`,
+`code` (Redux source paths, which must exist), a `pipeline` of steps,
+`pipeline_notes`, `sections` and `not_yet`. Each section has an `id`, an optional
+`step` number, a `title`, `rules` and `blocks`. A section may cite only rules from
+its own guide, and each cited rule's Original status is shown beside it. On top of
+the shared block types, walkthroughs add `chips`, `table`, `code`, `bits` (an
+example byte, decoded at build time) and `bitfield`. Computed blocks are
+`archive_offsets`, recomputed and checked against the rule text, and
+`ega_palette`, read from `pkg/graphics/legacy/model.go`. They live in
+[`scripts/site_hood_walkthrough.py`](../scripts/site_hood_walkthrough.py). The
+walkthrough renders above the guide's full rule reference;
+`site/content/hood/graphics.json` is the example.
 
 **A myth.** Add an object to `site/content/myths.json`. Its verdict is `busted`,
 `confirmed`, `depends` or `unknown`, and every rule it cites must be marked

@@ -192,7 +192,7 @@ func cartographicColour(tile uint16, p color.NRGBA) color.RGBA {
 
 func rgb(r, g, b int) color.RGBA {
 	const maxChannel = 255
-	//nolint:gosec // Every component is explicitly clamped to the uint8 range.
+
 	return color.RGBA{
 		R: uint8(max(0, min(maxChannel, r))), G: uint8(max(0, min(maxChannel, g))),
 		B: uint8(max(0, min(maxChannel, b))), A: maxChannel,

@@ -362,7 +362,7 @@ xvfb-run -a go test ./cmd/ultimav
 ```
 
 Provision separately before offline validation: `make tools` installs
-`goimports@v0.37.0` and `golangci-lint@v2.12.2`. Python 3.12+ is required for scripts
+`goimports@v0.37.0` and `golangci-lint@v2.15.0`. Python 3.12+ is required for scripts
 and tests; `make python-tools` installs Black 26.10.1 and Pylint 4.0.4 from the
 hashed lock into `.cache/python-quality`. Set `PYTHON_BOOTSTRAP` explicitly when
 ambient Python is older. All Make Python checks use that environment and never
@@ -678,6 +678,10 @@ or arbitrary environment values.
   and Windows, with DISPLAY/WAYLAND_DISPLAY cleared and core dependency checks.
 - The required render matrix runs every Ebitengine-linked package on Linux under
   Xvfb and macOS/Windows using native backends. Backend failures fail the job.
+  Hosted Linux and Windows runners have no sound device, and Ebitengine ends the
+  game loop when it cannot open one, so the job first installs a virtual device
+  (`LABSN/sound-ci-helpers`, pinned by commit). This proves only that audio
+  initializes, not that anything is audible.
 - Production builds target Linux, macOS, and Windows with `CGO_ENABLED=0`, using
   shipped embedded/generated assets without a generation step. A successful
   build is not native graphics, audio, or input acceptance.

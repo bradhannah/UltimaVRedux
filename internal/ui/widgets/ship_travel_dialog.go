@@ -48,7 +48,7 @@ func NewShipTravelDialog(config ShipTravelDialogConfig) *ShipTravelDialog {
 		panic("ShipTravelDialog: keyboard is required")
 	}
 	validateShipTravelReview(config.Intent.Review, true)
-	dialog := &ShipTravelDialog{ //nolint:exhaustruct // Transient lifecycle fields start empty.
+	dialog := &ShipTravelDialog{ //nolint:exhaustruct_v5 // Transient lifecycle fields start empty.
 		keyboard: config.Keyboard,
 		intent:   config.Intent,
 		frame:    newShipMerchantModalFrame(shipTravelPlacement()),

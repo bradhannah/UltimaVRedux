@@ -51,7 +51,7 @@ func NewAtlasDialog(dossier journal.AtlasDossier, texture *ebiten.Image, keyboar
 	if !view.Initialized {
 		*view = NewAtlasViewState()
 	}
-	//nolint:exhaustruct // Refresh and ensureLayout initialize detached data and measured panels.
+	//nolint:exhaustruct_v5 // Refresh and ensureLayout initialize detached data and measured panels.
 	d := &AtlasDialog{navigation: newNavigation(keyboard.IsKeyHeld), keyboard: keyboard,
 		view: view, texture: texture, onDismiss: onDismiss, focused: true}
 	d.Refresh(dossier)

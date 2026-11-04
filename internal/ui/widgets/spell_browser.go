@@ -97,7 +97,7 @@ type spellBrowser struct {
 }
 
 func newSpellBrowser(catalog []game_state.ZStatsSpell) *spellBrowser {
-	//nolint:exhaustruct // Search starts empty; refresh installs the detached catalog.
+	//nolint:exhaustruct_v5 // Search starts empty; refresh installs the detached catalog.
 	b := &spellBrowser{pages: 1, visible: 1}
 	b.refresh(catalog)
 
@@ -217,7 +217,7 @@ func (b *spellBrowser) handleSearchControls(keyboard *input.Keyboard, font *text
 		b.searching = true
 		if b.searchInput == nil {
 			placement := sprites.PercentBasedPlacement{StartPercentX: 0, StartPercentY: 0, EndPercentX: 1, EndPercentY: 1}
-			//nolint:exhaustruct // The browser owns submission, completion and rendering.
+			//nolint:exhaustruct_v5 // The browser owns submission, completion and rendering.
 			b.searchInput = NewTextInput(placement, font.TextFace.Size, spellBrowserTextCapacity,
 				nil, TextInputCallbacks{}, keyboard)
 			b.searchInput.SetFreeTextMode()

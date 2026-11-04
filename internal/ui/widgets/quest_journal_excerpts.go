@@ -34,7 +34,7 @@ func (d *QuestJournalDialog) isConversationTab() bool {
 
 func (d *QuestJournalDialog) selectedExchange() journal.Exchange {
 	if d.currentItemCount() == 0 {
-		return journal.Exchange{} //nolint:exhaustruct // Empty selection.
+		return journal.Exchange{} //nolint:exhaustruct_v5 // Empty selection.
 	}
 	if d.activeTab == QuestJournalConversationTab {
 		return d.lastConversation.Exchanges[d.selections[d.activeTab]]

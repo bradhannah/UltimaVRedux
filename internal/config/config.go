@@ -312,7 +312,7 @@ func newUltimaVConfiguration(
 	if err := validateConfigurationTypes(source); err != nil {
 		return nil, err
 	}
-	configuration := UltimaVConfiguration{source: source} //nolint:exhaustruct // Configuration sections are loaded below.
+	configuration := UltimaVConfiguration{source: source} //nolint:exhaustruct_v5 // Sections are loaded below.
 	if err := configuration.loadConfigurationSource(explicitDataPath, loadOriginalData); err != nil {
 		return nil, err
 	}
@@ -483,7 +483,7 @@ func (uc *UltimaVConfiguration) loadLoggingConfiguration() {
 }
 
 func (uc *UltimaVConfiguration) loadDebugConfiguration() {
-	uc.DebugConfiguration = &DebugConfiguration{ //nolint:exhaustruct // Remaining fields intentionally use defaults.
+	uc.DebugConfiguration = &DebugConfiguration{ //nolint:exhaustruct_v5 // Remaining fields intentionally use defaults.
 		SurfaceMovementDurationMs: uc.source.GetInt("Debug.SurfaceMovementDurationMs"),
 		SurfaceMovementCurve:      uc.source.GetString("Debug.SurfaceMovementCurve"),
 		CombatMovementSpeedFactor: uc.GetCombatSpeedFactor(),

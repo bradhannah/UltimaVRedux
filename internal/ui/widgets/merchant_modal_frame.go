@@ -46,7 +46,7 @@ func newMerchantModalFrame(config merchantModalFrameConfig) *merchantModalFrame 
 		panic("merchantModalFrame: invalid layout configuration")
 	}
 
-	return &merchantModalFrame{config: config} //nolint:exhaustruct // Layout initializes on the first ensureLayout.
+	return &merchantModalFrame{config: config} //nolint:exhaustruct_v5 // Layout initializes on the first ensureLayout.
 }
 
 func (f *merchantModalFrame) ensureLayout() bool {

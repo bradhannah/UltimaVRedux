@@ -164,7 +164,7 @@ func NewQuestJournalDialog(
 		panic("QuestJournalDialog: placement must have positive width and height")
 	}
 
-	//nolint:exhaustruct // Outputs and responsive layout are initialized by ensureLayout.
+	//nolint:exhaustruct_v5 // Outputs and responsive layout are initialized by ensureLayout.
 	dialog := &QuestJournalDialog{
 		navigation:       newNavigation(config.Keyboard.IsKeyHeld),
 		dossier:          cloneQuestJournalDossier(dossier),
@@ -488,7 +488,7 @@ func (d *QuestJournalDialog) calculateLayout() {
 	headerHeight = min(headerHeight, max(1, content.Dy()/questJournalVerticalRegionDivisor))
 	footerHeight = min(footerHeight, max(1, content.Dy()/questJournalVerticalRegionDivisor))
 
-	d.layout = questJournalLayout{ //nolint:exhaustruct // Remaining rectangles are calculated below.
+	d.layout = questJournalLayout{ //nolint:exhaustruct_v5 // Remaining rectangles are calculated below.
 		panelRect:  interior,
 		headerRect: image.Rect(content.Min.X, content.Min.Y, content.Max.X, content.Min.Y+headerHeight),
 		footerRect: image.Rect(content.Min.X, content.Max.Y-footerHeight, content.Max.X, content.Max.Y),

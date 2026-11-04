@@ -49,7 +49,7 @@ const (
 	gameplayMaxActionPopupsIndex
 )
 
-//nolint:exhaustruct,funlen // Explicit row catalog; boolean rows have no numeric accessors.
+//nolint:exhaustruct_v5,funlen // Explicit row catalog; boolean rows have no numeric accessors.
 func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 	return [...]gameplaySettingDefinition{
 		{

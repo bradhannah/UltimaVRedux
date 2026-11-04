@@ -306,7 +306,7 @@ func newTavernShopDialog(config TavernShopDialogConfig, field nativeTextField) *
 		panic("TavernShopDialog: text input must have exactly one source")
 	}
 
-	dialog := &TavernShopDialog{ //nolint:exhaustruct // Resolution-dependent presentation fields initialize on demand.
+	dialog := &TavernShopDialog{ //nolint:exhaustruct_v5 // Resolution-dependent presentation fields initialize on demand.
 		navigation:       newNavigation(config.Keyboard.IsKeyHeld),
 		keyboard:         config.Keyboard,
 		isKeyPressed:     isKeyPressed,

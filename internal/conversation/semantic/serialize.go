@@ -255,14 +255,14 @@ func stringsYAMLNode(values []string) *yaml.Node {
 }
 
 func mappingNode() *yaml.Node {
-	return &yaml.Node{ //nolint:exhaustruct // YAML emitter metadata uses zero values.
+	return &yaml.Node{ //nolint:exhaustruct_v5 // YAML emitter metadata uses zero values.
 		Kind: yaml.MappingNode,
 		Tag:  "!!map",
 	}
 }
 
 func sequenceNode() *yaml.Node {
-	return &yaml.Node{ //nolint:exhaustruct // YAML emitter metadata uses zero values.
+	return &yaml.Node{ //nolint:exhaustruct_v5 // YAML emitter metadata uses zero values.
 		Kind: yaml.SequenceNode,
 		Tag:  "!!seq",
 	}
@@ -280,7 +280,7 @@ func appendField(node *yaml.Node, name string, value *yaml.Node) {
 }
 
 func stringNode(value string) *yaml.Node {
-	node := &yaml.Node{ //nolint:exhaustruct // YAML emitter metadata uses zero values.
+	node := &yaml.Node{ //nolint:exhaustruct_v5 // YAML emitter metadata uses zero values.
 		Kind:  yaml.ScalarNode,
 		Tag:   yamlStringTag,
 		Value: value,
@@ -293,7 +293,7 @@ func stringNode(value string) *yaml.Node {
 }
 
 func integerNode(value int) *yaml.Node {
-	return &yaml.Node{ //nolint:exhaustruct // YAML emitter metadata uses zero values.
+	return &yaml.Node{ //nolint:exhaustruct_v5 // YAML emitter metadata uses zero values.
 		Kind:  yaml.ScalarNode,
 		Tag:   yamlIntegerTag,
 		Value: strconv.Itoa(value),

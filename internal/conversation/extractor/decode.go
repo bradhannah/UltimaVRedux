@@ -73,7 +73,7 @@ type instruction struct {
 	where  sourceLocation
 }
 
-//nolint:gocognit,gocyclo,cyclop,mnd,exhaustruct,lll,funlen // Closed opcode dispatch mirrors source order.
+//nolint:gocognit,gocyclo,cyclop,mnd,exhaustruct_v5,lll,funlen // Closed opcode dispatch mirrors source order.
 func parseExecutable(field rawField, dictionary map[byte]string, allowInclude bool) ([]instruction, error) {
 	instructions := make([]instruction, 0, len(field.data))
 	for index := 0; index < len(field.data); index++ {
@@ -207,7 +207,7 @@ func parseExecutable(field rawField, dictionary map[byte]string, allowInclude bo
 	return instructions, nil
 }
 
-//nolint:exhaustruct // Non-action instruction fields intentionally remain zero.
+//nolint:exhaustruct_v5 // Non-action instruction fields intentionally remain zero.
 func actionInstruction(action actionCode, offset int, where sourceLocation) instruction {
 	return instruction{kind: instructionAction, action: action, offset: offset, where: where}
 }
@@ -423,7 +423,7 @@ type bodyBuilder struct {
 	terminated   bool
 }
 
-//nolint:cyclop,err113,exhaustruct,funlen // Ordered conversion is a closed instruction state machine.
+//nolint:cyclop,err113,exhaustruct_v5,funlen // Ordered conversion is a closed instruction state machine.
 func instructionsToBody(
 	instructions []instruction,
 	initialRole semantic.ActionKind,
