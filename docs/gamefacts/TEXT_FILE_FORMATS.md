@@ -80,9 +80,9 @@ byte-exact spacing has not been compared.
 **Ending text**
 
 **Kind:** rule
-**Uses:** GFX-0004, DNG-0015
+**Uses:** GFX-0004, DNG-0015, INTRO-0003
 **Original:** Established
-**Redux:** Known discrepancy
+**Redux:** Matches
 
 `END.DAT` holds six zero-terminated text blocks, one for each illustrated ending
 screen, at offsets compiled into the program: 0, 424, 956, 1,530, 2,280, and 2,932.
@@ -105,9 +105,10 @@ break, printing a hyphen only if the line breaks there. Newline forces a break.
 short zero-terminated strings used earlier in the finale
 ([DNG-0015](DUNGEON_SYSTEM.md#dng-0015)).
 
-Redux reads the same six blocks and applies the `{` gap. Its line breaking uses a
-`_` mark only on a line with no space, so the hyphenated breaks the original makes
-do not occur.
+Redux reads the same six blocks and sets them with the story-text wrapper it
+shares with the Introduction ([INTRO-0003](STARTUP_MENU_AND_INTRODUCTIONS.md#intro-0003)).
+It applies the `{` gap, and when a line fills it backs up to the nearest space or
+nearest `_` whose hyphen still fits, drawing `-` at a `_` break.
 
-**Implementation:** `internal/sprites/endgame.go`
-**Tests:** `internal/sprites/endgame_test.go`, `internal/sprites/endgame_original_test.go`
+**Implementation:** `internal/sprites/endgame.go`, `cmd/ultimav/gamescene_finale.go`, `cmd/ultimav/intro_narrative.go`
+**Tests:** `internal/sprites/endgame_test.go`, `internal/sprites/endgame_original_test.go`, `cmd/ultimav/intro_narrative_test.go`

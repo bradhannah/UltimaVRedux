@@ -22,11 +22,6 @@
       "listed": true
     },
     {
-      "rule": "TEXT-0003",
-      "summary": "Where the ending text breaks its lines: Redux never makes the original's hyphenated breaks.",
-      "listed": true
-    },
-    {
       "rule": "TALK-0002",
       "summary": "A few rare text bytes inside conversations are not represented.",
       "listed": false

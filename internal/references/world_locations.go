@@ -42,8 +42,9 @@ func NewWorldLocations(gameConfig *config.UltimaVConfiguration) (*WorldLocations
 		y := Coordinate(gameConfig.RawDataOvl[yCoordsOffset+i])
 		location := Location(i + 1)
 
-		// Determine floor: Ararat is the only location in the underworld (floor -1)
-		// All other towns, castles, keeps, and dungeons exit to overworld (floor 0)
+		// Ararat is the only non-dungeon location in the Underworld. Dungeon exits
+		// ignore this floor: climb direction picks Britannia or the Underworld
+		// (exitDungeonToWorld; ref:DNG-0003).
 		floor := FloorNumber(OVERWORLD)
 		if location == Ararat {
 			floor = FloorNumber(UNDERWORLD)
