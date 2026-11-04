@@ -125,7 +125,7 @@ func NewReadyEquipmentDialog(
 		panic("ReadyEquipmentDialog: keyboard is required")
 	}
 
-	//nolint:exhaustruct // Layout is initialized below; transient selection and cache start empty.
+	//nolint:exhaustruct_v5 // Layout is initialized below; transient selection and cache start empty.
 	dialog := &ReadyEquipmentDialog{
 		navigation:      newNavigation(keyboard.IsKeyHeld),
 		keyboard:        keyboard,

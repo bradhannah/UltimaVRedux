@@ -66,7 +66,7 @@ test-profile-check:
 		fi; \
 	done
 
-.PHONY: help all dev run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test site validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
+.PHONY: help all dev run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test site site-publish validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
 
 help: ## Show available targets
 	@printf "$(PROJECT_NAME) development targets:\n\n"
@@ -84,7 +84,7 @@ tools: ## Provision pinned Go validation tools and module dependencies (networke
 	@mkdir -p "$(TOOLS_BIN)"
 	@$(GO) mod download
 	@GOBIN="$(TOOLS_BIN)" $(GO) install golang.org/x/tools/cmd/goimports@v0.37.0
-	@GOBIN="$(TOOLS_BIN)" $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+	@GOBIN="$(TOOLS_BIN)" $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
 .PHONY: python-tools python-env-check python-format python-format-check python-lint python-check python-staged-check
 python-tools: ## Provision the hashed Python quality environment (networked setup, Python 3.12+)
@@ -234,6 +234,9 @@ tooling-test: python-env-check ## Run Python developer-tool and real quality-too
 
 site: python-env-check ## Build the public GitHub Pages site into _site (see docs/SITE.md)
 	@"$(PYTHON)" -B scripts/build_site.py _site
+
+site-publish: python-env-check ## Build the site and push it to the gh-pages branch GitHub Pages serves (networked)
+	@"$(PYTHON)" -B scripts/publish_site.py
 
 validate: check policy-check build-check docs-check gamefacts-check tooling-test ## Run logic tests and canonical static checks once
 

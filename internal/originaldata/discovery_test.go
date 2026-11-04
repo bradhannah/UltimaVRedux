@@ -177,7 +177,9 @@ func TestWindowsGOGSeedsAcceptCustomRecordsAndRejectOtherPublishers(t *testing.T
 }
 
 func TestCommonSeedsUseGOGRootsAndProgramFilesFallback(t *testing.T) {
-	programFiles := filepath.Join(string(filepath.Separator), "Program Files")
+	// A temporary directory is absolute on every host; `\Program Files` lacks a
+	// drive letter and so is not absolute when the test itself runs on Windows.
+	programFiles := filepath.Join(t.TempDir(), "Program Files")
 	seeds := commonSeeds(HostProfile{
 		GOOS: "windows", HomeDirectory: filepath.Join(string(filepath.Separator), "Users", "Avatar"),
 		Environment: map[string]string{"ProgramFiles": programFiles, "SystemDrive": "C:"},

@@ -26,7 +26,7 @@ func (m *IntroMenuScene) openAcknowledgments() {
 	m.dialogStack.PushModalDialog(dialog)
 }
 
-//nolint:exhaustruct // Declarative paragraphs select a single heading/prose role; blank paragraphs provide spacing.
+//nolint:exhaustruct_v5 // Declarative paragraphs select a single heading/prose role; blank paragraphs provide spacing.
 func buildAcknowledgments(recordings []audio.RecordingCredit) []text.CreditParagraph {
 	document := text.OriginalAndReduxCredits()
 	document = append(document, text.CreditParagraph{Heading: "Music & Sound Attribution"},
@@ -79,7 +79,7 @@ func groupRecordingCredits(recordings []audio.RecordingCredit, music bool) []rec
 	return groups
 }
 
-//nolint:exhaustruct // Attribution paragraphs use prose or label/value roles, with no section heading.
+//nolint:exhaustruct_v5 // Attribution paragraphs use prose or label/value roles, with no section heading.
 func appendRecordingAttribution(document []text.CreditParagraph, group recordingCreditGroup) []text.CreditParagraph {
 	const unknownCredit = "unknown"
 

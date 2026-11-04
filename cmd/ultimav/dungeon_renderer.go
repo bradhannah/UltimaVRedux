@@ -51,7 +51,7 @@ func compositeDungeonDoorwayClip(canvas, clipLayer *ebiten.Image) {
 		dungeonDoorwayClipVertex(bounds.Max.X, bounds.Max.Y),
 	}
 	indices := [...]uint16{0, 1, 2, 1, 2, 3}
-	options := ebiten.DrawTrianglesOptions{ //nolint:exhaustruct // Zero-value blending and nearest filtering are required.
+	options := ebiten.DrawTrianglesOptions{ //nolint:exhaustruct_v5 // Zero blending and nearest filtering are required.
 		Address: ebiten.AddressClampToZero,
 	}
 	canvas.DrawTriangles(vertices[:], indices[:], clipLayer, &options)
@@ -183,7 +183,7 @@ func buildDungeonRenderPlanWithPresentation(
 	presentation dungeonRenderPresentation,
 ) dungeonRenderPlan {
 	wallSet := validateDungeonRenderSource(snapshot, player.Location)
-	plan := dungeonRenderPlan{ //nolint:exhaustruct // Count and operations begin at their required zero values.
+	plan := dungeonRenderPlan{ //nolint:exhaustruct_v5 // Count and operations begin at their required zero values.
 		wallSet:         wallSet,
 		location:        player.Location,
 		floor:           player.Floor,

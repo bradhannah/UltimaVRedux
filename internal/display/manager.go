@@ -128,7 +128,7 @@ func newDisplayManager(backends ...backend) *DisplayManager {
 	mode := observedMode(displayBackend)
 	lastWidth, lastHeight := validNormalSize(windowWidth, windowHeight)
 
-	//nolint:exhaustruct // Transition counters and unpublished frame metrics intentionally start at zero.
+	//nolint:exhaustruct_v5 // Transition counters and unpublished frame metrics intentionally start at zero.
 	return &DisplayManager{
 		backend:               displayBackend,
 		mode:                  mode,

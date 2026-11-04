@@ -111,7 +111,7 @@ func (d *QuestJournalDialog) beginSearch() {
 	d.searching = true
 	if d.searchInput == nil {
 		d.searchInput = NewTextInput(d.placement, d.font.TextFace.Size, questJournalQueryLimit, nil,
-			TextInputCallbacks{}, d.keyboard) //nolint:exhaustruct // Journal owns Enter and dismissal.
+			TextInputCallbacks{}, d.keyboard) //nolint:exhaustruct_v5 // Journal owns Enter and dismissal.
 		d.searchInput.SetFreeTextMode()
 	}
 	d.searchInput.SetText(d.searchQuery)

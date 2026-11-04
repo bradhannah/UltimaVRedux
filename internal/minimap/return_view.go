@@ -1,4 +1,4 @@
-//nolint:mnd,gocyclo,funlen,lll,exhaustruct,maintidx // Direct translation of verified RTTV opcodes and operands.
+//nolint:mnd,gocyclo,funlen,lll,exhaustruct_v5,maintidx // Direct translation of verified RTTV opcodes and operands.
 package minimap
 
 import (

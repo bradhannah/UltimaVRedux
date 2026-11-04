@@ -53,7 +53,7 @@ func NewReagentMixingDialog(keyboard *input.Keyboard,
 	if keyboard == nil {
 		panic("ReagentMixingDialog: keyboard required")
 	}
-	//nolint:exhaustruct // Preparation and intents start empty; ensureLayout initializes presentation.
+	//nolint:exhaustruct_v5 // Preparation and intents start empty; ensureLayout initializes presentation.
 	d := &ReagentMixingDialog{keyboard: keyboard, browser: newSpellBrowser(catalog),
 		navigation:       newNavigation(keyboard.IsKeyHeld),
 		reagentInventory: append([]ReagentInfo(nil), reagents...), reagentListState: NewScrollableListState(len(reagents), 1)}
@@ -226,7 +226,7 @@ func (d *ReagentMixingDialog) updateFinder() {
 					break
 				}
 			}
-			//nolint:exhaustruct // An unrecorded spell deliberately exposes no formula, effect or inventory preview.
+			//nolint:exhaustruct_v5 // An unrecorded spell deliberately exposes no formula, effect or inventory preview.
 			d.prepare(game_state.ZStatsSpell{ID: int(spell), Name: d.browser.syllables,
 				EffectLabel: "Unrecorded spell", FormulaState: "unknown"})
 		}

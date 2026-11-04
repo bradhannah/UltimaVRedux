@@ -97,7 +97,7 @@ func NewArmsTradeDialog(config ArmsTradeDialogConfig) *ArmsTradeDialog {
 		validateArmsFinalizedText("sale offer", config.Prose.Offer)
 	}
 
-	dialog := &ArmsTradeDialog{ //nolint:exhaustruct // Layout, output, and transient result fields initialize on demand.
+	dialog := &ArmsTradeDialog{ //nolint:exhaustruct_v5 // Layout, output and result fields initialize on demand.
 		keyboard: config.Keyboard,
 		intent:   config.Intent,
 		prose:    config.Prose,

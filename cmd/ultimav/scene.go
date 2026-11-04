@@ -162,7 +162,8 @@ func NewGame(initialScene Scene) *Game {
 	game.debugDefinitions = game.debugCatalog.Definitions()
 	displayManager := display.GetManager()
 	previous := displayManager.SetMapPopupViewportProvider(game.mapPopupViewport)
-	defer displayManager.SetMapPopupViewportProvider(previous)
+	// The setter returns the provider it replaces, not a cleanup function.
+	defer func() { displayManager.SetMapPopupViewportProvider(previous) }()
 	activateScene(initialScene)
 	game.publishDebugDiscovery(nil, 1)
 
@@ -424,7 +425,8 @@ func (g *Game) Update() error {
 	// Scope global presentation ownership so dormant/test games cannot retain it.
 	displayManager := display.GetManager()
 	previous := displayManager.SetMapPopupViewportProvider(g.mapPopupViewport)
-	defer displayManager.SetMapPopupViewportProvider(previous)
+	// The setter returns the provider it replaces, not a cleanup function.
+	defer func() { displayManager.SetMapPopupViewportProvider(previous) }()
 
 	// Use DisplayManager to handle resolution changes
 	if g.currentScene != nil && g.currentScene.GetUltimaConfiguration() != nil {
@@ -538,7 +540,8 @@ func commandUsesDynamicOptions(definition debugging.CommandDefinition) bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 	displayManager := display.GetManager()
 	previous := displayManager.SetMapPopupViewportProvider(g.mapPopupViewport)
-	defer displayManager.SetMapPopupViewportProvider(previous)
+	// The setter returns the provider it replaces, not a cleanup function.
+	defer func() { displayManager.SetMapPopupViewportProvider(previous) }()
 
 	if g.currentScene != nil {
 		g.currentScene.Draw(screen)

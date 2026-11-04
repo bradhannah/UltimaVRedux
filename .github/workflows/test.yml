@@ -130,6 +130,13 @@ jobs:
           libasound2-dev \
           xvfb
 
+    # Ebitengine opens the audio device on the first frame after an audio context
+    # exists and ends RunGame if that fails. Hosted Linux and Windows runners have
+    # no sound device, so give them a virtual one (PulseAudio null sink / VB-CABLE).
+    - name: Provide a virtual sound device (Linux/Windows)
+      if: runner.os != 'macOS'
+      uses: LABSN/sound-ci-helpers@d08c889a7bba7d9b1b059f8f76dac4672ea3a9cf # v1.0.4
+
     - name: Run required native tests with virtual display (Linux)
       if: runner.os == 'Linux'
       run: xvfb-run -a make test-render

@@ -174,7 +174,7 @@ func NewZStatsDossierDialog(
 		panic("ZStatsDossierDialog: placement must have positive width and height")
 	}
 
-	//nolint:exhaustruct // Remaining fields are presentation state initialized by ensureLayout or their zero values.
+	//nolint:exhaustruct_v5 // Remaining fields are presentation state initialized by ensureLayout or their zero values.
 	dialog := &ZStatsDossierDialog{
 		navigation:        newNavigation(config.Keyboard.IsKeyHeld),
 		dossier:           cloneZStatsDossier(dossier),

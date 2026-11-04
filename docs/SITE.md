@@ -7,10 +7,27 @@ against the Game Facts, so stale content fails instead of shipping.
 
 ## Publishing
 
-`.github/workflows/pages.yml` builds the site on every push to `main` and on manual
-dispatch, then deploys it with `actions/deploy-pages`. A repository owner must
-select **Settings, Pages, Build and deployment, Source: GitHub Actions** once;
-the workflow cannot enable Pages itself.
+GitHub Pages serves the `gh-pages` branch (**Settings, Pages, Build and
+deployment: Deploy from a branch, `gh-pages`, `/ (root)`**). That branch holds
+only built output; never edit it by hand.
+
+Publish by hand from an up-to-date `main` checkout, which is the normal path:
+
+```sh
+make site-publish   # builds, commits to gh-pages, pushes (needs push access)
+```
+
+[`scripts/publish_site.py`](../scripts/publish_site.py) refuses uncommitted
+changes under `site/`, `docs/gamefacts/` and `scripts/`, builds into a temporary
+directory, and records the result as the next `gh-pages` commit ("Publish site
+from <commit>") through a private Git index. It does not touch your working tree,
+index or current branch. An unchanged site pushes nothing. The push only
+fast-forwards, so if someone published in the meantime it fails and you run it
+again.
+
+`.github/workflows/pages.yml` runs the same script on every push to `main` when
+GitHub Actions is available. Nothing depends on it: when Actions does not run,
+publish by hand.
 
 To preview locally:
 
@@ -54,6 +71,7 @@ Rules for every page:
 | Path | Purpose |
 | --- | --- |
 | [`scripts/build_site.py`](../scripts/build_site.py) | Entry point: `python scripts/build_site.py OUTPUT_DIR`. |
+| [`scripts/publish_site.py`](../scripts/publish_site.py) | Builds and pushes to `gh-pages` (`make site-publish`); tested by `scripts/test_publish_site.py`. |
 | `scripts/site_data.py`, `scripts/site_data_play.py` | Build datasets from Game Facts tables. |
 | `scripts/site_markdown.py` | Small Markdown renderer for the Game Facts subset. |
 | `scripts/site_context.py` | Shared state, layout and HTML helpers. |

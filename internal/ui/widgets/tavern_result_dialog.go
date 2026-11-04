@@ -91,7 +91,7 @@ func NewTavernResultDialog(config TavernResultDialogConfig) *TavernResultDialog 
 	if isKeyPressed == nil {
 		isKeyPressed = ebiten.IsKeyPressed
 	}
-	dialog := &TavernResultDialog{ //nolint:exhaustruct // Resolution-dependent presentation initializes on demand.
+	dialog := &TavernResultDialog{ //nolint:exhaustruct_v5 // Resolution-dependent presentation initializes on demand.
 		keyboard: config.Keyboard, isKeyPressed: isKeyPressed, view: config.View,
 		visible: true, keysReady: tavernResultControlsReleased(isKeyPressed),
 		frame: newMerchantModalFrame(merchantModalFrameConfig{

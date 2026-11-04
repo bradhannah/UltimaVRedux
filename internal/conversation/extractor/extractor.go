@@ -16,6 +16,7 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
 	"github.com/bradhannah/UltimaVRedux/internal/files"
+	"github.com/bradhannah/UltimaVRedux/internal/repositoryfs"
 	"gopkg.in/yaml.v3"
 )
 
@@ -743,17 +744,8 @@ func syncDirectoryTree(root string) error {
 	}
 	slices.Reverse(directories)
 	for _, directory := range directories {
-		file, err := os.Open(directory) //nolint:gosec // Paths are within the private staging tree.
-		if err != nil {
-			return fmt.Errorf("opening extraction directory %q for sync: %w", directory, err)
-		}
-		syncErr := file.Sync()
-		closeErr := file.Close()
-		if syncErr != nil {
-			return fmt.Errorf("syncing extraction directory %q: %w", directory, syncErr)
-		}
-		if closeErr != nil {
-			return fmt.Errorf("closing extraction directory %q: %w", directory, closeErr)
+		if err := repositoryfs.SyncDirectory(directory); err != nil {
+			return fmt.Errorf("syncing extraction directory %q: %w", directory, err)
 		}
 	}
 
@@ -796,17 +788,8 @@ func publishStage(stage, output string, force bool) error {
 
 func syncParent(path string) error {
 	parent := filepath.Dir(path)
-	file, err := os.Open(parent) //nolint:gosec // Parent was selected by the caller's output path.
-	if err != nil {
-		return fmt.Errorf("opening output parent %q for sync: %w", parent, err)
-	}
-	syncErr := file.Sync()
-	closeErr := file.Close()
-	if syncErr != nil {
-		return fmt.Errorf("syncing output parent %q: %w", parent, syncErr)
-	}
-	if closeErr != nil {
-		return fmt.Errorf("closing output parent %q: %w", parent, closeErr)
+	if err := repositoryfs.SyncDirectory(parent); err != nil {
+		return fmt.Errorf("syncing output parent %q: %w", parent, err)
 	}
 
 	return nil

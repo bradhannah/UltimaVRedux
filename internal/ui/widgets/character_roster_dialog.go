@@ -165,7 +165,7 @@ func newCharacterRosterDialogShell(
 		panic("character roster dialog: placement must have positive width and height")
 	}
 
-	//nolint:exhaustruct // Layout modes default off; outputs and geometry are lazy display-size caches.
+	//nolint:exhaustruct_v5 // Layout modes default off; outputs and geometry are lazy display-size caches.
 	return &characterRosterDialogShell{
 		placement:   placement,
 		spriteSheet: spriteSheet,

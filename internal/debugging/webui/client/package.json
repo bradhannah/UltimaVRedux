@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "npm run typecheck && vite build",
     "test": "node --test typecheck_checks.mjs && vitest run",
-    "test:browser": "vite build --outDir browser/.build && node --max-old-space-size=64 --max-semi-space-size=2 node_modules/@playwright/test/cli.js test",
+    "test:browser": "vite build --outDir browser/.build && node --max-old-space-size=96 --max-semi-space-size=2 node_modules/@playwright/test/cli.js test",
     "typecheck": "node typecheck.mjs"
   },
   "dependencies": {

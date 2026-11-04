@@ -28,7 +28,7 @@ linters:
     - errname
     - errorlint
     - exhaustive
-    - exhaustruct
+    - exhaustruct_v5
     - exptostd
     - fatcontext
     - forbidigo
@@ -121,9 +121,9 @@ linters:
       - testdata/
       - ".*_test\\.go$"  # Exclude all test files from strict linting
     rules:
-      # exhaustruct: Normal Go pattern - DrawImageOptions and DrawOptions often have optional fields
+      # exhaustruct_v5: Normal Go pattern - DrawImageOptions and DrawOptions often have optional fields
       - linters:
-          - exhaustruct
+          - exhaustruct_v5
         text: "(ebiten\\.DrawImageOptions|text\\.DrawOptions) is missing fields"
       # exhaustive: Water tile generator switch doesn't need all sprite index cases
       - linters:
@@ -134,7 +134,7 @@ linters:
       # DTO literals, data-driven records, and compatibility validation branches.
       - linters:
           - cyclop
-          - exhaustruct
+          - exhaustruct_v5
           - funlen
           - gocognit
           - gocyclo
@@ -163,7 +163,7 @@ linters:
       - linters:
           - cyclop
           - err113
-          - exhaustruct
+          - exhaustruct_v5
           - funlen
           - gocognit
           - lll

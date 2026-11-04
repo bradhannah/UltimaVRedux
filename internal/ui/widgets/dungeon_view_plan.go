@@ -69,7 +69,7 @@ type dungeonViewLegendEntry struct {
 	plan  dungeonViewCellPlan
 }
 
-//nolint:cyclop,funlen,mnd,exhaustruct // Packed cell variants are presentation input, not new disclosure authority.
+//nolint:cyclop,funlen,mnd,exhaustruct_v5 // Packed cell variants are presentation input, not new disclosure authority.
 func dungeonViewCellPlanFor(cell references.DungeonCell) dungeonViewCellPlan {
 	plan := dungeonViewCellPlan{visible: true, surface: dungeonViewSurfaceFloor}
 	switch cell.Kind() {
@@ -148,7 +148,7 @@ func dungeonViewFeatureKey() []dungeonViewLegendEntry {
 	}
 }
 
-//nolint:exhaustruct,mnd // The unknown key has no disclosed surface or contents.
+//nolint:exhaustruct_v5,mnd // The unknown key has no disclosed surface or contents.
 func dungeonViewLegendFor(
 	plan dungeonViewRenderPlan,
 	facing references.DungeonFacing,

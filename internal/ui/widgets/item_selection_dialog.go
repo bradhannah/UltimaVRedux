@@ -149,7 +149,7 @@ func NewItemSelectionDialog(config ItemSelectionDialogConfig) *ItemSelectionDial
 		panic("ItemSelectionDialog: OnCancel is required")
 	}
 
-	dialog := &ItemSelectionDialog{ //nolint:exhaustruct // Responsive outputs and layout are initialized below.
+	dialog := &ItemSelectionDialog{ //nolint:exhaustruct_v5 // Responsive outputs and layout are initialized below.
 		navigation:      newNavigation(config.Keyboard.IsKeyHeld),
 		itemsByCategory: make(map[ItemCategory][]game_state.UseableItemInfo),
 		allItems:        append([]game_state.UseableItemInfo(nil), config.Items...),
@@ -486,7 +486,7 @@ func (d *ItemSelectionDialog) calculateLayout() {
 	)
 	overlap := max(1, d.pixelUnit())
 
-	d.layout = itemSelectionLayout{ //nolint:exhaustruct // Remaining rectangles are calculated below.
+	d.layout = itemSelectionLayout{ //nolint:exhaustruct_v5 // Remaining rectangles are calculated below.
 		panelRect:  interior,
 		headerRect: image.Rect(content.Min.X, content.Min.Y, content.Max.X, content.Min.Y+headerHeight),
 		footerRect: image.Rect(content.Min.X, content.Max.Y-footerHeight, content.Max.X, content.Max.Y),

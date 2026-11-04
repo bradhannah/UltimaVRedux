@@ -101,9 +101,9 @@ func findFilePointerViolations(fset *token.FileSet, path string) ([]pointerViola
 		return violations, nil
 	}
 
-	//nolint:exhaustruct // The checker only needs imported package identifier uses.
+	//nolint:exhaustruct_v5 // The checker only needs imported package identifier uses.
 	info := types.Info{Uses: make(map[*ast.Ident]types.Object)}
-	//nolint:exhaustruct // Default type-check settings are sufficient for package identifier resolution.
+	//nolint:exhaustruct_v5 // Default type-check settings are sufficient for package identifier resolution.
 	config := types.Config{
 		Importer: importer.Default(),
 		Error:    func(_ error) {},

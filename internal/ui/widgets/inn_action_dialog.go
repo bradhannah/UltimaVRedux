@@ -65,7 +65,7 @@ func NewInnActionDialog(config InnActionDialogConfig) *InnActionDialog {
 	if isKeyPressed == nil {
 		isKeyPressed = ebiten.IsKeyPressed
 	}
-	dialog := &InnActionDialog{ //nolint:exhaustruct // Resolution-dependent presentation fields initialize on demand.
+	dialog := &InnActionDialog{ //nolint:exhaustruct_v5 // Resolution-dependent presentation fields initialize on demand.
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,
 		intent:          cloneInnActionIntent(config.Intent),

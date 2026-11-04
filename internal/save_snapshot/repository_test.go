@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/repositoryfs"
@@ -300,13 +301,17 @@ func TestRepositoryUsesPrivateModesForPersonalAndRollback(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got := rootInfo.Mode().Perm(); got != 0o700 {
-			t.Fatalf("%s root mode = %o, want 700", reference, got)
-		}
 		parsed, _ := ParseReference(reference)
 		fileInfo, err := os.Stat(filepath.Join(root, parsed.ID+".json"))
 		if err != nil {
 			t.Fatal(err)
+		}
+		// Windows has no Unix permission bits; repositoryfs skips chmod there.
+		if runtime.GOOS == "windows" {
+			continue
+		}
+		if got := rootInfo.Mode().Perm(); got != 0o700 {
+			t.Fatalf("%s root mode = %o, want 700", reference, got)
 		}
 		if got := fileInfo.Mode().Perm(); got != 0o600 {
 			t.Fatalf("%s file mode = %o, want 600", reference, got)

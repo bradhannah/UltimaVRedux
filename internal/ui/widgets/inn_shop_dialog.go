@@ -224,7 +224,7 @@ func NewInnShopDialog(config InnShopDialogConfig) *InnShopDialog {
 		isKeyPressed = ebiten.IsKeyPressed
 	}
 
-	dialog := &InnShopDialog{ //nolint:exhaustruct // Resolution-dependent presentation fields initialize on demand.
+	dialog := &InnShopDialog{ //nolint:exhaustruct_v5 // Resolution-dependent presentation fields initialize on demand.
 		navigation:      newNavigation(config.Keyboard.IsKeyHeld),
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,
@@ -1253,9 +1253,9 @@ func innPickupRequest(state game_state.InnShopState, row game_state.InnGuestRow)
 func emptyInnActionRequest() InnActionRequest {
 	return InnActionRequest{
 		Action: InnActionRest,
-		Rest:   game_state.InnRestRequest{},   //nolint:exhaustruct // Inactive typed-union branch.
-		Leave:  game_state.InnLeaveRequest{},  //nolint:exhaustruct // Inactive typed-union branch.
-		Pickup: game_state.InnPickupRequest{}, //nolint:exhaustruct // Inactive typed-union branch.
+		Rest:   game_state.InnRestRequest{},   //nolint:exhaustruct_v5 // Inactive typed-union branch.
+		Leave:  game_state.InnLeaveRequest{},  //nolint:exhaustruct_v5 // Inactive typed-union branch.
+		Pickup: game_state.InnPickupRequest{}, //nolint:exhaustruct_v5 // Inactive typed-union branch.
 	}
 }
 
@@ -1282,15 +1282,15 @@ func emptyInnCharacterIdentity() game_state.InnCharacterIdentity {
 }
 
 func emptyInnRestQuote() game_state.InnRestQuote {
-	return game_state.InnRestQuote{} //nolint:exhaustruct // Empty typed-union branch and consume result.
+	return game_state.InnRestQuote{} //nolint:exhaustruct_v5 // Empty typed-union branch and consume result.
 }
 
 func emptyInnLeaveRow() game_state.InnLeaveRow {
-	return game_state.InnLeaveRow{} //nolint:exhaustruct // Empty typed-union branch and consume result.
+	return game_state.InnLeaveRow{} //nolint:exhaustruct_v5 // Empty typed-union branch and consume result.
 }
 
 func emptyInnGuestRow() game_state.InnGuestRow {
-	return game_state.InnGuestRow{} //nolint:exhaustruct // Empty typed-union branch and consume result.
+	return game_state.InnGuestRow{} //nolint:exhaustruct_v5 // Empty typed-union branch and consume result.
 }
 
 func cloneInnActionIntent(intent InnActionIntent) InnActionIntent {

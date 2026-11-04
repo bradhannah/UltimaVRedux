@@ -38,7 +38,7 @@ func NewTavernAdviceNotice(keyboard *input.Keyboard, pane func() image.Rectangle
 	if keyboard == nil || pane == nil || message == "" {
 		panic("TavernAdviceNotice: keyboard, pane and message are required")
 	}
-	notice := &TavernAdviceNotice{ //nolint:exhaustruct // Measured presentation initializes below.
+	notice := &TavernAdviceNotice{ //nolint:exhaustruct_v5 // Measured presentation initializes below.
 		keyboard: keyboard, pane: pane, message: message, isKeyPressed: ebiten.IsKeyPressed,
 		keysReady: tavernResultControlsReleased(ebiten.IsKeyPressed),
 	}

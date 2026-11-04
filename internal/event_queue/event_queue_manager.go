@@ -9,7 +9,7 @@ import (
 
 // NewEventQueueManager creates a new event queue manager
 func NewEventQueueManager(timeSource func() int64, systemCallbacks SystemCallbacks) *EventQueueManager {
-	//nolint:exhaustruct
+	//nolint:exhaustruct_v5
 	return &EventQueueManager{
 		queues:          make(map[string]*NamedEventQueue),
 		feedbackQueues:  make(map[string]*NamedEventQueue),
@@ -43,7 +43,7 @@ func (eqm *EventQueueManager) TriggerFeedback(
 }
 
 func (eqm *EventQueueManager) newQueue(name string, lane queueLane) *NamedEventQueue {
-	//nolint:exhaustruct
+	//nolint:exhaustruct_v5
 	return &NamedEventQueue{
 		name:             name,
 		events:           make([]*DelayedEvent, 0),
@@ -201,7 +201,7 @@ func (neq *NamedEventQueue) Priority(p int) *NamedEventQueue {
 
 // Sequential returns a sequential event builder for chained events
 func (neq *NamedEventQueue) Sequential() *SequentialEventBuilder {
-	//nolint:exhaustruct
+	//nolint:exhaustruct_v5
 	return &SequentialEventBuilder{
 		queue:    neq,
 		priority: neq.priority, // Copy priority from queue to builder
@@ -516,7 +516,7 @@ func (eqm *EventQueueManager) processInputWaiting(queue *NamedEventQueue, curren
 func (eqm *EventQueueManager) schedulePostInputActions(queue *NamedEventQueue, currentTime int64) {
 	if queue.pendingNextAction != nil {
 		nextExecuteAt := currentTime + queue.pendingNextDelay
-		//nolint:exhaustruct
+		//nolint:exhaustruct_v5
 		nextEvent := &DelayedEvent{
 			ExecuteAt: nextExecuteAt,
 			Action:    queue.pendingNextAction,
@@ -647,7 +647,7 @@ func (eqm *EventQueueManager) executeDelayedEvent(
 			queue.keyWasPressed = false
 		} else {
 			nextExecuteAt := currentTime + event.NextDelay
-			//nolint:exhaustruct
+			//nolint:exhaustruct_v5
 			nextEvent := &DelayedEvent{
 				ExecuteAt: nextExecuteAt,
 				Action:    event.NextAction,

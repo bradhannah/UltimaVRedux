@@ -176,7 +176,7 @@ type recordReader struct {
 	where sourceLocation
 }
 
-//nolint:gocognit,cyclop,exhaustruct,funlen // The state machine mirrors the closed TLK field grammar.
+//nolint:gocognit,cyclop,exhaustruct_v5,funlen // The state machine mirrors the closed TLK field grammar.
 func parseRecord(filename string, id, base int, data []byte) (rawConversation, error) {
 	reader := recordReader{data: data, base: base, index: 0, where: sourceLocation{filename: filename, conversationID: id}}
 	conversation := rawConversation{id: id, topics: nil, questions: nil}

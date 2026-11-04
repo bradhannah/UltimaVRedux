@@ -205,7 +205,7 @@ func GetBorderMacro(b byte) string {
 			"8llllllllllllll9", // 0x2d - bottom border plain
 			"hllllk    jlllli", // 0x2e - cross arm (left side + gap + right side)
 			"jlllli    hllllk", // 0x2f - cross arm mirrored
-			"     g    g     ", // 0x30 - cross vertical bars with gap
+			"     g    g     ", //nolint:dupword // 0x30 - cross vertical bars with gap (glyph codes)
 			"     hlllli     ", // 0x31 - cross bottom center
 		}
 

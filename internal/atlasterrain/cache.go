@@ -232,12 +232,8 @@ func publish(path string, data []byte) error {
 	if err != nil {
 		return fmt.Errorf("publish atlas cache: %w", err)
 	}
-	directory, err := os.Open(filepath.Dir(path))
-	if err != nil {
-		return fmt.Errorf("open atlas cache directory: %w", err)
-	}
-	err = errors.Join(directory.Sync(), directory.Close())
-	if err != nil {
+	// The shared helper skips Windows, which cannot sync a directory handle.
+	if err := repositoryfs.SyncDirectory(filepath.Dir(path)); err != nil {
 		return fmt.Errorf("sync atlas cache directory: %w", err)
 	}
 

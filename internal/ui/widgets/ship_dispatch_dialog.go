@@ -52,7 +52,7 @@ func NewShipDispatchDialog(config ShipDispatchDialogConfig) *ShipDispatchDialog 
 	if !shipBerthHasVessel(config.State.Berth) {
 		panic("ShipDispatchDialog: refreshed vessel berth is required")
 	}
-	dialog := &ShipDispatchDialog{ //nolint:exhaustruct // Transient choice fields start empty.
+	dialog := &ShipDispatchDialog{ //nolint:exhaustruct_v5 // Transient choice fields start empty.
 		keyboard: config.Keyboard,
 		state:    config.State,
 		frame:    newShipMerchantModalFrame(shipDispatchPlacement()),
