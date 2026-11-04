@@ -252,6 +252,26 @@ func TestConcealedCombatTargetDoesNotLeakIntoAimOrAssistance(t *testing.T) {
 	assert.Len(t, state.PreviewCombatAttack().Targets, 1)
 }
 
+func TestRememberedAimFollowsConcealedTargetAndEmptyShotForgetsIt(t *testing.T) {
+	state, _ := newCombatAttackPreviewTest(t, references.Halberd)
+	origin := state.CombatScene.GetPartyMemberPosition(0)
+	step := references.Coordinate(1)
+	if origin.X+2 >= references.XCombatMapTiles {
+		step = -1
+	}
+	position := references.Position{X: origin.X + 2*step, Y: origin.Y}
+	_, index := addSyntheticTriggerMonster(state, position, CombatMonsterLoyaltyMonster, references.MissileNone)
+	state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapLayer, &position, indexes.BlackSquare)
+	state.CombatScene.LastAttackTargets[0] = index
+
+	require.True(t, state.BeginCombatAttack())
+	assert.Equal(t, position, state.CombatScene.AttackTargeting.Cursor, "original aim has no terrain test")
+
+	require.True(t, state.MoveCombatAttackCursor(int(-step), 0))
+	state.ConfirmCombatAttackTarget()
+	assert.Equal(t, NoCombatTarget, state.CombatScene.LastAttackTargets[0], "an empty reach shot forgets the aim")
+}
+
 func TestOriginalCovetousRoomZeroUsesTriggerAuthoredConcealment(t *testing.T) {
 	state, _ := NewIntegrationTestBuilder(t).
 		WithLocation(references.Covetous).

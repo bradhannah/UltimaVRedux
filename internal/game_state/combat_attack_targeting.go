@@ -234,6 +234,9 @@ func (g *GameState) ConfirmCombatAttackTarget() CombatAttackTargetResult {
 	}
 	if targetFound && monster != nil && targeting.Attacker.IsPartyMember {
 		g.CombatScene.setLastCombatAttackTarget(targeting.Attacker, monsterIndex)
+	} else if isRanged && targeting.Attacker.IsPartyMember {
+		// Original pcmissile forgets the aim when a shot finds no target; melee keeps it.
+		g.CombatScene.setLastCombatAttackTarget(targeting.Attacker, NoCombatTarget)
 	}
 	if isRanged {
 		return g.preparePendingCombatAttack(targeting, source, targetIdentity, targetFound)
@@ -252,7 +255,6 @@ func (g *GameState) ConfirmCombatAttackTarget() CombatAttackTargetResult {
 	case !targeting.Attacker.IsPartyMember:
 		g.resolveControlledMonsterAttack(targeting.AttackerIndex, monster, monsterIndex, targeting.Cursor)
 	default:
-		g.CombatScene.setLastCombatAttackTarget(targeting.Attacker, monsterIndex)
 		g.resolveCombatAttackSourceAtPosition(targeting.AttackerIndex, source, targeting.Cursor)
 	}
 
@@ -324,9 +326,10 @@ func (g *GameState) initializeCombatAttackCursor() {
 		return
 	}
 
+	// Original plraim has no terrain test: the cursor follows a remembered target onto
+	// concealing Nothing or Arch, revealing where it moved. See ref:COMBAT-0004.
 	position := monster.Position()
-	if g.CombatTerrainAllowsObjectDisplay(position) &&
-		integerDistance(targeting.Origin, position) <= targeting.CurrentSource().MaxRange {
+	if integerDistance(targeting.Origin, position) <= targeting.CurrentSource().MaxRange {
 		targeting.Cursor = position
 	}
 }
