@@ -8,11 +8,11 @@ let app: VueApp<Element> | undefined
 let root: HTMLDivElement
 
 const recent: NavigationSurface = {
-  id: "codex:shrine.status",
-  workspace: "codex",
-  workspaceLabel: "Codex",
-  label: "Shrine Reference",
-  description: "Browse immutable virtue reference data.",
+  id: "game:shrine.status",
+  workspace: "game",
+  workspaceLabel: "Game",
+  label: "Shrine Progress",
+  description: "Inspect and alter shrine progression.",
   commandId: "shrine.status",
   commands: [],
 }
@@ -32,63 +32,21 @@ describe("Workbench Home", () => {
   it("opens recent surfaces and the navigation palette without executing commands", () => {
     const openPalette = vi.fn()
     const openSurface = vi.fn()
-    mount({ recents: [recent], connected: true, onOpenPalette: openPalette, onOpenSurface: openSurface })
+    mount({ recents: [recent], onOpenPalette: openPalette, onOpenSurface: openSurface })
 
     click("[data-home-go-to]")
-    click('[data-home-recent="codex:shrine.status"]')
+    click('[data-home-recent="game:shrine.status"]')
 
     expect(openPalette).toHaveBeenCalledOnce()
     expect(openSurface).toHaveBeenCalledOnce()
     expect(openSurface).toHaveBeenCalledWith(recent)
   })
 
-  it("summarizes the retained scenario run and opens Latest Run", () => {
-    const openScenarios = vi.fn()
-    const reviewAgain = vi.fn()
-    mount({
-      recents: [],
-      connected: false,
-      runStatus: {
-        run: {
-          runId: "run-guard-test",
-          reference: "project:guard-test",
-          definitionId: "guard-test",
-          definitionRevision: "a".repeat(64),
-          baseline: { type: "current" },
-          launch: { parameterValues: { seed: 77 }, baselineApplied: true },
-          state: "succeeded",
-          startedAt: "2026-08-07T14:31:42Z",
-          finishedAt: "2026-08-07T14:32:08Z",
-          currentProcess: false,
-          nextStep: 6,
-          totalSteps: 6,
-          initialSceneGeneration: 40,
-          sceneGeneration: 42,
-          steps: [],
-        }, runs: [], capacity: 20,
-      },
-      onOpenScenarios: openScenarios,
-      onReviewAgain: reviewAgain,
-    })
-
-    expect(root.querySelector(".home-latest-run")?.textContent).toContain("LAST RECEIVED")
-    expect(root.querySelector(".home-latest-run")?.textContent).toContain("project:guard-test")
-    expect(root.querySelector(".home-latest-run")?.textContent).toContain("SUCCEEDED")
-    expect(root.querySelector(".home-latest-run")?.textContent).toContain("6 / 6")
-    click('[data-home-run="run-guard-test"]')
-    expect(openScenarios).toHaveBeenCalledWith("latest-run", "run-guard-test")
-    click('[data-home-play="project:guard-test"]')
-    expect(reviewAgain).toHaveBeenCalledWith(expect.objectContaining({ runId: "run-guard-test", launch: { parameterValues: { seed: 77 }, baselineApplied: true } }))
-  })
-
-  it("offers useful empty-state destinations", () => {
-    const openScenarios = vi.fn()
-    mount({ recents: [], connected: true, runStatus: { run: null, runs: [], capacity: 20 }, onOpenScenarios: openScenarios })
+  it("offers a useful empty state", () => {
+    mount({ recents: [] })
 
     expect(root.querySelector(".home-recents")?.textContent).toContain("NO RECENT SURFACES")
-    expect(root.querySelector(".home-latest-run")?.textContent).toContain("NO DURABLE RUNS YET")
-    click("[data-home-open-scenarios]")
-    expect(openScenarios).toHaveBeenCalledWith("library")
+    expect(root.querySelector(".home-getting-started")?.textContent).toContain("searches every Workbench surface")
   })
 })
 

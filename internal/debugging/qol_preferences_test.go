@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestQoLCatalogSteppedDomainsAndScenarioExclusion(t *testing.T) {
+func TestCombatSpeedCatalogSteppedDomain(t *testing.T) {
 	catalog := NewInitialCatalog()
 	allowed := map[int]bool{50: true, 100: true, 150: true, 200: true, 300: true, 400: true,
 		600: true, 800: true, 1200: true, 1600: true, 2000: true}
@@ -21,19 +21,6 @@ func TestQoLCatalogSteppedDomainsAndScenarioExclusion(t *testing.T) {
 		} else {
 			require.Error(t, err)
 		}
-	}
-	for _, id := range []string{CommandCombatPresentationSpeedSet, CommandReduxConfirmQuickSaveSet, CommandReduxCombatHPBarsSet, CommandReduxActionPopupsSet} {
-		definition, exists := catalog.Get(id)
-		require.True(t, exists)
-		assert.True(t, definition.ScenarioExcluded)
-	}
-	for _, raw := range []string{"-1", "4", "1.5", "null", `"0"`} {
-		require.Error(t, catalog.ValidateRequest(Request{SessionID: "test", ID: "popups", CommandID: CommandReduxActionPopupsSet,
-			Arguments: map[string]json.RawMessage{"count": json.RawMessage(raw)}}))
-	}
-	for count := 0; count <= 3; count++ {
-		require.NoError(t, catalog.ValidateRequest(Request{SessionID: "test", ID: "popups", CommandID: CommandReduxActionPopupsSet,
-			Arguments: map[string]json.RawMessage{"count": json.RawMessage(strconv.Itoa(count))}}))
 	}
 }
 

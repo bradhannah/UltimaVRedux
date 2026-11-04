@@ -3,8 +3,7 @@ import { computed, ref, watch } from "vue"
 import { invalidateInstrumentReview, useInstrumentDraft } from "./instrument_session"
 
 import MoonPhaseGlyph from "./MoonPhaseGlyph.vue"
-import type { ScenarioComposerDraft } from "./scenarios"
-import { saveSlug, type SaveSnapshotDetail, type SaveSnapshotListData, type SaveSnapshotSummary, type SaveSource } from "./saves"
+import { saveSlug, type SaveSnapshotDetail, type SaveSnapshotListData, type SaveSource } from "./saves"
 
 const props = defineProps<{
   data?: SaveSnapshotListData
@@ -13,9 +12,6 @@ const props = defineProps<{
   pendingDetail: boolean
   pendingMutation: boolean
   currentScene?: { locationName: string; floor: number; date: string; time: string; partyMembers: number }
-  activeScenario?: ScenarioComposerDraft
-  activeScenarioDirty: boolean
-  loadReviewTarget?: { reference: string; revision: string; requestID: string }
 }>()
 
 const emit = defineEmits<{
@@ -24,8 +20,6 @@ const emit = defineEmits<{
   capture: [value: { source: "project" | "personal"; id: string; name: string; description: string }]
   load: [value: { reference: string; expectedRevision: string }]
   delete: [value: { reference: string; expectedRevision: string }]
-  useBaseline: [snapshot: SaveSnapshotSummary]
-  reviewTargetConsumed: []
 }>()
 
 const captureSource = useInstrumentDraft<"project" | "personal">("saves.source", "personal")
@@ -33,7 +27,7 @@ const captureName = useInstrumentDraft("saves.name", "")
 const captureID = useInstrumentDraft("saves.id", "")
 const captureDescription = useInstrumentDraft("saves.description", "")
 const slugEdited = useInstrumentDraft("saves.slugEdited", false)
-const review = ref<"load" | "delete" | "baseline">()
+const review = ref<"load" | "delete">()
 const reviewedSnapshot = ref<SaveSnapshotDetail>()
 invalidateInstrumentReview(() => { review.value = undefined; reviewedSnapshot.value = undefined })
 watch(review, (operation) => {
@@ -48,9 +42,6 @@ watch(() => `${props.detail?.summary.reference}:${props.detail?.summary.revision
   review.value = undefined
   confirmation.value = ""
 })
-watch(() => `${props.activeScenario?.source}:${props.activeScenario?.definition.id}:${props.activeScenario?.savedReference}`, () => {
-  if (review.value === "baseline") review.value = undefined
-})
 
 const groups = computed(() => (["project", "personal", "rollback"] as SaveSource[]).map((source) => ({
   source,
@@ -58,15 +49,8 @@ const groups = computed(() => (["project", "personal", "rollback"] as SaveSource
 })))
 const selected = computed(() => props.detail?.summary)
 const detail = computed(() => reviewedSnapshot.value ?? props.detail)
-watch([() => props.loadReviewTarget, () => props.detail], ([target, snapshot]) => {
-  if (!target || !snapshot || target.reference !== snapshot.summary.reference || target.revision !== snapshot.summary.revision) return
-  review.value = "load"
-  emit("reviewTargetConsumed")
-}, { immediate: true })
 const captureValid = computed(() => Boolean(captureName.value.trim() && captureID.value && props.data?.captureEligibility.canCapture))
 const deleteValid = computed(() => Boolean(selected.value && confirmation.value === selected.value.name && selected.value.eligibility.canDelete))
-const namedSnapshot = computed(() => selected.value?.source === "project" || selected.value?.source === "personal")
-const baselinePortable = computed(() => !props.activeScenario || props.activeScenario.source !== "project" || selected.value?.source === "project")
 
 function editSlug(value: string): void {
   slugEdited.value = true
@@ -83,7 +67,6 @@ function confirmReview(): void {
   if (!snapshot || props.pendingMutation || snapshot.reference !== selected.value?.reference || snapshot.revision !== selected.value?.revision) return
   if (review.value === "load" && snapshot.eligibility.canLoad) emit("load", { reference: snapshot.reference, expectedRevision: snapshot.revision })
   if (review.value === "delete" && deleteValid.value) emit("delete", { reference: snapshot.reference, expectedRevision: snapshot.revision })
-  if (review.value === "baseline" && baselinePortable.value) emit("useBaseline", snapshot)
   review.value = undefined
   confirmation.value = ""
 }
@@ -118,13 +101,10 @@ function confirmReview(): void {
             <div><dt>Date / Time</dt><dd>Y{{ detail.year }} M{{ detail.month }} D{{ detail.day }} · {{ String(detail.hour).padStart(2, '0') }}:{{ String(detail.minute).padStart(2, '0') }}</dd></div>
             <div><dt>Moon</dt><dd class="save-moon"><MoonPhaseGlyph :phase-index="detail.moonPhaseIndex" :label="detail.moonPhase" :size="24" /><span>{{ detail.moonPhase }}</span></dd></div>
           </dl>
-          <p v-if="detail.summary.referencedBy?.length" class="save-reference-warning"><strong>REFERENCED BY</strong> {{ detail.summary.referencedBy.join(' · ') }}. Delete is blocked while these scenarios use this baseline.</p>
           <div class="save-actions">
             <button type="button" :disabled="pendingMutation || !detail.summary.eligibility.canLoad || !detail.summary.compatibility.compatible" data-save-action="review-load" @click="review = 'load'">REVIEW &amp; LOAD</button>
-            <button v-if="namedSnapshot" type="button" :disabled="pendingMutation || !activeScenario || !baselinePortable" data-save-action="review-baseline" @click="review = 'baseline'">USE AS SCENARIO BASELINE</button>
             <button v-if="detail.summary.source !== 'rollback'" type="button" class="danger-button" :disabled="pendingMutation || !detail.summary.eligibility.canDelete" data-save-action="review-delete" @click="review = 'delete'; confirmation = ''">DELETE</button>
           </div>
-          <p v-if="!baselinePortable" class="disabled-reason">PROJECT SCENARIOS MAY ONLY USE PROJECT SNAPSHOT BASELINES.</p>
 
           <section v-if="review === 'load'" class="save-review" data-save-review="load">
             <header><strong>SCENE-BOUND LOAD REVIEW</strong><small>AUTOMATIC ROLLBACK WILL BE CAPTURED FIRST</small></header>
@@ -132,7 +112,6 @@ function confirmReview(): void {
             <footer><button type="button" @click="review = undefined">CANCEL</button><button type="button" data-save-action="confirm-load" @click="confirmReview">CAPTURE ROLLBACK &amp; LOAD</button></footer>
           </section>
           <section v-else-if="review === 'delete'" class="save-review danger" data-save-review="delete"><header><strong>REVISION-SAFE DELETE</strong><small>TYPE THE SNAPSHOT NAME</small></header><label>CONFIRM NAME<input v-model="confirmation" autocomplete="off" :placeholder="detail.summary.name" /></label><footer><button type="button" @click="review = undefined">CANCEL</button><button type="button" class="danger-button" :disabled="!deleteValid" data-save-action="confirm-delete" @click="confirmReview">DELETE REVIEWED REVISION</button></footer></section>
-          <section v-else-if="review === 'baseline'" class="save-review" data-save-review="baseline"><header><strong>SCENARIO BASELINE REVIEW</strong><small>{{ activeScenarioDirty ? 'ACTIVE DRAFT HAS UNSAVED CHANGES' : 'ACTIVE DRAFT' }}</small></header><p>Set <strong>{{ activeScenario?.definition.name }}</strong> to start from <code>{{ detail.summary.reference }}</code>. This changes only the active draft and must still be saved.</p><footer><button type="button" @click="review = undefined">CANCEL</button><button type="button" data-save-action="confirm-baseline" @click="confirmReview">USE REVIEWED SNAPSHOT</button></footer></section>
         </template>
         <p v-else class="empty-state">SELECT A CAPTURE TO INSPECT REVISION, GAME STATE, AND AVAILABLE OPERATIONS</p>
       </main>

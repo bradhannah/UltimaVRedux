@@ -1,6 +1,6 @@
 import type { Page, WebSocketRoute } from "@playwright/test"
 import initialCatalog from "../src/initial_catalog.fixture.json" with { type: "json" }
-import { sessionReady, successfulQueryCompletion, calendarStatusCompletion, scenarioStatusCompletion, inventoryLockerCompletion } from "../src/app_test_fixtures"
+import { sessionReady, successfulQueryCompletion, calendarStatusCompletion, testSetupStatusCompletion, inventoryLockerCompletion } from "../src/app_test_fixtures"
 
 interface Request { id: string; type: string; payload: { commandId: string; arguments: Record<string, unknown> } }
 
@@ -24,10 +24,9 @@ export async function mockWorkbench(page: Page) {
       const commandId = request.payload.commandId
       const complete = (data: object) => send(successfulQueryCompletion(request.id, commandId, `${commandId} synthetic result.`, data))
       if (commandId === "calendar.status") send(calendarStatusCompletion(request.id))
-      else if (commandId === "scenario.status") send(scenarioStatusCompletion(request.id))
+      else if (commandId === "test-setup.status") send(testSetupStatusCompletion(request.id))
       else if (commandId === "inventory.locker.status") send(inventoryLockerCompletion(request.id, "locker-1", 100))
       else if (commandId === "combat.status") complete({ active: false, monsters: [], party: [], forecast: [], monsterTypes: [] })
-      else if (commandId === "scenario.run.status") complete({ run: null, runs: [], capacity: 20 })
     })
   })
   return { send, executions: (commandId: string) => requests.filter((request) => request.payload.commandId === commandId) }

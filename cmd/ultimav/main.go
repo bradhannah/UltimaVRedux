@@ -82,10 +82,8 @@ func main() {
 	}
 }
 
-//nolint:cyclop,funlen,gocognit,gocyclo,maintidx,nestif // Ordered launch/recovery and diagnostic cleanup.
+//nolint:cyclop,funlen,gocognit,gocyclo,maintidx // Ordered launch/recovery and diagnostic cleanup.
 func runApplication() error {
-	var scenarioOptions scenarioStartupOptions
-	addScenarioFlags(&scenarioOptions)
 	var snapshotOptions snapshotStartupOptions
 	addSnapshotFlags(&snapshotOptions)
 	var playerSaveOptions playerSaveStartupOptions
@@ -182,85 +180,58 @@ func runApplication() error {
 	}
 	var initialScene Scene
 	var err error
-	if scenarioOptions.reference == "" {
-		startupError := errors.Join(startup.ConfigurationError, startup.OriginalDataError)
-		if startupError == nil {
-			startupError = originaldata.ValidateInstallation(
-				context.Background(),
-				gameConfig.SavedConfigData.DataFilePath,
-			)
+	startupError := errors.Join(startup.ConfigurationError, startup.OriginalDataError)
+	if startupError == nil {
+		startupError = originaldata.ValidateInstallation(
+			context.Background(),
+			gameConfig.SavedConfigData.DataFilePath,
+		)
+	}
+	if startupError == nil {
+		playable, loadErr := gameConfig.PlayableWithDataFilePath(gameConfig.SavedConfigData.DataFilePath)
+		if loadErr != nil {
+			startupError = loadErr
+		} else {
+			playable.SoundDisabled = *noSound
+			gameConfig = playable
 		}
-		if startupError == nil {
-			playable, loadErr := gameConfig.PlayableWithDataFilePath(gameConfig.SavedConfigData.DataFilePath)
-			if loadErr != nil {
-				startupError = loadErr
-			} else {
-				playable.SoundDisabled = *noSound
-				gameConfig = playable
-			}
+	}
+	if startupError == nil {
+		initialScene, err = CreateIntroMenuScene(gameConfig)
+		if err != nil {
+			startupError = err
 		}
-		if startupError == nil {
-			initialScene, err = CreateIntroMenuScene(gameConfig)
-			if err != nil {
-				startupError = err
-			}
+	}
+	if startupError != nil {
+		host, hostErr := originaldata.CurrentHostProfile()
+		if hostErr != nil {
+			// Application-level fatal: setup cannot offer deterministic host paths without a home or executable location.
+			return fmt.Errorf("resolving setup host: %w", hostErr)
 		}
-		if startupError != nil {
-			host, hostErr := originaldata.CurrentHostProfile()
-			if hostErr != nil {
-				// Application-level fatal: setup cannot offer deterministic host paths without a home or executable location.
-				return fmt.Errorf("resolving setup host: %w", hostErr)
-			}
-			initialScene = newDataSetupScene(
-				gameConfig,
-				startup.ConfigurationError,
-				startup.OriginalDataError,
-				host,
-				dataSetupFirstRun,
-				*noSound,
-				func(game *Game, playable *config.UltimaVConfiguration) error {
-					if err := game.ReplaceScene(func() (Scene, error) {
-						return CreateIntroMenuScene(playable)
-					}); err != nil {
-						return err
-					}
+		initialScene = newDataSetupScene(
+			gameConfig,
+			startup.ConfigurationError,
+			startup.OriginalDataError,
+			host,
+			dataSetupFirstRun,
+			*noSound,
+			func(game *Game, playable *config.UltimaVConfiguration) error {
+				if err := game.ReplaceScene(func() (Scene, error) {
+					return CreateIntroMenuScene(playable)
+				}); err != nil {
+					return err
+				}
 
-					return configureRuntimeServices(game, playerSaveOptions, snapshotOptions, scenarioOptions)
-				},
-				nil,
-			)
-		}
-	} else {
-		gameConfig, err = config.NewUltimaVConfiguration()
-		if err != nil {
-			// Application-level fatal: an explicitly requested scenario cannot enter interactive setup.
-			return fmt.Errorf("loading scenario configuration: %w", err)
-		}
-		gameConfig.SoundDisabled = *noSound
-		initialScene, err = NewGameScene(gameConfig)
-		if err != nil {
-			// Application-level fatal: an explicitly requested scenario requires a playable game scene.
-			return fmt.Errorf("creating scenario scene: %w", err)
-		}
-		// Direct original-save startup is a fresh application playthrough, not
-		// a property of the identity-free snapshot/legacy constructors.
-		metadata, identityErr := freshPlaythroughMetadata(newPlaythroughID)
-		if identityErr == nil {
-			identityErr = transferScenePlaythrough(initialScene, metadata)
-		}
-		if identityErr != nil {
-			if disposer, ok := initialScene.(sceneDisposer); ok {
-				disposer.Dispose()
-			}
-			// Application-level fatal: scenario startup requires a valid fresh playthrough identity.
-			return fmt.Errorf("creating scenario identity: %w", identityErr)
-		}
+				return configureRuntimeServices(game, playerSaveOptions, snapshotOptions)
+			},
+			nil,
+		)
 	}
 	game := NewGame(initialScene)
 	defer game.disposeActiveScene()
 	if _, setup := initialScene.(*dataSetupScene); !setup {
-		if err := configureRuntimeServices(game, playerSaveOptions, snapshotOptions, scenarioOptions); err != nil {
-			// Application-level fatal: an explicitly requested startup scenario cannot be configured or queued.
+		if err := configureRuntimeServices(game, playerSaveOptions, snapshotOptions); err != nil {
+			// Application-level fatal: runtime services cannot be configured.
 			return fmt.Errorf("configuring runtime services: %w", err)
 		}
 	}
@@ -324,22 +295,12 @@ func configureRuntimeServices(
 	game *Game,
 	playerSaveOptions playerSaveStartupOptions,
 	snapshotOptions snapshotStartupOptions,
-	scenarioOptions scenarioStartupOptions,
 ) error {
 	if err := configurePlayerSaveRepository(game, playerSaveOptions); err != nil {
 		logging.Errorf(logging.CategorySystem, "Player save repository unavailable: %v", err)
 	}
 	if err := configureSnapshotRepository(game, snapshotOptions); err != nil {
 		logging.Errorf(logging.CategorySystem, "Save snapshot repository unavailable: %v", err)
-	}
-	if err := configureScenarioRunner(game, scenarioOptions); err != nil {
-		logging.Errorf(logging.CategorySystem, "Scripted scenarios unavailable: %v", err)
-		if scenarioOptions.reference != "" {
-			return err
-		}
-	}
-	if err := submitStartupScenario(game, scenarioOptions); err != nil {
-		return err
 	}
 
 	return nil

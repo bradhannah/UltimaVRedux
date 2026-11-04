@@ -42,11 +42,10 @@ func presentationCommands() []CommandDefinition {
 		setBoolean(CommandSearchOverlaySet, "Set Search Overlay", "Show or hide authentic search locations in the game window.", []string{"command search overlay"}),
 		setBoolean(CommandMoongateOverlaySet, "Set Moongate Overlay", "Show or hide moonstone and moongate diagnostics in the game window.", []string{"moongate overlay"}),
 		{
-			ID: CommandCombatPresentationSpeedSet, Category: categoryReduxModifications, Name: "Set Combat Speed",
+			ID: CommandCombatPresentationSpeedSet, Category: categoryCombat, Name: "Set Combat Speed",
 			Description: "Persist master combat animation and action-pause speed. Higher values shorten presentation without changing combat rules.", Aliases: []string{"combat speed"},
 			Parameters:     []ParameterDefinition{{ID: "percent", Name: "Speed Percent", Kind: ParameterInteger, Required: true, Minimum: &minimumSpeed, Maximum: &maximumSpeed, Step: &step, Choices: speedChoices, ControlHint: controlHintNumber}},
 			ExecutionModes: []ExecutionMode{ExecutionPresentation}, Destructive: false,
-			ScenarioExcluded: true,
 		},
 	}
 }

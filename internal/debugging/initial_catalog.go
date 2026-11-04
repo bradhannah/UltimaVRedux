@@ -39,12 +39,8 @@ const (
 	CommandEnvironmentWindStatus = "environment.wind.status"
 	// CommandEnvironmentWindSet changes the current wind direction without consuming gameplay resources.
 	CommandEnvironmentWindSet = "environment.wind.set"
-	// CommandCombatMapCatalog reports available Britannia and dungeon combat maps.
-	CommandCombatMapCatalog = "combat.map-catalog.all"
 	// CommandLoggingStatus reports current categorized logging configuration.
 	CommandLoggingStatus = "logging.status"
-	// CommandShrineReferenceInspect reports static reference data for one shrine.
-	CommandShrineReferenceInspect = "shrine.reference.inspect"
 	// CommandShrineStatus reports reference and progression state for every shrine.
 	CommandShrineStatus = "shrine.status"
 	// CommandShrineProgressUpdate atomically changes one shrine's progression flags.
@@ -83,12 +79,6 @@ const (
 	CommandQuestItemRemove = "quest.item.remove"
 	// CommandWorldPositionStatus reports the current same-map coordinate space.
 	CommandWorldPositionStatus = "world.position.status"
-	// CommandMovementTeleport teleports the Avatar within the current map.
-	CommandMovementTeleport = "movement.teleport"
-	// CommandMovementEnterLocation transitions directly to one supported small-map entry point.
-	CommandMovementEnterLocation = "movement.enter-location"
-	// CommandMovementFloorSet transitions to one exact valid floor.
-	CommandMovementFloorSet = "movement.floor.set"
 	// CommandMovementLandmarkTravel transitions to a curated physical landmark.
 	CommandMovementLandmarkTravel = "movement.landmark.travel"
 	// CommandMoongateStatus reports moon phase, moonstones, and computed destination.
@@ -119,13 +109,6 @@ const (
 	CommandShipRepairFull = "ship.repair-full"
 	// CommandShipSkiffSet sets the exact number of skiffs attached to the current frigate.
 	CommandShipSkiffSet = "ship.skiff.set"
-
-	// CombatMapSectionAll selects both Britannia and dungeon combat maps.
-	CombatMapSectionAll = "all"
-	// CombatMapSectionBritannia selects Britannia combat maps.
-	CombatMapSectionBritannia = "britannia"
-	// CombatMapSectionDungeons selects dungeon combat maps.
-	CombatMapSectionDungeons = "dungeons"
 
 	// WindDirectionCalm is the stable serialized calm-wind identity.
 	WindDirectionCalm = "calm"
@@ -212,68 +195,12 @@ func NewInitialCatalog() *Catalog {
 			Destructive:    false,
 		},
 		{
-			ID:          CommandCombatMapCatalog,
-			Category:    categoryCombat,
-			Name:        "Combat Map Catalog",
-			Description: "List Britannia combat maps and dungeon room ranges.",
-			Aliases:     []string{"combat list", "combat list brit", "combat list dungeons"},
-			Parameters: []ParameterDefinition{
-				{
-					ID:          "section",
-					Name:        "Map Section",
-					Description: "Choose which combat-map family to list.",
-					Kind:        ParameterEnum,
-					Required:    false,
-					Default:     json.RawMessage(`"all"`),
-					Minimum:     nil,
-					Maximum:     nil,
-					Pattern:     "",
-					Choices: []Choice{
-						{Value: CombatMapSectionAll, Label: "All Maps", Metadata: nil},
-						{Value: CombatMapSectionBritannia, Label: "Britannia", Metadata: nil},
-						{Value: CombatMapSectionDungeons, Label: "Dungeons", Metadata: nil},
-					},
-					OptionsProvider: "",
-					ControlHint:     controlHintSelect,
-					Availability:    nil,
-				},
-			},
-			ExecutionModes: []ExecutionMode{ExecutionQuery},
-			Destructive:    false,
-		},
-		{
 			ID:             CommandLoggingStatus,
 			Category:       commandCategoryDiagnostics,
 			Name:           "Logging Status",
 			Description:    "Show global logging, level, output, and category state.",
 			Aliases:        []string{"debug status", "logging status"},
 			Parameters:     nil,
-			ExecutionModes: []ExecutionMode{ExecutionQuery},
-			Destructive:    false,
-		},
-		{
-			ID:          CommandShrineReferenceInspect,
-			Category:    categoryShrines,
-			Name:        "Shrine Reference",
-			Description: "Inspect static reference data for one virtue shrine.",
-			Aliases:     []string{"shrine data"},
-			Parameters: []ParameterDefinition{
-				{
-					ID:              parameterIndex,
-					Name:            "Shrine",
-					Description:     "Choose a virtue shrine.",
-					Kind:            ParameterEnum,
-					Required:        true,
-					Default:         json.RawMessage(`"0"`),
-					Minimum:         nil,
-					Maximum:         nil,
-					Pattern:         "",
-					Choices:         shrineChoices(),
-					OptionsProvider: "",
-					ControlHint:     controlHintSelect,
-					Availability:    nil,
-				},
-			},
 			ExecutionModes: []ExecutionMode{ExecutionQuery},
 			Destructive:    false,
 		},
@@ -379,15 +306,6 @@ func NewInitialCatalog() *Catalog {
 					OptionsProvider: OptionProviderActivePartyCharacters,
 					ControlHint:     controlHintSelect,
 					Availability:    []string{contextGameplay},
-					ScenarioChoices: []Choice{
-						{Value: "1", Label: "Party Position 1"},
-						{Value: "2", Label: "Party Position 2"},
-						{Value: "3", Label: "Party Position 3"},
-						{Value: "4", Label: "Party Position 4"},
-						{Value: "5", Label: "Party Position 5"},
-						{Value: "6", Label: "Party Position 6"},
-					},
-					ScenarioValueResolver: ScenarioValueResolverActivePartyPosition,
 				},
 				{
 					ID:              "strength",
@@ -532,7 +450,7 @@ func NewInitialCatalog() *Catalog {
 			ID: CommandPartyMaximizeLevels, Category: partyEquipmentCategory, Name: "Maximize Active Levels",
 			Description:    "Raise every reviewed active roster member to level eight and restore progression-derived resources.",
 			Aliases:        []string{"pc stats maxlevels"},
-			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true}},
+			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}}},
 			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
 		},
 		{
@@ -540,7 +458,7 @@ func NewInitialCatalog() *Catalog {
 			Description: "Atomically set an explicit status for one or a reviewed list of stable active roster indices.",
 			Aliases:     []string{"pc status"},
 			Parameters: []ParameterDefinition{
-				{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
+				{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
 				{ID: "rosterIndices", Name: "Active Roster Indices", Kind: ParameterIntegerList, Required: true, Minimum: &minimumRosterIndex, Maximum: &maximumRosterIndex},
 				{ID: "status", Name: "Status", Kind: ParameterEnum, Required: true, Choices: []Choice{{Value: "good", Label: "Good"}, {Value: "poisoned", Label: "Poisoned"}, {Value: "sleep", Label: "Sleep"}, {Value: "charmed", Label: "Charmed"}, {Value: "dead", Label: "Dead"}}, ControlHint: controlHintSelect},
 			},
@@ -550,7 +468,7 @@ func NewInitialCatalog() *Catalog {
 			ID: CommandPartyFill, Category: partyEquipmentCategory, Name: "Fill Active Party",
 			Description:    "Fill every open active-party position from the reviewed roster using authoritative composition rules.",
 			Aliases:        []string{"pc party fill"},
-			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true}},
+			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}}},
 			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
 		},
 		{
@@ -558,7 +476,7 @@ func NewInitialCatalog() *Catalog {
 			Description: "Add one reviewed inactive member by stable numeric roster index.",
 			Aliases:     []string{"pc party add"},
 			Parameters: []ParameterDefinition{
-				{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
+				{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
 				{ID: "rosterIndex", Name: "Roster Index", Kind: ParameterInteger, Required: true, Minimum: &minimumRosterIndex, Maximum: &maximumRosterIndex, ControlHint: controlHintNumber},
 			},
 			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
@@ -573,7 +491,7 @@ func NewInitialCatalog() *Catalog {
 	definitions = append(definitions, presentationCommands()...)
 	definitions = append(definitions, operationalCommands()...)
 	definitions = append(definitions, partyKarmaCommands()...)
-	definitions = append(definitions, scenarioCommands()...)
+	definitions = append(definitions, testSetupCommands()...)
 	definitions = append(definitions, thirdBatchCommands()...)
 	definitions = append(definitions, fourthBatchCommands()...)
 	definitions = append(definitions, fifthBatchCommands()...)
@@ -581,12 +499,9 @@ func NewInitialCatalog() *Catalog {
 	definitions = append(definitions, seventhBatchCommands()...)
 	definitions = append(definitions, saveSnapshotCommands()...)
 	definitions = append(definitions, partyEquipmentCommands()...)
-	definitions = append(definitions, reduxModificationCommands()...)
 	definitions = append(definitions, worldNavigatorCommands()...)
 	definitions = append(definitions, activeCombatDungeonRoomCommands()...)
 	definitions = append(definitions, merchantTesterCommands()...)
-	definitions = append(definitions, displayModeCommands()...)
-	definitions = append(definitions, scenarioRunCancelCommands()...)
 	applyCommandSearchTerms(definitions)
 	catalog, err := NewCatalog(definitions)
 	if err != nil {
@@ -599,32 +514,24 @@ func NewInitialCatalog() *Catalog {
 //nolint:goconst // Search vocabulary intentionally repeats player-facing terms across instruments.
 func applyCommandSearchTerms(definitions []CommandDefinition) {
 	terms := map[string][]string{
-		CommandWorldPositionStatus:                       {"teleport", "travel", "map", "location", "coordinates", "floor", "navigator"},
-		CommandWorldPositionSet:                          {"teleport", "travel", "map", "location", "coordinates", "floor", "navigator"},
-		CommandInventoryLockerStatus:                     {"items", "supplies", "food", "gold", "reagents", "potions", "scrolls", "equipment", "armory"},
-		CommandInventorySpellStatus:                      {"spells", "magic", "prepared", "light", "time stop", "duration", "incantations"},
-		CommandGuardsStatus:                              {"guards", "criminal", "wanted", "shadowlords", "death", "resurrection", "world diagnostics"},
-		CommandDisplayStatus:                             {"resolution", debugDisplayModeFullscreen, debugDisplayModeMaximized, "window", "screen", "display", "pending"},
-		CommandDisplayModeSet:                            {"resolution", debugDisplayModeFullscreen, debugDisplayModeMaximized, "window", "screen", "display"},
-		CommandDebugOptionsStatus:                        {"free move", "collision", "placeholders", "dialog bounds", "lighting overlay", "debug overlays", "unlimited casting", "spell level bypass"},
-		CommandLoggingStatus:                             {"logs", "console", "categories", "stdout", "verbosity", "logging"},
-		CommandMonsterEcosystemStatus:                    {"spawn", "enemies", "generation", "pirate", "whirlpool", "monsters"},
-		CommandCombatStatus:                              {"battle", "tactical", "monsters", "turn", "dex", "encounter", "combat"},
-		CommandSearchStatus:                              {"find", "nearby", "hidden", "secret", "item stacks", "search overlay"},
-		CommandPartyCharacterInspect:                     {"party", "characters", "stats", "hp", "mp", initialExperienceParameter, "roster", "karma"},
-		CommandPartyCharacterUpdate:                      {"party", "characters", "stats", "hp", "mp", initialExperienceParameter, "roster", "karma"},
-		CommandQuestItemStatus:                           {"artifacts", "shards", "quest inventory", "special items"},
-		CommandVehicleStatus:                             {"ships", "frigate", "skiff", "hull", "boat", "vehicle"},
-		CommandScenarioStatus:                            {"test setup", "reproduce", "camping", "death"},
-		CommandReduxModificationsStatus:                  {"redux", "deviation", "original behavior", "monster division", "splits", "dungeon", "discoveries", "visibility"},
-		CommandReduxCombatRepeatedMonsterDivisionSet:     {"redux", "combat", "slime", "gargoyle", "splits"},
-		CommandReduxDungeonsPersistHiddenDiscoveriesSet:  {"redux", "dungeon", "hidden door", "hidden pit", "persistence"},
-		CommandReduxDungeonsSubduedUnlitVisibilitySet:    {"redux", "dungeon", "darkness", "dim", "visibility"},
-		CommandReduxPresentationSmoothSurfaceMovementSet: {"redux", "presentation", "camera", "smooth", "movement"},
-		CommandReduxNavigationFlexibleSextantUseSet:      {"redux", "navigation", "sextant", "flexible"},
-		CommandMerchantTesterCatalog:                     {"merchant", "shop", "guild", "preview", "live", "tester"},
-		CommandMerchantTesterPreviewOpen:                 {"merchant", "shop", "guild", "preview", "tester"},
-		CommandMerchantTesterLiveOpen:                    {"merchant", "shop", "guild", "live", "tester"},
+		CommandWorldPositionStatus:       {"teleport", "travel", "map", "location", "coordinates", "floor", "navigator"},
+		CommandWorldPositionSet:          {"teleport", "travel", "map", "location", "coordinates", "floor", "navigator"},
+		CommandInventoryLockerStatus:     {"items", "supplies", "food", "gold", "reagents", "potions", "scrolls", "equipment", "armory"},
+		CommandInventorySpellStatus:      {"spells", "magic", "prepared", "light", "time stop", "duration", "incantations"},
+		CommandGuardsStatus:              {"guards", "criminal", "wanted", "shadowlords", "death", "resurrection", "world diagnostics"},
+		CommandDebugOptionsStatus:        {"free move", "collision", "placeholders", "dialog bounds", "lighting overlay", "debug overlays", "unlimited casting", "spell level bypass"},
+		CommandLoggingStatus:             {"logs", "console", "categories", "stdout", "verbosity", "logging"},
+		CommandMonsterEcosystemStatus:    {"spawn", "enemies", "generation", "pirate", "whirlpool", "monsters"},
+		CommandCombatStatus:              {"battle", "tactical", "monsters", "turn", "dex", "encounter", "combat"},
+		CommandSearchStatus:              {"find", "nearby", "hidden", "secret", "item stacks", "search overlay"},
+		CommandPartyCharacterInspect:     {"party", "characters", "stats", "hp", "mp", initialExperienceParameter, "roster", "karma"},
+		CommandPartyCharacterUpdate:      {"party", "characters", "stats", "hp", "mp", initialExperienceParameter, "roster", "karma"},
+		CommandQuestItemStatus:           {"artifacts", "shards", "quest inventory", "special items"},
+		CommandVehicleStatus:             {"ships", "frigate", "skiff", "hull", "boat", "vehicle"},
+		CommandTestSetupStatus:           {"test setup", "reproduce", "camping", "death"},
+		CommandMerchantTesterCatalog:     {"merchant", "shop", "guild", "preview", "live", "tester"},
+		CommandMerchantTesterPreviewOpen: {"merchant", "shop", "guild", "preview", "tester"},
+		CommandMerchantTesterLiveOpen:    {"merchant", "shop", "guild", "live", "tester"},
 	}
 	for index := range definitions {
 		definitions[index].SearchTerms = append([]string(nil), terms[definitions[index].ID]...)
@@ -666,8 +573,7 @@ func secondBatchToolCommands() []CommandDefinition {
 		},
 		{
 			ID: CommandCombatEncounterStart, Category: categoryCombat, Name: "Start Encounter",
-			Description:      "Validate, compose, and synchronously start a tactical encounter, or load a fixed dungeon room as authored.",
-			ScenarioTerminal: true,
+			Description: "Validate, compose, and synchronously start a tactical encounter, or load a fixed dungeon room as authored.",
 			Parameters: []ParameterDefinition{
 				{ID: "territory", Name: "Territory", Kind: ParameterEnum, Required: true, Choices: []Choice{{Value: "britannia", Label: "Britannia"}, {Value: "dungeon", Label: "Dungeon"}}, ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
 				{ID: "britanniaMap", Name: "Britannia Map", Kind: ParameterInteger, Minimum: &minimumMap, Maximum: &maximumMap, ControlHint: controlHintNumber},
@@ -789,8 +695,6 @@ func approvedToolCommands() []CommandDefinition {
 	maximumDay := 28
 	minimumQuantity := 1
 	maximumQuantity := 999
-	minimumFloor := -1
-	maximumFloor := references.DungeonFloorCount - 1
 
 	coordinateParameter := func(id, name string) ParameterDefinition {
 		return ParameterDefinition{
@@ -871,30 +775,6 @@ func approvedToolCommands() []CommandDefinition {
 			ExecutionModes: []ExecutionMode{ExecutionQuery},
 		},
 		{
-			ID: CommandMovementTeleport, Category: initialMovementCategory, Name: "Same-Map Teleport",
-			Description:    "Teleport to a validated coordinate on the current map without changing map or floor.",
-			Parameters:     []ParameterDefinition{coordinateParameter("x", "X"), coordinateParameter("y", "Y")},
-			ExecutionModes: []ExecutionMode{ExecutionSynchronized},
-		},
-		{
-			ID: CommandMovementEnterLocation, Category: initialMovementCategory, Name: "Enter Named Location",
-			Description: "Transition directly to a supported small-map entry point without simulating travel time.", Aliases: []string{"mv gos"},
-			Parameters: []ParameterDefinition{{
-				ID: "location", Name: "Location", Kind: ParameterEnum, Required: true,
-				Choices: smallMapLocationChoices(), ControlHint: controlHintSelect, Availability: []string{contextGameplay},
-			}},
-			ExecutionModes: []ExecutionMode{ExecutionSynchronized},
-		},
-		{
-			ID: CommandMovementFloorSet, Category: initialMovementCategory, Name: "Set Exact Floor",
-			Description: "Transition to one exact valid floor without climbing or advancing time.", Aliases: []string{"mv floor", "mv floor up", "mv floor down"},
-			Parameters: []ParameterDefinition{{
-				ID: "floor", Name: "Floor", Kind: ParameterInteger, Required: true,
-				Minimum: &minimumFloor, Maximum: &maximumFloor, ControlHint: controlHintNumber, Availability: []string{contextGameplay},
-			}},
-			ExecutionModes: []ExecutionMode{ExecutionSynchronized},
-		},
-		{
 			ID: CommandMovementLandmarkTravel, Category: initialMovementCategory, Name: "Travel to Landmark",
 			Description: "Transition to a curated shrine, quest, or Flame landmark without simulating travel time.", Aliases: []string{"mv special shrine"},
 			Parameters: []ParameterDefinition{{
@@ -909,15 +789,6 @@ func approvedToolCommands() []CommandDefinition {
 			ExecutionModes: []ExecutionMode{ExecutionQuery},
 		},
 	}
-}
-
-func smallMapLocationChoices() []Choice {
-	choices := make([]Choice, 0, int(references.SerpentsHold-references.Moonglow)+1)
-	for location := references.Moonglow; location <= references.SerpentsHold; location++ {
-		choices = append(choices, Choice{Value: strconv.Itoa(int(location)), Label: location.String(), Metadata: nil})
-	}
-
-	return choices
 }
 
 func worldLandmarkChoices() []Choice {

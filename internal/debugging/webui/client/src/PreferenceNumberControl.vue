@@ -6,8 +6,8 @@ import { useInstrumentDraft } from "./instrument_session"
 
 const props = defineProps<{ commandId: string; command?: CommandDefinition; value: number; disabled: boolean }>()
 const emit = defineEmits<{ apply: [argumentsByID: Record<string, string>] }>()
-// Number inputs implicitly coerce Vue v-model values. Keep raw DOM strings so
-// validation and retained drafts distinguish an empty field from explicit zero.
+// Keep raw DOM strings so retained drafts and validation see exactly what the
+// stepped selector holds.
 const draft = useInstrumentDraft<string>(`preference.${props.commandId}`, "")
 const previous = useInstrumentDraft<number | undefined>(`preference.${props.commandId}.previous`, undefined)
 const parameter = computed(() => props.command?.parameters?.[0])
@@ -25,10 +25,9 @@ function apply(): void {
 <template>
   <section class="instrument-setting" :data-preference="commandId">
     <div><strong>{{ command?.name }}</strong><p>{{ command?.description }}</p></div>
-    <select v-if="parameter?.choices?.length" :value="draft" @change="draft = ($event.target as HTMLSelectElement).value" :aria-label="command?.name" :disabled="disabled">
-      <option v-for="choice in parameter.choices" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
+    <select :value="draft" @change="draft = ($event.target as HTMLSelectElement).value" :aria-label="command?.name" :disabled="disabled">
+      <option v-for="choice in parameter?.choices ?? []" :key="choice.value" :value="choice.value">{{ choice.label }}</option>
     </select>
-    <input v-else :value="draft" @input="draft = ($event.target as HTMLInputElement).value" :aria-label="command?.name" type="number" :min="parameter?.minimum" :max="parameter?.maximum" :step="parameter?.step ?? 1" :disabled="disabled || !parameter" />
     <button type="button" :disabled="disabled || Boolean(error) || Number(draft) === value" @click="apply">APPLY {{ draft }}</button>
     <small v-if="error" role="status">{{ error }}</small>
   </section>

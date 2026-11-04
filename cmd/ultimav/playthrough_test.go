@@ -16,7 +16,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/debugging/scenarios"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -403,50 +402,6 @@ func TestWorkbenchCaptureLoadAndRollbackPreserveCheckpointMetadata(t *testing.T)
 	result = executeSnapshotTestCommand(t, game, debugging.CommandSaveSnapshotLoad, map[string]any{"reference": load.RollbackReference, "expectedRevision": load.RollbackRevision})
 	require.True(t, result.Success, result.ErrorMessage)
 	assert.Equal(t, source.playthrough, game.currentScene.(playthroughMetadataOwner).playthroughMetadata())
-}
-
-func TestScenarioFrozenAndFreshBaselinePlaythroughs(t *testing.T) {
-	for _, baseline := range []scenarios.BaselineType{scenarios.BaselineCurrent, scenarios.BaselineInit, scenarios.BaselineSnapshot} {
-		t.Run(string(baseline), func(t *testing.T) {
-			repository := newScenarioRunnerTestRepository(t)
-			definition := cancellationTestDefinition()
-			definition.Baseline = scenarios.Baseline{Type: baseline}
-			target := snapshotCommandTestRecord(t, "project:baseline", strings.Repeat("a", 64))
-			target.Envelope.Metadata.PlaythroughID = otherTestPlaythroughID
-			target.Envelope.Metadata.UserDescription = "Frozen note"
-			if baseline == scenarios.BaselineSnapshot {
-				definition.Baseline.Reference = target.Reference.String()
-			}
-			saveScenarioRunnerDefinition(t, repository, definition)
-			source := &scenarioRunnerTestScene{playthrough: playthroughMetadata{id: testPlaythroughID, userDescription: "Current note"}}
-			candidate := &scenarioRunnerTestScene{}
-			game := NewGame(source)
-			calls := 0
-			game.playthroughIDProvider = func() (string, error) { calls++; return otherTestPlaythroughID, nil }
-			snapshots := configureScenarioRunnerSnapshotRepository(game)
-			snapshots.records[target.Reference.String()] = target
-			game.ConfigureSnapshotRepository(snapshots, func(*config.UltimaVConfiguration, save_snapshot.SaveSnapshot) (Scene, error) { return candidate, nil })
-			game.ConfigureScenarioRunner(repository, func() (Scene, error) { return candidate, nil })
-			result := game.ExecuteLocalDebugCommand(scenarioRunnerStartRequest(t, game, repository, "project:cancel"))
-			require.True(t, result.Success, result.ErrorMessage)
-			target.Envelope.Metadata.UserDescription = "Changed after review"
-			target.Envelope.Metadata.PlaythroughID = testPlaythroughID
-			snapshots.records[target.Reference.String()] = target
-			require.NoError(t, game.Update())
-			switch baseline {
-			case scenarios.BaselineCurrent:
-				assert.Same(t, source, game.currentScene)
-				assert.Equal(t, "Current note", source.playthrough.userDescription)
-				assert.Zero(t, calls)
-			case scenarios.BaselineSnapshot:
-				assert.Equal(t, playthroughMetadata{id: otherTestPlaythroughID, userDescription: "Frozen note"}, candidate.playthrough)
-				assert.Zero(t, calls)
-			case scenarios.BaselineInit:
-				assert.Equal(t, playthroughMetadata{id: otherTestPlaythroughID}, candidate.playthrough)
-				assert.Equal(t, 1, calls)
-			}
-		})
-	}
 }
 
 func TestNewGameIdentityFailureAndNestedSaveRetriesRetainPreparedPayload(t *testing.T) {

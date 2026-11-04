@@ -19,9 +19,6 @@ const (
 	ParameterEquipment   ParameterKind = "equipment"
 )
 
-// ScenarioValueResolverActivePartyPosition replaces a planned party position with a live command value.
-const ScenarioValueResolverActivePartyPosition = "active-party-position"
-
 // ExecutionMode describes how a command interacts with live game state.
 type ExecutionMode string
 
@@ -60,38 +57,33 @@ type DiscoverySnapshot struct {
 
 // ParameterDefinition describes one typed command argument.
 type ParameterDefinition struct {
-	ID                    string          `json:"id"`
-	Name                  string          `json:"name"`
-	Description           string          `json:"description,omitempty"`
-	Kind                  ParameterKind   `json:"kind"`
-	Required              bool            `json:"required"`
-	Default               json.RawMessage `json:"default,omitempty"`
-	Minimum               *int            `json:"minimum,omitempty"`
-	Maximum               *int            `json:"maximum,omitempty"`
-	Step                  *int            `json:"step,omitempty"`
-	Pattern               string          `json:"pattern,omitempty"`
-	Choices               []Choice        `json:"choices,omitempty"`
-	OptionsProvider       string          `json:"optionsProvider,omitempty"`
-	ControlHint           string          `json:"controlHint,omitempty"`
-	Availability          []string        `json:"availability,omitempty"`
-	ScenarioRuntime       bool            `json:"scenarioRuntime,omitempty"`
-	ScenarioChoices       []Choice        `json:"scenarioChoices,omitempty"`
-	ScenarioValueResolver string          `json:"scenarioValueResolver,omitempty"`
+	ID              string          `json:"id"`
+	Name            string          `json:"name"`
+	Description     string          `json:"description,omitempty"`
+	Kind            ParameterKind   `json:"kind"`
+	Required        bool            `json:"required"`
+	Default         json.RawMessage `json:"default,omitempty"`
+	Minimum         *int            `json:"minimum,omitempty"`
+	Maximum         *int            `json:"maximum,omitempty"`
+	Step            *int            `json:"step,omitempty"`
+	Pattern         string          `json:"pattern,omitempty"`
+	Choices         []Choice        `json:"choices,omitempty"`
+	OptionsProvider string          `json:"optionsProvider,omitempty"`
+	ControlHint     string          `json:"controlHint,omitempty"`
+	Availability    []string        `json:"availability,omitempty"`
 }
 
 // CommandDefinition is the authoritative discovery schema for a logical command.
 type CommandDefinition struct {
-	ID               string                `json:"id"`
-	Category         string                `json:"category"`
-	Name             string                `json:"name"`
-	Description      string                `json:"description"`
-	Aliases          []string              `json:"aliases,omitempty"`
-	SearchTerms      []string              `json:"searchTerms,omitempty"`
-	Parameters       []ParameterDefinition `json:"parameters,omitempty"`
-	ExecutionModes   []ExecutionMode       `json:"executionModes"`
-	Destructive      bool                  `json:"destructive"`
-	ScenarioTerminal bool                  `json:"scenarioTerminal,omitempty"`
-	ScenarioExcluded bool                  `json:"scenarioExcluded,omitempty"`
+	ID             string                `json:"id"`
+	Category       string                `json:"category"`
+	Name           string                `json:"name"`
+	Description    string                `json:"description"`
+	Aliases        []string              `json:"aliases,omitempty"`
+	SearchTerms    []string              `json:"searchTerms,omitempty"`
+	Parameters     []ParameterDefinition `json:"parameters,omitempty"`
+	ExecutionModes []ExecutionMode       `json:"executionModes"`
+	Destructive    bool                  `json:"destructive"`
 }
 
 // Request is an immutable command invocation submitted to the update thread.
@@ -291,7 +283,6 @@ type SaveSnapshotSummary struct {
 	Revision      string                    `json:"revision"`
 	Compatibility SaveSnapshotCompatibility `json:"compatibility"`
 	Eligibility   SaveSnapshotEligibility   `json:"eligibility"`
-	ReferencedBy  []string                  `json:"referencedBy,omitempty"`
 }
 
 // SaveSnapshotDetail adds a compact review projection without exposing the full snapshot.
@@ -385,41 +376,6 @@ type ActiveSpellEffectData struct {
 type SpellEffectsData struct {
 	MagicLight  MagicLightEffectData  `json:"magicLight"`
 	ActiveSpell ActiveSpellEffectData `json:"activeSpell"`
-}
-
-// ReduxModificationsStatusData is the typed persisted Redux-rules payload.
-type ReduxModificationsStatusData struct {
-	ConfigurationDiagnostics []string                           `json:"configurationDiagnostics,omitempty"`
-	ConfigurationEditing     bool                               `json:"configurationEditing"`
-	ConfirmQuickSave         bool                               `json:"confirmQuickSave"`
-	Combat                   ReduxCombatModificationsData       `json:"combat"`
-	Dungeons                 ReduxDungeonModificationsData      `json:"dungeons"`
-	Presentation             ReduxPresentationModificationsData `json:"presentation"`
-	Navigation               ReduxNavigationModificationsData   `json:"navigation"`
-}
-
-// ReduxNavigationModificationsData reports optional sextant navigation policy.
-type ReduxNavigationModificationsData struct {
-	FlexibleSextantUse bool `json:"flexibleSextantUse"`
-}
-
-// ReduxPresentationModificationsData reports optional camera presentation choices.
-type ReduxPresentationModificationsData struct {
-	SmoothSurfaceMovement  bool `json:"smoothSurfaceMovement"`
-	MaxVisibleActionPopups int  `json:"maxVisibleActionPopups"`
-}
-
-// ReduxCombatModificationsData reports Redux combat behavior choices.
-type ReduxCombatModificationsData struct {
-	AllowRepeatedMonsterDivision bool `json:"allowRepeatedMonsterDivision"`
-	SpeedPercent                 int  `json:"speedPercent"`
-	ShowHealthBars               bool `json:"showHealthBars"`
-}
-
-// ReduxDungeonModificationsData reports Redux dungeon persistence and presentation choices.
-type ReduxDungeonModificationsData struct {
-	PersistHiddenDungeonDiscoveries bool `json:"persistHiddenDungeonDiscoveries"`
-	ShowSubduedUnlitDungeons        bool `json:"showSubduedUnlitDungeons"`
 }
 
 // NewNormalizedInvocation snapshots a catalog-normalized request without transport ownership fields.

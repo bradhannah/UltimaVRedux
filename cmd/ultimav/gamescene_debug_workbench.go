@@ -18,12 +18,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-var (
-	errScenarioPartyPositionRequired = errors.New("a non-empty party position is required")
-	errScenarioPartyPositionInvalid  = errors.New("invalid party position")
-	errScenarioPartyPositionEmpty    = errors.New("party position is not occupied")
-)
-
 const (
 	activeCharacterTokenPartCount = 2
 	allActivePartyValue           = "all"
@@ -86,23 +80,6 @@ type debugWorkbenchState interface {
 
 type windStatusResult struct {
 	Direction string `json:"direction"`
-}
-
-type combatMapSummary struct {
-	Index int    `json:"index"`
-	Name  string `json:"name"`
-}
-
-type dungeonCombatSummary struct {
-	Index       int    `json:"index"`
-	Name        string `json:"name"`
-	RoomMinimum int    `json:"roomMinimum"`
-	RoomMaximum int    `json:"roomMaximum"`
-}
-
-type combatMapCatalogResult struct {
-	Britannia []combatMapSummary     `json:"britannia"`
-	Dungeons  []dungeonCombatSummary `json:"dungeons"`
 }
 
 type loggingStatusResult struct {
@@ -490,70 +467,6 @@ func (g *GameScene) ExecuteDebugCommand(request debugging.Request) debugging.Res
 	return initialDebugCommandRegistry.executeScene(g, request)
 }
 
-// ResolveScenarioRuntimeParameters supplies transient preconditions immediately before a scenario step executes.
-func (g *GameScene) ResolveScenarioRuntimeParameters(
-	request debugging.Request,
-	definition debugging.CommandDefinition,
-) (debugging.Request, error) {
-	arguments := make(map[string]json.RawMessage, len(request.Arguments)+1)
-	for id, value := range request.Arguments {
-		arguments[id] = append(json.RawMessage(nil), value...)
-	}
-	request.Arguments = arguments
-	for _, parameter := range definition.Parameters {
-		if parameter.ScenarioValueResolver != debugging.ScenarioValueResolverActivePartyPosition {
-			continue
-		}
-		value, err := resolveScenarioPartyPosition(request.Arguments[parameter.ID], g.gameState.ActivePartyCharacters())
-		if err != nil {
-			return request, fmt.Errorf("scenario argument %q: %w", parameter.ID, err)
-		}
-		request.Arguments[parameter.ID] = value
-	}
-	registration, ok := initialDebugCommandRegistry.lookup(request.CommandID)
-	if !ok {
-		return request, fmt.Errorf("%w: %q", errDebugCommandNotRegistered, request.CommandID)
-	}
-	if registration.runtimeResolver != nil {
-		return registration.runtimeResolver(g, request)
-	}
-
-	return request, nil
-}
-
-func resolveScenarioPartyPosition(
-	raw json.RawMessage,
-	characters []game_state.ActiveCharacterSnapshot,
-) (json.RawMessage, error) {
-	var position string
-	if err := json.Unmarshal(raw, &position); err != nil || position == "" {
-		return nil, errScenarioPartyPositionRequired
-	}
-	if position == allActivePartyValue {
-		return mustDebugJSON(position), nil
-	}
-	positionNumber, err := strconv.Atoi(position)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %q", errScenarioPartyPositionInvalid, position)
-	}
-	for _, character := range characters {
-		if character.Slot+1 == positionNumber {
-			return mustDebugJSON(activeCharacterToken(character.Slot, character.Name)), nil
-		}
-	}
-
-	return nil, fmt.Errorf("%w: %d", errScenarioPartyPositionEmpty, positionNumber)
-}
-
-// PreserveScenarioAvatarName restores player identity after loading the unnamed INIT baseline.
-func (g *GameScene) PreserveScenarioAvatarName(name string) error {
-	if err := g.gameState.SetAvatarName(name); err != nil {
-		return fmt.Errorf("preserving scenario Avatar name: %w", err)
-	}
-
-	return nil
-}
-
 //nolint:maintidx // Explicit command dispatch keeps each stable wire ID adjacent to its authority call and result mapping.
 func executeDebugCommand(gameState debugWorkbenchState, request debugging.Request) debugging.Result {
 	switch request.CommandID {
@@ -712,8 +625,6 @@ func executeDebugCommand(gameState debugWorkbenchState, request debugging.Reques
 		return executeQuestItemMutation(request, concreteDebugGameState(gameState), false)
 	case debugging.CommandWorldPositionStatus:
 		return executeWorldPositionStatus(request, concreteDebugGameState(gameState))
-	case debugging.CommandMovementTeleport:
-		return executeMovementTeleport(request, concreteDebugGameState(gameState))
 	case debugging.CommandMoongateStatus:
 		return executeMoongateStatus(request, concreteDebugGameState(gameState))
 	case debugging.CommandInventoryLockerStatus,
@@ -1108,25 +1019,6 @@ func newWorldPositionResult(state *game_state.GameState) worldPositionResult {
 	return result
 }
 
-func executeMovementTeleport(request debugging.Request, state *game_state.GameState) debugging.Result {
-	x := mustDebugIntegerArgument(request, "x")
-	y := mustDebugIntegerArgument(request, "y")
-	change, err := state.TeleportPlayerOnCurrentMap(x, y)
-	if err != nil {
-		return debugging.FailureResult(request, "invalid_teleport_position", err.Error())
-	}
-	result := debugSuccessResultWithMode(
-		request,
-		debugging.ExecutionSynchronized,
-		"Player teleported within the current map.",
-		newWorldPositionResult(state),
-	)
-	appendSemanticChange(&result.Changes, "world.position.x", change.Before.X, change.After.X)
-	appendSemanticChange(&result.Changes, "world.position.y", change.Before.Y, change.After.Y)
-
-	return result
-}
-
 func executeMoongateStatus(request debugging.Request, state *game_state.GameState) debugging.Result {
 	return executeMoongateStatusWithOverlay(request, state, false)
 }
@@ -1438,38 +1330,7 @@ func executeApplicationDebugCommand(
 	request debugging.Request,
 	configuration *config.UltimaVConfiguration,
 ) (debugging.Result, bool) {
-	if result, handled := executeReduxModificationsDebugCommand(request, configuration); handled {
-		return result, true
-	}
-
 	switch request.CommandID {
-	case debugging.CommandCombatMapCatalog:
-		section := mustDebugStringArgument(request, "section")
-		catalog := combatMapCatalogResult{
-			Britannia: make([]combatMapSummary, 0, references.TotalCombatMaps),
-			Dungeons:  make([]dungeonCombatSummary, 0, references.MaxDungeonCombatIndex+1),
-		}
-		if section != debugging.CombatMapSectionDungeons {
-			for mapIndex := range references.TotalCombatMaps {
-				combatMap := references.NewCombatMapReference(mapIndex, references.BritanniaCombatTerritory)
-				catalog.Britannia = append(catalog.Britannia, combatMapSummary{
-					Index: mapIndex,
-					Name:  combatMap.MapName,
-				})
-			}
-		}
-		if section != debugging.CombatMapSectionBritannia {
-			for dungeonIndex, dungeonName := range references.DungeonNames() {
-				catalog.Dungeons = append(catalog.Dungeons, dungeonCombatSummary{
-					Index:       dungeonIndex,
-					Name:        dungeonName,
-					RoomMinimum: 0,
-					RoomMaximum: references.MaxDungeonRooms - 1,
-				})
-			}
-		}
-
-		return debugSuccessResult(request, "Combat map catalog loaded: "+section+".", catalog), true
 	case debugging.CommandLoggingStatus:
 		return debugSuccessResult(request, "Logging status loaded.", newLoggingStatusResult()), true
 	case debugging.CommandLoggingEnabledSet:
@@ -1536,29 +1397,6 @@ func executeApplicationDebugCommand(
 		}
 
 		return result, true
-	case debugging.CommandShrineReferenceInspect:
-		shrineIndex, err := strconv.Atoi(mustDebugStringArgument(request, "index"))
-		if err != nil {
-			panic(fmt.Sprintf("validated shrine index is not numeric: %v", err))
-		}
-		shrine := game_state.GetShrineData(shrineIndex)
-		if shrine == nil {
-			panic(fmt.Sprintf("validated shrine index %d has no reference data", shrineIndex))
-		}
-
-		return debugSuccessResult(request, "Shrine reference loaded: "+shrine.VirtueName+".", shrineReferenceResult{
-			Index:       shrine.Index,
-			VirtueName:  shrine.VirtueName,
-			VirtueKey:   shrine.VirtueKey,
-			Mantra:      shrine.Mantra,
-			WordOfPower: shrine.WordOfPower,
-			WorldX:      shrine.WorldX,
-			WorldY:      shrine.WorldY,
-			StrBonus:    shrine.StrBonus,
-			DexBonus:    shrine.DexBonus,
-			IntBonus:    shrine.IntBonus,
-			KarmaBonus:  shrine.KarmaBonus(),
-		}), true
 	default:
 		var empty debugging.Result
 

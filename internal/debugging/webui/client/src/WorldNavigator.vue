@@ -584,7 +584,7 @@ function apply(): void {
           <button type="button" :disabled="!landmarkDraft || pendingLandmark" @click="emit('travelLandmark', landmarkDraft)">{{ pendingLandmark ? 'TRAVELLING...' : 'SET UP' }}</button>
           <small>Physical shrines, quest landmarks, and usable positions directly south of each blue Flame. Spirituality still requires its moongate.</small>
         </div>
-        <div><span>WATERFALL</span><button type="button" disabled>DEFERRED</button><small>The authentic two-tile hazard sequence remains scenario-owned.</small></div>
+        <div><span>WATERFALL</span><button type="button" disabled>DEFERRED</button><small>The authentic two-tile hazard sequence is not implemented.</small></div>
       </section>
     </template>
     <p v-else class="empty-state">WAITING FOR WORLD POSITION</p>

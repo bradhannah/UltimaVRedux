@@ -30,27 +30,25 @@ func partyEquipmentCommands() []CommandDefinition {
 		})
 	}
 	parameters = append(parameters, ParameterDefinition{
-		ID:              inventoryExpectedSnapshotID,
-		Name:            "Expected Equipment State",
-		Description:     "Complete carried-inventory and roster-loadout fingerprint reviewed before execution.",
-		Kind:            ParameterString,
-		Required:        true,
-		ControlHint:     activeCombatTextControlHint,
-		Availability:    []string{contextGameplay},
-		ScenarioRuntime: true,
+		ID:           inventoryExpectedSnapshotID,
+		Name:         "Expected Equipment State",
+		Description:  "Complete carried-inventory and roster-loadout fingerprint reviewed before execution.",
+		Kind:         ParameterString,
+		Required:     true,
+		ControlHint:  activeCombatTextControlHint,
+		Availability: []string{contextGameplay},
 	})
 
 	return []CommandDefinition{{
-		ID:               CommandPartyEquipmentLoadoutUpdate,
-		Category:         partyEquipmentCategory,
-		Name:             "Equipment Loadout",
-		Description:      "Atomically change one or more equipment slots for one or all active party members using carried or explicitly manufactured items.",
-		Aliases:          []string{"ready equipment", "party loadout"},
-		SearchTerms:      []string{"weapon", "armour", "armor", "shield", "helm", "ring", partyEquipmentAmuletID},
-		Parameters:       parameters,
-		ExecutionModes:   []ExecutionMode{ExecutionAlteration},
-		Destructive:      true,
-		ScenarioTerminal: false,
+		ID:             CommandPartyEquipmentLoadoutUpdate,
+		Category:       partyEquipmentCategory,
+		Name:           "Equipment Loadout",
+		Description:    "Atomically change one or more equipment slots for one or all active party members using carried or explicitly manufactured items.",
+		Aliases:        []string{"ready equipment", "party loadout"},
+		SearchTerms:    []string{"weapon", "armour", "armor", "shield", "helm", "ring", partyEquipmentAmuletID},
+		Parameters:     parameters,
+		ExecutionModes: []ExecutionMode{ExecutionAlteration},
+		Destructive:    true,
 	}}
 }
 
@@ -64,16 +62,6 @@ func partyEquipmentCharacterParameter() ParameterDefinition {
 		OptionsProvider: OptionProviderEquipmentLoadoutTargets,
 		ControlHint:     controlHintSelect,
 		Availability:    []string{contextGameplay},
-		ScenarioChoices: []Choice{
-			{Value: "all", Label: "All active party members"},
-			{Value: "1", Label: "Party Position 1"},
-			{Value: "2", Label: "Party Position 2"},
-			{Value: "3", Label: "Party Position 3"},
-			{Value: "4", Label: "Party Position 4"},
-			{Value: "5", Label: "Party Position 5"},
-			{Value: "6", Label: "Party Position 6"},
-		},
-		ScenarioValueResolver: ScenarioValueResolverActivePartyPosition,
 	}
 }
 

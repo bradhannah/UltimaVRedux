@@ -54,10 +54,7 @@
         "choices": true,
         "optionsProvider": true,
         "controlHint": true,
-        "availability": true,
-        "scenarioRuntime": true,
-        "scenarioChoices": true,
-        "scenarioValueResolver": true
+        "availability": true
       }
     },
     "CommandDefinition": {
@@ -72,9 +69,7 @@
       "optional": {
         "aliases": true,
         "searchTerms": true,
-        "parameters": true,
-        "scenarioTerminal": true,
-        "scenarioExcluded": true
+        "parameters": true
       }
     },
     "CommandInvocation": {

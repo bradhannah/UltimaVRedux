@@ -3,7 +3,7 @@ package debugging
 import "encoding/json"
 
 const (
-	categoryScenarios = "Scenarios"
+	categoryTestSetups = "Test Setups"
 	// CommandTestHoleUp queues the production camping workflow with explicit test branches.
 	CommandTestHoleUp = "command-test.hole-up"
 	// CommandTestSearch queues the production map-specific Search action.
@@ -18,14 +18,14 @@ func thirdBatchCommands() []CommandDefinition {
 
 	return []CommandDefinition{
 		{
-			ID: CommandTestHoleUp, Category: categoryScenarios, Name: "Test Hole Up",
+			ID: CommandTestHoleUp, Category: categoryTestSetups, Name: "Test Hole Up",
 			Description: "Queue production camping with explicit wanderer and ambush branches against a reviewed party roster.",
 			Aliases:     []string{"command holeup"},
 			Parameters: []ParameterDefinition{
 				{ID: "hours", Name: "Hours", Kind: ParameterInteger, Required: true, Minimum: &minimumHours, Maximum: &maximumHours, ControlHint: controlHintNumber, Availability: []string{contextGameplay}},
 				{ID: "forceWanderer", Name: "Force Wanderer", Kind: ParameterBoolean, Required: false, Default: json.RawMessage(`false`), Availability: []string{contextGameplay}},
 				{ID: "forceAmbush", Name: "Force Ambush", Kind: ParameterBoolean, Required: false, Default: json.RawMessage(`false`), Availability: []string{contextGameplay}},
-				{ID: "expectedPartyFingerprint", Name: "Reviewed Party", Kind: ParameterString, Required: true, Availability: []string{contextGameplay}, ScenarioRuntime: true},
+				{ID: "expectedPartyFingerprint", Name: "Reviewed Party", Kind: ParameterString, Required: true, Availability: []string{contextGameplay}},
 				{ID: "guardRosterIndex", Name: "Guard Roster Index", Description: "Optional stable active-party roster index.", Kind: ParameterInteger, Required: false, Minimum: &minimumRosterIndex, Maximum: &maximumRosterIndex, ControlHint: controlHintNumber, Availability: []string{contextGameplay}},
 			},
 			ExecutionModes: []ExecutionMode{ExecutionWorkflow}, Destructive: false,

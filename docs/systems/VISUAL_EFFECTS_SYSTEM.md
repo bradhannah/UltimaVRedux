@@ -875,8 +875,7 @@ This is a repeatable inspection procedure, not a record of manual acceptance.
    At an eligible quiescent boundary, Workbench Discard Active Encounter can
    separately inspect teardown. It is not a way to interrupt an input-owning
    effect mid-animation. Mid-phase shutdown and replacement are covered by the
-   automated lifecycle tests below; scenario Cancel does not cancel gameplay
-   workflows. Audio listening requires populated manifest recordings.
+   automated lifecycle tests below. Audio listening requires populated manifest recordings.
 6. Open a multi-item combat chest and compare each temporary icon with its
    discovery description. Acknowledge with a fresh Enter/Escape, wait several
    seconds, then pick up items one at a time: persistent pile display must stay

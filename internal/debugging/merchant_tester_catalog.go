@@ -35,13 +35,12 @@ func merchantTesterCommands() []CommandDefinition {
 			ID: CommandMerchantTesterCatalog, Category: categoryMerchantTester, Name: "Merchant Tester",
 			Description: "Inspect all canonical merchants and current Preview and Live launch availability.",
 			Aliases:     []string{"merchant catalog", "shop tester"}, ExecutionModes: []ExecutionMode{ExecutionQuery},
-			ScenarioExcluded: true,
 		},
 		{
 			ID: CommandMerchantTesterPreviewOpen, Category: categoryMerchantTester, Name: "Open Merchant Preview",
 			Description: "Open the production merchant presentation and stop before transaction authority.",
 			Aliases:     []string{"merchant preview", "shop preview"}, Parameters: []ParameterDefinition{merchantParameter},
-			ExecutionModes: []ExecutionMode{ExecutionWorkflow}, ScenarioExcluded: true,
+			ExecutionModes: []ExecutionMode{ExecutionWorkflow},
 		},
 		{
 			ID: CommandMerchantTesterLiveOpen, Category: categoryMerchantTester, Name: "Open Live Merchant Session",
@@ -56,7 +55,6 @@ func merchantTesterCommands() []CommandDefinition {
 				{ID: "expectedSourceFingerprint", Name: "Reviewed Source Fingerprint", Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
 			},
 			ExecutionModes: []ExecutionMode{ExecutionWorkflow, ExecutionAlteration}, Destructive: true,
-			ScenarioExcluded: true,
 		},
 	}
 }

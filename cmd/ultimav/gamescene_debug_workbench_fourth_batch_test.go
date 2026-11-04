@@ -113,7 +113,6 @@ func TestDebugRitualStateMutationsAreBlockedDuringGameplayWorkflow(t *testing.T)
 	for _, commandID := range []string{
 		debugging.CommandQuestItemEnsure,
 		debugging.CommandQuestItemRemove,
-		debugging.CommandMovementTeleport,
 	} {
 		result := scene.ExecuteDebugCommand(debugging.Request{CommandID: commandID})
 

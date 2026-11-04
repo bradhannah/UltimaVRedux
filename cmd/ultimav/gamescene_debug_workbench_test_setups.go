@@ -2,10 +2,9 @@ package main
 
 import (
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 )
 
-type scenarioStatusResult struct {
+type testSetupStatusResult struct {
 	PartyFingerprint       string                      `json:"partyFingerprint"`
 	WipeReview             activePartyWipeReviewResult `json:"wipeReview"`
 	LocationID             int                         `json:"locationId"`
@@ -25,23 +24,15 @@ type scenarioStatusResult struct {
 	Party                  []activeCharacterResult     `json:"party"`
 }
 
-func (g *GameScene) executeScenarioDebugCommand(request debugging.Request) (debugging.Result, bool) {
-	if request.CommandID != debugging.CommandScenarioStatus {
+func (g *GameScene) executeTestSetupDebugCommand(request debugging.Request) (debugging.Result, bool) {
+	if request.CommandID != debugging.CommandTestSetupStatus {
 		return debugging.Result{}, false
 	}
 
-	return debugSuccessResult(request, "Scenario Lab status loaded.", newScenarioStatusResult(g)), true
+	return debugSuccessResult(request, "Test setup status loaded.", newTestSetupStatusResult(g)), true
 }
 
-func appendWorldSetupChanges(changes *[]debugging.StateChange, operation game_state.WorldSetupResult) {
-	appendSemanticChange(changes, "world.locationId", int(operation.Before.Location), int(operation.After.Location))
-	appendSemanticChange(changes, "world.floor", int(operation.Before.Floor), int(operation.After.Floor))
-	appendSemanticChange(changes, "world.position.x", int(operation.Before.Position.X), int(operation.After.Position.X))
-	appendSemanticChange(changes, "world.position.y", int(operation.Before.Position.Y), int(operation.After.Position.Y))
-	appendSemanticChange(changes, "effects.smashed", operation.SmashedBefore, operation.SmashedAfter)
-}
-
-func newScenarioStatusResult(scene *GameScene) scenarioStatusResult {
+func newTestSetupStatusResult(scene *GameScene) testSetupStatusResult {
 	state := scene.gameState
 	location := state.MapState.PlayerLocation
 	characters := state.ActivePartyCharacters()
@@ -50,7 +41,7 @@ func newScenarioStatusResult(scene *GameScene) scenarioStatusResult {
 		party = append(party, newActiveCharacterResult(character))
 	}
 
-	return scenarioStatusResult{
+	return testSetupStatusResult{
 		PartyFingerprint: state.CurrentPartyRosterSnapshot().Fingerprint,
 		WipeReview:       newActivePartyWipeReviewResult(state.ReviewActivePartyWipe()),
 		LocationID:       int(location.Location), LocationName: location.Location.String(),

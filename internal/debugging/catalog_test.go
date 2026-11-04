@@ -13,260 +13,57 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-func TestInitialCatalogContainsReadOnlySlice(t *testing.T) {
+func TestInitialCatalogPublishesSupportedCommands(t *testing.T) {
 	catalog := NewInitialCatalog()
-	definitions := catalog.Definitions()
+	seen := make(map[string]bool)
+	for _, definition := range catalog.Definitions() {
+		assert.False(t, seen[definition.ID], definition.ID)
+		seen[definition.ID] = true
+	}
 
-	require.Len(t, definitions, 133)
-	assert.Equal(t, CommandScenarioRunCancel, definitions[132].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[132].ExecutionModes)
-	assert.True(t, definitions[132].ScenarioExcluded)
-	_, legacySavePublished := catalog.Get("scenario.definition.save")
-	assert.False(t, legacySavePublished)
-	assert.Equal(t, CommandEnvironmentWindStatus, definitions[0].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionQuery}, definitions[0].ExecutionModes)
-	assert.Equal(t, CommandEnvironmentWindSet, definitions[1].ID)
-	assert.Equal(t, CommandCombatMapCatalog, definitions[2].ID)
-	assert.Equal(t, CommandLoggingStatus, definitions[3].ID)
-	assert.Equal(t, CommandShrineReferenceInspect, definitions[4].ID)
-	assert.Equal(t, CommandShrineStatus, definitions[5].ID)
-	assert.Equal(t, CommandShrineProgressUpdate, definitions[6].ID)
-	assert.Equal(t, CommandPartyCharacterInspect, definitions[7].ID)
-	assert.Equal(t, CommandPartyCharacterUpdate, definitions[8].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[8].ExecutionModes)
-	assert.Equal(t, OptionProviderActivePartyCharacters, definitions[8].Parameters[0].OptionsProvider)
-	assert.Equal(t, ScenarioValueResolverActivePartyPosition, definitions[8].Parameters[0].ScenarioValueResolver)
-	require.Len(t, definitions[8].Parameters[0].ScenarioChoices, 6)
-	assert.Equal(t, Choice{Value: "1", Label: "Party Position 1"}, definitions[8].Parameters[0].ScenarioChoices[0])
-	assert.Equal(t, "level", definitions[8].Parameters[7].ID)
-	assert.Equal(t, OptionProviderActivePartyPositions, definitions[8].Parameters[9].OptionsProvider)
-	assert.Equal(t, CommandPartyMaximizeLevels, definitions[9].ID)
-	assert.Equal(t, CommandPartyStatusSet, definitions[10].ID)
-	assert.Equal(t, ParameterIntegerList, definitions[10].Parameters[1].Kind)
-	assert.Equal(t, CommandPartyFill, definitions[11].ID)
-	assert.Equal(t, CommandPartyMemberAdd, definitions[12].ID)
-	assert.Equal(t, CommandCalendarStatus, definitions[13].ID)
-	assert.Equal(t, CommandCalendarSetTime, definitions[14].ID)
-	assert.Equal(t, CommandCalendarSetDay, definitions[15].ID)
-	assert.Equal(t, CommandSearchStatus, definitions[16].ID)
-	assert.Equal(t, CommandSearchItemStackAdd, definitions[17].ID)
-	assert.Equal(t, CommandSearchProgressReset, definitions[18].ID)
-	assert.True(t, definitions[18].Destructive)
-	assert.Equal(t, CommandQuestItemStatus, definitions[19].ID)
-	assert.Equal(t, CommandQuestItemEnsure, definitions[20].ID)
-	assert.Equal(t, CommandQuestItemRemove, definitions[21].ID)
-	assert.True(t, definitions[21].Destructive)
-	assert.Equal(t, CommandWorldPositionStatus, definitions[22].ID)
-	assert.Equal(t, CommandMovementTeleport, definitions[23].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[23].ExecutionModes)
-	assert.Equal(t, CommandMovementEnterLocation, definitions[24].ID)
-	assert.Equal(t, CommandMovementFloorSet, definitions[25].ID)
-	assert.Equal(t, CommandMovementLandmarkTravel, definitions[26].ID)
-	assert.Contains(t, definitions[26].Parameters[0].Choices, Choice{
+	for _, id := range []string{
+		CommandEnvironmentWindStatus, CommandLoggingStatus, CommandShrineStatus, CommandShrineProgressUpdate,
+		CommandPartyCharacterInspect, CommandPartyCharacterUpdate, CommandCalendarStatus, CommandSearchStatus,
+		CommandQuestItemStatus, CommandWorldPositionStatus, CommandWorldPositionSet, CommandMovementLandmarkTravel,
+		CommandMoongateStatus, CommandCombatEncounterOptions, CommandCombatEncounterStart, CommandInventoryLockerStatus,
+		CommandInventorySpellStatus, CommandCombatStatus, CommandCombatPresentationSpeedSet, CommandDebugOptionsStatus,
+		CommandMovementFreeMoveSet, CommandTestSetupStatus, CommandTestHoleUp, CommandDeathKillParty,
+		CommandDeathTestSequence, CommandTestTelescope, CommandSaveSnapshotList, CommandSaveSnapshotLoad,
+		CommandMerchantTesterCatalog, CommandMerchantTesterPreviewOpen, CommandMerchantTesterLiveOpen,
+		CommandCodexQuestStateSetAll, CommandPartyEquipmentLoadoutUpdate,
+	} {
+		assert.True(t, seen[id], id)
+	}
+
+	for _, id := range []string{
+		"scenario.status", "scenario.definition.list", "scenario.definition.get", "scenario.definition.validate",
+		"scenario.definition.create", "scenario.definition.update", "scenario.definition.delete",
+		"scenario.definition.duplicate", "scenario.run.start", "scenario.run.status", "scenario.run.cancel",
+		"combat.map-catalog.all", "shrine.reference.inspect",
+		"display.status", "display.mode.set", "display.resolution.set", "display.fullscreen.set",
+		"movement.teleport", "movement.enter-location", "movement.floor.set",
+		"redux.modifications.status", "redux.combat.repeated-monster-division.set",
+		"redux.dungeons.persist-hidden-discoveries.set", "redux.dungeons.subdued-unlit-visibility.set",
+		"redux.presentation.smooth-surface-movement.set", "redux.navigation.flexible_sextant_use.set",
+		"redux.saves.confirm-quick-save.set", "redux.combat.health-bars.set", "redux.presentation.action-popups.set",
+	} {
+		assert.False(t, seen[id], id)
+	}
+
+	landmark, ok := catalog.Get(CommandMovementLandmarkTravel)
+	require.True(t, ok)
+	assert.Contains(t, landmark.Parameters[0].Choices, Choice{
 		Value: "lord_british_secret_room", Label: "Lord British's Secret Room",
 	})
-	assert.Equal(t, CommandMoongateStatus, definitions[27].ID)
-	assert.Equal(t, CommandCombatEncounterOptions, definitions[28].ID)
-	assert.Equal(t, CommandCombatEncounterStart, definitions[29].ID)
-	assert.True(t, definitions[29].ScenarioTerminal)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[29].ExecutionModes)
-	assert.Equal(t, CommandMonsterClearMapEnemies, definitions[32].ID)
-	assert.True(t, definitions[32].Destructive)
-	assert.Equal(t, CommandVehicleStatus, definitions[35].ID)
-	assert.Equal(t, CommandVehicleSpawn, definitions[36].ID)
-	assert.Equal(t, CommandVehicleForceBoard, definitions[37].ID)
-	assert.Equal(t, CommandShipDamageRaw, definitions[38].ID)
-	assert.Equal(t, CommandShipRepairFull, definitions[39].ID)
-	assert.Equal(t, CommandShipSkiffSet, definitions[40].ID)
-	assert.Equal(t, CommandInventoryLockerStatus, definitions[41].ID)
-	assert.Equal(t, CommandInventoryProvisionSet, definitions[42].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[42].ExecutionModes)
-	assert.Equal(t, CommandInventoryEquipmentClear, definitions[53].ID)
-	assert.True(t, definitions[53].Destructive)
-	assert.Equal(t, CommandInventorySpellStatus, definitions[54].ID)
-	assert.Equal(t, CommandInventorySpellSet, definitions[55].ID)
-	assert.Equal(t, CommandInventorySpellPresetMax, definitions[56].ID)
-	assert.Equal(t, CommandSpellEffectSetRemaining, definitions[57].ID)
-	assert.Equal(t, CommandSpellEffectActivate, definitions[58].ID)
-	assert.Equal(t, CommandCombatStatus, definitions[59].ID)
-	assert.Equal(t, CommandCombatMonsterSleepSet, definitions[60].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[60].ExecutionModes)
-	assert.Equal(t, CommandCombatExitDebug, definitions[61].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[61].ExecutionModes)
-	assert.True(t, definitions[61].Destructive)
-	assert.Equal(t, CommandCombatMonsterSpawn, definitions[62].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[62].ExecutionModes)
-	assert.Equal(t, CommandRNGSeedSet, definitions[63].ID)
-	assert.Equal(t, CommandCombatMonsterDamageRaw, definitions[64].ID)
-	assert.Equal(t, CommandCombatMonsterKill, definitions[65].ID)
-	assert.Equal(t, CommandCombatMonsterKillAll, definitions[66].ID)
-	assert.Equal(t, CommandCombatMonsterClear, definitions[67].ID)
-	assert.True(t, definitions[66].Destructive)
-	assert.True(t, definitions[67].Destructive)
-	assert.Equal(t, CommandCombatDungeonRoomClear, definitions[127].ID)
-	assert.Equal(t, CommandMerchantTesterCatalog, definitions[128].ID)
-	assert.Equal(t, CommandMerchantTesterPreviewOpen, definitions[129].ID)
-	assert.Equal(t, CommandMerchantTesterLiveOpen, definitions[130].ID)
-	assert.Equal(t, CommandDisplayModeSet, definitions[131].ID)
-	assert.Equal(t, CommandLoggingEnabledSet, definitions[68].ID)
-	assert.Equal(t, CommandLoggingCategorySet, definitions[71].ID)
-	assert.Equal(t, CommandLoggingCategoriesSetAll, definitions[72].ID)
-	assert.Equal(t, CommandLightingOverlaySet, definitions[73].ID)
-	assert.Equal(t, CommandCombatPresentationSpeedSet, definitions[76].ID)
-	assert.Equal(t, categoryReduxModifications, definitions[76].Category)
-	assert.True(t, definitions[76].ScenarioExcluded)
-	require.Len(t, definitions[76].Parameters, 1)
-	assert.Equal(t, "percent", definitions[76].Parameters[0].ID)
-	assert.Equal(t, ParameterInteger, definitions[76].Parameters[0].Kind)
-	require.NotNil(t, definitions[76].Parameters[0].Minimum)
-	require.NotNil(t, definitions[76].Parameters[0].Maximum)
-	require.NotNil(t, definitions[76].Parameters[0].Step)
-	assert.Equal(t, 50, *definitions[76].Parameters[0].Minimum)
-	assert.Equal(t, 2000, *definitions[76].Parameters[0].Maximum)
-	assert.Len(t, definitions[76].Parameters[0].Choices, 11)
-	assert.Equal(t, 50, *definitions[76].Parameters[0].Step)
-	assert.Equal(t, CommandGuardsStatus, definitions[77].ID)
-	assert.Equal(t, CommandShadowlordStatus, definitions[78].ID)
-	assert.Equal(t, CommandDeathStatus, definitions[79].ID)
-	assert.Equal(t, CommandDebugOptionsStatus, definitions[80].ID)
-	assert.Equal(t, CommandMovementFreeMoveSet, definitions[81].ID)
-	assert.Equal(t, CommandTextPlaceholdersSet, definitions[82].ID)
-	assert.Equal(t, CommandDialogBoundsSet, definitions[83].ID)
-	assert.Equal(t, CommandUnlimitedCastingResourcesSet, definitions[84].ID)
-	assert.Equal(t, CommandSpellLevelRestrictionsBypassSet, definitions[85].ID)
-	assert.Equal(t, CommandDisplayStatus, definitions[86].ID)
-	assert.Equal(t, CommandDisplayResolutionSet, definitions[87].ID)
-	assert.Equal(t, CommandDisplayFullscreenSet, definitions[88].ID)
-	assert.Equal(t, CommandPartyKarmaSet, definitions[89].ID)
-	assert.Equal(t, CommandScenarioStatus, definitions[90].ID)
-	assert.Equal(t, CommandScenarioDefinitionList, definitions[91].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionQuery}, definitions[91].ExecutionModes)
-	assert.Equal(t, CommandScenarioDefinitionGet, definitions[92].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionQuery}, definitions[92].ExecutionModes)
-	assert.Equal(t, CommandScenarioDefinitionValidate, definitions[93].ID)
-	assert.Equal(t, CommandScenarioDefinitionCreate, definitions[94].ID)
-	assert.Equal(t, CommandScenarioDefinitionUpdate, definitions[95].ID)
-	assert.Equal(t, CommandScenarioDefinitionDelete, definitions[96].ID)
-	assert.Equal(t, CommandScenarioDefinitionDuplicate, definitions[97].ID)
-	assert.Equal(t, CommandScenarioRunStart, definitions[98].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, definitions[98].ExecutionModes)
-	assert.Equal(t, CommandScenarioRunStatus, definitions[99].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionQuery}, definitions[99].ExecutionModes)
-	assert.Equal(t, CommandTestHoleUp, definitions[100].ID)
-	assert.Equal(t, CommandTestSearch, definitions[101].ID)
-	assert.Equal(t, CommandMoongateTravel, definitions[102].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, definitions[102].ExecutionModes)
-	assert.Equal(t, CommandQuestShardUse, definitions[103].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, definitions[103].ExecutionModes)
-	assert.Equal(t, CommandQuestInventoryPresetUsable, definitions[104].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionAlteration}, definitions[104].ExecutionModes)
-	assert.Equal(t, CommandTestTelescope, definitions[105].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, definitions[105].ExecutionModes)
-	assert.Equal(t, CommandTestSpyglass, definitions[106].ID)
-	assert.Equal(t, CommandTestCrystalBall, definitions[107].ID)
-	assert.Equal(t, CommandDeathKillParty, definitions[108].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[108].ExecutionModes)
-	assert.True(t, definitions[108].Destructive)
-	assert.Equal(t, CommandDeathTestSequence, definitions[109].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, definitions[109].ExecutionModes)
-	assert.True(t, definitions[109].Destructive)
-	assert.Equal(t, CommandCodexQuestStateSetAll, definitions[110].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionAlteration}, definitions[110].ExecutionModes)
-	assert.True(t, definitions[110].Destructive)
-	assert.Equal(t, CommandSaveSnapshotList, definitions[111].ID)
-	assert.Equal(t, CommandSaveSnapshotGet, definitions[112].ID)
-	assert.Equal(t, CommandSaveSnapshotCapture, definitions[113].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionAlteration}, definitions[113].ExecutionModes)
-	assert.Equal(t, CommandSaveSnapshotLoad, definitions[114].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSceneRestart}, definitions[114].ExecutionModes)
-	assert.True(t, definitions[114].Destructive)
-	assert.Equal(t, CommandReduxModificationsStatus, definitions[117].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionQuery}, definitions[117].ExecutionModes)
-	assert.Equal(t, CommandReduxCombatRepeatedMonsterDivisionSet, definitions[118].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[118].ExecutionModes)
-	assert.True(t, definitions[118].ScenarioExcluded)
-	require.Len(t, definitions[118].Parameters, 1)
-	assert.Equal(t, ParameterBoolean, definitions[118].Parameters[0].Kind)
-	assert.Equal(t, CommandReduxConfirmQuickSaveSet, definitions[119].ID)
-	assert.Equal(t, CommandReduxCombatHPBarsSet, definitions[120].ID)
-	assert.Equal(t, CommandReduxActionPopupsSet, definitions[121].ID)
-	for _, index := range []int{119, 120, 121} {
-		assert.Equal(t, categoryReduxModifications, definitions[index].Category)
-		assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[index].ExecutionModes)
-		assert.True(t, definitions[index].ScenarioExcluded)
-		assert.False(t, definitions[index].Destructive)
-		require.Len(t, definitions[index].Parameters, 1)
-		assert.True(t, definitions[index].Parameters[0].Required)
+	speed, ok := catalog.Get(CommandCombatPresentationSpeedSet)
+	require.True(t, ok)
+	assert.Equal(t, categoryCombat, speed.Category)
+	assert.Equal(t, []ExecutionMode{ExecutionPresentation}, speed.ExecutionModes)
+	for _, id := range []string{CommandDeathKillParty, CommandDeathTestSequence, CommandSaveSnapshotLoad} {
+		definition, found := catalog.Get(id)
+		require.True(t, found)
+		assert.True(t, definition.Destructive, id)
 	}
-	for _, index := range []int{119, 120} {
-		assert.Equal(t, parameterEnabled, definitions[index].Parameters[0].ID)
-		assert.Equal(t, ParameterBoolean, definitions[index].Parameters[0].Kind)
-	}
-	assert.Equal(t, "count", definitions[121].Parameters[0].ID)
-	assert.Equal(t, ParameterInteger, definitions[121].Parameters[0].Kind)
-	require.NotNil(t, definitions[121].Parameters[0].Minimum)
-	require.NotNil(t, definitions[121].Parameters[0].Maximum)
-	require.NotNil(t, definitions[121].Parameters[0].Step)
-	assert.Equal(t, 0, *definitions[121].Parameters[0].Minimum)
-	assert.Equal(t, 3, *definitions[121].Parameters[0].Maximum)
-	assert.Equal(t, 1, *definitions[121].Parameters[0].Step)
-	assert.Equal(t, CommandReduxDungeonsPersistHiddenDiscoveriesSet, definitions[122].ID)
-	assert.Equal(t, CommandReduxDungeonsSubduedUnlitVisibilitySet, definitions[123].ID)
-	assert.Equal(t, CommandReduxPresentationSmoothSurfaceMovementSet, definitions[124].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[124].ExecutionModes)
-	assert.True(t, definitions[124].ScenarioExcluded)
-	require.Len(t, definitions[124].Parameters, 1)
-	assert.Equal(t, ParameterBoolean, definitions[124].Parameters[0].Kind)
-	assert.Equal(t, CommandReduxNavigationFlexibleSextantUseSet, definitions[125].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definitions[125].ExecutionModes)
-	assert.True(t, definitions[125].ScenarioExcluded)
-	assert.False(t, definitions[125].Destructive)
-	require.Len(t, definitions[125].Parameters, 1)
-	assert.Equal(t, ParameterBoolean, definitions[125].Parameters[0].Kind)
-	assert.Equal(t, CommandWorldPositionSet, definitions[126].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionSynchronized}, definitions[126].ExecutionModes)
-	assert.Equal(t, CommandSaveSnapshotDelete, definitions[115].ID)
-	assert.True(t, definitions[115].Destructive)
-	assert.Equal(t, CommandPartyEquipmentLoadoutUpdate, definitions[116].ID)
-	assert.Equal(t, []ExecutionMode{ExecutionAlteration}, definitions[116].ExecutionModes)
-	assert.True(t, definitions[116].Destructive)
-}
-
-func TestScenarioRunCancelCatalogRequiresOnlyRunIdentity(t *testing.T) {
-	catalog := NewInitialCatalog()
-	definition, found := catalog.Get(CommandScenarioRunCancel)
-	require.True(t, found)
-	require.Len(t, definition.Parameters, 1)
-	assert.Equal(t, "runId", definition.Parameters[0].ID)
-	assert.True(t, definition.ScenarioExcluded)
-	assert.False(t, definition.Destructive)
-	assert.Equal(t, []ExecutionMode{ExecutionLiveSafe}, definition.ExecutionModes)
-	for _, value := range []string{`"run-1"`, `""`, `" "`, `0`, `null`} {
-		_, err := catalog.NormalizeRequest(Request{SessionID: "test", ID: "cancel", CommandID: CommandScenarioRunCancel,
-			Arguments: map[string]json.RawMessage{"runId": json.RawMessage(value)}})
-		if value == `"run-1"` {
-			require.NoError(t, err)
-		} else {
-			require.Error(t, err)
-		}
-	}
-	_, err := catalog.NormalizeRequest(Request{SessionID: "test", ID: "cancel", CommandID: CommandScenarioRunCancel})
-	require.Error(t, err)
-}
-
-func TestInitialCatalogValidatesDisplayModeChoices(t *testing.T) {
-	catalog := NewInitialCatalog()
-	request := Request{
-		SessionID: "test", ID: "display-mode", CommandID: CommandDisplayModeSet,
-		Arguments: map[string]json.RawMessage{"mode": json.RawMessage(`"maximized"`)},
-	}
-
-	_, err := catalog.NormalizeRequest(request)
-	require.NoError(t, err)
-
-	request.Arguments["mode"] = json.RawMessage(`"exclusive"`)
-	_, err = catalog.NormalizeRequest(request)
-	assert.Error(t, err)
 }
 
 func TestMerchantTesterCatalogDefinitionsAndTypedParameters(t *testing.T) {
@@ -276,7 +73,6 @@ func TestMerchantTesterCatalogDefinitionsAndTypedParameters(t *testing.T) {
 	require.True(t, ok)
 	assert.Empty(t, status.Parameters)
 	assert.Equal(t, []ExecutionMode{ExecutionQuery}, status.ExecutionModes)
-	assert.True(t, status.ScenarioExcluded)
 
 	preview, ok := catalog.Get(CommandMerchantTesterPreviewOpen)
 	require.True(t, ok)
@@ -286,7 +82,6 @@ func TestMerchantTesterCatalogDefinitionsAndTypedParameters(t *testing.T) {
 	assert.True(t, preview.Parameters[0].Required)
 	assert.Equal(t, OptionProviderMerchantTesterMerchants, preview.Parameters[0].OptionsProvider)
 	assert.Equal(t, []ExecutionMode{ExecutionWorkflow}, preview.ExecutionModes)
-	assert.True(t, preview.ScenarioExcluded)
 
 	live, ok := catalog.Get(CommandMerchantTesterLiveOpen)
 	require.True(t, ok)
@@ -299,7 +94,6 @@ func TestMerchantTesterCatalogDefinitionsAndTypedParameters(t *testing.T) {
 	})
 	assert.Equal(t, []ExecutionMode{ExecutionWorkflow, ExecutionAlteration}, live.ExecutionModes)
 	assert.True(t, live.Destructive)
-	assert.True(t, live.ScenarioExcluded)
 
 	require.NoError(t, catalog.ValidateRequest(Request{
 		SessionID: "test", ID: "preview", CommandID: CommandMerchantTesterPreviewOpen,
@@ -351,9 +145,6 @@ func TestWorldNavigatorCatalogDefinitionsAndNormalization(t *testing.T) {
 		world.Parameters[9].ID,
 		world.Parameters[10].ID,
 	})
-	for _, parameter := range world.Parameters[6:] {
-		assert.True(t, parameter.ScenarioRuntime, parameter.ID)
-	}
 	require.NoError(t, catalog.ValidateRequest(Request{
 		SessionID: "test", ID: "world", CommandID: CommandWorldPositionSet,
 		Arguments: map[string]json.RawMessage{
@@ -386,12 +177,9 @@ func TestPartyEquipmentLoadoutCatalogUsesSlotSpecificAtomicChoices(t *testing.T)
 	require.True(t, ok)
 	require.Len(t, definition.Parameters, 8)
 	assert.Equal(t, OptionProviderEquipmentLoadoutTargets, definition.Parameters[0].OptionsProvider)
-	assert.Equal(t, ScenarioValueResolverActivePartyPosition, definition.Parameters[0].ScenarioValueResolver)
-	assert.Equal(t, Choice{Value: "all", Label: "All active party members"}, definition.Parameters[0].ScenarioChoices[0])
 	assert.Equal(t, "helm", definition.Parameters[1].ID)
 	assert.Equal(t, "amulet", definition.Parameters[6].ID)
 	assert.Equal(t, inventoryExpectedSnapshotID, definition.Parameters[7].ID)
-	assert.True(t, definition.Parameters[7].ScenarioRuntime)
 	assert.Contains(t, definition.Parameters[3].Choices, choice("inventory:30", "Equip Long Sword from inventory"))
 	assert.Contains(t, definition.Parameters[3].Choices, choice("manufacture:39", "Manufacture and equip Glass Sword"))
 	assert.NotContains(t, definition.Parameters[3].Choices, choice("inventory:27", "Equip Arrows from inventory"))
@@ -418,88 +206,6 @@ func TestInitialCatalogValidatesSaveSnapshotOperations(t *testing.T) {
 	require.ErrorIs(t, catalog.ValidateRequest(remove), ErrInvalidRequest)
 	load.Arguments["expectedRevision"] = json.RawMessage(`"stale"`)
 	require.ErrorIs(t, catalog.ValidateRequest(load), ErrInvalidRequest)
-}
-
-func TestInitialCatalogValidatesDurableScenarioOperations(t *testing.T) {
-	catalog := NewInitialCatalog()
-
-	for _, commandID := range []string{CommandScenarioDefinitionList, CommandScenarioRunStatus} {
-		require.NoError(t, catalog.ValidateRequest(Request{SessionID: "test", ID: commandID, CommandID: commandID}))
-		require.ErrorIs(t, catalog.ValidateRequest(Request{
-			SessionID: "test", ID: commandID, CommandID: commandID,
-			Arguments: map[string]json.RawMessage{"unexpected": json.RawMessage(`true`)},
-		}), ErrInvalidRequest)
-	}
-
-	get := Request{SessionID: "test", ID: "get", CommandID: CommandScenarioDefinitionGet, Arguments: map[string]json.RawMessage{
-		"reference": json.RawMessage(`"project:starvation-check"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(get))
-	get.Arguments["reference"] = json.RawMessage(`"starvation-check"`)
-	require.ErrorIs(t, catalog.ValidateRequest(get), ErrInvalidRequest)
-	get.Arguments["reference"] = json.RawMessage(`"personal:starvation-check"`)
-	require.NoError(t, catalog.ValidateRequest(get))
-	delete(get.Arguments, "reference")
-	require.ErrorIs(t, catalog.ValidateRequest(get), ErrInvalidRequest)
-
-	validate := Request{SessionID: "test", ID: "validate", CommandID: CommandScenarioDefinitionValidate, Arguments: map[string]json.RawMessage{
-		"definition": json.RawMessage(`"{\"schemaVersion\":2}"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(validate))
-
-	create := Request{SessionID: "test", ID: "create", CommandID: CommandScenarioDefinitionCreate, Arguments: map[string]json.RawMessage{
-		"source": json.RawMessage(`"personal"`), "definition": json.RawMessage(`"{\"schemaVersion\":2}"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(create))
-
-	revision := `"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"`
-	update := Request{SessionID: "test", ID: "update", CommandID: CommandScenarioDefinitionUpdate, Arguments: map[string]json.RawMessage{
-		"reference": json.RawMessage(`"project:starvation-check"`), "expectedRevision": json.RawMessage(revision),
-		"definition": json.RawMessage(`"{\"schemaVersion\":2}"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(update))
-	update.Arguments["expectedRevision"] = json.RawMessage(`"stale"`)
-	require.ErrorIs(t, catalog.ValidateRequest(update), ErrInvalidRequest)
-
-	remove := Request{SessionID: "test", ID: "delete", CommandID: CommandScenarioDefinitionDelete, Arguments: map[string]json.RawMessage{
-		"reference": json.RawMessage(`"personal:starvation-check"`), "expectedRevision": json.RawMessage(revision),
-	}}
-	require.NoError(t, catalog.ValidateRequest(remove))
-
-	duplicate := Request{SessionID: "test", ID: "duplicate", CommandID: CommandScenarioDefinitionDuplicate, Arguments: map[string]json.RawMessage{
-		"sourceReference": json.RawMessage(`"project:starvation-check"`), "sourceRevision": json.RawMessage(revision),
-		"destinationSource": json.RawMessage(`"personal"`), "destinationId": json.RawMessage(`"starvation-copy"`),
-		"destinationName": json.RawMessage(`"Starvation Copy"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(duplicate))
-	delete(duplicate.Arguments, "destinationName")
-	require.ErrorIs(t, catalog.ValidateRequest(duplicate), ErrInvalidRequest)
-
-	start := Request{SessionID: "test", ID: "start", CommandID: CommandScenarioRunStart, Arguments: map[string]json.RawMessage{
-		"reference": json.RawMessage(`"personal:starvation-check"`), "expectedRevision": json.RawMessage(revision),
-		"reviewedSceneGeneration": json.RawMessage(`7`),
-	}}
-	normalized, err := catalog.NormalizeRequest(start)
-	require.NoError(t, err)
-	assert.JSONEq(t, `"{}"`, string(normalized.Arguments["parameterValues"]))
-	assert.JSONEq(t, `""`, string(normalized.Arguments["expectedBaselineRevision"]))
-	delete(start.Arguments, "expectedRevision")
-	require.ErrorIs(t, catalog.ValidateRequest(start), ErrInvalidRequest)
-	start.Arguments["expectedRevision"] = json.RawMessage(revision)
-	delete(start.Arguments, "reviewedSceneGeneration")
-	require.ErrorIs(t, catalog.ValidateRequest(start), ErrInvalidRequest)
-	start.Arguments["reviewedSceneGeneration"] = json.RawMessage(`7`)
-
-	start.Arguments["reference"] = json.RawMessage(`"starvation-check"`)
-	require.ErrorIs(t, catalog.ValidateRequest(start), ErrInvalidRequest)
-	start.Arguments["reference"] = json.RawMessage(`"project:starvation-check"`)
-	start.Arguments["parameterValues"] = json.RawMessage(`"{\"seed\":77}"`)
-	require.NoError(t, catalog.ValidateRequest(start))
-	start.Arguments["parameterValues"] = json.RawMessage(`{"seed":77}`)
-	require.ErrorIs(t, catalog.ValidateRequest(start), ErrInvalidRequest)
-	start.Arguments["parameterValues"] = json.RawMessage(`"{\"seed\":77}"`)
-	start.Arguments["unknown"] = json.RawMessage(`true`)
-	require.ErrorIs(t, catalog.ValidateRequest(start), ErrInvalidRequest)
 }
 
 func TestInitialCatalogValidatesEighthBatchCombatArguments(t *testing.T) {
@@ -586,16 +292,6 @@ func TestInitialCatalogValidatesIndependentSpellEffectReviewedState(t *testing.T
 	require.NoError(t, catalog.ValidateRequest(activateRequest))
 }
 
-func TestInitialCatalogNormalizesCombatMapSectionDefault(t *testing.T) {
-	catalog := NewInitialCatalog()
-	request := Request{SessionID: "test-session", ID: "request-1", CommandID: CommandCombatMapCatalog}
-
-	normalized, err := catalog.NormalizeRequest(request)
-
-	require.NoError(t, err)
-	assert.JSONEq(t, `"all"`, string(normalized.Arguments["section"]))
-}
-
 func TestInitialCatalogValidatesThirdBatchParameters(t *testing.T) {
 	catalog := NewInitialCatalog()
 	holeUp := Request{SessionID: "test", ID: "hole-up", CommandID: CommandTestHoleUp, Arguments: map[string]json.RawMessage{
@@ -649,59 +345,6 @@ func TestInitialCatalogValidatesPartyRosterIndexLists(t *testing.T) {
 	require.Error(t, catalog.ValidateRequest(request))
 }
 
-func TestInitialCatalogValidatesConcreteQueryParameters(t *testing.T) {
-	catalog := NewInitialCatalog()
-
-	for _, section := range []string{CombatMapSectionAll, CombatMapSectionBritannia, CombatMapSectionDungeons} {
-		err := catalog.ValidateRequest(Request{
-			SessionID: "test-session",
-			ID:        "combat-" + section,
-			CommandID: CommandCombatMapCatalog,
-			Arguments: map[string]json.RawMessage{"section": json.RawMessage(`"` + section + `"`)},
-		})
-		require.NoError(t, err)
-	}
-
-	for _, shrineIndex := range []int{0, 7} {
-		err := catalog.ValidateRequest(Request{
-			SessionID: "test-session",
-			ID:        "shrine",
-			CommandID: CommandShrineReferenceInspect,
-			Arguments: map[string]json.RawMessage{"index": json.RawMessage(strconv.Quote(strconv.Itoa(shrineIndex)))},
-		})
-		require.NoError(t, err)
-	}
-}
-
-func TestInitialCatalogRejectsInvalidConcreteQueryParameters(t *testing.T) {
-	catalog := NewInitialCatalog()
-	tests := []Request{
-		{
-			SessionID: "test-session",
-			ID:        "combat-invalid",
-			CommandID: CommandCombatMapCatalog,
-			Arguments: map[string]json.RawMessage{"section": json.RawMessage(`"unknown"`)},
-		},
-		{
-			SessionID: "test-session",
-			ID:        "shrine-low",
-			CommandID: CommandShrineReferenceInspect,
-			Arguments: map[string]json.RawMessage{"index": json.RawMessage(`"-1"`)},
-		},
-		{
-			SessionID: "test-session",
-			ID:        "shrine-high",
-			CommandID: CommandShrineReferenceInspect,
-			Arguments: map[string]json.RawMessage{"index": json.RawMessage(`"8"`)},
-		},
-	}
-
-	for _, request := range tests {
-		err := catalog.ValidateRequest(request)
-		require.ErrorIs(t, err, ErrInvalidRequest)
-	}
-}
-
 func TestInitialCatalogValidatesApprovedToolBoundaries(t *testing.T) {
 	catalog := NewInitialCatalog()
 	valid := []Request{
@@ -709,7 +352,6 @@ func TestInitialCatalogValidatesApprovedToolBoundaries(t *testing.T) {
 		{SessionID: "test", ID: "day", CommandID: CommandCalendarSetDay, Arguments: map[string]json.RawMessage{"day": json.RawMessage(`28`)}},
 		{SessionID: "test", ID: "stack", CommandID: CommandSearchItemStackAdd, Arguments: map[string]json.RawMessage{"x": json.RawMessage(`255`), "y": json.RawMessage(`0`), "item": json.RawMessage(`"gold"`), "quantity": json.RawMessage(`999`)}},
 		{SessionID: "test", ID: "quest", CommandID: CommandQuestItemEnsure, Arguments: map[string]json.RawMessage{"item": json.RawMessage(`"sextant"`)}},
-		{SessionID: "test", ID: "teleport", CommandID: CommandMovementTeleport, Arguments: map[string]json.RawMessage{"x": json.RawMessage(`0`), "y": json.RawMessage(`255`)}},
 	}
 	for _, request := range valid {
 		require.NoError(t, catalog.ValidateRequest(request), request.ID)
@@ -1045,13 +687,11 @@ func TestCloneDiscoverySnapshotDetachesDynamicChoiceMetadata(t *testing.T) {
 	}
 
 	cloned := CloneDiscoverySnapshot(original)
-	cloned.Commands[8].Parameters[0].ScenarioChoices[0].Label = "changed scenario choice"
 	cloned.OptionSets[0].Choices[0].Metadata[0] = '['
 	cloned.OptionSets[0].Choices[0].Label = "changed"
 	cloned.OptionSets[0].UnavailableReason = "changed"
 
 	assert.JSONEq(t, `{"strength":20}`, string(original.OptionSets[0].Choices[0].Metadata))
-	assert.Equal(t, "Party Position 1", original.Commands[8].Parameters[0].ScenarioChoices[0].Label)
 	assert.Equal(t, "Position 1 · Avatar", original.OptionSets[0].Choices[0].Label)
 	assert.Equal(t, "outside combat only", original.OptionSets[0].UnavailableReason)
 }

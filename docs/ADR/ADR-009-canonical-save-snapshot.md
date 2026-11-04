@@ -9,7 +9,7 @@ closures, event queues, and transient presentation. It cannot serve as a wire
 model. `GameState.RawSave` is populated during original-save import and is not
 synchronized as play continues, so it cannot be save authority either.
 
-Player saves, Workbench checkpoints, rollback, scenario baselines, and test
+Player saves, Workbench checkpoints, rollback, and test
 fixtures all need the same restoration semantics. A separate debug-state format
 would duplicate party, inventory, progression, and world rules and eventually
 diverge from gameplay.
@@ -57,12 +57,12 @@ does not require an occupant, because the actor phase can vacate the door before
 the next close-processing boundary. This permits faithful next-turn continuation
 without serializing sprite layers or relaxing in-flight workflow restrictions.
 
-Workbench loads and non-current scenario baselines persist a rollback before
+Workbench loads persist a rollback before
 constructing a dormant candidate. Player-slot loads construct from the reviewed
 slot revision. Candidate construction/activation failure leaves the old scene
 active and disposes the failed candidate. The application-owned debug control
-plane survives scene replacement. Scenarios invoke authoritative commands after
-baseline selection rather than patching arbitrary snapshot fields.
+plane survives scene replacement. The Workbench's former scripted scenarios and
+scenario baselines were retired; nothing patches arbitrary snapshot fields.
 
 ### Checkpoint Metadata And Player Reference Material
 
@@ -84,9 +84,8 @@ no snapshot field/version changes are needed for that presentation simplificatio
 Outdoor Blink's retained map window is deliberately runtime-only gameplay state.
 Normal original startup rebuilds it from loaded coordinates despite saving offsets.
 All actual native hydration therefore initializes the window from the final loaded
-position and plane, including player loads, Workbench load/rollback and named
-scenario baselines. Saving alone and a scenario using the current live baseline
-preserve it. A failed candidate leaves the old scene's history untouched. This
+position and plane, including player loads and Workbench load/rollback. Saving
+alone preserves it. A failed candidate leaves the old scene's history untouched. This
 bounded original-style reset can change the next Blink at unchanged coordinates;
 it is not a promise of byte-for-byte runtime continuation. It needs no new DTO or
 schema version and does not reset unrelated durable terrain, actors, or progression.
@@ -130,10 +129,9 @@ absence without becoming a replenishment trigger.
 
 ### Versioning
 
-Envelope, snapshot, and scenario formats are independent contracts. Their exact
+Envelope and snapshot formats are independent contracts. Their exact
 supported versions, strict field requirements, migration behavior, and limits
-belong in [Save Snapshot Schema](../details/SAVE_SNAPSHOT_SCHEMA.md) and
-[Workbench scenarios](../systems/DEBUG_WORKBENCH.md#scenarios), not a second
+belong in [Save Snapshot Schema](../details/SAVE_SNAPSHOT_SCHEMA.md), not a second
 version ledger in this ADR. Unsupported versions are rejected rather than
 guessed, and schema changes require deliberate compatibility decisions. Native
 compatibility starts at the first publicly shipped snapshot version; earlier

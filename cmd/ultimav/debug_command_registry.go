@@ -22,15 +22,13 @@ type debugCommandContext struct {
 
 type debugCommandHandler func(debugCommandContext, debugging.Request) debugging.Result
 type debugCommandGuard func(*GameScene, debugging.Request) *debugging.Result
-type debugCommandRuntimeResolver func(*GameScene, debugging.Request) (debugging.Request, error)
 
 type debugCommandRegistration struct {
-	commandID       string
-	owner           string
-	scope           debugCommandScope
-	handler         debugCommandHandler
-	guard           debugCommandGuard
-	runtimeResolver debugCommandRuntimeResolver
+	commandID string
+	owner     string
+	scope     debugCommandScope
+	handler   debugCommandHandler
+	guard     debugCommandGuard
 }
 
 type debugCommandRegistry struct {
@@ -43,10 +41,6 @@ var (
 	errDebugRegistrationMissing     = errors.New("catalog command has no application registration")
 	errDebugRegistrationUnknown     = errors.New("registered debug command is absent from the catalog")
 	errDebugRegistrationDuplicate   = errors.New("debug command already has an execution owner")
-	errDebugRuntimeResolverMissing  = errors.New(
-		"catalog command with a ScenarioRuntime parameter has no runtime resolver",
-	)
-	errDebugCommandNotRegistered = errors.New("debug command is not registered")
 )
 
 //nolint:gochecknoglobals // Immutable startup registry; command handlers never mutate it after construction.
@@ -63,14 +57,12 @@ func newDebugCommandRegistry(catalog *debugging.Catalog) (*debugCommandRegistry,
 	registry := newEmptyDebugCommandRegistry()
 	registerCoreSceneDebugCommands(registry)
 	registerApplicationDebugCommands(registry)
-	registerDisplayDebugCommands(registry)
 	registerSecondBatchDebugCommands(registry)
 	registerThirdBatchDebugCommands(registry)
 	registerFourthBatchDebugCommands(registry)
 	registerFifthBatchDebugCommands(registry)
 	registerSixthBatchDebugCommands(registry)
 	registerSeventhBatchDebugCommands(registry)
-	registerScenarioDebugCommands(registry)
 	registerWorldSetupDebugCommands(registry)
 	registerWorldNavigatorDebugCommands(registry)
 	registerOperationalDebugCommands(registry)
@@ -79,9 +71,8 @@ func newDebugCommandRegistry(catalog *debugging.Catalog) (*debugCommandRegistry,
 	registerSpellDebugCommands(registry)
 	registerActiveCombatDebugCommands(registry)
 	registerMerchantTesterDebugCommands(registry)
-	registerReduxModificationsDebugCommands(registry)
-	registerScenarioDefinitionDebugCommands(registry)
-	registerScenarioRunDebugCommands(registry)
+	registerCombatSpeedDebugCommand(registry)
+	registerTestSetupDebugCommands(registry)
 	registerSnapshotDebugCommands(registry)
 
 	if err := validateDebugCommandRegistry(catalog, registry); err != nil {
@@ -96,12 +87,9 @@ func validateDebugCommandRegistry(catalog *debugging.Catalog, registry *debugCom
 	catalogIDs := make(map[string]struct{}, len(definitions))
 	for _, definition := range definitions {
 		catalogIDs[definition.ID] = struct{}{}
-		registration, ok := registry.registrations[definition.ID]
+		_, ok := registry.registrations[definition.ID]
 		if !ok {
 			return fmt.Errorf("%w: %q", errDebugRegistrationMissing, definition.ID)
-		}
-		if commandHasScenarioRuntimeParameter(definition) && registration.runtimeResolver == nil {
-			return fmt.Errorf("%w: %q", errDebugRuntimeResolverMissing, definition.ID)
 		}
 	}
 	for commandID := range registry.registrations {
@@ -111,16 +99,6 @@ func validateDebugCommandRegistry(catalog *debugging.Catalog, registry *debugCom
 	}
 
 	return nil
-}
-
-func commandHasScenarioRuntimeParameter(definition debugging.CommandDefinition) bool {
-	for _, parameter := range definition.Parameters {
-		if parameter.ScenarioRuntime {
-			return true
-		}
-	}
-
-	return false
 }
 
 func mustNewDebugCommandRegistry(catalog *debugging.Catalog) *debugCommandRegistry {
@@ -152,12 +130,11 @@ func (r *debugCommandRegistry) registerGroup(
 ) {
 	for _, commandID := range commandIDs {
 		if err := r.register(debugCommandRegistration{
-			commandID:       commandID,
-			owner:           owner,
-			scope:           scope,
-			handler:         handler,
-			guard:           nil,
-			runtimeResolver: nil,
+			commandID: commandID,
+			owner:     owner,
+			scope:     scope,
+			handler:   handler,
+			guard:     nil,
 		}); err != nil {
 			panic(err)
 		}
@@ -169,15 +146,13 @@ func (r *debugCommandRegistry) registerScene(
 	owner string,
 	handler debugCommandHandler,
 	guard debugCommandGuard,
-	resolver debugCommandRuntimeResolver,
 ) {
 	if err := r.register(debugCommandRegistration{
-		commandID:       commandID,
-		owner:           owner,
-		scope:           debugCommandScene,
-		handler:         handler,
-		guard:           guard,
-		runtimeResolver: resolver,
+		commandID: commandID,
+		owner:     owner,
+		scope:     debugCommandScene,
+		handler:   handler,
+		guard:     guard,
 	}); err != nil {
 		panic(err)
 	}

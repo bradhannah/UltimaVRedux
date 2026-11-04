@@ -242,7 +242,7 @@ update thread. Use the navigation-only Command Palette (`Ctrl+K` / `Command+K`)
 to find the owning instrument. Selecting a surface may load a read-only query
 but never executes a mutation. The live catalog supplies current commands and
 availability reasons. See [Workbench architecture](systems/DEBUG_WORKBENCH.md)
-for review, revision, scenario, and rollback contracts, and
+for review, revision, and rollback contracts, and
 [Workbench UI](ui/DEBUG_WORKBENCH_UI.md) for interaction ownership.
 
 ## Common Commands

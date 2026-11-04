@@ -2,25 +2,6 @@ package main
 
 import "github.com/bradhannah/UltimaVRedux/internal/logging"
 
-// ScenarioCommandsReady reports whether a scripted scenario may dispatch its
-// next command without overlapping interactive or scripted gameplay work.
-func (g *GameScene) ScenarioCommandsReady() bool {
-	return !g.gameState.IsInCombat() &&
-		!g.transientCommandInput.pass.active &&
-		!g.transientCommandInput.pending.active &&
-		!g.dialogStack.HasOpenDialog() &&
-		!g.gameState.EventQueueManager.HasActiveWorkflows() &&
-		g.miniMapScene == nil &&
-		g.gameState.ShrineScene == nil &&
-		g.gameState.CanAcceptGameplayCommands()
-}
-
-// ScenarioRunsAllowed rejects runs that can never make progress because the
-// production finale has taken permanent gameplay ownership.
-func (g *GameScene) ScenarioRunsAllowed() bool {
-	return g.gameState.CanAcceptGameplayCommands()
-}
-
 // PrepareForSceneReplacement stops live playback before the candidate is activated.
 func (g *GameScene) PrepareForSceneReplacement() {
 	g.clearCombatMovement()

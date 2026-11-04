@@ -175,12 +175,14 @@ func TestDataSetupSceneCancelsSearchWithoutAcceptingLateResult(t *testing.T) {
 	require.True(t, ok)
 	assert.Contains(t, menu.ButtonTexts(), "Check Again")
 
-	require.Never(t, func() bool {
+	// Update on this goroutine: testify's Never polls from other goroutines, which
+	// can still be running scene.Update when cleanup disposes the scene.
+	for range 10 {
+		time.Sleep(5 * time.Millisecond)
 		require.NoError(t, scene.Update(game))
 		_, changed := scene.dialogStack.PeekTopModalDialog().(*widgets.SaveSlotBrowser)
-
-		return changed
-	}, 50*time.Millisecond, 5*time.Millisecond)
+		require.False(t, changed, "a cancelled search must not deliver its late result")
+	}
 }
 
 func TestDataSetupSceneRetrySupersedesCancelledSearch(t *testing.T) {

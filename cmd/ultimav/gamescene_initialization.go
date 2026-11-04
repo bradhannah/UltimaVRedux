@@ -58,33 +58,6 @@ func NewGameSceneFromLegacySaveFile(
 	return NewGameSceneFromSaveSnapshot(gameConfig, conversion.Snapshot)
 }
 
-func newGameSceneFromInitTemplateFile(
-	gameConfig *config.UltimaVConfiguration,
-	templateFilePath string,
-) (*GameScene, error) {
-	rawSaveData, err := game_state.ReadLegacySaveFile(templateFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("reading original INIT.GAM template: %w", err)
-	}
-
-	return newGameSceneFromInitTemplateBytes(gameConfig, rawSaveData)
-}
-
-func newGameSceneFromInitTemplateBytes(
-	gameConfig *config.UltimaVConfiguration,
-	rawSaveData []byte,
-) (*GameScene, error) {
-	return newGameScene(gameConfig, func(gameReferences *references.GameReferences) (*game_state.GameState, error) {
-		return game_state.NewGameStateFromLegacyTemplateBytes(
-			rawSaveData,
-			gameConfig,
-			gameReferences,
-			xTilesVisibleOnGameScreen,
-			yTilesVisibleOnGameScreen,
-		)
-	})
-}
-
 // NewGameSceneFromSaveSnapshot constructs a dormant gameplay scene from a native snapshot.
 // The scene does not start audio or alter process-wide display settings until Game activates it.
 func NewGameSceneFromSaveSnapshot(

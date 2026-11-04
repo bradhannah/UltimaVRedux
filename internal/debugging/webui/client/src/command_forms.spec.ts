@@ -32,7 +32,6 @@ describe("generated command forms", () => {
     for (const percent of [50, 100, 150, 200, 300, 400, 600, 800, 1200, 1600, 2000]) expect(validateDraft(command, { percent: String(percent) })).toEqual({})
     for (const percent of [25, 75, 125, 250, 350, 500, 2001, 50.5]) expect(validateDraft(command, { percent: String(percent) }).percent).toBeTruthy()
     expect(validateDraft(command, { percent: "250" }).percent).toContain("Choose one of 50, 100")
-    expect(command.scenarioExcluded).toBe(true)
   })
   it("retains zero and false defaults as editable values", () => {
     expect(reconcileDraft(formCommand)).toEqual({ name: "", count: "0", enabled: "false", section: "all" })

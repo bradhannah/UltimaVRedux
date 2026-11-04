@@ -428,11 +428,10 @@ confirmation/cancellation with visible server rejection, and keyboard palette
 navigation/Escape/focus restoration. They use bundled real Chromium headless shell
 with Playwright's default browser launch settings and screenshots only on failure.
 Full Chrome, custom Chromium feature overrides, extensions, persistent profiles,
-actual desktop zoom, dock matrices and exhaustive scenario browser workflows are
+actual desktop zoom, dock matrices and exhaustive browser workflows are
 not required. This is an intentional coverage reduction, not equivalent acceptance
 of those removed cases. Existing DOM/Go tests retain detailed behavior checks;
-two focused App DOM regressions protect stale scenario Start and delayed rollback
-review revocation. The synthetic transport never performs live game mutations or
+focused App DOM regressions protect delayed rollback review revocation. The synthetic transport never performs live game mutations or
 certifies the interface's live usability. These execution settings still require
 aggregate process-tree supervision on constrained hosts.
 
@@ -683,8 +682,7 @@ or arbitrary environment values.
   shipped embedded/generated assets without a generation step. A successful
   build is not native graphics, audio, or input acceptance.
 - Ubuntu quality checks provision tools and Workbench dependencies separately,
-  require the Go/TypeScript scenario wire assertion with
-  `ULTIMA5_REQUIRE_WEB_CONTRACT=1`, then run `make validate` without a display.
+  then run `make validate` without a display.
   This runs logic and static checks, not a second Linux native/full-suite pass.
 - Go versions come from `go.mod`; the workflow does not duplicate a version literal.
 

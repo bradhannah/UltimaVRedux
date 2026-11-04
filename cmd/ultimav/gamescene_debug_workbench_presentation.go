@@ -22,8 +22,6 @@ func (g *GameScene) executePresentationDebugCommand(request debugging.Request) (
 		g.overlayRenderer.SetMoonstoneOverlayEnabled(after)
 
 		return presentationBooleanResult(request, "Moongate overlay updated.", "presentation.overlays.moongate", before, after), true
-	case debugging.CommandCombatPresentationSpeedSet:
-		return executeReduxModificationsDebugCommand(request, g.gameConfig)
 	default:
 		return debugging.Result{}, false
 	}

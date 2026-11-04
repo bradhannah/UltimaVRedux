@@ -177,24 +177,6 @@ func validateParameterDefinition(commandID string, parameter ParameterDefinition
 	if err := validateParameterConstraints(commandID, parameter); err != nil {
 		return err
 	}
-	if parameter.ScenarioValueResolver != "" && parameter.ScenarioValueResolver != ScenarioValueResolverActivePartyPosition {
-		return fmt.Errorf(
-			"%w: command %q parameter %q has unsupported scenario value resolver %q",
-			ErrInvalidCatalog,
-			commandID,
-			parameter.ID,
-			parameter.ScenarioValueResolver,
-		)
-	}
-	if parameter.ScenarioValueResolver == ScenarioValueResolverActivePartyPosition &&
-		(parameter.Kind != ParameterCharacter || len(parameter.ScenarioChoices) == 0) {
-		return fmt.Errorf(
-			"%w: command %q parameter %q active-party-position resolver requires character kind and scenario choices",
-			ErrInvalidCatalog,
-			commandID,
-			parameter.ID,
-		)
-	}
 	if len(parameter.Default) > 0 {
 		if err := validateArgument(parameter, parameter.Default); err != nil {
 			return fmt.Errorf(
@@ -368,7 +350,6 @@ func cloneDefinition(definition CommandDefinition) CommandDefinition {
 	for i := range definition.Parameters {
 		definition.Parameters[i].Default = append(json.RawMessage(nil), definition.Parameters[i].Default...)
 		definition.Parameters[i].Choices = cloneChoices(definition.Parameters[i].Choices)
-		definition.Parameters[i].ScenarioChoices = cloneChoices(definition.Parameters[i].ScenarioChoices)
 		definition.Parameters[i].Availability = append([]string(nil), definition.Parameters[i].Availability...)
 		definition.Parameters[i].Minimum = cloneIntPointer(definition.Parameters[i].Minimum)
 		definition.Parameters[i].Maximum = cloneIntPointer(definition.Parameters[i].Maximum)

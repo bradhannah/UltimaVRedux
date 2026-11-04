@@ -12,7 +12,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/debugging/scenarios"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -176,35 +175,6 @@ func TestSnapshotCommandsCaptureListGetAndDeleteLifecycle(t *testing.T) {
 	deleted := executeSnapshotTestCommand(t, game, debugging.CommandSaveSnapshotDelete, map[string]any{"reference": "project:stable-point", "expectedRevision": revision})
 	assert.True(t, deleted.Success, deleted.ErrorMessage)
 	assert.NotContains(t, repository.records, "project:stable-point")
-}
-
-func TestSnapshotDeleteRejectsScenarioBaselineReference(t *testing.T) {
-	target := snapshotCommandTestRecord(t, "project:stable-point", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-	snapshotRepository := &snapshotCommandTestRepository{records: map[string]save_snapshot.Record{target.Reference.String(): target}}
-	scenarioRepository := newScenarioRunnerTestRepository(t)
-	game := NewGame(&snapshotCommandTestScene{snapshot: validCommandTestSnapshot()})
-	game.ConfigureSnapshotRepository(snapshotRepository, nil)
-	game.ConfigureScenarioRunner(scenarioRepository, nil)
-	saveScenarioRunnerDefinition(t, scenarioRepository, scenarios.Definition{
-		SchemaVersion: scenarios.CurrentSchemaVersion, ID: "uses-stable-point", Name: "Uses Stable Point",
-		Description: "Keeps its named baseline reachable.", Baseline: scenarios.SnapshotBaseline(target.Reference.String()),
-		Steps: []scenarios.Step{{Type: scenarios.StepNote, Note: "Reference ownership test."}},
-	})
-	list := executeSnapshotTestCommand(t, game, debugging.CommandSaveSnapshotList, nil)
-	require.True(t, list.Success, list.ErrorMessage)
-	var listData debugging.SaveSnapshotListData
-	require.NoError(t, json.Unmarshal(list.Data, &listData))
-	require.Len(t, listData.Snapshots, 1)
-	assert.Equal(t, []string{"project:uses-stable-point"}, listData.Snapshots[0].ReferencedBy)
-	assert.False(t, listData.Snapshots[0].Eligibility.CanDelete)
-
-	result := executeSnapshotTestCommand(t, game, debugging.CommandSaveSnapshotDelete, map[string]any{
-		"reference": target.Reference.String(), "expectedRevision": target.Revision,
-	})
-
-	assert.Equal(t, snapshotReferencedError, result.ErrorCode)
-	assert.Contains(t, result.ErrorMessage, "project:uses-stable-point")
-	assert.Contains(t, snapshotRepository.records, target.Reference.String())
 }
 
 func TestSnapshotCompatibilityDisablesImpossibleLoads(t *testing.T) {
@@ -380,15 +350,6 @@ func TestSnapshotCommandsMapRepositoryErrorsAndDispatchOnUpdateThread(t *testing
 	repository.createErr = errors.New("read-only filesystem")
 	failedCapture := executeSnapshotTestCommand(t, game, debugging.CommandSaveSnapshotCapture, map[string]any{"source": "personal", "id": "failure", "name": "Failure"})
 	assert.Equal(t, snapshotCaptureError, failedCapture.ErrorCode)
-}
-
-func TestSnapshotManagementCommandsAreExcludedFromScenarios(t *testing.T) {
-	for _, commandID := range []string{
-		debugging.CommandSaveSnapshotList, debugging.CommandSaveSnapshotGet, debugging.CommandSaveSnapshotCapture,
-		debugging.CommandSaveSnapshotLoad, debugging.CommandSaveSnapshotDelete,
-	} {
-		assert.True(t, isScenarioManagementCommand(commandID), commandID)
-	}
 }
 
 func executeSnapshotTestCommand(t *testing.T, game *Game, commandID string, arguments map[string]any) debugging.Result {

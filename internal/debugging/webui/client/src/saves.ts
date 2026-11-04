@@ -18,7 +18,6 @@ export interface SaveSnapshotSummary {
   revision: string
   compatibility: { compatible: boolean; reason?: string }
   eligibility: SaveEligibility
-  referencedBy?: string[]
 }
 
 export interface SaveSnapshotListData {

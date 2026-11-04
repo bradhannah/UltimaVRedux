@@ -35,7 +35,5 @@ __pycache__/
 /internal/debugging/webui/client/.vite/
 /internal/debugging/webui/client/browser/results/
 /data/init/INIT.GAM
-/debug/scenarios/.scenario-repository.lock
-/debug/scenarios/.scenario-snapshot-references.lock
 /debug/snapshots/.save-snapshot-repository.lock
 /debug/snapshots/.scenario-snapshot-references.lock

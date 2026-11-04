@@ -12,7 +12,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/debugging/scenarios"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -142,45 +141,5 @@ func TestOutdoorWindowFailedReplacementPreservesOldSceneNextBlink(t *testing.T) 
 		require.False(t, result.Success)
 		assert.Same(t, source, game.currentScene)
 		assertOutdoorWindowNextBlink(t, source, 124)
-	}
-}
-
-func TestOutdoorWindowNamedAndCurrentScenarioBaselineNextBlink(t *testing.T) {
-	for _, named := range []bool{false, true} {
-		source := newOutdoorWindowSnapshotScene(t)
-		record := outdoorWindowSnapshotRecord(t, source, "project:outdoor-window")
-		repository := &snapshotCommandTestRepository{records: map[string]save_snapshot.Record{record.Reference.String(): record}}
-		scenarioRepository := newScenarioRunnerTestRepository(t)
-		baseline := scenarios.CurrentBaseline()
-		if named {
-			baseline = scenarios.SnapshotBaseline(record.Reference.String())
-		}
-		saveScenarioRunnerDefinition(t, scenarioRepository, scenarios.Definition{
-			SchemaVersion: scenarios.CurrentSchemaVersion, ID: "outdoor-window", Name: "Outdoor window",
-			Description: "Observe the next Blink after baseline selection.", Baseline: baseline,
-			Steps: []scenarios.Step{{Type: scenarios.StepNote, Note: "Baseline selected."}},
-		})
-		game := NewGame(source)
-		builds := 0
-		game.ConfigureSnapshotRepository(repository, func(configuration *config.UltimaVConfiguration, snapshot save_snapshot.SaveSnapshot) (Scene, error) {
-			builds++
-
-			return buildOutdoorWindowCandidate(t, configuration, snapshot)
-		})
-		game.ConfigureScenarioRunner(scenarioRepository, nil)
-		result := game.ExecuteLocalDebugCommand(scenarioRunnerStartRequest(t, game, scenarioRepository, "project:outdoor-window"))
-		require.True(t, result.Success, result.ErrorMessage)
-		for range 3 {
-			game.updateScenarioRun()
-		}
-		require.Equal(t, scenarioRunSucceeded, game.scenarioRun.status.State)
-		if named {
-			assert.Equal(t, 1, builds)
-			assertOutdoorWindowNextBlink(t, game.currentScene.(*GameScene), 140)
-		} else {
-			assert.Zero(t, builds)
-			assert.Same(t, source, game.currentScene)
-			assertOutdoorWindowNextBlink(t, source, 124)
-		}
 	}
 }

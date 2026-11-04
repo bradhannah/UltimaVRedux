@@ -13,7 +13,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/audio"
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/debugging/scenarios"
 	"github.com/bradhannah/UltimaVRedux/internal/display"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/profiling"
@@ -44,14 +43,6 @@ type Game struct {
 	debugDiscoveryPolling             atomic.Bool
 	debugDiscoveryRetired             atomic.Bool
 	sceneGeneration                   atomic.Uint64
-	scenarioRepository                *scenarios.Repository
-	scenarioInitLoader                func() (Scene, error)
-	scenarioRun                       *scenarioRun
-	scenarioRunHistory                scenarioRunHistoryRepository
-	scenarioHistory                   []scenarios.RunRecord
-	scenarioHistoryError              string
-	scenarioNow                       func() time.Time
-	scenarioRunID                     func() (string, error)
 	snapshotRepository                snapshotRepository
 	snapshotSceneBuilder              func(*config.UltimaVConfiguration, save_snapshot.SaveSnapshot) (Scene, error)
 	snapshotNow                       func() time.Time
@@ -80,40 +71,6 @@ type windowCloseHandler interface {
 	HandleWindowCloseRequest(game *Game) bool
 }
 
-type scenarioRunHistoryRepository interface {
-	Load() ([]scenarios.RunRecord, error)
-	Append(record scenarios.RunRecord) ([]scenarios.RunRecord, error)
-	Capacity() int
-}
-
-// ConfigureScenarioRunner injects the durable definition repository and INIT
-// baseline loader without imposing filesystem or scene construction policy on Game.
-func (g *Game) ConfigureScenarioRunner(repository *scenarios.Repository, initLoader func() (Scene, error)) {
-	g.scenarioRepository = repository
-	g.scenarioInitLoader = initLoader
-	if repository != nil {
-		repository.ConfigureSnapshotRepository(g.snapshotRepository)
-	}
-}
-
-// ConfigureScenarioRunHistory loads private terminal run history without making
-// scenario execution depend on diagnostic persistence availability.
-func (g *Game) ConfigureScenarioRunHistory(repository scenarioRunHistoryRepository) {
-	g.scenarioRunHistory = repository
-	g.scenarioHistory = nil
-	g.scenarioHistoryError = ""
-	if repository == nil {
-		return
-	}
-	runs, err := repository.Load()
-	if err != nil {
-		g.scenarioHistoryError = err.Error()
-
-		return
-	}
-	g.scenarioHistory = runs
-}
-
 // ConfigureSnapshotRepository injects native snapshot persistence and dormant scene construction.
 func (g *Game) ConfigureSnapshotRepository(
 	repository snapshotRepository,
@@ -121,9 +78,6 @@ func (g *Game) ConfigureSnapshotRepository(
 ) {
 	g.snapshotRepository = repository
 	g.snapshotSceneBuilder = builder
-	if g.scenarioRepository != nil {
-		g.scenarioRepository.ConfigureSnapshotRepository(repository)
-	}
 }
 
 // ConfigurePlayerSaveRepository injects player-slot persistence and dormant
@@ -179,8 +133,6 @@ func NewGame(initialScene Scene) *Game {
 		debugCommandRegistry:          initialDebugCommandRegistry,
 		debugDiscovery:                atomic.Pointer[debugging.DiscoverySnapshot]{},
 		sceneGeneration:               atomic.Uint64{},
-		scenarioNow:                   time.Now,
-		scenarioRunID:                 newScenarioRunID,
 		snapshotNow:                   time.Now,
 		snapshotGameVersion:           developmentGameVersion,
 		playerSaveNow:                 time.Now,
@@ -307,13 +259,6 @@ func (g *Game) executeDebugCommand(request debugging.Request) debugging.Result {
 				"the available command options changed after this request was prepared",
 			), invocation)
 		}
-	}
-	if g.scenarioRunBlocksRequest(request, definition) {
-		return g.withCommandCompletion(debugging.FailureResult(
-			request,
-			"scenario_run_active",
-			"gameplay mutations are unavailable while a scripted scenario is queued or running",
-		), invocation)
 	}
 	if registration.scope == debugCommandApplicationValidated {
 		result := registration.handler(debugCommandContext{game: g, scene: nil}, request)
@@ -492,7 +437,6 @@ func (g *Game) Update() error {
 		if g.debugDiscoveryPolling.Load() {
 			g.refreshDebugDiscoverySnapshot()
 		}
-		g.updateScenarioRun()
 		g.debugBridge.Process(gameDebugExecutor{game: g}, maxDebugRequestsPerUpdate)
 		if g.windowCloseRequested() {
 			g.handleWindowCloseRequest()

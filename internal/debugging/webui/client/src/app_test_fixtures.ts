@@ -17,8 +17,8 @@ export function calendarStatusCompletion(requestId: string): object {
   })
 }
 
-export function scenarioStatusCompletion(requestId: string): object {
-  return successfulQueryCompletion(requestId, "scenario.status", "Scenario Lab status loaded.", {
+export function testSetupStatusCompletion(requestId: string): object {
+  return successfulQueryCompletion(requestId, "test-setup.status", "Test setup status loaded.", {
     partyFingerprint: "party-1",
     wipeReview: { fingerprint: "wipe-1", members: [{ slot: 0, name: "Avatar", hp: 100, status: "good" }] },
     locationId: 2, locationName: "Britain", mapType: "small", floor: 0,

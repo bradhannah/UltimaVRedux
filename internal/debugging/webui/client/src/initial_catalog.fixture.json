@@ -63,46 +63,6 @@
     "destructive": false
   },
   {
-    "id": "combat.map-catalog.all",
-    "category": "Combat",
-    "name": "Combat Map Catalog",
-    "description": "List Britannia combat maps and dungeon room ranges.",
-    "aliases": [
-      "combat list",
-      "combat list brit",
-      "combat list dungeons"
-    ],
-    "parameters": [
-      {
-        "id": "section",
-        "name": "Map Section",
-        "description": "Choose which combat-map family to list.",
-        "kind": "enum",
-        "required": false,
-        "default": "all",
-        "choices": [
-          {
-            "value": "all",
-            "label": "All Maps"
-          },
-          {
-            "value": "britannia",
-            "label": "Britannia"
-          },
-          {
-            "value": "dungeons",
-            "label": "Dungeons"
-          }
-        ],
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
     "id": "logging.status",
     "category": "Diagnostics",
     "name": "Logging Status",
@@ -118,64 +78,6 @@
       "stdout",
       "verbosity",
       "logging"
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "shrine.reference.inspect",
-    "category": "Shrines",
-    "name": "Shrine Reference",
-    "description": "Inspect static reference data for one virtue shrine.",
-    "aliases": [
-      "shrine data"
-    ],
-    "parameters": [
-      {
-        "id": "index",
-        "name": "Shrine",
-        "description": "Choose a virtue shrine.",
-        "kind": "enum",
-        "required": true,
-        "default": "0",
-        "choices": [
-          {
-            "value": "0",
-            "label": "Honesty"
-          },
-          {
-            "value": "1",
-            "label": "Compassion"
-          },
-          {
-            "value": "2",
-            "label": "Valour"
-          },
-          {
-            "value": "3",
-            "label": "Justice"
-          },
-          {
-            "value": "4",
-            "label": "Sacrifice"
-          },
-          {
-            "value": "5",
-            "label": "Honor"
-          },
-          {
-            "value": "6",
-            "label": "Spirituality"
-          },
-          {
-            "value": "7",
-            "label": "Humility"
-          }
-        ],
-        "controlHint": "select"
-      }
     ],
     "executionModes": [
       "query"
@@ -347,34 +249,7 @@
         "controlHint": "select",
         "availability": [
           "gameplay"
-        ],
-        "scenarioChoices": [
-          {
-            "value": "1",
-            "label": "Party Position 1"
-          },
-          {
-            "value": "2",
-            "label": "Party Position 2"
-          },
-          {
-            "value": "3",
-            "label": "Party Position 3"
-          },
-          {
-            "value": "4",
-            "label": "Party Position 4"
-          },
-          {
-            "value": "5",
-            "label": "Party Position 5"
-          },
-          {
-            "value": "6",
-            "label": "Party Position 6"
-          }
-        ],
-        "scenarioValueResolver": "active-party-position"
+        ]
       },
       {
         "id": "strength",
@@ -504,8 +379,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
@@ -530,8 +404,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "rosterIndices",
@@ -593,8 +466,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
@@ -619,8 +491,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "rosterIndex",
@@ -1008,222 +879,6 @@
     ],
     "executionModes": [
       "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "movement.teleport",
-    "category": "Movement",
-    "name": "Same-Map Teleport",
-    "description": "Teleport to a validated coordinate on the current map without changing map or floor.",
-    "parameters": [
-      {
-        "id": "x",
-        "name": "X",
-        "description": "Coordinate on the active map.",
-        "kind": "integer",
-        "required": true,
-        "minimum": 0,
-        "maximum": 255,
-        "controlHint": "number"
-      },
-      {
-        "id": "y",
-        "name": "Y",
-        "description": "Coordinate on the active map.",
-        "kind": "integer",
-        "required": true,
-        "minimum": 0,
-        "maximum": 255,
-        "controlHint": "number"
-      }
-    ],
-    "executionModes": [
-      "synchronized_live"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "movement.enter-location",
-    "category": "Movement",
-    "name": "Enter Named Location",
-    "description": "Transition directly to a supported small-map entry point without simulating travel time.",
-    "aliases": [
-      "mv gos"
-    ],
-    "parameters": [
-      {
-        "id": "location",
-        "name": "Location",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "1",
-            "label": "Moonglow"
-          },
-          {
-            "value": "2",
-            "label": "Britain"
-          },
-          {
-            "value": "3",
-            "label": "Jhelom"
-          },
-          {
-            "value": "4",
-            "label": "Yew"
-          },
-          {
-            "value": "5",
-            "label": "Minoc"
-          },
-          {
-            "value": "6",
-            "label": "Trinsic"
-          },
-          {
-            "value": "7",
-            "label": "SkaraBrae"
-          },
-          {
-            "value": "8",
-            "label": "NewMagincia"
-          },
-          {
-            "value": "9",
-            "label": "Fogsbane"
-          },
-          {
-            "value": "10",
-            "label": "Stormcrow"
-          },
-          {
-            "value": "11",
-            "label": "Greyhaven"
-          },
-          {
-            "value": "12",
-            "label": "Waveguide"
-          },
-          {
-            "value": "13",
-            "label": "IolosHut"
-          },
-          {
-            "value": "14",
-            "label": "SuteksHut"
-          },
-          {
-            "value": "15",
-            "label": "SinVraalsHut"
-          },
-          {
-            "value": "16",
-            "label": "GrendelsHut"
-          },
-          {
-            "value": "17",
-            "label": "LordBritishsCastle"
-          },
-          {
-            "value": "18",
-            "label": "PalaceOfBlackthorn"
-          },
-          {
-            "value": "19",
-            "label": "WestBritanny"
-          },
-          {
-            "value": "20",
-            "label": "NorthBritanny"
-          },
-          {
-            "value": "21",
-            "label": "EastBritanny"
-          },
-          {
-            "value": "22",
-            "label": "Paws"
-          },
-          {
-            "value": "23",
-            "label": "Cove"
-          },
-          {
-            "value": "24",
-            "label": "BuccaneersDen"
-          },
-          {
-            "value": "25",
-            "label": "Ararat"
-          },
-          {
-            "value": "26",
-            "label": "Bordermarch"
-          },
-          {
-            "value": "27",
-            "label": "Farthing"
-          },
-          {
-            "value": "28",
-            "label": "Windemere"
-          },
-          {
-            "value": "29",
-            "label": "Stonegate"
-          },
-          {
-            "value": "30",
-            "label": "Lycaeum"
-          },
-          {
-            "value": "31",
-            "label": "EmpathAbbey"
-          },
-          {
-            "value": "32",
-            "label": "SerpentsHold"
-          }
-        ],
-        "controlHint": "select",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "synchronized_live"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "movement.floor.set",
-    "category": "Movement",
-    "name": "Set Exact Floor",
-    "description": "Transition to one exact valid floor without climbing or advancing time.",
-    "aliases": [
-      "mv floor",
-      "mv floor up",
-      "mv floor down"
-    ],
-    "parameters": [
-      {
-        "id": "floor",
-        "name": "Floor",
-        "kind": "integer",
-        "required": true,
-        "minimum": -1,
-        "maximum": 7,
-        "controlHint": "number",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "synchronized_live"
     ],
     "destructive": false
   },
@@ -1670,8 +1325,7 @@
     "executionModes": [
       "synchronized_live"
     ],
-    "destructive": false,
-    "scenarioTerminal": true
+    "destructive": false
   },
   {
     "id": "monster.ecosystem.status",
@@ -3844,7 +3498,7 @@
   },
   {
     "id": "combat.presentation.speed.set",
-    "category": "Redux Modifications",
+    "category": "Combat",
     "name": "Set Combat Speed",
     "description": "Persist master combat animation and action-pause speed. Higher values shorten presentation without changing combat rules.",
     "aliases": [
@@ -3860,17 +3514,50 @@
         "maximum": 2000,
         "step": 50,
         "choices": [
-          { "value": "50", "label": "0.5x" },
-          { "value": "100", "label": "1x" },
-          { "value": "150", "label": "1.5x" },
-          { "value": "200", "label": "2x" },
-          { "value": "300", "label": "3x" },
-          { "value": "400", "label": "4x" },
-          { "value": "600", "label": "6x" },
-          { "value": "800", "label": "8x" },
-          { "value": "1200", "label": "12x" },
-          { "value": "1600", "label": "16x" },
-          { "value": "2000", "label": "20x" }
+          {
+            "value": "50",
+            "label": "0.5x"
+          },
+          {
+            "value": "100",
+            "label": "1x"
+          },
+          {
+            "value": "150",
+            "label": "1.5x"
+          },
+          {
+            "value": "200",
+            "label": "2x"
+          },
+          {
+            "value": "300",
+            "label": "3x"
+          },
+          {
+            "value": "400",
+            "label": "4x"
+          },
+          {
+            "value": "600",
+            "label": "6x"
+          },
+          {
+            "value": "800",
+            "label": "8x"
+          },
+          {
+            "value": "1200",
+            "label": "12x"
+          },
+          {
+            "value": "1600",
+            "label": "16x"
+          },
+          {
+            "value": "2000",
+            "label": "20x"
+          }
         ],
         "controlHint": "number"
       }
@@ -3878,8 +3565,7 @@
     "executionModes": [
       "presentation"
     ],
-    "destructive": false,
-    "scenarioExcluded": true
+    "destructive": false
   },
   {
     "id": "guards.status",
@@ -4078,78 +3764,6 @@
     "destructive": false
   },
   {
-    "id": "display.status",
-    "category": "Display",
-    "name": "Game Window Display",
-    "description": "Inspect requested and observed runtime game-window modes and dimensions.",
-    "searchTerms": [
-      "resolution",
-      "fullscreen",
-      "maximized",
-      "window",
-      "screen",
-      "display",
-      "pending"
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "display.resolution.set",
-    "category": "Display",
-    "name": "Set Game Window Resolution",
-    "description": "Request one supported runtime window size without changing player display settings.",
-    "aliases": [
-      "screen ru",
-      "screen rd"
-    ],
-    "parameters": [
-      {
-        "id": "index",
-        "name": "Resolution",
-        "kind": "integer",
-        "required": true,
-        "minimum": 0,
-        "maximum": 4,
-        "controlHint": "select",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "presentation"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "display.fullscreen.set",
-    "category": "Display",
-    "name": "Set Game Window Fullscreen",
-    "description": "Compatibility control that requests runtime fullscreen or windowed mode without changing player display settings.",
-    "aliases": [
-      "screen fs"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Enabled",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "presentation"
-    ],
-    "destructive": false
-  },
-  {
     "id": "party.karma.set",
     "category": "Party",
     "name": "Set Party Karma",
@@ -4177,10 +3791,10 @@
     "destructive": false
   },
   {
-    "id": "scenario.status",
-    "category": "Scenarios",
-    "name": "Scenario Lab",
-    "description": "Inspect and run exceptional deterministic gameplay scenarios.",
+    "id": "test-setup.status",
+    "category": "Test Setups",
+    "name": "Test Setups",
+    "description": "Inspect the active party and run the camping and death test setups.",
     "searchTerms": [
       "test setup",
       "reproduce",
@@ -4193,277 +3807,8 @@
     "destructive": false
   },
   {
-    "id": "scenario.definition.list",
-    "category": "Scenarios",
-    "name": "List Scripted Scenarios",
-    "description": "List durable scripted scenario definitions from project and personal sources.",
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "scenario.definition.get",
-    "category": "Scenarios",
-    "name": "Get Scripted Scenario",
-    "description": "Get one complete versioned scripted scenario definition by source-qualified reference.",
-    "parameters": [
-      {
-        "id": "reference",
-        "name": "Source-Qualified Reference",
-        "kind": "string",
-        "required": true,
-        "pattern": "^(project|personal):[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-      }
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "scenario.definition.validate",
-    "category": "Scenarios",
-    "name": "Validate Scripted Scenario",
-    "description": "Validate one JSON scripted scenario definition against the current command catalog without mutation.",
-    "parameters": [
-      {
-        "id": "definition",
-        "name": "JSON Definition",
-        "description": "Complete scripted scenario definition encoded as JSON.",
-        "kind": "string",
-        "required": true
-      }
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "scenario.definition.create",
-    "category": "Scenarios",
-    "name": "Create Scripted Scenario",
-    "description": "Validate and create one JSON scripted scenario definition only when its source-qualified destination is absent.",
-    "parameters": [
-      {
-        "id": "source",
-        "name": "Source",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "project",
-            "label": "Project"
-          },
-          {
-            "value": "personal",
-            "label": "Personal"
-          }
-        ],
-        "controlHint": "select"
-      },
-      {
-        "id": "definition",
-        "name": "JSON Definition",
-        "description": "Complete scripted scenario definition encoded as JSON.",
-        "kind": "string",
-        "required": true
-      }
-    ],
-    "executionModes": [
-      "coordinated_alteration"
-    ],
-    "destructive": true
-  },
-  {
-    "id": "scenario.definition.update",
-    "category": "Scenarios",
-    "name": "Update Scripted Scenario",
-    "description": "Validate and update one scripted scenario only when its stored revision matches; the definition ID cannot rename or move it.",
-    "parameters": [
-      {
-        "id": "reference",
-        "name": "Source-Qualified Reference",
-        "kind": "string",
-        "required": true,
-        "pattern": "^(project|personal):[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-      },
-      {
-        "id": "expectedRevision",
-        "name": "Expected Revision",
-        "kind": "string",
-        "required": true,
-        "pattern": "^[a-f0-9]{64}$"
-      },
-      {
-        "id": "definition",
-        "name": "JSON Definition",
-        "description": "Complete scripted scenario definition encoded as JSON.",
-        "kind": "string",
-        "required": true
-      }
-    ],
-    "executionModes": [
-      "coordinated_alteration"
-    ],
-    "destructive": true
-  },
-  {
-    "id": "scenario.definition.delete",
-    "category": "Scenarios",
-    "name": "Delete Scripted Scenario",
-    "description": "Delete one scripted scenario only when its stored revision matches.",
-    "parameters": [
-      {
-        "id": "reference",
-        "name": "Source-Qualified Reference",
-        "kind": "string",
-        "required": true,
-        "pattern": "^(project|personal):[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-      },
-      {
-        "id": "expectedRevision",
-        "name": "Expected Revision",
-        "kind": "string",
-        "required": true,
-        "pattern": "^[a-f0-9]{64}$"
-      }
-    ],
-    "executionModes": [
-      "coordinated_alteration"
-    ],
-    "destructive": true
-  },
-  {
-    "id": "scenario.definition.duplicate",
-    "category": "Scenarios",
-    "name": "Duplicate Scripted Scenario",
-    "description": "Copy one reviewed scenario revision to an explicit absent destination without overwriting.",
-    "parameters": [
-      {
-        "id": "sourceReference",
-        "name": "Source Reference",
-        "kind": "string",
-        "required": true,
-        "pattern": "^(project|personal):[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-      },
-      {
-        "id": "sourceRevision",
-        "name": "Source Revision",
-        "kind": "string",
-        "required": true,
-        "pattern": "^[a-f0-9]{64}$"
-      },
-      {
-        "id": "destinationSource",
-        "name": "Destination Source",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "project",
-            "label": "Project"
-          },
-          {
-            "value": "personal",
-            "label": "Personal"
-          }
-        ],
-        "controlHint": "select"
-      },
-      {
-        "id": "destinationId",
-        "name": "Destination ID",
-        "kind": "string",
-        "required": true,
-        "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
-      },
-      {
-        "id": "destinationName",
-        "name": "Destination Name",
-        "kind": "string",
-        "required": true
-      }
-    ],
-    "executionModes": [
-      "coordinated_alteration"
-    ],
-    "destructive": true
-  },
-  {
-    "id": "scenario.run.start",
-    "category": "Scenarios",
-    "name": "Start Scripted Scenario",
-    "description": "Start a reviewed durable scripted scenario revision against the reviewed active scene generation.",
-    "parameters": [
-      {
-        "id": "reference",
-        "name": "Source-Qualified Reference",
-        "kind": "string",
-        "required": true,
-        "pattern": "^(project|personal):[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
-        "availability": [
-          "gameplay"
-        ]
-      },
-      {
-        "id": "expectedRevision",
-        "name": "Reviewed Definition Revision",
-        "kind": "string",
-        "required": true,
-        "pattern": "^[a-f0-9]{64}$"
-      },
-      {
-        "id": "expectedBaselineRevision",
-        "name": "Reviewed Baseline Revision",
-        "kind": "string",
-        "required": false,
-        "default": "",
-        "pattern": "^(?:[a-f0-9]{64})?$"
-      },
-      {
-        "id": "reviewedSceneGeneration",
-        "name": "Reviewed Scene Generation",
-        "kind": "integer",
-        "required": true,
-        "minimum": 1,
-        "maximum": 2147483647,
-        "controlHint": "number",
-        "availability": [
-          "gameplay"
-        ]
-      },
-      {
-        "id": "parameterValues",
-        "name": "JSON Parameter Values",
-        "description": "Launch parameter values encoded as a JSON object.",
-        "kind": "string",
-        "required": false,
-        "default": "{}",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "workflow"
-    ],
-    "destructive": true
-  },
-  {
-    "id": "scenario.run.status",
-    "category": "Scenarios",
-    "name": "Scripted Scenario Run Status",
-    "description": "Report the active scripted scenario run and bounded private history with ordered step results.",
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
     "id": "command-test.hole-up",
-    "category": "Scenarios",
+    "category": "Test Setups",
     "name": "Test Hole Up",
     "description": "Queue production camping with explicit wanderer and ambush branches against a reviewed party roster.",
     "aliases": [
@@ -4509,8 +3854,7 @@
         "required": true,
         "availability": [
           "gameplay"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "guardRosterIndex",
@@ -4852,8 +4196,7 @@
         "required": true,
         "availability": [
           "gameplay"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
@@ -4877,8 +4220,7 @@
         "required": true,
         "availability": [
           "gameplay"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
@@ -5086,38 +4428,7 @@
         "controlHint": "select",
         "availability": [
           "gameplay"
-        ],
-        "scenarioChoices": [
-          {
-            "value": "all",
-            "label": "All active party members"
-          },
-          {
-            "value": "1",
-            "label": "Party Position 1"
-          },
-          {
-            "value": "2",
-            "label": "Party Position 2"
-          },
-          {
-            "value": "3",
-            "label": "Party Position 3"
-          },
-          {
-            "value": "4",
-            "label": "Party Position 4"
-          },
-          {
-            "value": "5",
-            "label": "Party Position 5"
-          },
-          {
-            "value": "6",
-            "label": "Party Position 6"
-          }
-        ],
-        "scenarioValueResolver": "active-party-position"
+        ]
       },
       {
         "id": "helm",
@@ -5598,260 +4909,13 @@
         "controlHint": "text",
         "availability": [
           "gameplay"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
       "coordinated_alteration"
     ],
     "destructive": true
-  },
-  {
-    "id": "redux.modifications.status",
-    "category": "Redux Modifications",
-    "name": "Redux Gameplay Modifications",
-    "description": "Inspect persisted Redux gameplay rules and original-behavior overrides.",
-    "aliases": [
-      "redux settings",
-      "gameplay modifications"
-    ],
-    "searchTerms": [
-      "redux",
-      "deviation",
-      "original behavior",
-      "monster division",
-      "splits",
-      "dungeon",
-      "discoveries",
-      "visibility"
-    ],
-    "executionModes": [
-      "query"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "redux.combat.repeated-monster-division.set",
-    "category": "Redux Modifications",
-    "name": "Set Repeated Monster Division",
-    "description": "Persist whether surviving Slimes, Gargoyles, and their children may divide repeatedly.",
-    "aliases": [
-      "repeated splits",
-      "original monster division"
-    ],
-    "searchTerms": [
-      "redux",
-      "combat",
-      "slime",
-      "gargoyle",
-      "splits"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Allow Repeated Division",
-        "description": "Enable repeated source-authentic division instead of the Redux one-child limit.",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.saves.confirm-quick-save.set",
-    "category": "Redux Modifications",
-    "name": "Confirm Quick Save",
-    "description": "Persist confirmation prompts for Q quick saves; Off still reports success.",
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Confirm Quick Save",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.combat.health-bars.set",
-    "category": "Redux Modifications",
-    "name": "Show Combat HP Bars",
-    "description": "Persist battlefield health bars; Off adds monster injury descriptions. Fleeing indicators remain visible.",
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Show Combat HP Bars",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.presentation.action-popups.set",
-    "category": "Redux Modifications",
-    "name": "Maximum Action Popups",
-    "description": "Persist the simultaneous action-popup limit; zero is Off and messages remain in the output panel.",
-    "parameters": [
-      {
-        "id": "count",
-        "name": "Maximum Action Popups",
-        "kind": "integer",
-        "required": true,
-        "minimum": 0,
-        "maximum": 3,
-        "step": 1,
-        "controlHint": "number"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.dungeons.persist-hidden-discoveries.set",
-    "category": "Redux Modifications",
-    "name": "Set Persistent Hidden Dungeon Discoveries",
-    "description": "Persist revealed hidden dungeon doors and pits between fresh visits.",
-    "aliases": [
-      "persistent dungeon discoveries",
-      "remember hidden doors"
-    ],
-    "searchTerms": [
-      "redux",
-      "dungeon",
-      "hidden door",
-      "hidden pit",
-      "persistence"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Persist Hidden Discoveries",
-        "description": "Enable Redux persistence instead of original per-visit discovery reset.",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.dungeons.subdued-unlit-visibility.set",
-    "category": "Redux Modifications",
-    "name": "Set Subdued Unlit Dungeon Visibility",
-    "description": "Show deterministic dim dungeon geometry when no real light is active.",
-    "aliases": [
-      "dim dungeons",
-      "unlit dungeon visibility"
-    ],
-    "searchTerms": [
-      "redux",
-      "dungeon",
-      "darkness",
-      "dim",
-      "visibility"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Show Subdued Unlit Dungeons",
-        "description": "Enable Redux subdued visibility instead of original binary black.",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.presentation.smooth-surface-movement.set",
-    "category": "Redux Modifications",
-    "name": "Set Smooth Surface Movement",
-    "description": "Persist optional camera scrolling while walking, riding, flying or boating; mounts animate 25% faster and automatic sailing follows its cadence. Gameplay timing, combat and dungeons are unchanged.",
-    "aliases": [
-      "smooth movement",
-      "surface scrolling"
-    ],
-    "searchTerms": [
-      "redux",
-      "presentation",
-      "camera",
-      "smooth",
-      "movement"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Smooth Surface Movement",
-        "description": "Enable optional Redux camera scrolling; disabled by default.",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "redux.navigation.flexible_sextant_use.set",
-    "category": "Redux Modifications",
-    "name": "Set Flexible Sextant Use",
-    "description": "Persist optional daytime and settlement sextant use on all floors, including cellars; dungeons, Underworld and ownership requirements remain excluded.",
-    "aliases": [
-      "flexible sextant",
-      "sextant navigation"
-    ],
-    "searchTerms": [
-      "redux",
-      "navigation",
-      "sextant",
-      "flexible"
-    ],
-    "parameters": [
-      {
-        "id": "enabled",
-        "name": "Flexible sextant use",
-        "description": "Enable flexible navigation instead of original nighttime world-only use; disabled by default.",
-        "kind": "boolean",
-        "required": true,
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
   },
   {
     "id": "world.position.set",
@@ -6193,8 +5257,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "expectedFloor",
@@ -6206,8 +5269,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "expectedX",
@@ -6219,8 +5281,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "expectedY",
@@ -6232,8 +5293,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       },
       {
         "id": "expectedSourceFingerprint",
@@ -6243,8 +5303,7 @@
         "availability": [
           "gameplay",
           "outside_combat"
-        ],
-        "scenarioRuntime": true
+        ]
       }
     ],
     "executionModes": [
@@ -6302,8 +5361,7 @@
     "executionModes": [
       "query"
     ],
-    "destructive": false,
-    "scenarioExcluded": true
+    "destructive": false
   },
   {
     "id": "merchant.tester.preview.open",
@@ -6339,8 +5397,7 @@
     "executionModes": [
       "workflow"
     ],
-    "destructive": false,
-    "scenarioExcluded": true
+    "destructive": false
   },
   {
     "id": "merchant.tester.live.open",
@@ -6435,74 +5492,6 @@
       "workflow",
       "coordinated_alteration"
     ],
-    "destructive": true,
-    "scenarioExcluded": true
-  },
-  {
-    "id": "display.mode.set",
-    "category": "Display",
-    "name": "Set Game Window Mode",
-    "description": "Request a runtime game-window mode without changing player display settings.",
-    "aliases": [
-      "screen mode"
-    ],
-    "searchTerms": [
-      "resolution",
-      "fullscreen",
-      "maximized",
-      "window",
-      "screen",
-      "display"
-    ],
-    "parameters": [
-      {
-        "id": "mode",
-        "name": "Display Mode",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "windowed",
-            "label": "Windowed"
-          },
-          {
-            "value": "maximized",
-            "label": "Maximized Window"
-          },
-          {
-            "value": "fullscreen",
-            "label": "Borderless Fullscreen"
-          }
-        ],
-        "controlHint": "select",
-        "availability": [
-          "gameplay"
-        ]
-      }
-    ],
-    "executionModes": [
-      "presentation"
-    ],
-    "destructive": false
-  },
-  {
-    "id": "scenario.run.cancel",
-    "category": "Scenarios",
-    "name": "Cancel Remaining Steps",
-    "description": "Stop remaining steps of the identified run when processed; retain completed effects, the applied baseline, and production workflows. Does not restore rollback.",
-    "parameters": [
-      {
-        "id": "runId",
-        "name": "Run ID",
-        "kind": "string",
-        "required": true,
-        "pattern": "^\\S+$"
-      }
-    ],
-    "executionModes": [
-      "live_safe"
-    ],
-    "destructive": false,
-    "scenarioExcluded": true
+    "destructive": true
   }
 ]

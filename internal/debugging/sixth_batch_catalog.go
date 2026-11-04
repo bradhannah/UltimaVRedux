@@ -12,7 +12,7 @@ func sixthBatchCommands() []CommandDefinition {
 	fingerprint := func() []ParameterDefinition {
 		return []ParameterDefinition{{
 			ID: expectedFingerprintID, Name: "Reviewed Wipe Fingerprint", Kind: ParameterString, Required: true,
-			Availability: []string{contextGameplay}, ScenarioRuntime: true,
+			Availability: []string{contextGameplay},
 		}}
 	}
 
