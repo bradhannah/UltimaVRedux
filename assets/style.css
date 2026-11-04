@@ -283,6 +283,31 @@ th[aria-sort="descending"] button::after { content: " ▼"; color: var(--yellow)
   h2 { font-size: 20px; }
 }
 
+/* Under the hood walkthroughs */
+.code-line { font-size: 14px; color: var(--grey); }
+.pipeline { list-style: none; padding: 0; margin: 20px 0 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.pipeline li { border: 2px solid var(--blue); padding: 8px 12px; min-width: 128px; font: 13px var(--mono); }
+.pipeline .label { display: block; font: 700 12px var(--mono); color: var(--yellow); text-transform: uppercase; }
+.pipeline-notes { font-size: 14px; color: var(--grey); }
+.walk { margin: 36px 0 0; padding-top: 4px; border-top: 2px solid var(--blue); }
+.walk h2 .step { color: var(--white); font-family: var(--mono); }
+.walk .rule-meta span { display: inline-flex; gap: 6px; align-items: center; }
+.not-yet ul { color: var(--grey); }
+h2.reference { margin-top: 48px; padding-top: 16px; border-top: 4px double var(--blue); }
+.chip-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; }
+.chip-group .label { font: 700 12px var(--mono); color: var(--grey); text-transform: uppercase; margin-right: 6px; }
+.bits { margin: 0 0 18px; }
+.bit-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.nibble { display: flex; }
+.bit { width: 28px; height: 28px; line-height: 26px; text-align: center; font: 700 15px var(--mono); border: 1px solid var(--blue); }
+.nibble + .nibble .bit { border-color: var(--yellow); }
+.bits figcaption { margin-top: 6px; font-size: 14px; color: var(--grey); }
+.palette { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.palette li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.swatch { width: 28px; height: 20px; border: 1px solid var(--grey); flex: none; }
+table.bitfield th, table.bitfield td { text-align: center; }
+table.bitfield td + td { border-left: 2px solid var(--blue); }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
