@@ -10,8 +10,14 @@ Playing requires files from your own copy of the original MS-DOS PC game, such a
 the GOG edition.
 
 **[Download the preview](https://github.com/bradhannah/UltimaVRedux/releases)**
+· **[Game guide website](https://bradhannah.github.io/UltimaVRedux/)**
 · [Installation & setup](docs/INSTALL.md)
 · [Report a bug](https://github.com/bradhannah/UltimaVRedux/issues/new/choose)
+
+The [game guide website](https://bradhannah.github.io/UltimaVRedux/) covers the
+original game's facts and mechanics: bestiary, arms and armour, spells, shops,
+atlas and myths tested. It also has file-format guides for modders, downloadable
+JSON data, and a list of what Redux does differently.
 
 > **Public preview:** downloadable builds are available for macOS, Windows and
 > Linux; see [platform status](docs/INSTALL.md#platform-status) for what has been
