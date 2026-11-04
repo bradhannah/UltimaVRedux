@@ -15,6 +15,7 @@ import build_site
 import site_context
 import site_data
 import site_data_play
+import site_hood_walkthrough
 import site_markdown
 import site_pages_content
 from gamefacts_public import JSONValue
@@ -260,6 +261,37 @@ class SiteContentTest(SiteBuildCase):
         saved = self.page("original/hood/saved-gam/index.html")
         self.assertIn("<h2", saved)
         self.assertNotIn("](", saved, "unrendered Markdown link")
+
+    def test_graphics_walkthrough_precedes_rule_reference(self) -> None:
+        """The decoding walkthrough's steps come first, then every rule in full."""
+        text = self.page("original/hood/graphics/index.html")
+        anchors = [
+            'id="compressed"',
+            'id="lzw"',
+            'id="records"',
+            'id="pixels"',
+            'id="colours"',
+            'id="tile-sheet"',
+            'id="signature"',
+            'id="not-yet"',
+            'id="rule-reference"',
+            'id="gfx-0001"',
+        ]
+        positions = [text.index(anchor) for anchor in anchors]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("2 + 4 × 28", text)
+        self.assertIn("<code>0x72</code>", text)
+        self.assertEqual(text.count('class="swatch"'), 16)
+        self.assertIn("high nibble = 10; right pixel = low nibble = 7", text)
+        self.assertNotIn("](", text, "unrendered Markdown link")
+
+    def test_walkthrough_offsets_must_match_the_rules(self) -> None:
+        """A recomputed offset that a rule no longer states fails the build."""
+        context = copy.deepcopy(self.context)
+        rule = context.rules["GFX-0002"]
+        rule["text"] = rule["text"].replace("`0x72`", "`0x74`")
+        with self.assertRaisesRegex(ValueError, "GFX-0002 no longer states"):
+            site_hood_walkthrough.archive_offsets(context)
 
     def test_spoiler_answers_only_inside_reveal_elements(self) -> None:
         """Mantras, Words of Power and quest item positions are never in plain text."""

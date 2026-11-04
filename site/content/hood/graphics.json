@@ -1,0 +1,198 @@
+{
+  "intro": "From a `.16` file to pixels: expand the LZW stream, find the records, read each record's size, unpack the pixels, then look up the colours. Every number below comes from rules GFX-0001 to GFX-0008; the build recomputes the archive offsets and checks them against those rules.",
+  "code": [
+    "pkg/graphics/legacy/lzw.go",
+    "pkg/graphics/legacy/decode.go",
+    "pkg/graphics/legacy/catalog.go",
+    "pkg/graphics/legacy/model.go"
+  ],
+  "pipeline": [
+    {"label": "File", "text": ".16 .4 .BIT .PCS"},
+    {"label": "Expand", "text": "LZW"},
+    {"label": "Records", "text": "count + offsets"},
+    {"label": "Record", "text": "width, height"},
+    {"label": "Pixels", "text": "4-bit or 1-bit"},
+    {"label": "Colours", "text": "EGA palette"}
+  ],
+  "pipeline_notes": [
+    "`WD.BIT`, `IBM.CH`, `RUNES.CH` and `BRITISH.PTH` are stored directly: skip step 2.",
+    "`ITEMS` and `MON` archives pair each image with a 1-bit mask."
+  ],
+  "sections": [
+    {
+      "id": "compressed",
+      "step": "1",
+      "title": "Compressed or not",
+      "rules": ["GFX-0001"],
+      "blocks": [
+        {
+          "type": "chips",
+          "label": "LZW-compressed",
+          "items": ["PROPORT.PCS", "BRITISH.BIT", "TITLE.BIT", "TILES.16", "ITEMS.16", "DNG1–3.16", "MON0–7.16", "CREATE.16", "TEXT.16", "STORY1–6.16", "END1.16", "END2.16", "ULTIMA.16", "STARTSC.16", "ENDSC.16"]
+        },
+        {
+          "type": "chips",
+          "label": "Stored directly",
+          "items": ["WD.BIT", "IBM.CH", "RUNES.CH", "BRITISH.PTH"]
+        },
+        {"type": "p", "text": "On CGA and Hercules, picture names end in `.4`; Hercules fixed fonts end in `.HCS`."}
+      ]
+    },
+    {
+      "id": "lzw",
+      "step": "2",
+      "title": "Expand the LZW stream",
+      "rules": ["GFX-0001"],
+      "blocks": [
+        {
+          "type": "table",
+          "head": ["Part", "Value"],
+          "rows": [
+            ["Header", "4-byte little-endian expanded length"],
+            ["Code order", "Least significant bit first"],
+            ["Code width", "Starts at 9 bits, grows to 12"],
+            ["Clear", "Code 256; the stream must start with it. It resets the width, the next entry and the previous sequence."],
+            ["End", "Code 257"],
+            ["First new entry", "Code 258"],
+            ["Grow the width", "When the next entry index reaches 2^width"],
+            ["Dictionary", "4,096 entries; when full, stop adding until the next clear"],
+            ["After the end", "Redux checks the declared length and that any padding is zero"]
+          ]
+        },
+        {
+          "type": "code",
+          "caption": "Redux's decoding model as pseudocode",
+          "lines": [
+            "length = u32le(data[0:4])",
+            "reset(): width = 9; next = 258; prev = none",
+            "for each code (LSB-first, width bits):",
+            "  if code == 256: reset(); continue",
+            "  if code == 257: stop",
+            "  if code < next:    entry = dict[code]",
+            "  elif code == next: entry = prev + prev[0]",
+            "  else: corrupt",
+            "  output(entry)",
+            "  if prev and next < 4096:",
+            "    dict[next] = prev + entry[0]; next += 1",
+            "    if next == 2**width and width < 12: width += 1",
+            "  prev = entry",
+            "check len(output) == length"
+          ]
+        },
+        {
+          "type": "callout",
+          "label": "How sure is this?",
+          "text": "One complete file has been checked: expanding the shipped `TILES.16` with this model reproduces its source sheets byte for byte. Every stream transition, the full-dictionary case, trailing padding and corrupt input have not been checked against original samples, and a working decoder is not proof of every original rule."
+        }
+      ]
+    },
+    {
+      "id": "records",
+      "step": "3",
+      "title": "Find the records",
+      "rules": ["GFX-0002", "GFX-0003", "GFX-0004"],
+      "blocks": [
+        {"type": "p", "text": "After expanding, each archive starts with a little-endian 16-bit count, then a table of offsets from the start of the expanded data. A zero offset means an empty slot."},
+        {
+          "type": "table",
+          "head": ["Archive", "Count", "Offset table", "Records"],
+          "rows": [
+            ["Pictures: `CREATE`, `TEXT`, `STORY1–6`, `END1–2`, `ULTIMA`, `STARTSC`, `ENDSC`", "Records", "4 bytes each: low word, then a high word that is zero in the reviewed builds", "CREATE 11, TEXT 6, STORY 3/4/2/2/2/8, END 3 each, ULTIMA 5, STARTSC 3, ENDSC 1"],
+            ["Dungeon panels: `DNG1–3`", "28 slots", "4 bytes each; slots 8 and 24 are empty", "26 panels"],
+            ["Items: `ITEMS`", "20 images", "Two 16-bit offsets per image: image, mask, image, mask…", "40 records"],
+            ["Monsters: `MON0–7`", "6 images", "Two 16-bit offsets per image, as for items", "12 records per file"],
+            ["One-bit: `TITLE`, `BRITISH`, `WD`", "Records", "16-bit offsets", "TITLE 10; BRITISH and WD 1 each"],
+            ["Proportional font: `PROPORT.PCS`", "91 glyphs", "16-bit offsets", "Characters `0x20`–`0x7A`; `0x4FC` bytes in all"]
+          ]
+        },
+        {"type": "p", "text": "The first record always sits right after the table, at 2 + entry size × entries; for ordinary pictures that is 2 + 4 × count. The build recomputes the fixed archives' offsets and checks each against the rules:"},
+        {"type": "computed", "name": "archive_offsets"}
+      ]
+    },
+    {
+      "id": "record",
+      "step": "4",
+      "title": "Read a record",
+      "rules": ["GFX-0002", "GFX-0004"],
+      "blocks": [
+        {"type": "p", "text": "Each record starts with a 16-bit width and a 16-bit height, then its rows. Ordinary pictures round the stored width up to a multiple of eight:"},
+        {
+          "type": "code",
+          "lines": [
+            "stored_width  = 8 * ceil(width / 8)",
+            "payload_bytes = stored_width * height / 2"
+          ]
+        },
+        {"type": "p", "text": "Don't apply this rounding everywhere: the dungeon, item and monster archives use their dimensions as given. A proportional-font glyph record is 12 bytes: width, height (always 8), then eight row bytes. The space glyph has width zero but still has a record, and a glyph's width is not its text advance."}
+      ]
+    },
+    {
+      "id": "pixels",
+      "step": "5",
+      "title": "Unpack the pixels",
+      "rules": ["GFX-0002", "GFX-0003"],
+      "blocks": [
+        {"type": "bits", "byte": "0xA7", "mode": "nibbles", "caption": "4 bits per pixel: the left pixel is the high nibble."},
+        {"type": "bits", "byte": "0xB4", "mode": "msb", "caption": "Masks, 1 bit per pixel: bit 7 is the earliest pixel."},
+        {"type": "p", "text": "Example bytes for illustration, not taken from the game. In `ITEMS` and `MON` archives each image's mask follows it as its own record. Which mask polarity means \"draw\", and how opaque black is treated, have not been verified."}
+      ]
+    },
+    {
+      "id": "colours",
+      "step": "6",
+      "title": "Look up the colours",
+      "rules": ["GFX-0006"],
+      "blocks": [
+        {"type": "p", "text": "The files store palette indexes, not colours. Redux's review exporter maps them to the standard 16-colour EGA palette:"},
+        {"type": "computed", "name": "ega_palette"},
+        {"type": "p", "text": "Dungeon combat and the ending change some tiles' colours. Redux's current model swaps palette-index bits 1 and 2 for selected tiles in dungeons and uses a separate lossy mapping for the ending, applied as it draws. The original driver tables are not decoded yet."}
+      ]
+    },
+    {
+      "id": "tile-sheet",
+      "title": "The tile sheet: TILES.16",
+      "rules": ["GFX-0008"],
+      "blocks": [
+        {
+          "type": "stats",
+          "items": [
+            {"label": "Tiles", "value": "512", "note": "16 × 16 pixels each"},
+            {"label": "Per tile", "value": "128 bytes", "note": "16 rows of 8 bytes"},
+            {"label": "Expanded", "value": "65,536 bytes", "note": "No header or offset table"}
+          ]
+        },
+        {"type": "p", "text": "`TILES.16` uses the same LZW wrapper but none of the archive layouts above. Tile n starts at byte 128 × n of the expanded data; each row is 4 bits per pixel with the left pixel in the high nibble. The data is the four 16,384-byte source sheets joined in order. The CGA `TILES.4` expands to 32,768 bytes, 64 per tile."}
+      ]
+    },
+    {
+      "id": "signature",
+      "title": "The signature path: BRITISH.PTH",
+      "rules": ["GFX-0007"],
+      "blocks": [
+        {
+          "type": "bitfield",
+          "fields": [
+            {"high": 7, "low": 7, "label": "X sign"},
+            {"high": 6, "low": 4, "label": "X distance"},
+            {"high": 3, "low": 3, "label": "Y sign"},
+            {"high": 2, "low": 0, "label": "Y distance"}
+          ]
+        },
+        {
+          "type": "ul",
+          "items": [
+            "Plot the current point using the previous command's pen state, then move.",
+            "A distance above 2 lifts the pen for the next step.",
+            "A zero byte ends a segment. Startup draws four segments, starting at (44,68), (64,94), (143,78) and (167,105)."
+          ]
+        }
+      ]
+    }
+  ],
+  "not_yet": [
+    "The colour tables in `EGA.DRV`, and exactly which tiles they change (GFX-0006).",
+    "The fixed fonts' exact packing. Redux reads 128 glyphs of 8 × 8, one byte per row, 1,024 bytes; not independently verified (GFX-0005).",
+    "Mask polarity and how masks are composited (GFX-0003).",
+    "CGA (`.4`) and Hercules (`.HCS`) variants beyond their names and the CGA tile sheet's size."
+  ]
+}

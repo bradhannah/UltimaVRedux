@@ -89,6 +89,20 @@ Facts (`level_table`, `ambush_table`); add new ones in
 `scripts/site_pages_content.py`. Verify every number against the cited rule.
 Links inside content use site-absolute paths such as `/original/levels/`.
 
+**A walkthrough for an Under the hood guide.** Add `site/content/hood/<slug>.json`,
+named after the guide's slug in `scripts/site_pages_hood.py`. It holds `intro`,
+`code` (Redux source paths, which must exist), a `pipeline` of steps,
+`pipeline_notes`, `sections` and `not_yet`. Each section has an `id`, an optional
+`step` number, a `title`, `rules` and `blocks`. A section may cite only rules from
+its own guide, and each cited rule's Original status is shown beside it. On top of
+the shared block types, walkthroughs add `chips`, `table`, `code`, `bits` (an
+example byte, decoded at build time) and `bitfield`. Computed blocks are
+`archive_offsets`, recomputed and checked against the rule text, and
+`ega_palette`, read from `pkg/graphics/legacy/model.go`. They live in
+[`scripts/site_hood_walkthrough.py`](../scripts/site_hood_walkthrough.py). The
+walkthrough renders above the guide's full rule reference;
+`site/content/hood/graphics.json` is the example.
+
 **A myth.** Add an object to `site/content/myths.json`. Its verdict is `busted`,
 `confirmed`, `depends` or `unknown`, and every rule it cites must be marked
 Original: Established, or the build fails.
