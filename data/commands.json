@@ -1,0 +1,262 @@
+{
+ "dataset": "commands",
+ "schema_version": 1,
+ "title": "Commands",
+ "key": "key",
+ "source": [
+  {
+   "rule": "CMD-0001",
+   "original": "Established"
+  }
+ ],
+ "records": [
+  {
+   "key": "A",
+   "command": "Attack",
+   "outdoors": "Dir outdoor attack",
+   "town": "Dir town attack",
+   "dungeon": "Wanderer directly ahead",
+   "combat": "Attack/aim each readied damage item"
+  },
+  {
+   "key": "B",
+   "command": "Board",
+   "outdoors": "Vehicle underfoot, no Dir",
+   "town": "Same",
+   "dungeon": "Not here",
+   "combat": "Board what?"
+  },
+  {
+   "key": "C",
+   "command": "Cast",
+   "outdoors": "Outdoor-legal spells",
+   "town": "Town-legal spells",
+   "dungeon": "Dungeon-legal spells",
+   "combat": "PC only, combat-legal spells"
+  },
+  {
+   "key": "D",
+   "command": "Unassigned",
+   "outdoors": "Reject",
+   "town": "Reject",
+   "dungeon": "Reject",
+   "combat": "Reject"
+  },
+  {
+   "key": "E",
+   "command": "Enter",
+   "outdoors": "Location/dungeon underfoot",
+   "town": "Enter what?",
+   "dungeon": "Enter what?",
+   "combat": "Not here"
+  },
+  {
+   "key": "F",
+   "command": "Fire",
+   "outdoors": "Valid frigate broadside",
+   "town": "Adjacent cardinal cannon",
+   "dungeon": "What?",
+   "combat": "Not here"
+  },
+  {
+   "key": "G",
+   "command": "Get",
+   "outdoors": "Dir object pickup",
+   "town": "Dir object pickup",
+   "dungeon": "Open chest in Current",
+   "combat": "PC-only tactical Get"
+  },
+  {
+   "key": "H",
+   "command": "Hole up",
+   "outdoors": "Camp on foot or repair ship",
+   "town": "Underlying bed required",
+   "dungeon": "Dungeon rest",
+   "combat": "Not here"
+  },
+  {
+   "key": "I",
+   "command": "Ignite",
+   "outdoors": "Surface torch",
+   "town": "Surface torch",
+   "dungeon": "Dungeon light",
+   "combat": "Not here"
+  },
+  {
+   "key": "J",
+   "command": "Jimmy",
+   "outdoors": "Dir lock attempt",
+   "town": "Dir lock attempt",
+   "dungeon": "Current chest disarm",
+   "combat": "PC-only tactical Jimmy"
+  },
+  {
+   "key": "K",
+   "command": "Klimb",
+   "outdoors": "Mountain attempt",
+   "town": "Stairs/ladder or adjacent climb",
+   "dungeon": "Current ladder/pit/grapple route",
+   "combat": "Ladder or small rocks"
+  },
+  {
+   "key": "L",
+   "command": "Look",
+   "outdoors": "Dir",
+   "town": "Dir",
+   "dungeon": "Relative Look",
+   "combat": "Not here"
+  },
+  {
+   "key": "M",
+   "command": "Mix",
+   "outdoors": "Prepare spells",
+   "town": "Same",
+   "dungeon": "Same",
+   "combat": "Not here"
+  },
+  {
+   "key": "N",
+   "command": "New Order",
+   "outdoors": "Reorder party",
+   "town": "Same",
+   "dungeon": "Same",
+   "combat": "Not here"
+  },
+  {
+   "key": "O",
+   "command": "Open",
+   "outdoors": "Dir",
+   "town": "Dir",
+   "dungeon": "Current chest",
+   "combat": "PC-only tactical Open"
+  },
+  {
+   "key": "P",
+   "command": "Push",
+   "outdoors": "Dir push/pull",
+   "town": "Dir push/pull",
+   "dungeon": "Not here",
+   "combat": "Dir after trap check"
+  },
+  {
+   "key": "Q",
+   "command": "Quit",
+   "outdoors": "Save decision",
+   "town": "Save decision",
+   "dungeon": "Save decision",
+   "combat": "Not here"
+  },
+  {
+   "key": "R",
+   "command": "Ready",
+   "outdoors": "Select actor/equipment",
+   "town": "Same",
+   "dungeon": "Same",
+   "combat": "Acting PC; body armor locked until victory"
+  },
+  {
+   "key": "S",
+   "command": "Search",
+   "outdoors": "Dir",
+   "town": "Dir",
+   "dungeon": "Relative Search",
+   "combat": "PC-only tactical Search"
+  },
+  {
+   "key": "T",
+   "command": "Talk",
+   "outdoors": "Dir, no response",
+   "town": "Dir NPC interaction",
+   "dungeon": "No response",
+   "combat": "No response"
+  },
+  {
+   "key": "U",
+   "command": "Use",
+   "outdoors": "Usable-item projection",
+   "town": "Same",
+   "dungeon": "Same",
+   "combat": "PC-only context-sensitive effects"
+  },
+  {
+   "key": "V",
+   "command": "View",
+   "outdoors": "Spend gem, area view",
+   "town": "Same",
+   "dungeon": "Spend gem, dungeon view",
+   "combat": "Not here"
+  },
+  {
+   "key": "W",
+   "command": "Unassigned",
+   "outdoors": "Reject",
+   "town": "Reject",
+   "dungeon": "Reject",
+   "combat": "Reject"
+  },
+  {
+   "key": "X",
+   "command": "X-it",
+   "outdoors": "Leave vehicle when legal",
+   "town": "Same",
+   "dungeon": "X-it what?",
+   "combat": "X-it what?"
+  },
+  {
+   "key": "Y",
+   "command": "Yell",
+   "outdoors": "Sail toggle or input",
+   "town": "Input",
+   "dungeon": "Input, ordinarily no effect",
+   "combat": "Tactical Yell"
+  },
+  {
+   "key": "Z",
+   "command": "Z-stats",
+   "outdoors": "Party stats",
+   "town": "Same",
+   "dungeon": "Same",
+   "combat": "Party stats"
+  },
+  {
+   "key": "Space",
+   "command": "Pass",
+   "outdoors": "Pass; sailing first loses sail state",
+   "town": "Pass",
+   "dungeon": "Pass",
+   "combat": "End actor action"
+  },
+  {
+   "key": "Arrows",
+   "command": "Movement",
+   "outdoors": "Absolute cardinal",
+   "town": "Absolute cardinal",
+   "dungeon": "Advance/right/back/left relative to facing",
+   "combat": "Absolute; legal edge exits"
+  },
+  {
+   "key": "Return / period",
+   "command": "Context input",
+   "outdoors": "Both reject; Return completes, period free",
+   "town": "Both reject without completion",
+   "dungeon": "Turn around (Return in ordinary non-debug build)",
+   "combat": "Not movement"
+  },
+  {
+   "key": "0–9",
+   "command": "Selection/music",
+   "outdoors": "Active player",
+   "town": "Active player unless at harpsichord",
+   "dungeon": "Active player",
+   "combat": "0 clears; 1–6 select combat PC"
+  },
+  {
+   "key": "Escape",
+   "command": "Context input",
+   "outdoors": "Not Quit",
+   "town": "Not Quit",
+   "dungeon": "Not Quit",
+   "combat": "Attempt battlefield escape"
+  }
+ ]
+}

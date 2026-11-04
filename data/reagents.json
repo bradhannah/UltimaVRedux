@@ -1,0 +1,225 @@
+{
+ "dataset": "reagents",
+ "schema_version": 1,
+ "title": "Reagents",
+ "key": "index",
+ "source": [
+  {
+   "rule": "MIX-0001",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0005",
+   "original": "Established"
+  }
+ ],
+ "derived_from": {
+  "sold_at": "MERCH-0005"
+ },
+ "records": [
+  {
+   "index": 0,
+   "name": "Sulfurous Ash",
+   "abbreviation": "SA",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Yew",
+      "shop": "Healers Herbs",
+      "base_price": 12,
+      "units": 12
+     },
+     {
+      "location": "Skara Brae",
+      "shop": "The Alchemist",
+      "base_price": 14,
+      "units": 14
+     }
+    ]
+   }
+  },
+  {
+   "index": 1,
+   "name": "Ginseng",
+   "abbreviation": "GS",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Moonglow",
+      "shop": "The Herbalist",
+      "base_price": 20,
+      "units": 10
+     },
+     {
+      "location": "Yew",
+      "shop": "Healers Herbs",
+      "base_price": 16,
+      "units": 8
+     },
+     {
+      "location": "Skara Brae",
+      "shop": "The Alchemist",
+      "base_price": 16,
+      "units": 8
+     }
+    ]
+   }
+  },
+  {
+   "index": 2,
+   "name": "Garlic",
+   "abbreviation": "GA",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Moonglow",
+      "shop": "The Herbalist",
+      "base_price": 18,
+      "units": 6
+     },
+     {
+      "location": "Yew",
+      "shop": "Healers Herbs",
+      "base_price": 16,
+      "units": 8
+     }
+    ]
+   }
+  },
+  {
+   "index": 3,
+   "name": "Spider Silk",
+   "abbreviation": "SS",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Moonglow",
+      "shop": "The Herbalist",
+      "base_price": 12,
+      "units": 4
+     },
+     {
+      "location": "Yew",
+      "shop": "Healers Herbs",
+      "base_price": 8,
+      "units": 2
+     },
+     {
+      "location": "Cove",
+      "shop": "Mysticism",
+      "base_price": 6,
+      "units": 2
+     }
+    ]
+   }
+  },
+  {
+   "index": 4,
+   "name": "Blood Moss",
+   "abbreviation": "BM",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Yew",
+      "shop": "Healers Herbs",
+      "base_price": 20,
+      "units": 4
+     },
+     {
+      "location": "Skara Brae",
+      "shop": "The Alchemist",
+      "base_price": 30,
+      "units": 6
+     },
+     {
+      "location": "Cove",
+      "shop": "Mysticism",
+      "base_price": 8,
+      "units": 2
+     },
+     {
+      "location": "Lycaeum",
+      "shop": "The Sharper Mage",
+      "base_price": 50,
+      "units": 4
+     }
+    ]
+   }
+  },
+  {
+   "index": 5,
+   "name": "Black Pearl",
+   "abbreviation": "BP",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Skara Brae",
+      "shop": "The Alchemist",
+      "base_price": 18,
+      "units": 6
+     },
+     {
+      "location": "Cove",
+      "shop": "Mysticism",
+      "base_price": 8,
+      "units": 2
+     }
+    ]
+   }
+  },
+  {
+   "index": 6,
+   "name": "Nightshade",
+   "abbreviation": "NS",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Moonglow",
+      "shop": "The Herbalist",
+      "base_price": 12,
+      "units": 1
+     },
+     {
+      "location": "Cove",
+      "shop": "Mysticism",
+      "base_price": 10,
+      "units": 1
+     },
+     {
+      "location": "Lycaeum",
+      "shop": "The Sharper Mage",
+      "base_price": 30,
+      "units": 1
+     }
+    ]
+   }
+  },
+  {
+   "index": 7,
+   "name": "Mandrake Root",
+   "abbreviation": "MR",
+   "derived": {
+    "sold_at": [
+     {
+      "location": "Moonglow",
+      "shop": "The Herbalist",
+      "base_price": 13,
+      "units": 1
+     },
+     {
+      "location": "Cove",
+      "shop": "Mysticism",
+      "base_price": 15,
+      "units": 1
+     },
+     {
+      "location": "Lycaeum",
+      "shop": "The Sharper Mage",
+      "base_price": 40,
+      "units": 1
+     }
+    ]
+   }
+  }
+ ]
+}

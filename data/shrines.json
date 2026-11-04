@@ -1,0 +1,100 @@
+{
+ "dataset": "shrines",
+ "schema_version": 1,
+ "title": "Shrines",
+ "key": "index",
+ "source": [
+  {
+   "rule": "SHRINE-0001",
+   "original": "Established"
+  }
+ ],
+ "derived_from": {
+  "sextant": "SIGN-0007"
+ },
+ "spoiler_fields": [
+  "mantra"
+ ],
+ "records": [
+  {
+   "index": 0,
+   "virtue": "Honesty",
+   "mantra": "Ahm",
+   "x": 233,
+   "y": 66,
+   "derived": {
+    "sextant": "E'C\", O'J\""
+   }
+  },
+  {
+   "index": 1,
+   "virtue": "Compassion",
+   "mantra": "Mu",
+   "x": 128,
+   "y": 92,
+   "derived": {
+    "sextant": "F'M\", I'A\""
+   }
+  },
+  {
+   "index": 2,
+   "virtue": "Valour",
+   "mantra": "Ra",
+   "x": 36,
+   "y": 229,
+   "derived": {
+    "sextant": "O'F\", C'E\""
+   }
+  },
+  {
+   "index": 3,
+   "virtue": "Justice",
+   "mantra": "Beh",
+   "x": 73,
+   "y": 11,
+   "derived": {
+    "sextant": "A'L\", E'J\""
+   }
+  },
+  {
+   "index": 4,
+   "virtue": "Sacrifice",
+   "mantra": "Cah",
+   "x": 205,
+   "y": 45,
+   "derived": {
+    "sextant": "C'N\", M'N\""
+   }
+  },
+  {
+   "index": 5,
+   "virtue": "Honor",
+   "mantra": "Summ",
+   "x": 81,
+   "y": 207,
+   "derived": {
+    "sextant": "M'P\", F'B\""
+   }
+  },
+  {
+   "index": 6,
+   "virtue": "Spirituality",
+   "mantra": "Om",
+   "x": null,
+   "y": null,
+   "derived": {
+    "sextant": null
+   }
+  },
+  {
+   "index": 7,
+   "virtue": "Humility",
+   "mantra": "Lum",
+   "x": 231,
+   "y": 216,
+   "derived": {
+    "sextant": "N'I\", O'H\""
+   }
+  }
+ ]
+}

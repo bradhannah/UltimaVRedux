@@ -1,0 +1,520 @@
+{
+ "dataset": "locations",
+ "schema_version": 1,
+ "title": "Locations",
+ "key": "number",
+ "source": [
+  {
+   "rule": "MAP-0003",
+   "original": "Established"
+  },
+  {
+   "rule": "MAP-0004",
+   "original": "Established"
+  },
+  {
+   "rule": "WORD-0001",
+   "original": "Established"
+  }
+ ],
+ "spoiler_fields": [
+  "word_of_power"
+ ],
+ "records": [
+  {
+   "number": 1,
+   "name": "Moonglow",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 232,
+   "y": 135,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 2,
+   "name": "Britain",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 81,
+   "y": 106,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 3,
+   "name": "Jhelom",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 36,
+   "y": 222,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 4,
+   "name": "Yew",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 58,
+   "y": 43,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 5,
+   "name": "Minoc",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 159,
+   "y": 20,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 6,
+   "name": "Trinsic",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 106,
+   "y": 184,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 7,
+   "name": "Skara Brae",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 22,
+   "y": 128,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 8,
+   "name": "New Magincia",
+   "kind": "town",
+   "file": "TOWNE.DAT",
+   "x": 187,
+   "y": 169,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 9,
+   "name": "Fogsbane",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 88,
+   "y": 120,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 10,
+   "name": "Stormcrow",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 152,
+   "y": 24,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 11,
+   "name": "Greyhaven",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 104,
+   "y": 216,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 12,
+   "name": "Waveguide",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 216,
+   "y": 120,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 13,
+   "name": "Iolo's Hut",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 45,
+   "y": 62,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 14,
+   "name": "Sutek's Hut",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 176,
+   "y": 208,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 15,
+   "name": "Sin Vraal's Hut",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 201,
+   "y": 59,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 16,
+   "name": "Grendel's Hut",
+   "kind": "dwelling",
+   "file": "DWELLING.DAT",
+   "x": 153,
+   "y": 91,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 17,
+   "name": "Lord British's Castle",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 86,
+   "y": 107,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 18,
+   "name": "Palace of Blackthorn",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 196,
+   "y": 245,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 19,
+   "name": "West Britanny",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 84,
+   "y": 106,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 20,
+   "name": "North Britanny",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 86,
+   "y": 105,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 21,
+   "name": "East Britanny",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 88,
+   "y": 106,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 22,
+   "name": "Paws",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 98,
+   "y": 145,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 23,
+   "name": "Cove",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 136,
+   "y": 90,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 24,
+   "name": "Buccaneer's Den",
+   "kind": "castle",
+   "file": "CASTLE.DAT",
+   "x": 136,
+   "y": 158,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 25,
+   "name": "Ararat",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 49,
+   "y": 58,
+   "worlds": [
+    "underworld"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 26,
+   "name": "Bordermarch",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 15,
+   "y": 160,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 27,
+   "name": "Farthing",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 64,
+   "y": 240,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 28,
+   "name": "Windemere",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 248,
+   "y": 8,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 29,
+   "name": "Stonegate",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 148,
+   "y": 74,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 30,
+   "name": "The Lycaeum",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 218,
+   "y": 107,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 31,
+   "name": "Empath Abbey",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 28,
+   "y": 50,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 32,
+   "name": "Serpent's Hold",
+   "kind": "keep",
+   "file": "KEEP.DAT",
+   "x": 146,
+   "y": 241,
+   "worlds": [
+    "britannia"
+   ],
+   "word_of_power": null
+  },
+  {
+   "number": 33,
+   "name": "Deceit",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 240,
+   "y": 73,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "FALLAX",
+   "file_record": 0
+  },
+  {
+   "number": 34,
+   "name": "Despise",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 91,
+   "y": 67,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "VILIS",
+   "file_record": 1
+  },
+  {
+   "number": 35,
+   "name": "Destard",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 72,
+   "y": 168,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "INOPIA",
+   "file_record": 2
+  },
+  {
+   "number": 36,
+   "name": "Wrong",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 126,
+   "y": 20,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "MALUM",
+   "file_record": 3
+  },
+  {
+   "number": 37,
+   "name": "Covetous",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 156,
+   "y": 27,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "AVIDUS",
+   "file_record": 4
+  },
+  {
+   "number": 38,
+   "name": "Shame",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 58,
+   "y": 102,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "INFAMA",
+   "file_record": 5
+  },
+  {
+   "number": 39,
+   "name": "Hythloth",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 239,
+   "y": 240,
+   "worlds": [
+    "britannia",
+    "underworld"
+   ],
+   "word_of_power": "IGNAVUS",
+   "file_record": 6
+  },
+  {
+   "number": 40,
+   "name": "Doom",
+   "kind": "dungeon",
+   "file": "DUNGEON.DAT",
+   "x": 128,
+   "y": 128,
+   "worlds": [
+    "underworld"
+   ],
+   "word_of_power": "VERAMOCOR",
+   "file_record": 7
+  }
+ ]
+}

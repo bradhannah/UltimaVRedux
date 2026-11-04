@@ -1,0 +1,154 @@
+{
+ "dataset": "moon_phases",
+ "schema_version": 1,
+ "title": "Moon phases",
+ "key": "day",
+ "source": [
+  {
+   "rule": "MOON-0002",
+   "original": "Established"
+  }
+ ],
+ "records": [
+  {
+   "day": 1,
+   "trammel": 0,
+   "felucca": 0
+  },
+  {
+   "day": 2,
+   "trammel": 1,
+   "felucca": 0
+  },
+  {
+   "day": 3,
+   "trammel": 1,
+   "felucca": 1
+  },
+  {
+   "day": 4,
+   "trammel": 2,
+   "felucca": 2
+  },
+  {
+   "day": 5,
+   "trammel": 2,
+   "felucca": 3
+  },
+  {
+   "day": 6,
+   "trammel": 3,
+   "felucca": 4
+  },
+  {
+   "day": 7,
+   "trammel": 3,
+   "felucca": 5
+  },
+  {
+   "day": 8,
+   "trammel": 4,
+   "felucca": 6
+  },
+  {
+   "day": 9,
+   "trammel": 5,
+   "felucca": 7
+  },
+  {
+   "day": 10,
+   "trammel": 5,
+   "felucca": 0
+  },
+  {
+   "day": 11,
+   "trammel": 6,
+   "felucca": 0
+  },
+  {
+   "day": 12,
+   "trammel": 6,
+   "felucca": 1
+  },
+  {
+   "day": 13,
+   "trammel": 7,
+   "felucca": 2
+  },
+  {
+   "day": 14,
+   "trammel": 7,
+   "felucca": 3
+  },
+  {
+   "day": 15,
+   "trammel": 0,
+   "felucca": 4
+  },
+  {
+   "day": 16,
+   "trammel": 1,
+   "felucca": 5
+  },
+  {
+   "day": 17,
+   "trammel": 1,
+   "felucca": 6
+  },
+  {
+   "day": 18,
+   "trammel": 2,
+   "felucca": 7
+  },
+  {
+   "day": 19,
+   "trammel": 2,
+   "felucca": 0
+  },
+  {
+   "day": 20,
+   "trammel": 3,
+   "felucca": 0
+  },
+  {
+   "day": 21,
+   "trammel": 3,
+   "felucca": 1
+  },
+  {
+   "day": 22,
+   "trammel": 4,
+   "felucca": 2
+  },
+  {
+   "day": 23,
+   "trammel": 5,
+   "felucca": 3
+  },
+  {
+   "day": 24,
+   "trammel": 5,
+   "felucca": 4
+  },
+  {
+   "day": 25,
+   "trammel": 6,
+   "felucca": 5
+  },
+  {
+   "day": 26,
+   "trammel": 6,
+   "felucca": 6
+  },
+  {
+   "day": 27,
+   "trammel": 7,
+   "felucca": 7
+  },
+  {
+   "day": 28,
+   "trammel": 7,
+   "felucca": 0
+  }
+ ]
+}

@@ -1,0 +1,873 @@
+{
+ "dataset": "spells",
+ "schema_version": 1,
+ "title": "Spells",
+ "key": "index",
+ "source": [
+  {
+   "rule": "SPELL-0002",
+   "original": "Established"
+  },
+  {
+   "rule": "MIX-0001",
+   "original": "Established"
+  },
+  {
+   "rule": "SPELL-0001",
+   "original": "Incomplete"
+  }
+ ],
+ "derived_from": {
+  "mp_cost": "SPELL-0001"
+ },
+ "records": [
+  {
+   "index": 0,
+   "name": "In Lor",
+   "circle": 1,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon"
+   ],
+   "reagents": [
+    "Sulfurous Ash"
+   ],
+   "effect": "Set separate magical-light counter to 100.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 1,
+   "name": "Grav Por",
+   "circle": 1,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Black Pearl"
+   ],
+   "effect": "Range-15 automatically hitting delivered missile; attack rating 16, then armor.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 2,
+   "name": "An Zu",
+   "circle": 1,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Garlic"
+   ],
+   "effect": "Select member; Sleeping becomes Good, with matching combat sleep-entry handling.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 3,
+   "name": "An Nox",
+   "circle": 1,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Garlic"
+   ],
+   "effect": "Select member; Poisoned becomes Good.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 4,
+   "name": "Mani",
+   "circle": 1,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Spider Silk"
+   ],
+   "effect": "Non-Dead target gains D30 HP capped at maximum; full-health living target still succeeds.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 5,
+   "name": "An Ylem",
+   "circle": 1,
+   "contexts": [
+    "town",
+    "combat"
+   ],
+   "reagents": [
+    "Garlic",
+    "Blood Moss"
+   ],
+   "effect": "Adjacent direction; eligible furniture/pushables, including mirrors, become floor.",
+   "derived": {
+    "mp_cost": 1
+   }
+  },
+  {
+   "index": 6,
+   "name": "An Sanct",
+   "circle": 2,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss"
+   ],
+   "effect": "Adjacent surface/combat locked door unlocks or chest trap clears. Dungeon opens current then facing eligible chest cell, preserving bit 0x08.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 7,
+   "name": "An Xen Corp",
+   "circle": 2,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Garlic"
+   ],
+   "effect": "Scan eligible undead monsters regardless of loyalty; non-immune failed-INT-save targets become 1 HP and flee.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 8,
+   "name": "Rel Hur",
+   "circle": 2,
+   "contexts": [
+    "outdoors"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss"
+   ],
+   "effect": "Choose wind direction; passed direction changes nothing after payment.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 9,
+   "name": "In Wis",
+   "circle": 2,
+   "contexts": [
+    "outdoors"
+   ],
+   "reagents": [
+    "Nightshade"
+   ],
+   "effect": "Report world Y then X using two Runic A–P nibbles each.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 10,
+   "name": "Kal Xen",
+   "circle": 2,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Mandrake Root"
+   ],
+   "effect": "Up to eight placement attempts; loyal Rat/Spider/Bat/Python, selector weights 6/5/3/2 of sixteen.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 11,
+   "name": "In Xen Mani",
+   "circle": 2,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Garlic",
+    "Mandrake Root"
+   ],
+   "effect": "Add R(1,3) food, capped at 9,999.",
+   "derived": {
+    "mp_cost": 2
+   }
+  },
+  {
+   "index": 12,
+   "name": "Vas Lor",
+   "circle": 3,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Mandrake Root"
+   ],
+   "effect": "Set magical light to 255.",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 13,
+   "name": "Vas Flam",
+   "circle": 3,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Black Pearl"
+   ],
+   "effect": "Range-15 automatically hitting delivered fire missile; attack rating 30, then armor.",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 14,
+   "name": "In Flam Grav",
+   "circle": 3,
+   "contexts": [
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Spider Silk",
+    "Black Pearl"
+   ],
+   "effect": "Facing dungeon fire field 0x82/0x8A. Combat range-15 field, direct rating 21, standing damage R(0,10).",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 15,
+   "name": "In Nox Grav",
+   "circle": 3,
+   "contexts": [
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Black Pearl",
+    "Nightshade"
+   ],
+   "effect": "Facing dungeon poison field 0x81/0x89. Combat field poisons a directly hit Good PC; other direct targets take R(0,20).",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 16,
+   "name": "In Zu Grav",
+   "circle": 3,
+   "contexts": [
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Spider Silk",
+    "Black Pearl"
+   ],
+   "effect": "Facing dungeon sleep field 0x80/0x88. Combat direct/standing contact sleeps without a save.",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 17,
+   "name": "In Por",
+   "circle": 3,
+   "contexts": [
+    "outdoors",
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Blood Moss"
+   ],
+   "effect": "Outdoors reaches last exact Grass on selected ray in retained 32×32 window, with numeric clipping and initial-only coordinate wrapping. Combat tries up to seven random legal destinations; dungeon-combat fails.",
+   "derived": {
+    "mp_cost": 3
+   }
+  },
+  {
+   "index": 18,
+   "name": "An Grav",
+   "circle": 4,
+   "contexts": [
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Black Pearl"
+   ],
+   "effect": "Dungeon removes current field before testing facing field. Combat removes first adjacent field object in selected direction.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 19,
+   "name": "In Sanct",
+   "circle": 4,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Ginseng",
+    "Garlic"
+   ],
+   "effect": "Shared Protection duration 20; apparent +3 armor intent is subject to effective-armor uncertainty.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 20,
+   "name": "In Sanct Grav",
+   "circle": 4,
+   "contexts": [
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Black Pearl",
+    "Mandrake Root"
+   ],
+   "effect": "Facing dungeon electric field 0x83/0x8B; exact 0x83 contact damages party and pushes back. Combat range-15 movement-blocking protection field.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 21,
+   "name": "Uus Por",
+   "circle": 4,
+   "contexts": [
+    "dungeon"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Blood Moss"
+   ],
+   "effect": "One floor upward; boundary exits dungeon. Fails in Doom.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 22,
+   "name": "Des Por",
+   "circle": 4,
+   "contexts": [
+    "dungeon"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Blood Moss"
+   ],
+   "effect": "One floor downward; boundary exits dungeon. Fails in Doom.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 23,
+   "name": "Wis Quas",
+   "circle": 4,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Nightshade"
+   ],
+   "effect": "Reveal active invisible non-PC entries.",
+   "derived": {
+    "mp_cost": 4
+   }
+  },
+  {
+   "index": 24,
+   "name": "In Bet Xen",
+   "circle": 5,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Spider Silk",
+    "Blood Moss"
+   ],
+   "effect": "Find one legal random square in up to eight tries; create up to four loyal Insect Swarms there, capacity permitting.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 25,
+   "name": "An Ex Por",
+   "circle": 5,
+   "contexts": [
+    "town",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Garlic",
+    "Blood Moss"
+   ],
+   "effect": "Adjacent ordinary/locked door becomes magically locked, preserving solid/window family.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 26,
+   "name": "In Ex Por",
+   "circle": 5,
+   "contexts": [
+    "town",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss"
+   ],
+   "effect": "Adjacent magic door becomes ordinarily unlocked, preserving family.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 27,
+   "name": "Vas Mani",
+   "circle": 5,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Spider Silk",
+    "Mandrake Root"
+   ],
+   "effect": "Non-Dead member reaches maximum HP; combat fails until victory.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 28,
+   "name": "In Zu",
+   "circle": 5,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Ginseng",
+    "Spider Silk",
+    "Nightshade"
+   ],
+   "effect": "Directional cone sleeps non-immune targets that fail INT saves.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 29,
+   "name": "Rel Tym",
+   "circle": 5,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Shared Quickness duration 30; context-specific time/activity gates.",
+   "derived": {
+    "mp_cost": 5
+   }
+  },
+  {
+   "index": 30,
+   "name": "In Vas Por Ylem",
+   "circle": 6,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Hostile entries with effective DEX ≤ D30 take R(1,20) magical damage; caster receives attributed kill XP.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 31,
+   "name": "Quas An Wis",
+   "circle": 6,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Shared Confusion duration 20; a monster-loyal actor's target search temporarily changes source loyalty if D30 > INT, including possessed/charmed PCs.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 32,
+   "name": "In An",
+   "circle": 6,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Garlic",
+    "Mandrake Root"
+   ],
+   "effect": "Shared Negate Magic duration 10; suppress relevant monster magic/teleport/specials and prepared combat casting.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 33,
+   "name": "Wis An Ylem",
+   "circle": 6,
+   "contexts": [
+    "outdoors",
+    "town"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Mandrake Root"
+   ],
+   "effect": "Local X-ray for 20 update ticks.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 34,
+   "name": "An Xen Ex",
+   "circle": 6,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Spider Silk",
+    "Black Pearl",
+    "Nightshade"
+   ],
+   "effect": "Range-15 occupied target; reject stocks, friendly loyalty, immunity, or successful INT save; otherwise toggle Charm. Charmed PC roster status becomes Good.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 35,
+   "name": "Rel Xen Bet",
+   "circle": 6,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Spider Silk",
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Range-15 occupied target; failed INT save and no immunity deletes it and creates a Rat on that square.",
+   "derived": {
+    "mp_cost": 6
+   }
+  },
+  {
+   "index": 36,
+   "name": "Sanct Lor",
+   "circle": 7,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Blood Moss",
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Acting PC entry becomes invisible.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 37,
+   "name": "Xen Corp",
+   "circle": 7,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Black Pearl",
+    "Nightshade"
+   ],
+   "effect": "Range-15 death missile; failed INT save delivers special damage 99, still subject to immortality.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 38,
+   "name": "In Quas Xen",
+   "circle": 7,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Ginseng",
+    "Spider Silk",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Range-15 occupied target; copy complete entry/object into free slots, then repeat random placement until legal. No save; no attempt bound.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 39,
+   "name": "In Quas Wis",
+   "circle": 7,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon"
+   ],
+   "reagents": [
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Surface local map view or dungeon symbolic view.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 40,
+   "name": "In Nox Hur",
+   "circle": 7,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss",
+    "Nightshade"
+   ],
+   "effect": "Cone toxifies targets with D30 ≥ effective DEX; Good PCs become Poisoned, other targets take R(0,20). No explicit immunity-family gate.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 41,
+   "name": "In Quas Corp",
+   "circle": 7,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Garlic",
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Scan monsters; non-immune failed-INT-save targets become 1 HP and flee.",
+   "derived": {
+    "mp_cost": 7
+   }
+  },
+  {
+   "index": 42,
+   "name": "In Mani Corp",
+   "circle": 8,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Ginseng",
+    "Garlic",
+    "Spider Silk",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Resurrect Dead member at 1 HP, restore class MP, apply karma XP reduction, recalculate level and maximum HP.",
+   "derived": {
+    "mp_cost": 8
+   }
+  },
+  {
+   "index": 43,
+   "name": "Kal Xen Corp",
+   "circle": 8,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Garlic",
+    "Spider Silk",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Up to eight placement attempts for Daemon; D30 ≥ caster INT leaves it hostile, otherwise loyal.",
+   "derived": {
+    "mp_cost": 8
+   }
+  },
+  {
+   "index": 44,
+   "name": "In Vas Grav Corp",
+   "circle": 8,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Nightshade",
+    "Mandrake Root"
+   ],
+   "effect": "Cone; non-immune failed-INT-save targets receive special damage 99.",
+   "derived": {
+    "mp_cost": 8
+   }
+  },
+  {
+   "index": 45,
+   "name": "In Flam Hur",
+   "circle": 8,
+   "contexts": [
+    "combat"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "Cone; each encountered target takes R(0,30) magical damage without an armor roll.",
+   "derived": {
+    "mp_cost": 8
+   }
+  },
+  {
+   "index": 46,
+   "name": "Vas Rel Por",
+   "circle": 8,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon"
+   ],
+   "reagents": [
+    "Sulfurous Ash",
+    "Black Pearl",
+    "Mandrake Root"
+   ],
+   "effect": "Reject ship-shape family, including skiff; choose phase 1–8 and attempt that moongate destination. Invalid/unavailable travel fails after payment.",
+   "derived": {
+    "mp_cost": 8
+   }
+  },
+  {
+   "index": 47,
+   "name": "An Tym",
+   "circle": 8,
+   "contexts": [
+    "outdoors",
+    "town",
+    "dungeon",
+    "combat"
+   ],
+   "reagents": [
+    "Garlic",
+    "Blood Moss",
+    "Mandrake Root"
+   ],
+   "effect": "An object with exact base Shadowlord tile 0xFC absorbs it; the other three family frames do not satisfy this test. Otherwise shared Time Stop duration 10 suppresses hostile activity and supplies effective monster DEX 1 without rewriting stored countdown DEX.",
+   "derived": {
+    "mp_cost": 8
+   }
+  }
+ ]
+}

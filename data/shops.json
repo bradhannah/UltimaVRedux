@@ -1,0 +1,1283 @@
+{
+ "dataset": "shops",
+ "schema_version": 1,
+ "title": "Shops",
+ "key": "id",
+ "source": [
+  {
+   "rule": "MERCH-0001",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0002",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0004",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0005",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0006",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0007",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0008",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0009",
+   "original": "Established"
+  },
+  {
+   "rule": "MERCH-0012",
+   "original": "Established"
+  },
+  {
+   "rule": "EQUIP-0001",
+   "original": "Established"
+  }
+ ],
+ "derived_from": {
+  "price_at_intelligence": "MERCH-0002"
+ },
+ "records": [
+  {
+   "id": "arms-britain",
+   "family": "arms",
+   "location": "Britain",
+   "shop": "Iolo's Bows",
+   "owner": "Gwenneth",
+   "details": {
+    "stock": [
+     {
+      "item": "Dagger",
+      "base_price": 1
+     },
+     {
+      "item": "Sling",
+      "base_price": 10
+     },
+     {
+      "item": "Bow",
+      "base_price": 75
+     },
+     {
+      "item": "Arrows",
+      "base_price": 10
+     },
+     {
+      "item": "Crossbow",
+      "base_price": 150
+     },
+     {
+      "item": "Quarrels",
+      "base_price": 15
+     },
+     {
+      "item": "Magic Bow",
+      "base_price": 800
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-jhelom",
+   "family": "arms",
+   "location": "Jhelom",
+   "shop": "Naughty Nomaan's",
+   "owner": "Nomaan",
+   "details": {
+    "stock": [
+     {
+      "item": "Flaming Oil",
+      "base_price": 5
+     },
+     {
+      "item": "Mace",
+      "base_price": 50
+     },
+     {
+      "item": "Spiked Collar",
+      "base_price": 240
+     },
+     {
+      "item": "Throwing Axe",
+      "base_price": 3
+     },
+     {
+      "item": "Spiked Helm",
+      "base_price": 150
+     },
+     {
+      "item": "Spiked Shield",
+      "base_price": 120
+     },
+     {
+      "item": "Morning Star",
+      "base_price": 60
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-yew",
+   "family": "arms",
+   "location": "Yew",
+   "shop": "Arms of Justice",
+   "owner": "Ronan",
+   "details": {
+    "stock": [
+     {
+      "item": "Leather Helm",
+      "base_price": 15
+     },
+     {
+      "item": "Cloth Armour",
+      "base_price": 20
+     },
+     {
+      "item": "Leather Armour",
+      "base_price": 50
+     },
+     {
+      "item": "Club",
+      "base_price": 5
+     },
+     {
+      "item": "Spear",
+      "base_price": 7
+     },
+     {
+      "item": "Silver Sword",
+      "base_price": 250
+     },
+     {
+      "item": "Magic Axe",
+      "base_price": 1000
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-minoc",
+   "family": "arms",
+   "location": "Minoc",
+   "shop": "Darkwatch Armoury",
+   "owner": "Shenstone",
+   "details": {
+    "stock": [
+     {
+      "item": "Iron Helm",
+      "base_price": 120
+     },
+     {
+      "item": "Small Shield",
+      "base_price": 40
+     },
+     {
+      "item": "Ring Mail",
+      "base_price": 100
+     },
+     {
+      "item": "Short Sword",
+      "base_price": 40
+     },
+     {
+      "item": "Long Sword",
+      "base_price": 70
+     },
+     {
+      "item": "Mace",
+      "base_price": 50
+     },
+     {
+      "item": "Two-Handed Hammer",
+      "base_price": 85
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-trinsic",
+   "family": "arms",
+   "location": "Trinsic",
+   "shop": "The Paladin's Protectorate!",
+   "owner": "Paul",
+   "details": {
+    "stock": [
+     {
+      "item": "Two-Handed Axe",
+      "base_price": 150
+     },
+     {
+      "item": "Two-Handed Sword",
+      "base_price": 200
+     },
+     {
+      "item": "Halberd",
+      "base_price": 250
+     },
+     {
+      "item": "Iron Helm",
+      "base_price": 120
+     },
+     {
+      "item": "Large Shield",
+      "base_price": 70
+     },
+     {
+      "item": "Scale Mail",
+      "base_price": 150
+     },
+     {
+      "item": "Plate Mail",
+      "base_price": 700
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-castle-britannia",
+   "family": "arms",
+   "location": "Castle Britannia",
+   "shop": "North Star Armoury",
+   "owner": "Max",
+   "details": {
+    "stock": [
+     {
+      "item": "Chain Coif",
+      "base_price": 50
+     },
+     {
+      "item": "Magic Shield",
+      "base_price": 2000
+     },
+     {
+      "item": "Chain Mail",
+      "base_price": 300
+     },
+     {
+      "item": "Plate Mail",
+      "base_price": 700
+     },
+     {
+      "item": "Long Sword",
+      "base_price": 70
+     },
+     {
+      "item": "Silver Sword",
+      "base_price": 250
+     },
+     {
+      "item": "Ring of Protection",
+      "base_price": 500
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-buccaneer-s-den",
+   "family": "arms",
+   "location": "Buccaneer's Den",
+   "shop": "Buccaneers Booty",
+   "owner": "Kitiara",
+   "details": {
+    "stock": [
+     {
+      "item": "Leather Helm",
+      "base_price": 15
+     },
+     {
+      "item": "Leather Armour",
+      "base_price": 50
+     },
+     {
+      "item": "Dagger",
+      "base_price": 1
+     },
+     {
+      "item": "Main Gauche",
+      "base_price": 15
+     },
+     {
+      "item": "Short Sword",
+      "base_price": 40
+     },
+     {
+      "item": "Flaming Oil",
+      "base_price": 5
+     },
+     {
+      "item": "Ring of Invisibility",
+      "base_price": 450
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-bordermarch",
+   "family": "arms",
+   "location": "Bordermarch",
+   "shop": "The Shattered Shield",
+   "owner": "Steve",
+   "details": {
+    "stock": [
+     {
+      "item": "Magic Shield",
+      "base_price": 2000
+     },
+     {
+      "item": "Two-Handed Axe",
+      "base_price": 150
+     },
+     {
+      "item": "Magic Bow",
+      "base_price": 800
+     },
+     {
+      "item": "Arrows",
+      "base_price": 10
+     },
+     {
+      "item": "Two-Handed Hammer",
+      "base_price": 85
+     },
+     {
+      "item": "Ring of Regeneration",
+      "base_price": 200
+     },
+     {
+      "item": "Amulet of Turning",
+      "base_price": 900
+     }
+    ]
+   }
+  },
+  {
+   "id": "arms-serpent-s-hold",
+   "family": "arms",
+   "location": "Serpent's Hold",
+   "shop": "Siege Crafters",
+   "owner": "Thol",
+   "details": {
+    "stock": [
+     {
+      "item": "Chain Coif",
+      "base_price": 50
+     },
+     {
+      "item": "Chain Mail",
+      "base_price": 300
+     },
+     {
+      "item": "Crossbow",
+      "base_price": 150
+     },
+     {
+      "item": "Quarrels",
+      "base_price": 15
+     },
+     {
+      "item": "Halberd",
+      "base_price": 250
+     },
+     {
+      "item": "Throwing Axe",
+      "base_price": 3
+     },
+     {
+      "item": "Morning Star",
+      "base_price": 60
+     }
+    ]
+   }
+  },
+  {
+   "id": "reagents-moonglow",
+   "family": "reagents",
+   "location": "Moonglow",
+   "shop": "The Herbalist",
+   "owner": "Nilrem",
+   "details": {
+    "bundles": [
+     {
+      "reagent": "Ginseng",
+      "base_price": 20,
+      "units": 10,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 34,
+        "20": 28,
+        "30": 22
+       }
+      }
+     },
+     {
+      "reagent": "Garlic",
+      "base_price": 18,
+      "units": 6,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 30,
+        "20": 25,
+        "30": 19
+       }
+      }
+     },
+     {
+      "reagent": "Spider Silk",
+      "base_price": 12,
+      "units": 4,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 20,
+        "20": 16,
+        "30": 13
+       }
+      }
+     },
+     {
+      "reagent": "Nightshade",
+      "base_price": 12,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 20,
+        "20": 16,
+        "30": 13
+       }
+      }
+     },
+     {
+      "reagent": "Mandrake Root",
+      "base_price": 13,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 22,
+        "20": 18,
+        "30": 14
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "reagents-yew",
+   "family": "reagents",
+   "location": "Yew",
+   "shop": "Healers Herbs",
+   "owner": "Madam Pendra",
+   "details": {
+    "bundles": [
+     {
+      "reagent": "Sulfurous Ash",
+      "base_price": 12,
+      "units": 12,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 20,
+        "20": 16,
+        "30": 13
+       }
+      }
+     },
+     {
+      "reagent": "Ginseng",
+      "base_price": 16,
+      "units": 8,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 27,
+        "20": 22,
+        "30": 17
+       }
+      }
+     },
+     {
+      "reagent": "Garlic",
+      "base_price": 16,
+      "units": 8,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 27,
+        "20": 22,
+        "30": 17
+       }
+      }
+     },
+     {
+      "reagent": "Spider Silk",
+      "base_price": 8,
+      "units": 2,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 13,
+        "20": 11,
+        "30": 8
+       }
+      }
+     },
+     {
+      "reagent": "Blood Moss",
+      "base_price": 20,
+      "units": 4,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 34,
+        "20": 28,
+        "30": 22
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "reagents-skara-brae",
+   "family": "reagents",
+   "location": "Skara Brae",
+   "shop": "The Alchemist",
+   "owner": "Toama",
+   "details": {
+    "bundles": [
+     {
+      "reagent": "Sulfurous Ash",
+      "base_price": 14,
+      "units": 14,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 23,
+        "20": 19,
+        "30": 15
+       }
+      }
+     },
+     {
+      "reagent": "Ginseng",
+      "base_price": 16,
+      "units": 8,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 27,
+        "20": 22,
+        "30": 17
+       }
+      }
+     },
+     {
+      "reagent": "Blood Moss",
+      "base_price": 30,
+      "units": 6,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 51,
+        "20": 42,
+        "30": 33
+       }
+      }
+     },
+     {
+      "reagent": "Black Pearl",
+      "base_price": 18,
+      "units": 6,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 30,
+        "20": 25,
+        "30": 19
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "reagents-cove",
+   "family": "reagents",
+   "location": "Cove",
+   "shop": "Mysticism",
+   "owner": "Enlor",
+   "details": {
+    "bundles": [
+     {
+      "reagent": "Spider Silk",
+      "base_price": 6,
+      "units": 2,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 10,
+        "20": 8,
+        "30": 6
+       }
+      }
+     },
+     {
+      "reagent": "Blood Moss",
+      "base_price": 8,
+      "units": 2,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 13,
+        "20": 11,
+        "30": 8
+       }
+      }
+     },
+     {
+      "reagent": "Black Pearl",
+      "base_price": 8,
+      "units": 2,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 13,
+        "20": 11,
+        "30": 8
+       }
+      }
+     },
+     {
+      "reagent": "Nightshade",
+      "base_price": 10,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 17,
+        "20": 14,
+        "30": 11
+       }
+      }
+     },
+     {
+      "reagent": "Mandrake Root",
+      "base_price": 15,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 25,
+        "20": 21,
+        "30": 16
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "reagents-lycaeum",
+   "family": "reagents",
+   "location": "Lycaeum",
+   "shop": "The Sharper Mage",
+   "owner": "Virden",
+   "details": {
+    "bundles": [
+     {
+      "reagent": "Blood Moss",
+      "base_price": 50,
+      "units": 4,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 85,
+        "20": 70,
+        "30": 55
+       }
+      }
+     },
+     {
+      "reagent": "Nightshade",
+      "base_price": 30,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 51,
+        "20": 42,
+        "30": 33
+       }
+      }
+     },
+     {
+      "reagent": "Mandrake Root",
+      "base_price": 40,
+      "units": 1,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 68,
+        "20": 56,
+        "30": 44
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "guild-new-magincia",
+   "family": "guild",
+   "location": "New Magincia",
+   "shop": "The Den",
+   "owner": "Braunam",
+   "details": {
+    "offers": [
+     {
+      "item": "Keys",
+      "units": 3,
+      "base_price": 190,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 323,
+        "20": 266,
+        "30": 209
+       }
+      }
+     },
+     {
+      "item": "Gems",
+      "units": 4,
+      "base_price": 255,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 433,
+        "20": 357,
+        "30": 280
+       }
+      }
+     },
+     {
+      "item": "Torches",
+      "units": 5,
+      "base_price": 12,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 20,
+        "20": 16,
+        "30": 13
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "guild-paws",
+   "family": "guild",
+   "location": "Paws",
+   "shop": "The Guild",
+   "owner": "Danfits",
+   "details": {
+    "offers": [
+     {
+      "item": "Keys",
+      "units": 3,
+      "base_price": 160,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 272,
+        "20": 224,
+        "30": 176
+       }
+      }
+     },
+     {
+      "item": "Gems",
+      "units": 4,
+      "base_price": 200,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 340,
+        "20": 280,
+        "30": 220
+       }
+      }
+     },
+     {
+      "item": "Torches",
+      "units": 5,
+      "base_price": 11,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 18,
+        "20": 15,
+        "30": 12
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "guild-buccaneer-s-den",
+   "family": "guild",
+   "location": "Buccaneer's Den",
+   "shop": "The Nemesis",
+   "owner": "Daem",
+   "details": {
+    "offers": [
+     {
+      "item": "Keys",
+      "units": 3,
+      "base_price": 185,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 314,
+        "20": 259,
+        "30": 203
+       }
+      }
+     },
+     {
+      "item": "Gems",
+      "units": 4,
+      "base_price": 225,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 382,
+        "20": 315,
+        "30": 247
+       }
+      }
+     },
+     {
+      "item": "Torches",
+      "units": 5,
+      "base_price": 25,
+      "derived": {
+       "price_at_intelligence": {
+        "10": 42,
+        "20": 35,
+        "30": 27
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "id": "healer-minoc",
+   "family": "healer",
+   "location": "Minoc",
+   "shop": "The Healers Mission",
+   "owner": "Regina",
+   "details": {
+    "cure": null,
+    "heal": null,
+    "resurrect": 200
+   }
+  },
+  {
+   "id": "healer-trinsic",
+   "family": "healer",
+   "location": "Trinsic",
+   "shop": "Wounds of Honour",
+   "owner": "Leila",
+   "details": {
+    "cure": 25,
+    "heal": 40,
+    "resurrect": 215
+   }
+  },
+  {
+   "id": "healer-skara-brae",
+   "family": "healer",
+   "location": "Skara Brae",
+   "shop": "The Spirit Healers",
+   "owner": "Temptious",
+   "details": {
+    "cure": 30,
+    "heal": 45,
+    "resurrect": 225
+   }
+  },
+  {
+   "id": "healer-east-brittany",
+   "family": "healer",
+   "location": "East Brittany",
+   "shop": "Healers' Sanctum",
+   "owner": "Milan",
+   "details": {
+    "cure": 35,
+    "heal": 50,
+    "resurrect": 237
+   }
+  },
+  {
+   "id": "healer-cove",
+   "family": "healer",
+   "location": "Cove",
+   "shop": "Sanctuary",
+   "owner": "Jessica",
+   "details": {
+    "cure": 40,
+    "heal": 55,
+    "resurrect": 247
+   }
+  },
+  {
+   "id": "healer-lycaeum",
+   "family": "healer",
+   "location": "Lycaeum",
+   "shop": "The Shield of Truth",
+   "owner": "Faye",
+   "details": {
+    "cure": 15,
+    "heal": 60,
+    "resurrect": 249
+   }
+  },
+  {
+   "id": "healer-empath-abbey",
+   "family": "healer",
+   "location": "Empath Abbey",
+   "shop": "The Empath",
+   "owner": "Jessip",
+   "details": {
+    "cure": 10,
+    "heal": 65,
+    "resurrect": 262
+   }
+  },
+  {
+   "id": "horse-trinsic",
+   "family": "horse",
+   "location": "Trinsic",
+   "shop": "Horse & Rider",
+   "owner": "Hettar",
+   "details": {
+    "base_price": 100,
+    "derived": {
+     "price_at_intelligence": {
+      "10": 170,
+      "20": 140,
+      "30": 110
+     }
+    }
+   }
+  },
+  {
+   "id": "horse-north-brittany",
+   "family": "horse",
+   "location": "North Brittany",
+   "shop": "The Stablehouse",
+   "owner": "Theoan",
+   "details": {
+    "base_price": 130,
+    "derived": {
+     "price_at_intelligence": {
+      "10": 221,
+      "20": 182,
+      "30": 143
+     }
+    }
+   }
+  },
+  {
+   "id": "horse-paws",
+   "family": "horse",
+   "location": "Paws",
+   "shop": "Wishing Well Horses",
+   "owner": "Ferru",
+   "details": {
+    "base_price": 160,
+    "derived": {
+     "price_at_intelligence": {
+      "10": 272,
+      "20": 224,
+      "30": 176
+     }
+    }
+   }
+  },
+  {
+   "id": "ship-jhelom",
+   "family": "ship",
+   "location": "Jhelom",
+   "shop": "Island Shipwrights",
+   "owner": "Bantral",
+   "details": {
+    "frigate_base_price": 600,
+    "skiff_base_price": 200,
+    "derived": {
+     "frigate_price_at_intelligence": {
+      "10": 1020,
+      "20": 840,
+      "30": 660
+     },
+     "skiff_price_at_intelligence": {
+      "10": 340,
+      "20": 280,
+      "30": 220
+     }
+    }
+   }
+  },
+  {
+   "id": "ship-minoc",
+   "family": "ship",
+   "location": "Minoc",
+   "shop": "The Crow's Nest",
+   "owner": "Captain Blyth",
+   "details": {
+    "frigate_base_price": 753,
+    "skiff_base_price": 175,
+    "derived": {
+     "frigate_price_at_intelligence": {
+      "10": 1280,
+      "20": 1054,
+      "30": 828
+     },
+     "skiff_price_at_intelligence": {
+      "10": 297,
+      "20": 245,
+      "30": 192
+     }
+    }
+   }
+  },
+  {
+   "id": "ship-east-brittany",
+   "family": "ship",
+   "location": "East Brittany",
+   "shop": "The Oaken Oar",
+   "owner": "Master Hawkins",
+   "details": {
+    "frigate_base_price": 650,
+    "skiff_base_price": 125,
+    "derived": {
+     "frigate_price_at_intelligence": {
+      "10": 1105,
+      "20": 910,
+      "30": 715
+     },
+     "skiff_price_at_intelligence": {
+      "10": 212,
+      "20": 175,
+      "30": 137
+     }
+    }
+   }
+  },
+  {
+   "id": "ship-buccaneer-s-den",
+   "family": "ship",
+   "location": "Buccaneer's Den",
+   "shop": "The Rusty Bucket",
+   "owner": "Jones",
+   "details": {
+    "frigate_base_price": 700,
+    "skiff_base_price": 100,
+    "derived": {
+     "frigate_price_at_intelligence": {
+      "10": 1190,
+      "20": 980,
+      "30": 770
+     },
+     "skiff_price_at_intelligence": {
+      "10": 170,
+      "20": 140,
+      "30": 110
+     }
+    }
+   }
+  },
+  {
+   "id": "inn-britain",
+   "family": "inn",
+   "location": "Britain",
+   "shop": "The Wayfarer Inn",
+   "owner": "Donya",
+   "details": {
+    "nightly_base_price": 2,
+    "guest_capacity": 3
+   }
+  },
+  {
+   "id": "inn-jhelom",
+   "family": "inn",
+   "location": "Jhelom",
+   "shop": "The Warrior's Stead",
+   "owner": "Gremnor",
+   "details": {
+    "nightly_base_price": 3,
+    "guest_capacity": 4
+   }
+  },
+  {
+   "id": "inn-skara-brae",
+   "family": "inn",
+   "location": "Skara Brae",
+   "shop": "The Haunting Inn",
+   "owner": "Rogi",
+   "details": {
+    "nightly_base_price": 2,
+    "guest_capacity": 3
+   }
+  },
+  {
+   "id": "inn-north-brittany",
+   "family": "inn",
+   "location": "North Brittany",
+   "shop": "Hotel Brittany",
+   "owner": "Terbor",
+   "details": {
+    "nightly_base_price": 3,
+    "guest_capacity": 2
+   }
+  },
+  {
+   "id": "inn-paws",
+   "family": "inn",
+   "location": "Paws",
+   "shop": "The Smugglers' Inn",
+   "owner": "Lorien",
+   "details": {
+    "nightly_base_price": 2,
+    "guest_capacity": 2
+   }
+  },
+  {
+   "id": "inn-buccaneer-s-den",
+   "family": "inn",
+   "location": "Buccaneer's Den",
+   "shop": "The King's Ransom Inn",
+   "owner": "Ransack",
+   "details": {
+    "nightly_base_price": 3,
+    "guest_capacity": 2
+   }
+  },
+  {
+   "id": "tavern-moonglow",
+   "family": "tavern",
+   "location": "Moonglow",
+   "shop": "The Honest Meal",
+   "owner": "Sam",
+   "details": {
+    "meal": "Mutton",
+    "meal_price_per_diner": 3,
+    "drink": "Ale",
+    "pack": "Rations",
+    "pack_base_price": 10
+   }
+  },
+  {
+   "id": "tavern-britain",
+   "family": "tavern",
+   "location": "Britain",
+   "shop": "The Wayfarer Tavern",
+   "owner": "Tika",
+   "details": {
+    "meal": "Mutton",
+    "meal_price_per_diner": 4,
+    "drink": "Ale",
+    "pack": "Rations",
+    "pack_base_price": 15
+   }
+  },
+  {
+   "id": "tavern-jhelom",
+   "family": "tavern",
+   "location": "Jhelom",
+   "shop": "The Sword and Keg",
+   "owner": "Nicole",
+   "details": {
+    "meal": "Mutton",
+    "meal_price_per_diner": 5,
+    "drink": "Ale",
+    "pack": "Rations",
+    "pack_base_price": 20
+   }
+  },
+  {
+   "id": "tavern-yew",
+   "family": "tavern",
+   "location": "Yew",
+   "shop": "The Slaughtered Lamb",
+   "owner": "Duclas",
+   "details": {
+    "meal": "Boar",
+    "meal_price_per_diner": 3,
+    "drink": "Rum",
+    "pack": null,
+    "pack_base_price": null
+   }
+  },
+  {
+   "id": "tavern-new-magincia",
+   "family": "tavern",
+   "location": "New Magincia",
+   "shop": "The Humble Palate",
+   "owner": "Felicity",
+   "details": {
+    "meal": "Fruit",
+    "meal_price_per_diner": 2,
+    "drink": "Stout",
+    "pack": "Provisions",
+    "pack_base_price": 30
+   }
+  },
+  {
+   "id": "tavern-west-brittany",
+   "family": "tavern",
+   "location": "West Brittany",
+   "shop": "The Blue Boar Tavern",
+   "owner": "Jaymes",
+   "details": {
+    "meal": "Cheese",
+    "meal_price_per_diner": 5,
+    "drink": "Wine",
+    "pack": null,
+    "pack_base_price": null
+   }
+  },
+  {
+   "id": "tavern-paws",
+   "family": "tavern",
+   "location": "Paws",
+   "shop": "The Cat's Lair",
+   "owner": "Dr. Cat",
+   "details": {
+    "meal": "Mutton",
+    "meal_price_per_diner": 3,
+    "drink": "Ale",
+    "pack": "Rations",
+    "pack_base_price": 20
+   }
+  },
+  {
+   "id": "tavern-buccaneer-s-den",
+   "family": "tavern",
+   "location": "Buccaneer's Den",
+   "shop": "The Fallen Virgin",
+   "owner": "Nikki",
+   "details": {
+    "meal": "Boar",
+    "meal_price_per_diner": 4,
+    "drink": "Rum",
+    "pack": null,
+    "pack_base_price": null
+   }
+  },
+  {
+   "id": "tavern-lycaeum",
+   "family": "tavern",
+   "location": "Lycaeum",
+   "shop": "The Folley Tap",
+   "owner": "Rob",
+   "details": {
+    "meal": "Mutton",
+    "meal_price_per_diner": 5,
+    "drink": "Ale",
+    "pack": "Rations",
+    "pack_base_price": 30
+   }
+  }
+ ]
+}

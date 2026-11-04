@@ -1,0 +1,81 @@
+{
+ "dataset": "moonstones",
+ "schema_version": 1,
+ "title": "Moonstones at the start of a game",
+ "key": "index",
+ "source": [
+  {
+   "rule": "MOON-0001",
+   "original": "Established"
+  }
+ ],
+ "derived_from": {
+  "sextant": "SIGN-0007"
+ },
+ "records": [
+  {
+   "index": 0,
+   "x": 224,
+   "y": 133,
+   "derived": {
+    "sextant": "I'F\", O'A\""
+   }
+  },
+  {
+   "index": 1,
+   "x": 96,
+   "y": 102,
+   "derived": {
+    "sextant": "G'G\", G'A\""
+   }
+  },
+  {
+   "index": 2,
+   "x": 38,
+   "y": 224,
+   "derived": {
+    "sextant": "O'A\", C'G\""
+   }
+  },
+  {
+   "index": 3,
+   "x": 50,
+   "y": 37,
+   "derived": {
+    "sextant": "C'F\", D'C\""
+   }
+  },
+  {
+   "index": 4,
+   "x": 166,
+   "y": 19,
+   "derived": {
+    "sextant": "B'D\", K'G\""
+   }
+  },
+  {
+   "index": 5,
+   "x": 104,
+   "y": 194,
+   "derived": {
+    "sextant": "M'C\", G'I\""
+   }
+  },
+  {
+   "index": 6,
+   "x": 23,
+   "y": 126,
+   "derived": {
+    "sextant": "H'O\", B'H\""
+   }
+  },
+  {
+   "index": 7,
+   "x": 187,
+   "y": 167,
+   "derived": {
+    "sextant": "K'H\", L'L\""
+   }
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "dataset": "quest_items",
+ "schema_version": 1,
+ "title": "Quest items placed in the Underworld",
+ "key": "name",
+ "source": [
+  {
+   "rule": "QUEST-0002",
+   "original": "Incomplete"
+  }
+ ],
+ "spoiler_fields": [
+  "x",
+  "y"
+ ],
+ "records": [
+  {
+   "name": "Amulet of Lord British",
+   "x": 105,
+   "y": 225
+  },
+  {
+   "name": "Shard of Falsehood",
+   "x": 192,
+   "y": 80
+  },
+  {
+   "name": "Shard of Hatred",
+   "x": 130,
+   "y": 65
+  },
+  {
+   "name": "Shard of Cowardice",
+   "x": 176,
+   "y": 184
+  }
+ ]
+}

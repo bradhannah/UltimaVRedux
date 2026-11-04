@@ -1,0 +1,1166 @@
+{
+ "dataset": "creatures",
+ "schema_version": 1,
+ "title": "Creatures",
+ "key": "index",
+ "source": [
+  {
+   "rule": "ENEMY-0001",
+   "original": "Established"
+  },
+  {
+   "rule": "ENEMY-0002",
+   "original": "Established"
+  },
+  {
+   "rule": "PROGRESS-0002",
+   "original": "Established"
+  }
+ ],
+ "derived_from": {
+  "kill_xp": "PROGRESS-0002",
+  "movement": "ENEMY-0002",
+  "group": "ENEMY-0001 (editorial grouping by index range)"
+ },
+ "records": [
+  {
+   "index": 0,
+   "name": "Mage",
+   "str": 10,
+   "dex": 15,
+   "int": 20,
+   "armour": 0,
+   "damage": 15,
+   "hp": 10,
+   "group_max": 3,
+   "treasure": 20,
+   "mode": "8000",
+   "abilities": [],
+   "range": 7,
+   "missile": "blue",
+   "friend": "Skeleton",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 1,
+   "name": "Bard",
+   "str": 15,
+   "dex": 20,
+   "int": 10,
+   "armour": 4,
+   "damage": 12,
+   "hp": 15,
+   "group_max": 9,
+   "treasure": 10,
+   "mode": "4000",
+   "abilities": [],
+   "range": 3,
+   "missile": "arrow",
+   "friend": "Bard",
+   "derived": {
+    "kill_xp": 4,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 2,
+   "name": "Fighter",
+   "str": 20,
+   "dex": 15,
+   "int": 10,
+   "armour": 8,
+   "damage": 15,
+   "hp": 20,
+   "group_max": 6,
+   "treasure": 15,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Bard",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 3,
+   "name": "Avatar archetype",
+   "str": 25,
+   "dex": 25,
+   "int": 25,
+   "armour": 7,
+   "damage": 30,
+   "hp": 20,
+   "group_max": 1,
+   "treasure": 25,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Avatar",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 4,
+   "name": "Villager",
+   "str": 12,
+   "dex": 12,
+   "int": 12,
+   "armour": 0,
+   "damage": 6,
+   "hp": 8,
+   "group_max": 1,
+   "treasure": 10,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 5,
+   "name": "Merchant",
+   "str": 12,
+   "dex": 12,
+   "int": 18,
+   "armour": 0,
+   "damage": 6,
+   "hp": 8,
+   "group_max": 1,
+   "treasure": 10,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 6,
+   "name": "Jester",
+   "str": 12,
+   "dex": 18,
+   "int": 12,
+   "armour": 0,
+   "damage": 6,
+   "hp": 8,
+   "group_max": 1,
+   "treasure": 10,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 7,
+   "name": "Banjo-player shape; displayed Bard",
+   "str": 12,
+   "dex": 16,
+   "int": 14,
+   "armour": 0,
+   "damage": 6,
+   "hp": 8,
+   "group_max": 1,
+   "treasure": 10,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 8,
+   "name": "In Stocks; no singular name",
+   "str": 12,
+   "dex": 12,
+   "int": 12,
+   "armour": 0,
+   "damage": 0,
+   "hp": 5,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 9,
+   "name": "In Manacles; no singular name",
+   "str": 12,
+   "dex": 12,
+   "int": 12,
+   "armour": 0,
+   "damage": 0,
+   "hp": 5,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 10,
+   "name": "Child",
+   "str": 8,
+   "dex": 8,
+   "int": 8,
+   "armour": 0,
+   "damage": 0,
+   "hp": 5,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Child",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 11,
+   "name": "Beggar",
+   "str": 8,
+   "dex": 8,
+   "int": 8,
+   "armour": 0,
+   "damage": 0,
+   "hp": 5,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Villager",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 12,
+   "name": "Guard",
+   "str": 22,
+   "dex": 30,
+   "int": 10,
+   "armour": 6,
+   "damage": 30,
+   "hp": 99,
+   "group_max": 8,
+   "treasure": 5,
+   "mode": "0000",
+   "abilities": [],
+   "range": 15,
+   "missile": "axe",
+   "friend": "Guard",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 13,
+   "name": "Wanderer",
+   "str": 30,
+   "dex": 30,
+   "int": 30,
+   "armour": 30,
+   "damage": 99,
+   "hp": 99,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "B008",
+   "abilities": [
+    "teleports",
+    "vanishes_on_death",
+    "immortal"
+   ],
+   "range": 9,
+   "missile": "blue",
+   "friend": "Wanderer",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "flying",
+    "group": "person"
+   }
+  },
+  {
+   "index": 14,
+   "name": "Blackthorn",
+   "str": 30,
+   "dex": 30,
+   "int": 30,
+   "armour": 30,
+   "damage": 30,
+   "hp": 99,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "BC48",
+   "abilities": [
+    "teleports",
+    "vanishes_on_death",
+    "turns_invisible",
+    "summons_daemons",
+    "possesses",
+    "immortal"
+   ],
+   "range": 9,
+   "missile": "red",
+   "friend": "Blackthorn",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "on_foot",
+    "group": "person"
+   }
+  },
+  {
+   "index": 15,
+   "name": "Lord British",
+   "str": 30,
+   "dex": 30,
+   "int": 30,
+   "armour": 30,
+   "damage": 99,
+   "hp": 99,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "B008",
+   "abilities": [
+    "teleports",
+    "vanishes_on_death",
+    "immortal"
+   ],
+   "range": 9,
+   "missile": "blue",
+   "friend": "Lord British",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "flying",
+    "group": "person"
+   }
+  },
+  {
+   "index": 16,
+   "name": "Sea Horse",
+   "str": 17,
+   "dex": 20,
+   "int": 20,
+   "armour": 2,
+   "damage": 10,
+   "hp": 30,
+   "group_max": 3,
+   "treasure": 0,
+   "mode": "C001",
+   "abilities": [
+    "no_corpse"
+   ],
+   "range": 5,
+   "missile": "blue",
+   "friend": "Squid",
+   "derived": {
+    "kill_xp": 8,
+    "movement": "water",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 17,
+   "name": "Squid",
+   "str": 24,
+   "dex": 20,
+   "int": 8,
+   "armour": 0,
+   "damage": 20,
+   "hp": 50,
+   "group_max": 2,
+   "treasure": 0,
+   "mode": "4005",
+   "abilities": [
+    "ranged_poison",
+    "no_corpse"
+   ],
+   "range": 7,
+   "missile": "blue",
+   "friend": "Sea Horse",
+   "derived": {
+    "kill_xp": 13,
+    "movement": "water",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 18,
+   "name": "Sea Serpent",
+   "str": 17,
+   "dex": 17,
+   "int": 8,
+   "armour": 2,
+   "damage": 30,
+   "hp": 70,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "4001",
+   "abilities": [
+    "no_corpse"
+   ],
+   "range": 9,
+   "missile": "red",
+   "friend": "Squid",
+   "derived": {
+    "kill_xp": 18,
+    "movement": "water",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 19,
+   "name": "Shark",
+   "str": 20,
+   "dex": 17,
+   "int": 5,
+   "armour": 0,
+   "damage": 8,
+   "hp": 22,
+   "group_max": 10,
+   "treasure": 0,
+   "mode": "0001",
+   "abilities": [
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Shark",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "water",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 20,
+   "name": "Giant Rat",
+   "str": 5,
+   "dex": 20,
+   "int": 5,
+   "armour": 0,
+   "damage": 6,
+   "hp": 10,
+   "group_max": 10,
+   "treasure": 5,
+   "mode": "0300",
+   "abilities": [
+    "poisons"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Skeleton",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 21,
+   "name": "Bat",
+   "str": 5,
+   "dex": 30,
+   "int": 5,
+   "armour": 0,
+   "damage": 6,
+   "hp": 5,
+   "group_max": 16,
+   "treasure": 0,
+   "mode": "0001",
+   "abilities": [
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Bat",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "flying",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 22,
+   "name": "Giant Spider",
+   "str": 10,
+   "dex": 10,
+   "int": 5,
+   "armour": 0,
+   "damage": 8,
+   "hp": 10,
+   "group_max": 4,
+   "treasure": 5,
+   "mode": "0204",
+   "abilities": [
+    "poisons",
+    "ranged_poison"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Giant Rat",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 23,
+   "name": "Ghost",
+   "str": 1,
+   "dex": 20,
+   "int": 10,
+   "armour": 0,
+   "damage": 12,
+   "hp": 20,
+   "group_max": 6,
+   "treasure": 0,
+   "mode": "0821",
+   "abilities": [
+    "turns_invisible",
+    "undead",
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Skeleton",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "ether",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 24,
+   "name": "Slime",
+   "str": 6,
+   "dex": 6,
+   "int": 2,
+   "armour": 0,
+   "damage": 4,
+   "hp": 10,
+   "group_max": 16,
+   "treasure": 0,
+   "mode": "0011",
+   "abilities": [
+    "divides",
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Slime",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 25,
+   "name": "Gremlin",
+   "str": 10,
+   "dex": 21,
+   "int": 10,
+   "armour": 2,
+   "damage": 4,
+   "hp": 10,
+   "group_max": 13,
+   "treasure": 12,
+   "mode": "0002",
+   "abilities": [
+    "steals_food"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Mimic",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 26,
+   "name": "Mimic",
+   "str": 20,
+   "dex": 30,
+   "int": 12,
+   "armour": 3,
+   "damage": 15,
+   "hp": 30,
+   "group_max": 1,
+   "treasure": 20,
+   "mode": "0280",
+   "abilities": [
+    "poisons",
+    "bludgeons"
+   ],
+   "range": 2,
+   "missile": "green",
+   "friend": "Ettin",
+   "derived": {
+    "kill_xp": 8,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 27,
+   "name": "Reaper",
+   "str": 20,
+   "dex": 25,
+   "int": 12,
+   "armour": 4,
+   "damage": 20,
+   "hp": 40,
+   "group_max": 3,
+   "treasure": 25,
+   "mode": "8080",
+   "abilities": [
+    "bludgeons"
+   ],
+   "range": 9,
+   "missile": "blue",
+   "friend": "Bat",
+   "derived": {
+    "kill_xp": 11,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 28,
+   "name": "Gazer",
+   "str": 8,
+   "dex": 10,
+   "int": 25,
+   "armour": 0,
+   "damage": 10,
+   "hp": 20,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "8040",
+   "abilities": [
+    "possesses"
+   ],
+   "range": 5,
+   "missile": "violet",
+   "friend": "Bat",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "flying",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 29,
+   "name": "Crawler",
+   "str": 17,
+   "dex": 15,
+   "int": 12,
+   "armour": 0,
+   "damage": 15,
+   "hp": 35,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Slime",
+   "derived": {
+    "kill_xp": 9,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 30,
+   "name": "Gargoyle",
+   "str": 20,
+   "dex": 10,
+   "int": 5,
+   "armour": 15,
+   "damage": 20,
+   "hp": 40,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "0090",
+   "abilities": [
+    "bludgeons",
+    "divides"
+   ],
+   "range": 9,
+   "missile": "rock",
+   "friend": "Gargoyle",
+   "derived": {
+    "kill_xp": 11,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 31,
+   "name": "Insect Swarm",
+   "str": 1,
+   "dex": 30,
+   "int": 1,
+   "armour": 0,
+   "damage": 4,
+   "hp": 5,
+   "group_max": 10,
+   "treasure": 0,
+   "mode": "0001",
+   "abilities": [
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Slime",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 32,
+   "name": "Orc",
+   "str": 15,
+   "dex": 13,
+   "int": 10,
+   "armour": 2,
+   "damage": 12,
+   "hp": 10,
+   "group_max": 10,
+   "treasure": 11,
+   "mode": "0080",
+   "abilities": [
+    "bludgeons"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Troll",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 33,
+   "name": "Skeleton",
+   "str": 10,
+   "dex": 20,
+   "int": 5,
+   "armour": 0,
+   "damage": 12,
+   "hp": 20,
+   "group_max": 8,
+   "treasure": 13,
+   "mode": "0020",
+   "abilities": [
+    "undead"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Mage",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 34,
+   "name": "Python",
+   "str": 5,
+   "dex": 18,
+   "int": 8,
+   "armour": 1,
+   "damage": 8,
+   "hp": 10,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "0004",
+   "abilities": [
+    "ranged_poison"
+   ],
+   "range": 3,
+   "missile": "green",
+   "friend": "Giant Spider",
+   "derived": {
+    "kill_xp": 3,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 35,
+   "name": "Ettin",
+   "str": 20,
+   "dex": 15,
+   "int": 12,
+   "armour": 3,
+   "damage": 15,
+   "hp": 30,
+   "group_max": 6,
+   "treasure": 17,
+   "mode": "4080",
+   "abilities": [
+    "bludgeons"
+   ],
+   "range": 5,
+   "missile": "rock",
+   "friend": "Headless",
+   "derived": {
+    "kill_xp": 8,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 36,
+   "name": "Headless",
+   "str": 19,
+   "dex": 12,
+   "int": 8,
+   "armour": 2,
+   "damage": 12,
+   "hp": 20,
+   "group_max": 8,
+   "treasure": 12,
+   "mode": "0080",
+   "abilities": [
+    "bludgeons"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Ettin",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 37,
+   "name": "Wisp",
+   "str": 8,
+   "dex": 30,
+   "int": 20,
+   "armour": 0,
+   "damage": 20,
+   "hp": 40,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "2041",
+   "abilities": [
+    "teleports",
+    "possesses",
+    "no_corpse"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Ghost",
+   "derived": {
+    "kill_xp": 11,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 38,
+   "name": "Daemon",
+   "str": 25,
+   "dex": 25,
+   "int": 25,
+   "armour": 5,
+   "damage": 20,
+   "hp": 75,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "8461",
+   "abilities": [
+    "summons_daemons",
+    "possesses",
+    "undead",
+    "no_corpse"
+   ],
+   "range": 9,
+   "missile": "red",
+   "friend": "Dragon",
+   "derived": {
+    "kill_xp": 19,
+    "movement": "flying",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 39,
+   "name": "Dragon",
+   "str": 30,
+   "dex": 25,
+   "int": 25,
+   "armour": 10,
+   "damage": 30,
+   "hp": 99,
+   "group_max": 2,
+   "treasure": 30,
+   "mode": "0400",
+   "abilities": [
+    "summons_daemons"
+   ],
+   "range": 9,
+   "missile": "red",
+   "friend": "Dragon",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "flying",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 40,
+   "name": "Sand Trap",
+   "str": 25,
+   "dex": 25,
+   "int": 5,
+   "armour": 10,
+   "damage": 30,
+   "hp": 80,
+   "group_max": 1,
+   "treasure": 25,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Sand Trap",
+   "derived": {
+    "kill_xp": 21,
+    "movement": "desert",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 41,
+   "name": "Troll",
+   "str": 18,
+   "dex": 17,
+   "int": 9,
+   "armour": 4,
+   "damage": 15,
+   "hp": 15,
+   "group_max": 4,
+   "treasure": 15,
+   "mode": "4000",
+   "abilities": [],
+   "range": 5,
+   "missile": "axe",
+   "friend": "Giant Rat",
+   "derived": {
+    "kill_xp": 4,
+    "movement": "on_foot",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 42,
+   "name": "Force Field; no singular name",
+   "str": 0,
+   "dex": 0,
+   "int": 0,
+   "armour": 0,
+   "damage": 0,
+   "hp": 0,
+   "group_max": 0,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Force Field",
+   "derived": {
+    "kill_xp": null,
+    "movement": null,
+    "group": "field"
+   }
+  },
+  {
+   "index": 43,
+   "name": "Whirlpool; no singular name",
+   "str": 0,
+   "dex": 0,
+   "int": 0,
+   "armour": 0,
+   "damage": 0,
+   "hp": 0,
+   "group_max": 0,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Whirlpool",
+   "derived": {
+    "kill_xp": null,
+    "movement": "deep_water",
+    "group": "field"
+   }
+  },
+  {
+   "index": 44,
+   "name": "Mongbat",
+   "str": 10,
+   "dex": 30,
+   "int": 15,
+   "armour": 4,
+   "damage": 20,
+   "hp": 20,
+   "group_max": 16,
+   "treasure": 5,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Mongbat",
+   "derived": {
+    "kill_xp": 6,
+    "movement": "flying",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 45,
+   "name": "Corpser",
+   "str": 17,
+   "dex": 10,
+   "int": 8,
+   "armour": 0,
+   "damage": 15,
+   "hp": 40,
+   "group_max": 4,
+   "treasure": 0,
+   "mode": "0000",
+   "abilities": [],
+   "range": 1,
+   "missile": null,
+   "friend": "Corpser",
+   "derived": {
+    "kill_xp": 11,
+    "movement": "grass",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 46,
+   "name": "Rot Worm",
+   "str": 5,
+   "dex": 17,
+   "int": 6,
+   "armour": 0,
+   "damage": 6,
+   "hp": 5,
+   "group_max": 10,
+   "treasure": 0,
+   "mode": "0300",
+   "abilities": [
+    "poisons"
+   ],
+   "range": 1,
+   "missile": null,
+   "friend": "Giant Rat",
+   "derived": {
+    "kill_xp": 2,
+    "movement": "swamp",
+    "group": "monster"
+   }
+  },
+  {
+   "index": 47,
+   "name": "Shadowlord",
+   "str": 25,
+   "dex": 30,
+   "int": 30,
+   "armour": 10,
+   "damage": 30,
+   "hp": 99,
+   "group_max": 1,
+   "treasure": 0,
+   "mode": "BB61",
+   "abilities": [
+    "teleports",
+    "vanishes_on_death",
+    "turns_invisible",
+    "poisons",
+    "possesses",
+    "undead",
+    "no_corpse"
+   ],
+   "range": 9,
+   "missile": "red",
+   "friend": "Daemon",
+   "derived": {
+    "kill_xp": 25,
+    "movement": "ether",
+    "group": "monster"
+   }
+  }
+ ]
+}

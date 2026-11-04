@@ -1,0 +1,202 @@
+{
+ "schema_version": 1,
+ "generator": "scripts/build_site.py",
+ "datasets": [
+  {
+   "dataset": "creatures",
+   "title": "Creatures",
+   "path": "creatures.json",
+   "records": 48,
+   "source": [
+    {
+     "rule": "ENEMY-0001",
+     "original": "Established"
+    },
+    {
+     "rule": "ENEMY-0002",
+     "original": "Established"
+    },
+    {
+     "rule": "PROGRESS-0002",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "equipment",
+   "title": "Equipment",
+   "path": "equipment.json",
+   "records": 48,
+   "source": [
+    {
+     "rule": "EQUIP-0001",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "locations",
+   "title": "Locations",
+   "path": "locations.json",
+   "records": 40,
+   "source": [
+    {
+     "rule": "MAP-0003",
+     "original": "Established"
+    },
+    {
+     "rule": "MAP-0004",
+     "original": "Established"
+    },
+    {
+     "rule": "WORD-0001",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "moon_phases",
+   "title": "Moon phases",
+   "path": "moon_phases.json",
+   "records": 28,
+   "source": [
+    {
+     "rule": "MOON-0002",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "moonstones",
+   "title": "Moonstones at the start of a game",
+   "path": "moonstones.json",
+   "records": 8,
+   "source": [
+    {
+     "rule": "MOON-0001",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "shrines",
+   "title": "Shrines",
+   "path": "shrines.json",
+   "records": 8,
+   "source": [
+    {
+     "rule": "SHRINE-0001",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "quest_items",
+   "title": "Quest items placed in the Underworld",
+   "path": "quest_items.json",
+   "records": 4,
+   "source": [
+    {
+     "rule": "QUEST-0002",
+     "original": "Incomplete"
+    }
+   ]
+  },
+  {
+   "dataset": "spells",
+   "title": "Spells",
+   "path": "spells.json",
+   "records": 48,
+   "source": [
+    {
+     "rule": "SPELL-0002",
+     "original": "Established"
+    },
+    {
+     "rule": "MIX-0001",
+     "original": "Established"
+    },
+    {
+     "rule": "SPELL-0001",
+     "original": "Incomplete"
+    }
+   ]
+  },
+  {
+   "dataset": "reagents",
+   "title": "Reagents",
+   "path": "reagents.json",
+   "records": 8,
+   "source": [
+    {
+     "rule": "MIX-0001",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0005",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "shops",
+   "title": "Shops",
+   "path": "shops.json",
+   "records": 46,
+   "source": [
+    {
+     "rule": "MERCH-0001",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0002",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0004",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0005",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0006",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0007",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0008",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0009",
+     "original": "Established"
+    },
+    {
+     "rule": "MERCH-0012",
+     "original": "Established"
+    },
+    {
+     "rule": "EQUIP-0001",
+     "original": "Established"
+    }
+   ]
+  },
+  {
+   "dataset": "commands",
+   "title": "Commands",
+   "path": "commands.json",
+   "records": 31,
+   "source": [
+    {
+     "rule": "CMD-0001",
+     "original": "Established"
+    }
+   ]
+  }
+ ]
+}
