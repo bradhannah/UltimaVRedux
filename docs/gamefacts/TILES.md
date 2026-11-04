@@ -26,8 +26,9 @@ categories 05-0C, torch 0D, box 0E, food 0F, horses 10-13, carpet rider 14,
 party 1C, ships 20-27, skiff 28, pirate ship 2C, and humanoids from 40.
 Fields E8-EB in object/room descriptors are distinct from terrain E8's hourglass.
 
-This logical space does not establish the physical record count or whole layout
-of `TILES.16`. Tile zero's tactical hit-effect manipulation is not fully specified
+The physical layout of `TILES.16` is given in
+[GFX-0008](GRAPHICS_FORMATS.md#gfx-0008); this logical space alone does not
+establish it. Tile zero's tactical hit-effect manipulation is not fully specified
 by its map-legend meaning.
 
 ### TILE-0002
