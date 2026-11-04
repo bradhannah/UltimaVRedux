@@ -41,6 +41,7 @@ Game Facts rule IDs rather than fragile descriptive-heading references.
 | [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md) | Guide contributor setup, implementation workflows, and local cross-platform release packaging. | `development` | Procedure |
 | [`ERROR_HANDLING.md`](ERROR_HANDLING.md) | Define panic, fatal, returned-error, and callback failure policy. | `engineering` | General policy |
 | [`PROFILING.md`](PROFILING.md) | Define profile-first CPU, memory, and allocation investigation. | `performance` | Procedure |
+| [`SITE.md`](SITE.md) | Explain how the public GitHub Pages site is generated, previewed, deployed, and extended with pages and datasets. | `public-site` | Procedure |
 | [`TESTING.md`](TESTING.md) | Define test strategy, fixture recipes, suites, and regression review. | `testing` | General policy |
 
 ## Architecture Decisions

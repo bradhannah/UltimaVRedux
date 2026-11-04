@@ -1,0 +1,49 @@
+{
+  "slug": "levelling",
+  "tier": "how",
+  "title": "Levelling and the Wanderer",
+  "summary": "When he comes, and what he gives",
+  "lede": "You never level up the moment you earn the XP. The Wanderer does it, and he only appears after a qualifying rest outdoors. Players often call him Lord British's ghost; this site uses the name in the Game Facts, the Wanderer. Here is every gate, in the order the game checks them.",
+  "rules": ["CAMP-0005", "PROGRESS-0001", "PROGRESS-0003", "KARMA-0017"],
+  "blocks": [
+    {"type": "h2", "text": "The seven steps of a visit"},
+    {
+      "type": "steps",
+      "items": [
+        {"title": "Outdoors only.", "text": "A camp in a dungeon never qualifies."},
+        {"title": "6 hours or more.", "text": "What counts is the number you chose, not the time you actually slept."},
+        {"title": "No ambush.", "text": "An ambush cancels the healing, the visit and the cooldown."},
+        {"title": "Cooldown has run out.", "text": "14 hour changes since your last qualifying rest, counting the hours you just slept."},
+        {"title": "Healing.", "text": "Everyone except the guard, the poisoned and the dead gains 1 to 63 HP, up to their maximum. Mages and the Avatar get MP equal to INT; Bards get half their INT."},
+        {"title": "The visit roll.", "text": "1 in 4. On a hit, he appears."},
+        {"title": "Cooldown resets to 14,", "text": "whether or not he came."}
+      ]
+    },
+    {"type": "h2", "text": "What he gives"},
+    {
+      "type": "ul",
+      "items": [
+        "Every member who is not dead is restored to full HP and set to Good.",
+        "Each member's level is recalculated from their XP: 1 plus the number of binary digits in XP ÷ 100 (dropping fractions).",
+        "If the level differs from the one stored, it is updated and both HP values become 30 × level. One of STR, DEX or INT, picked at random, rises by 1, to at most 30.",
+        "A report is read out, chosen by your karma in bands of 20. The top band has its own Wanderer text."
+      ]
+    },
+    {
+      "type": "p",
+      "text": "The original gives **one** stat award per visit, even if you gained several levels at once."
+    },
+    {
+      "type": "callout",
+      "label": "Redux differs",
+      "text": "You get one stat award for each level gained, and none when a level is corrected downward. See [Differences you'll notice](/redux/differences/#progress-0003)."
+    },
+    {"type": "h2", "text": "Myths about the Wanderer"},
+    {"type": "myths", "ids": ["ankh", "once-a-month", "dungeon-visit"]},
+    {"type": "h2", "text": "Level and XP"},
+    {
+      "type": "p",
+      "text": "The table of XP for each level is on [Levels and experience](/original/levels/)."
+    }
+  ]
+}

@@ -66,7 +66,7 @@ test-profile-check:
 		fi; \
 	done
 
-.PHONY: help all dev run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
+.PHONY: help all dev run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test site validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
 
 help: ## Show available targets
 	@printf "$(PROJECT_NAME) development targets:\n\n"
@@ -231,6 +231,9 @@ gamefacts-check: python-env-check ## Validate public stable references, graph, c
 
 tooling-test: python-env-check ## Run Python developer-tool and real quality-tool regressions
 	@"$(PYTHON)" -I -B -m unittest discover -s scripts -p 'test_*.py'
+
+site: python-env-check ## Build the public GitHub Pages site into _site (see docs/SITE.md)
+	@"$(PYTHON)" -B scripts/build_site.py _site
 
 validate: check policy-check build-check docs-check gamefacts-check tooling-test ## Run logic tests and canonical static checks once
 

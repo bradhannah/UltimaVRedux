@@ -1,0 +1,68 @@
+{
+  "note": "Owner-curated. Each myth is phrased as a claim or question. Every rule in `rules` must have Original: Established. verdict is one of busted, confirmed, depends, unknown. Add an entry here and rebuild; no code changes are needed.",
+  "myths": [
+    {
+      "id": "ankh",
+      "claim": "Wearing the Ankh makes the Wanderer visit more often.",
+      "verdict": "busted",
+      "answer": "Every qualifying outdoor rest gets the same 1 in 4 chance. The rule lists each condition (outdoors, six hours or more, no ambush, cooldown over) and gear is not among them.",
+      "rules": ["CAMP-0005"],
+      "link": "/original/how/levelling/",
+      "link_label": "Levelling and the Wanderer"
+    },
+    {
+      "id": "shared-xp",
+      "claim": "The XP from a kill is shared by the party.",
+      "verdict": "busted",
+      "answer": "All of it goes to whoever lands the killing blow: the creature's maximum HP ÷ 4 + 1.",
+      "rules": ["PROGRESS-0002", "COMBAT-0009"],
+      "link": "/original/levels/",
+      "link_label": "Levels and experience"
+    },
+    {
+      "id": "guard-ambush",
+      "claim": "Posting a guard makes ambushes rarer.",
+      "verdict": "busted",
+      "answer": "The chance is 1 in 64 per hour either way. A guard matters once you are attacked: the sleepers are woken. Without one, they are not.",
+      "rules": ["CAMP-0003", "CAMP-0004"],
+      "link": "/original/how/camping/",
+      "link_label": "Camping, step by step"
+    },
+    {
+      "id": "longer-rests",
+      "claim": "Longer rests risk more ambushes.",
+      "verdict": "confirmed",
+      "answer": "Every hour change except the last rolls 1 in 64. A 9-hour rest gets 8 rolls: about an 11.8% chance of at least one ambush.",
+      "rules": ["CAMP-0003"],
+      "link": "/original/how/camping/",
+      "link_label": "Camping, step by step"
+    },
+    {
+      "id": "level-cap",
+      "claim": "Level 8 is the highest level.",
+      "verdict": "depends",
+      "answer": "The level formula has no cap, but every XP gain we have checked stops at 9,999, which is level 8.",
+      "rules": ["PROGRESS-0001"],
+      "link": "/original/levels/",
+      "link_label": "Levels and experience"
+    },
+    {
+      "id": "once-a-month",
+      "claim": "The Wanderer can only visit once a month.",
+      "verdict": "busted",
+      "answer": "The game notes the month of his last visit, but never checks it when deciding whether he can come.",
+      "rules": ["CAMP-0005"],
+      "link": "/original/how/levelling/",
+      "link_label": "Levelling and the Wanderer"
+    },
+    {
+      "id": "dungeon-visit",
+      "claim": "The Wanderer can find you when you camp in a dungeon.",
+      "verdict": "busted",
+      "answer": "No. A dungeon camp never rolls for him. Only outdoor rests do.",
+      "rules": ["CAMP-0005"],
+      "link": "/original/how/levelling/",
+      "link_label": "Levelling and the Wanderer"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "note": "Owner-curated. Keyed by rule ID. The build fails if a listed rule is no longer 'Known discrepancy', and also if a Known discrepancy rule is missing from this file. `listed: false` keeps a gap off the Redux page (developer notes only).",
+  "gaps": [
+    {
+      "rule": "COMBAT-0008",
+      "summary": "How monsters choose targets, flee and use special attacks.",
+      "listed": true
+    },
+    {
+      "rule": "MOON-0005",
+      "summary": "Which shrine a moongate sends you to at midnight.",
+      "listed": true
+    },
+    {
+      "rule": "SPELL-0005",
+      "summary": "Where summoned creatures, Blink and Clone land when there is little room.",
+      "listed": true
+    },
+    {
+      "rule": "MIX-0003",
+      "summary": "Who a failed reagent mixture hurts when no one is eligible.",
+      "listed": true
+    },
+    {
+      "rule": "TEXT-0003",
+      "summary": "Where the ending text breaks its lines: Redux never makes the original's hyphenated breaks.",
+      "listed": true
+    },
+    {
+      "rule": "TALK-0002",
+      "summary": "A few rare text bytes inside conversations are not represented.",
+      "listed": false
+    }
+  ]
+}

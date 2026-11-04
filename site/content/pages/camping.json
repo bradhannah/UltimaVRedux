@@ -1,0 +1,44 @@
+{
+  "slug": "camping",
+  "tier": "facts",
+  "title": "Camping and rest",
+  "summary": "Hours, ambush odds, who finds you",
+  "lede": "Camp for one to nine hours. Rest heals the party when it is long enough, and the longer you stay, the more chances for something to find you.",
+  "rules": ["CAMP-0001", "CAMP-0002", "CAMP-0003", "CAMP-0005"],
+  "blocks": [
+    {
+      "type": "stats",
+      "items": [
+        {"label": "Length", "value": "1–9 hours", "note": "Zero or Space cancels setup."},
+        {"label": "Ambush chance", "value": "1 in 64", "note": "Per hour change, guarded or not."},
+        {"label": "Healing", "value": "1–63 HP", "note": "Each eligible member, up to their maximum. Needs 6+ hours."},
+        {"label": "Wanderer", "value": "1 in 4", "note": "Outdoors only, after a qualifying rest."}
+      ]
+    },
+    {"type": "h2", "text": "Where you can camp"},
+    {
+      "type": "p",
+      "text": "Outdoors you need dry land and a party on foot. A ship cannot camp; it is repaired instead. A watch is offered only when more than one member is Good or Poisoned, and the guard you pick has to be Good."
+    },
+    {
+      "type": "callout",
+      "label": "Redux differs",
+      "text": "Horses stay mounted and a magic carpet goes into your pack. See [Differences you'll notice](/redux/differences/#camp-0001)."
+    },
+    {"type": "h2", "text": "Who ambushes you"},
+    {
+      "type": "p",
+      "text": "When an ambush comes, the creature is chosen from a fixed list of eight entries. A dash means that creature never ambushes there. In a dungeon the choice is made before you start resting."
+    },
+    {"type": "computed", "name": "ambush_table"},
+    {"type": "h2", "text": "Who is healed"},
+    {
+      "type": "p",
+      "text": "After a rest of six hours or more, each party member gains between 1 and 63 HP, up to their maximum. The guard, the poisoned and the dead are left out. Mages and the Avatar then have MP equal to their INT; Bards get half their INT."
+    },
+    {
+      "type": "p",
+      "text": "Step by step, with every roll: [Camping, step by step](/original/how/camping/)."
+    }
+  ]
+}

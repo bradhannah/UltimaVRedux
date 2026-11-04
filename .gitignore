@@ -26,6 +26,8 @@ go.work.sum
 /test_output/
 /.ruff_cache/
 /.cache/
+# Generated public site (make site).
+/_site/
 __pycache__/
 *.py[cod]
 /ultimav
