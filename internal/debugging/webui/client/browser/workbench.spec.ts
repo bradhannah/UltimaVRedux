@@ -17,20 +17,23 @@ async function openWorkbench(page: Page) {
 }
 
 async function openInventory(page: Page) {
-  await page.locator('[data-workspace="game"]').click()
+  await page.locator('[data-workspace="items"]').click()
   await page.locator('[data-command-select="inventory.locker.status"]').click()
   await expect(page.getByRole("spinbutton", { name: "gold target quantity", exact: true })).toHaveValue("100")
 }
 
 test("desktop startup displays status and usable navigation", async ({ page }) => {
   const wire = await openWorkbench(page)
-  await page.locator('[data-workspace="game"]').click()
+  await expect(page.getByRole("heading", { name: "What do you want to set up?" })).toBeVisible()
+  await expect(page.locator("[data-topbar-where]")).toContainText("Britain")
+  await expect(page.locator("[data-topbar-party]")).toContainText("1 · all healthy")
+  await page.locator('[data-workspace="time"]').click()
   await page.locator('[data-command-select="calendar.status"]').click()
   await expect(page.locator(".calendar-readout")).toContainText("4:15 PM")
   await openInventory(page)
-  await expect(page.locator('[data-workspace="tools"]')).toBeInViewport()
-  await page.locator('[data-workspace="tools"]').click()
-  await expect(page.locator('[data-workspace="tools"]')).toHaveClass("selected")
+  await expect(page.locator('[data-workspace="more"]')).toBeInViewport()
+  await page.locator('[data-workspace="more"]').click()
+  await expect(page.locator('[data-workspace="more"]')).toHaveAttribute("aria-current", "page")
   expect(wire.executions("inventory.provision.set")).toHaveLength(0)
 })
 
@@ -43,8 +46,8 @@ test("compact laptop layout keeps navigation and inventory controls reachable", 
   await gold.scrollIntoViewIfNeeded()
   await expect(gold).toBeInViewport({ ratio: 1 })
   await page.getByRole("button", { name: "STAGE CHANGE", exact: true }).click({ trial: true })
-  await expect(page.locator('[data-workspace="tools"]')).toBeInViewport()
-  const overflow = await page.locator(".instrument-bank, .workspace-tabs, .history-panel").evaluateAll((elements) =>
+  await expect(page.locator('[data-workspace="more"]')).toBeInViewport()
+  const overflow = await page.locator(".instrument-bank, .task-tabs, .history-panel").evaluateAll((elements) =>
     elements.filter((element) => element.scrollWidth > element.clientWidth + 1).map((element) => element.className))
   expect(overflow).toEqual([])
 })

@@ -3,19 +3,28 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import WorkbenchHome from "./WorkbenchHome.vue"
 import type { NavigationSurface } from "./command_navigation"
+import { taskDefinition, type HomeCard } from "./workbench_tasks"
 
 let app: VueApp<Element> | undefined
 let root: HTMLDivElement
 
 const recent: NavigationSurface = {
-  id: "game:shrine.status",
-  workspace: "game",
-  workspaceLabel: "Game",
+  id: "more:shrine.status",
+  workspace: "more",
+  workspaceLabel: "More",
   label: "Shrine Progress",
   description: "Inspect and alter shrine progression.",
   commandId: "shrine.status",
   commands: [],
 }
+
+const cards: HomeCard[] = [
+  {
+    task: taskDefinition("time"),
+    quick: [{ id: "time:20:0", label: "Set 20:00", description: "Set the time of day to 20:00", effect: { kind: "time", hour: 20, minute: 0 } }],
+  },
+  { task: taskDefinition("party"), quick: [] },
+]
 
 beforeEach(() => {
   root = document.createElement("div")
@@ -29,24 +38,28 @@ afterEach(() => {
 })
 
 describe("Workbench Home", () => {
-  it("opens recent surfaces and the navigation palette without executing commands", () => {
-    const openPalette = vi.fn()
+  it("offers a card per task with quick actions, an open button and recent tools", () => {
+    const openTask = vi.fn()
     const openSurface = vi.fn()
-    mount({ recents: [recent], onOpenPalette: openPalette, onOpenSurface: openSurface })
+    const quick = vi.fn()
+    mount({ cards, recents: [recent], onOpenTask: openTask, onOpenSurface: openSurface, onQuick: quick })
 
-    click("[data-home-go-to]")
-    click('[data-home-recent="game:shrine.status"]')
+    expect(root.querySelector("h1")?.textContent).toBe("What do you want to set up?")
+    click('[data-home-quick="time:20:0"]')
+    click('[data-home-open="party"]')
+    click('[data-home-recent="more:shrine.status"]')
 
-    expect(openPalette).toHaveBeenCalledOnce()
-    expect(openSurface).toHaveBeenCalledOnce()
+    expect(quick).toHaveBeenCalledWith(cards[0].quick[0])
+    expect(openTask).toHaveBeenCalledWith("party")
     expect(openSurface).toHaveBeenCalledWith(recent)
+    expect(root.querySelector('[data-home-task="party"] .home-chips')).toBeNull()
   })
 
-  it("offers a useful empty state", () => {
-    mount({ recents: [] })
+  it("explains an empty recent list and reports the last quick action", () => {
+    mount({ cards, recents: [], feedback: { success: false, text: "Set Calendar Time failed: rejected" } })
 
-    expect(root.querySelector(".home-recents")?.textContent).toContain("NO RECENT SURFACES")
-    expect(root.querySelector(".home-getting-started")?.textContent).toContain("searches every Workbench surface")
+    expect(root.querySelector(".home-recents")?.textContent).toContain("Nothing yet")
+    expect(root.querySelector("[data-home-feedback]")?.textContent).toContain("rejected")
   })
 })
 

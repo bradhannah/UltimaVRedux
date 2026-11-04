@@ -13,26 +13,26 @@ Related documents:
 
 ## Current Implementation
 
-The responsive query/mutation shell and first intent-based workspaces are implemented. They include:
+The responsive query/mutation shell and task-hub navigation are implemented. They include:
 
-- Home, Game, System, Saves, and Tools navigation while preserving the authoritative command catalog underneath.
-- A visually dominant workspace tab rail with clear selected-state treatment.
+- A top bar on every view: connection, scene and retry state; **Where** (location and floor), **When** (game date and time), **Party** (size and plain-language health); an Exploring or In combat chip; and Search (`Ctrl/⌘K`). It shows only telemetry the Workbench already receives.
+- Task tabs with a clear selected state: Home, Go to, Party, Items & spells, Time & sky, Fight (marked while in combat), Checkpoints, and More. Each task page groups existing instruments and shows a tool picker when it holds more than one; the authoritative command catalog stays underneath.
 - Every browser launch opens Home. The selected instrument, collapsed Global History state, bottom/right history dock, and navigation recents remain browser-local across refreshes; stale instrument and recent-surface identities fall back through catalog validation.
 - Visible-only silent refresh for Logging, Wind, Calendar, World Navigator, Moongates, Monster Ecosystem, Active Combat, Vehicle, Inventory Locker, Prepared Spells, Search, Quest Inventory, and Shrine progression plus revisioned party-editor metadata refresh, without flooding global history.
 - Named virtue navigation instead of numeric Shrine entry.
-- Palette, Home, and command-rail navigation automatically load the selected read-only reference. Failed reference loads render an explicit error instead of an indefinite loading state.
+- Palette, Home, and tool-picker navigation automatically load the selected read-only reference. Failed reference loads render an explicit error instead of an indefinite loading state.
 - Connection, scene-generation, retry, and session-resume indicators.
-- A masthead Britannian calendar showing the live formatted game date/time, moon-phase label, and authentic runic phase glyph from the shared `runic_font.png` sprite sheet.
+- A top-bar Britannian calendar showing the live formatted game date/time, moon-phase label, and authentic runic phase glyph from the shared `runic_font.png` sprite sheet.
 - Correlated accepted/completed/failed command handling with replay deduplication.
 - Typed wind, calendar, world-navigation, moongate, ecosystem, vehicle, inventory-locker, encounter-composer, search/item-stack, quest-inventory, logging, shrine, and party result views, plus schema-generated fallback controls.
-- A Game Shrine Progress instrument for current quest/ruined state and explicit alterations, including shrine progress presets.
+- A Shrine Progress instrument (More) for current quest/ruined state and explicit alterations, including shrine progress presets.
 - A specialized Wind console with automatic telemetry, pause/resume, age, explicit direction selection, and Apply.
 - A Calendar chronometer with staged practical presets, bounded exact controls, and derived lighting/moon context.
 - A five-cell Search cross with complete stack inspection, stable provision placement, and confirmed one-time-progress reset.
 - A fixed Quest Inventory ledger with all 14 item identities, canonical placements, and confirmed per-item removal.
-- Three independent Game party instruments: Character Editor for one active character's attributes/resources/condition/order, Equipment Loadouts for reviewed six-slot atomic changes, and Party Roster for active/inactive composition plus reviewed party-wide operations. User-facing active positions are one-based; zero-based roster indices remain secondary diagnostic identities.
-- A Tools Test Setups instrument for reviewed camping and death/resurrection utilities; these are built-in utilities, not saved scripts.
-- A Saves workspace grouping Project / Shared, Personal / Local, and Rollback / Recovery records, with detached compact detail, stable-scene capture, reviewed load/delete, and automatic rollback disclosure.
+- Three independent Party instruments: Character Editor for one active character's attributes/resources/condition/order, Equipment Loadouts for reviewed six-slot atomic changes, and Party Roster for active/inactive composition plus reviewed party-wide operations. User-facing active positions are one-based; zero-based roster indices remain secondary diagnostic identities.
+- A Test Setups instrument (More) for reviewed camping and death/resurrection utilities; these are built-in utilities, not saved scripts.
+- A Checkpoints page grouping Project / Shared, Personal / Local, and Rollback / Recovery records, with detached compact detail, stable-scene capture, reviewed load/delete, and automatic rollback disclosure.
 - A World Navigator that preserves staged destination drafts while live status silently refreshes their reviewed source preconditions. It submits one atomic exact or authoritative route placement across large, small, and dungeon maps. Dungeon routes expose outside entrance, canonical inside start, and the non-Doom Underworld-exit ladder; unavailable route targets remain visible with a reason. Physical shrine setup remains a separate lane; Spirituality and waterfall transitions remain separate workflows.
 - A Moongate phase atlas with all moonstone records, reviewed production travel, coordinate-destination handoff into the Navigator, and a coordinate-free Shrine of Spirituality route during 00:00-00:09.
 - The Monster Ecosystem roster uses bounded keyboard-accessible scrolling with sticky headings; short reference tables remain unbounded.
@@ -42,27 +42,27 @@ The responsive query/mutation shell and first intent-based workspaces are implem
 - An Active Combat Console with an 11x11 tactical map, party and monster condition telemetry, DEX forecast, reviewed stable-ID mutations, and a fixed-room-only Clear Room review that defeats hostile enemies and declares victory without exiting combat. Mutations are unavailable while combat animation or dialogs are active.
 - A Monster Ecosystem Console with map capacity, enemy telemetry, explicit generation settings, confirmed enemy-only clear, and special spawn attempts.
 - A dedicated Ships instrument with current PartyVehicle details, hull preview, reviewed non-sinking damage, full repair, and exact Redux skiff quantities from 0 through 12.
-- A Game Prepared Spell Inventory grouped by circle, with exact staged quantities, a reviewed all-99 preset, and active-duration controls for exact remaining turns and authentic Light/Time Stop activation.
-- A persistent top-bar Free Move switch backed by the same explicit setter and status query as the Debug Options instrument.
-- A combat-only masthead **Escape Combat** action that submits `combat.exit-debug` with the latest encounter ID and reviewed snapshot fingerprint. It disappears outside combat and disables during transient combat work; the server rejects fixed dungeon rooms because their exploration continuation requires a normal room exit.
-- A System Debug Options instrument for retry-safe renderer flags, including the lighting overlay. Display settings and persisted Redux gameplay preferences are no longer Workbench instruments; they remain in the game's own Configure dialog.
-- A Tools Observation pane that owns Telescope, Spyglass, and Crystal Ball production workflows, presents their distinct requirements and branches, and shows the latest queued context without polling or automatic execution.
-- A Tools Merchant Tester with a static 46-merchant directory, town filtering,
+- A Prepared Spell Inventory (Items & spells) grouped by circle, with exact staged quantities, a reviewed all-99 preset, and active-duration controls for exact remaining turns and authentic Light/Time Stop activation.
+- A Free Move switch in the Go to page header, backed by the same explicit setter and status query as the Debug Options instrument.
+- A combat-only top-bar **Escape Combat** action that submits `combat.exit-debug` with the latest encounter ID and reviewed snapshot fingerprint. It disappears outside combat and disables during transient combat work; the server rejects fixed dungeon rooms because their exploration continuation requires a normal room exit.
+- A Debug Options instrument (More) for retry-safe renderer flags, including the lighting overlay. Display settings and persisted Redux gameplay preferences are no longer Workbench instruments; they remain in the game's own Configure dialog.
+- An Observation pane (More) that owns Telescope, Spyglass, and Crystal Ball production workflows, presents their distinct requirements and branches, and shows the latest queued context without polling or automatic execution.
+- A Merchant Tester (More) with a static 46-merchant directory, town filtering,
   family-grouped merchant selection, direct concrete Preview for all eight
   families, and reviewed Live launch. All 46 merchants are ready: nine Arms,
   nine Tavern, three Guild, seven Healer, five Reagent, three Horse, four Ship,
   and six Inn merchants.
-- Game World Diagnostics consolidating otherwise hidden Guard hostility, Shadowlord presence/assignments, and death/resurrection consequences.
-- A Game Inventory Locker with persistent provisions, reagents, potions, scrolls, and armory tabs; staged stale-safe exact carried quantities, explicit presets, additive consumable grants, and read-only all-roster loadout telemetry.
+- World Diagnostics (More) consolidating otherwise hidden Guard hostility, Shadowlord presence/assignments, and death/resurrection consequences.
+- An Inventory Locker (Items & spells) with persistent provisions, reagents, potions, scrolls, and armory tabs; staged stale-safe exact carried quantities, explicit presets, additive consumable grants, and read-only all-roster loadout telemetry.
 - Character Editor uses a compact live party selector, prefilled attributes, segmented condition/order controls, dirty-only submission, and effective-change preview. Equipment Loadouts independently stages inventory, manufacture, or unequip sources per slot for one member or atomically for all active members, showing common or mixed current slots and aggregate inventory requirements. Party Roster shows active and inactive members together, supports arbitrary occupied-position selection for reviewed status changes, and stages composition/progression reviews before submission.
 - A compact last-operation banner inside the active instrument instead of a separate Latest Result column.
-- Compact masthead, workspace tabs, and Global History chrome that preserve touch-sized narrow-layout controls while maximizing desktop instrument space; execution-mode badges sit beside instrument titles instead of consuming a separate row.
+- Compact top bar, task tabs, and Global History chrome that preserve touch-sized narrow-layout controls while maximizing desktop instrument space; execution-mode badges sit beside instrument titles instead of consuming a separate row.
 - Collapsible bounded history with follow controls, switchable bottom/right docking, and orientation-aware resizing. Narrow layouts render it at the bottom without overwriting the saved dock preference.
 - A five-step typography scale: 11px metadata, 12px supporting text, 14px standard UI text, 18px titles, and one responsive display size.
-- Content-based sizing: a 1600px shell cap, 760-1100px view caps, intrinsic workspace tabs, 72-112px numeric controls, 176-280px selectors, fixed-size Wind controls, and vertical stacking before horizontal scrolling.
-- Global catalog search across all workspaces, catalog-owned aliases and search terms, destination-labelled results that switch to the owning workspace, category navigation, one active generated or specialized instrument, F5 execution, and narrow desktop-browser stacking. Phone-specific design is not a goal.
+- Content-based sizing: a 1600px shell cap, 760-1100px view caps, intrinsic task tabs, 72-112px numeric controls, 176-280px selectors, fixed-size Wind controls, and vertical stacking before horizontal scrolling.
+- Global catalog search across all tasks, catalog-owned aliases and search terms, destination-labelled results that switch to the owning task, one active generated or specialized instrument, F5 execution, and narrow desktop-browser stacking. Phone-specific design is not a goal.
 
-Saves uses capped work surfaces and explicit reviewed operations.
+Checkpoints uses capped work surfaces and explicit reviewed operations.
 The Workbench does not expose an arbitrary live-state or snapshot-field editor.
 
 ### Specialized Instrument Ownership
@@ -107,11 +107,11 @@ matches by location name, map type, or ID as the operator types.
 
 ### Status-Backed Refresh
 
-Status-backed instruments query when selected, generally poll silently only while visible, and issue an immediate silent status query after each successful companion mutation. World Navigator preserves dirty destination drafts while polling advances only the reviewed live-source preconditions. A `stale_world_position` failure triggers one silent status refresh and never automatically retries the mutation. The masthead calendar and combat-only quick exit are explicit global consumers, so their calendar and active-combat status queries continue silently across workspaces. Refreshed status, not optimistic UI state, is authoritative. Refreshes otherwise reconcile selections while preserving unrelated dirty drafts, and routine polling does not enter global history.
+Status-backed instruments query when selected, generally poll silently only while visible, and issue an immediate silent status query after each successful companion mutation. World Navigator preserves dirty destination drafts while polling advances only the reviewed live-source preconditions. A `stale_world_position` failure triggers one silent status refresh and never automatically retries the mutation. The top bar's calendar, location and party summary, and the combat-only quick exit, are explicit global consumers, so their calendar, test-setup, and active-combat status queries continue silently across tasks. Refreshed status, not optimistic UI state, is authoritative. Refreshes otherwise reconcile selections while preserving unrelated dirty drafts, and routine polling does not enter global history.
 
 Active Combat also refreshes when it is the selected instrument, with duplicate
-pending queries suppressed. Hidden browser pages stop routine polling. Workspace
-selection is retained per workspace; session-owned instrument drafts/tabs survive
+pending queries suppressed. Hidden browser pages stop routine polling. Tool
+selection is retained per task; session-owned instrument drafts/tabs survive
 detours and reconnects. These are desired values, not durable browser-reload
 storage or review authority. Navigation, connection/session, scene, and visibility
 changes disarm reviews; later telemetry does not silently overwrite dirty values.
@@ -131,23 +131,37 @@ an older success banner visible. Blank numeric input is not coerced to zero.
 
 Use the Ultima display font only for the product title and selected headings. Use a readable monospaced developer font for forms, values, diffs, and events.
 
-## Home Workspace
+## Home
 
-Home is the first workspace on every browser launch. It replaces the former decorative `WORKSPACES` label with a real accessible tab and provides orientation without duplicating command controls.
+Home opens on every browser launch and asks "What do you want to set up?". It
+holds one card for each common task (Go to, Fight, Party, Items & spells, Time &
+sky, Checkpoints), each with an icon, a one-line purpose, a few quick actions and
+an Open button, plus a Recent list.
 
-The page contains:
+Quick actions only call commands that need no separate review:
 
-- A prominent Go To launcher for the navigation-only command palette.
-- Up to eight browser-local recent surfaces, resolved against the current authoritative catalog. Selecting one navigates and auto-loads its owning read-only query without executing a mutation.
-- Empty states that direct new users toward Go To or the workspace tabs.
+- Go to: `movement.landmark.travel` for a few landmarks from the live catalog.
+- Time & sky: `calendar.set-time` presets for 05:00, 12:00 and 20:00.
+- Fight: Escape combat (`combat.exit-debug`), shown only while in combat.
+- Open-tool chips that only navigate, such as Encounter Composer or Party Roster.
 
-Home disconnected content is labelled `LAST RECEIVED` rather than live. Recent surfaces are recorded by navigation through the command palette or Home itself; ordinary command-rail selection does not create a second recency model.
+Commands that require a fingerprint review inside their tool, such as party
+status, inventory presets and checkpoint load, are not offered on Home. The last
+quick action's outcome shows in a status line.
 
-Home owns no catalog commands and exposes no mutation controls. The previously selected instrument and its draft remain intact underneath Home so entering its workspace can continue that work.
+Recent lists up to eight browser-local surfaces, resolved against the current
+authoritative catalog. Selecting one navigates and auto-loads its owning read-only
+query without executing a mutation. Recents are recorded by palette or Home
+navigation; ordinary tool-picker selection does not create a second recency model.
+Surface IDs are `<task>:<commandId>`; recents saved under the former workspace IDs
+are dropped.
+
+The previously selected instrument and its draft remain intact underneath Home,
+so opening its task continues that work.
 
 ## Command Palette
 
-`Ctrl+K` or `Command+K` opens the fastest path to any Workbench surface. Selecting a result opens its owning workspace and instrument, automatically loads the owning read-only query, and never executes a mutation.
+`Ctrl+K` or `Command+K` opens the fastest path to any Workbench surface. Selecting a result opens its owning task and instrument, automatically loads the owning read-only query, and never executes a mutation.
 
 ```text
               +====================================================+
@@ -157,7 +171,7 @@ Home owns no catalog commands and exposes no mutation controls. The previously s
               +----------------------------------------------------+
               | MATCHES                                            |
               | > Shrine Progress                                  |
-              |   Game / Live shrine quest state                   |
+              |   More / Live shrine quest state                   |
               |                                              Enter |
               +----------------------------------------------------+
               | READ-ONLY QUERIES AUTO-LOAD · NO MUTATIONS RUN   |
@@ -166,13 +180,13 @@ Home owns no catalog commands and exposes no mutation controls. The previously s
 
 Search matches:
 
-- Workspace and instrument names.
-- Surface descriptions and owning workspaces.
+- Task and instrument names.
+- Surface descriptions and owning tasks.
 - Stable command IDs and catalog-owned search terms.
 - Command names, descriptions, categories, and aliases owned by each surface.
 - Recent surfaces when the query is empty, capped at eight.
 
-Ranking favors exact surface or workspace-qualified matches, then prefixes, then deterministic all-token matches. Ties sort by workspace, surface label, and stable surface ID.
+Ranking favors exact surface or task-qualified matches, then prefixes, then deterministic all-token matches. Ties sort by task, surface label, and stable surface ID.
 
 Enter navigates to the selected surface and closes the palette. Command execution remains inside the destination instrument with its normal validation and review requirements.
 
@@ -213,9 +227,9 @@ Controls are selected from parameter schemas:
 
 Dangerous defaults such as `all`, `clear`, or deletion are not preselected unless the logical action is explicitly a bulk preset.
 
-## Saves Workspace
+## Checkpoints
 
-Saves is a top-level workspace for immutable canonical snapshot records. It does not import legacy `SAVED.GAM`, expose full snapshot JSON, compare records, or offer arbitrary field editing.
+Checkpoints is a top-level task for immutable canonical snapshot records. It does not import legacy `SAVED.GAM`, expose full snapshot JSON, compare records, or offer arbitrary field editing.
 
 ```text
 +============================================================================+
@@ -273,10 +287,10 @@ History is a log of results only. It does not capture steps into saved scripts.
 
 ## Laptop Layout
 
-Shell tracks allow shrinking, workspace/history actions wrap, and instrument
+Shell tracks allow shrinking, task tabs and history actions wrap, and instrument
 grids respond to available container width rather than assuming an undocked
 viewport. Narrow layouts move history to the bottom without changing the saved
-desktop dock preference and reduce command-rail height so controls remain
+desktop dock preference and keep tool pickers compact so controls remain
 reachable. Editable values use larger form typography within the existing visual
 language; this does not add phone/touch controls to the player-facing game.
 
@@ -315,7 +329,7 @@ The command palette automatically executes only the read-only query that owns th
 Ctrl+K / Command+K
   |
   v
-type workspace, instrument, intent, or stable command ID
+type task, instrument, intent, or stable command ID
   |
   v
 navigate to owning Workbench surface

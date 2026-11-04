@@ -44,10 +44,26 @@ import InventoryLocker from "./InventoryLocker.vue"
 import SpellInventory from "./SpellInventory.vue"
 import WorldNavigator from "./WorldNavigator.vue"
 import ObservationPane, { type ObservationCommandID } from "./ObservationPane.vue"
-import MoonPhaseGlyph from "./MoonPhaseGlyph.vue"
+import WorkbenchTopBar, { type TopBarClock, type TopBarParty } from "./WorkbenchTopBar.vue"
 import CommandPalette from "./CommandPalette.vue"
 import WorkbenchHome from "./WorkbenchHome.vue"
 import { recentNavigationSurfaces, updateNavigationRecents, type NavigationSurface } from "./command_navigation"
+import {
+  compareToolOrder,
+  homeTaskIDs,
+  partyHealthSummary,
+  placeLabel,
+  preferredLandmarks,
+  taskDefinition,
+  taskDefinitions,
+  timePresets,
+  toolDefinitions,
+  toolGroupOrder,
+  type HomeCard,
+  type HomeQuickAction,
+  type TaskID,
+  type ToolGroup,
+} from "./workbench_tasks"
 import type {
   CalendarStatusData,
   CombatEncounterOptionsData,
@@ -85,8 +101,7 @@ import {
 import { partyEquipmentLoadoutCommandID } from "./party_equipment_loadout"
 
 type ConnectionState = "connecting" | "handshaking" | "ready" | "reconnecting" | "disconnected"
-type CatalogWorkspaceID = NavigationSurface["workspace"]
-type WorkspaceID = "home" | CatalogWorkspaceID
+type WorkspaceID = "home" | TaskID
 type HistoryDock = "bottom" | "right"
 interface ResultEntry extends CommandResult {
   entryID: string
@@ -103,8 +118,8 @@ interface PendingRequest {
   statusRequested: boolean
 }
 
-interface CommandCategory {
-  name: string
+interface ToolGroupView {
+  name?: ToolGroup
   commands: CommandDefinition[]
 }
 
@@ -184,6 +199,8 @@ const deathStatusCommandID = "death.status"
 const worldDiagnosticCommandIDs = [guardStatusCommandID, shadowlordStatusCommandID, deathStatusCommandID]
 const inventoryLockerStatusCommandID = "inventory.locker.status"
 const activeCombatStatusCommandID = "combat.status"
+// Queried on every poll so the top bar can show When, Where, Party and the combat mode on every view.
+const globalStatusCommandIDs = [calendarStatusCommandID, activeCombatStatusCommandID, testSetupStatusCommandID]
 const activeCombatSleepCommandID = "combat.monster.sleep.set"
 const activeCombatExitCommandID = "combat.exit-debug"
 const activeCombatSpawnCommandID = "combat.monster.spawn"
@@ -330,8 +347,6 @@ provideInstrumentSession(computed(() => `${sessionID.value}:${sceneGeneration.va
 const livePollingPaused = ref(false)
 const selectedShrineIndex = ref(0)
 const linkedWorldCoordinates = ref<{ x: number; y: number }>()
-const commandSearch = ref("")
-const collapsedCategories = ref(new Set<string>())
 const drafts = ref<Record<string, CommandDraft>>({})
 const dirtyFields = ref<Record<string, string[]>>({})
 const formErrors = ref<Record<string, FormErrors>>({})
@@ -344,7 +359,6 @@ const trimmedResults = ref(0)
 const reconnectAttempt = ref(0)
 const stream = ref<HTMLElement | null>(null)
 const historyPanel = ref<HTMLElement | null>(null)
-const commandSearchInput = ref<HTMLInputElement | null>(null)
 const followResults = ref(true)
 const historyCollapsed = ref(localStorage.getItem(historyCollapsedStorageKey) === "true")
 const historyDock = ref<HistoryDock>(restoredHistoryDock())
@@ -358,7 +372,6 @@ const processedRequestIDs = new Set<string>()
 const processedRequestOrder: string[] = []
 const silentRequestIDs = new Set<string>()
 const commandPaletteOpen = ref(false)
-const commandPaletteLauncher = ref<HTMLButtonElement | null>(null)
 const navigationRecents = ref<string[]>(restoredNavigationRecents())
 let reconnectTimer: number | undefined
 let connectionTimer: number | undefined
@@ -386,38 +399,17 @@ const historyPanelStyle = computed(() => historyDock.value === "right"
   : { height: historyCollapsed.value ? undefined : `${historyHeight.value}px` })
 const isReady = computed(() => connectionState.value === "ready")
 const supportedCommands = computed(() => commands.value.filter(isSupportedWorkbenchCommand))
-const availableCommands = computed(() => supportedCommands.value.filter((command) => commandBelongsToWorkspace(command, activeWorkspace.value)))
-const searchableCommands = computed(() => supportedCommands.value.filter((command) => workspaces.some((workspace) => commandBelongsToWorkspace(command, workspace.id))))
-const filteredCommands = computed(() => {
-  const search = commandSearch.value.trim().toLocaleLowerCase()
-  if (!search) return availableCommands.value
-
-  return searchableCommands.value.filter((command) => [
-    command.name,
-    command.id,
-    command.category,
-    command.description,
-    ...(command.aliases ?? []),
-    ...(command.searchTerms ?? []),
-  ].some((value) => value.toLocaleLowerCase().includes(search)))
-})
-const commandCategories = computed<CommandCategory[]>(() => {
-  const categories = new Map<string, CommandDefinition[]>()
-  for (const command of filteredCommands.value) {
-    const categoryName = navigationCategory(command, commandSearch.value.trim() ? primaryWorkspaceForCommand(command) : activeWorkspace.value)
-    const category = categories.get(categoryName) ?? []
-    category.push(command)
-    categories.set(categoryName, category)
+const availableCommands = computed(() => supportedCommands.value
+  .filter((command) => ownerTask(command) === activeWorkspace.value)
+  .sort((left, right) => compareToolOrder(left.id, right.id)))
+const toolGroups = computed<ToolGroupView[]>(() => {
+  if (activeWorkspace.value !== "more") return [{ commands: availableCommands.value }]
+  const grouped = new Map<ToolGroup, CommandDefinition[]>()
+  for (const command of availableCommands.value) {
+    const group = toolDefinitions[command.id]?.group ?? "For developers"
+    grouped.set(group, [...(grouped.get(group) ?? []), command])
   }
-
-  return [...categories]
-    .map(([name, categoryCommands]) => ({ name, commands: categoryCommands }))
-    .sort((left, right) => navigationCategoryOrder(left.name) - navigationCategoryOrder(right.name))
-})
-const navigationCommandTotal = computed(() => commandSearch.value.trim() ? searchableCommands.value.length : availableCommands.value.length)
-const catalogTabCommandID = computed(() => {
-  const visibleCommands = commandCategories.value.flatMap((category) => categoryExpanded(category.name) ? category.commands : [])
-  return visibleCommands.some((command) => command.id === selectedCommandID.value) ? selectedCommandID.value : visibleCommands[0]?.id
+  return [...grouped].map(([name, groupCommands]) => ({ name, commands: groupCommands })).sort((left, right) => toolGroupOrder(left.name!) - toolGroupOrder(right.name!))
 })
 const selectedCommand = computed(() => availableCommands.value.find((command) => command.id === selectedCommandID.value))
 const selectedQueryFailure = computed(() => {
@@ -438,7 +430,7 @@ const latestWindResult = computed(() => latestResults.value[windStatusCommandID]
 const latestLoggingResult = computed(() => latestResults.value[loggingStatusCommandID])
 const latestShrineStatusResult = computed(() => latestResults.value[shrineStatusCommandID])
 const latestCalendarResult = computed(() => latestResults.value[calendarStatusCommandID])
-const mastheadCalendar = computed(() => latestCalendarResult.value?.data ? calendarStatusData(latestCalendarResult.value.data) : undefined)
+const currentCalendar = computed(() => latestCalendarResult.value?.data ? calendarStatusData(latestCalendarResult.value.data) : undefined)
 const latestSearchResult = computed(() => latestResults.value[searchStatusCommandID])
 const latestQuestItemResult = computed(() => latestResults.value[questItemStatusCommandID])
 const latestWorldPositionResult = computed(() => latestResults.value[worldPositionStatusCommandID])
@@ -450,11 +442,11 @@ const latestVehicleStatusResult = computed(() => latestResults.value[vehicleStat
 const latestInventoryLockerResult = computed(() => latestResults.value[inventoryLockerStatusCommandID])
 const latestSpellInventoryResult = computed(() => latestResults.value[spellInventoryStatusCommandID])
 const latestActiveCombatResult = computed(() => latestResults.value[activeCombatStatusCommandID])
-const mastheadActiveCombat = computed(() => latestActiveCombatResult.value?.data
+const currentCombat = computed(() => latestActiveCombatResult.value?.data
   ? activeCombatStatusData(latestActiveCombatResult.value.data)
   : undefined)
 const quickCombatExitDisabled = computed(() => {
-	const combat = mastheadActiveCombat.value
+	const combat = currentCombat.value
 	return !isReady.value || commandPending(activeCombatExitCommandID) || !combat?.active || combat.workflowActive
 		|| combat.map?.pendingAdvanceTurn || combat.map?.activeMonsterIndex !== -1
 })
@@ -474,28 +466,39 @@ const latestObservationResult = computed(() => [...results.value].reverse().find
 ))
 const observationPending = computed(() => observationCommandIDs.some(commandPending))
 const worldLandmarkChoices = computed(() => commands.value.find((command) => command.id === movementLandmarkTravelCommandID)?.parameters?.find((parameter) => parameter.id === "landmark")?.choices ?? [])
-const catalogWorkspaces: { id: CatalogWorkspaceID; label: string; detail: string }[] = [
-  { id: "game", label: "Game", detail: "State & setup" },
-  { id: "system", label: "System", detail: "App & overlays" },
-  { id: "saves", label: "Saves", detail: "Checkpoints" },
-  { id: "tools", label: "Tools", detail: "Tests & workflows" },
-]
-const workspaces: { id: WorkspaceID; label: string; detail: string }[] = [
-  { id: "home", label: "Home", detail: "Start here" },
-  ...catalogWorkspaces,
-]
-const navigationSurfaces = computed<NavigationSurface[]>(() => catalogWorkspaces.flatMap((workspace) => supportedCommands.value
-  .filter((command) => commandBelongsToWorkspace(command, workspace.id))
-  .map((command) => ({
-    id: `${workspace.id}:${command.id}`,
-    workspace: workspace.id,
-    workspaceLabel: workspace.label,
-    label: workspaceCommandName(command, workspace.id),
-    description: workspaceCommandDescription(command, workspace.id),
+const navigationSurfaces = computed<NavigationSurface[]>(() => supportedCommands.value.flatMap((command) => {
+  const task = ownerTask(command)
+  if (!task) return []
+  return [{
+    id: `${task}:${command.id}`,
+    workspace: task,
+    workspaceLabel: taskDefinition(task).label,
+    label: toolName(command),
+    description: toolDescription(command),
     commandId: command.id,
     commands: navigationSurfaceCommands(command),
-  }))))
+  }]
+}))
 const homeRecentSurfaces = computed(() => recentNavigationSurfaces(navigationSurfaces.value, navigationRecents.value))
+const topBarTestSetup = computed(() => latestTestSetupStatusResult.value?.data ? latestTestSetupStatusResult.value.data as TestSetupStatusData : undefined)
+const topBarWhere = computed(() => topBarTestSetup.value ? placeLabel(topBarTestSetup.value) : undefined)
+const topBarClock = computed<TopBarClock | undefined>(() => currentCalendar.value)
+const topBarParty = computed<TopBarParty | undefined>(() => partyHealthSummary(topBarTestSetup.value?.party))
+const topBarMode = computed(() => currentCombat.value ? (currentCombat.value.active ? "combat" : "exploring") : undefined)
+const homeQuickState = ref<{ requestID?: string; error?: string }>()
+const homeFeedback = computed(() => {
+  const state = homeQuickState.value
+  if (!state) return undefined
+  if (state.error) return { success: false, text: state.error }
+  const result = results.value.find((candidate) => candidate.requestId === state.requestID)
+  if (result) {
+    return result.success
+      ? { success: true, text: result.summary || `${commandName(result.commandId)} completed.` }
+      : { success: false, text: `${commandName(result.commandId)} failed: ${result.errorMessage ?? result.errorCode ?? "unknown error"}` }
+  }
+  return state.requestID && pending.value.has(state.requestID) ? { success: true, text: "Working…" } : undefined
+})
+const homeCards = computed<HomeCard[]>(() => homeTaskIDs.map((task) => ({ task: taskDefinition(task), quick: homeQuickActions(task) })))
 const retryDetail = computed(() => {
   if (retryScheduled.value) return `automatic retry ${reconnectAttempt.value} scheduled`
   if (["connecting", "reconnecting", "handshaking"].includes(connectionState.value)) return "connecting now"
@@ -637,23 +640,19 @@ function handleMessage(message: Envelope): void {
       }
       drafts.value = nextDrafts
       dirtyFields.value = nextDirtyFields
+      if (activeWorkspace.value !== "home" && taskCommands(catalog.commands, activeWorkspace.value).length === 0) activeWorkspace.value = "home"
       if (activeWorkspace.value === "home") {
         if (!catalog.commands.some((command) => isSupportedWorkbenchCommand(command) && command.id === selectedCommandID.value)) {
           selectedCommandID.value = catalog.commands.find(isSupportedWorkbenchCommand)?.id ?? ""
         }
       } else {
-        let workspaceCommands = catalog.commands.filter((command) => isSupportedWorkbenchCommand(command) && commandBelongsToWorkspace(command, activeWorkspace.value))
-        if (workspaceCommands.length === 0 && catalog.commands.some(isSupportedWorkbenchCommand)) {
-		  const firstSupported = catalog.commands.find(isSupportedWorkbenchCommand)
-		  activeWorkspace.value = firstSupported ? primaryWorkspaceForCommand(firstSupported) : "tools"
-		  workspaceCommands = catalog.commands.filter((command) => isSupportedWorkbenchCommand(command) && commandBelongsToWorkspace(command, activeWorkspace.value))
-        }
+        const workspaceCommands = taskCommands(catalog.commands, activeWorkspace.value)
         if (!workspaceCommands.some((command) => command.id === selectedCommandID.value)) selectedCommandID.value = workspaceCommands[0]?.id ?? ""
       }
       sceneGeneration.value = catalog.sceneGeneration
 		void nextTick(() => {
-			if (![calendarStatusCommandID, activeCombatStatusCommandID].includes(selectedCommandID.value)) autoExecuteSelectedQuery()
-      for (const globalID of [calendarStatusCommandID, activeCombatStatusCommandID]) {
+			if (!globalStatusCommandIDs.includes(selectedCommandID.value)) autoExecuteSelectedQuery()
+      for (const globalID of globalStatusCommandIDs) {
         const latest = latestResults.value[globalID]
         if (!latest || latest.sceneGeneration !== sceneGeneration.value || latest.sessionId !== sessionID.value) runQueryByID(globalID, true)
       }
@@ -812,10 +811,6 @@ function resetCommand(command: CommandDefinition): void {
 }
 
 function selectCommand(command: CommandDefinition): void {
-  if (commandSearch.value.trim()) {
-    activeWorkspace.value = primaryWorkspaceForCommand(command)
-    commandSearch.value = ""
-  }
   if (command.id === merchantTesterCatalogCommandID) merchantCatalogExplicitRefreshRequired = false
   selectedCommandID.value = command.id
   if (commandUsesDynamicOptions(command)) requestCatalog()
@@ -825,9 +820,8 @@ function selectCommand(command: CommandDefinition): void {
 function selectWorkspace(workspace: WorkspaceID): void {
   if (activeWorkspace.value !== "home") workspaceSelections.set(activeWorkspace.value, selectedCommandID.value)
   activeWorkspace.value = workspace
-  commandSearch.value = ""
   if (workspace === "home") return
-  const workspaceCommands = supportedCommands.value.filter((command) => commandBelongsToWorkspace(command, workspace))
+  const workspaceCommands = taskCommands(supportedCommands.value, workspace)
   const remembered = workspaceSelections.get(workspace) ?? selectedCommandID.value
   selectedCommandID.value = workspaceCommands.some((command) => command.id === remembered) ? remembered : workspaceCommands[0]?.id ?? ""
   if (selectedCommandID.value === merchantTesterCatalogCommandID) merchantCatalogExplicitRefreshRequired = false
@@ -839,29 +833,14 @@ function selectShrine(index: number): void {
 }
 
 function openCombatEncounterComposer(): void {
-	activeWorkspace.value = "tools"
-  commandSearch.value = ""
-  selectedCommandID.value = combatEncounterOptionsCommandID
+  activeWorkspace.value = "fight"
+selectedCommandID.value = combatEncounterOptionsCommandID
   void nextTick(autoExecuteSelectedQuery)
 }
 
 function activateCommand(command: CommandDefinition): void {
   selectCommand(command)
   void nextTick(() => firstInstrumentControl()?.focus())
-}
-
-function toggleCategory(category: string): void {
-  const next = new Set(collapsedCategories.value)
-  if (next.has(category)) {
-    next.delete(category)
-  } else {
-    next.add(category)
-  }
-  collapsedCategories.value = next
-}
-
-function categoryExpanded(category: string): boolean {
-  return commandSearch.value.trim() !== "" || !collapsedCategories.value.has(category)
 }
 
 function firstInvalidControl(commandID: string): HTMLInputElement | HTMLSelectElement | null {
@@ -951,91 +930,24 @@ function isSupportedWorkbenchCommand(command: CommandDefinition): boolean {
   return !command.destructive && command.executionModes.some((mode) => mode === "query" || mode === "live_safe")
 }
 
-function commandBelongsToWorkspace(command: CommandDefinition, workspace: WorkspaceID): boolean {
-  switch (workspace) {
-    case "home":
-      return false
-    case "game":
-      return command.id === windStatusCommandID || command.id === calendarStatusCommandID
-        || command.id === worldPositionStatusCommandID || command.id === moongateStatusCommandID
-        || command.id === monsterEcosystemStatusCommandID || command.id === activeCombatStatusCommandID
-        || command.id === shrineStatusCommandID || command.id === partyCharacterCommandID
-        || command.id === partyEquipmentLoadoutCommandID || command.id === partyCharacterInspectCommandID
-        || command.id === searchStatusCommandID || command.id === questItemStatusCommandID
-        || command.id === vehicleStatusCommandID || command.id === inventoryLockerStatusCommandID
-        || command.id === spellInventoryStatusCommandID || command.id === guardStatusCommandID
-    case "system":
-      return command.id === loggingStatusCommandID || command.id === debugOptionsStatusCommandID
-    case "saves":
-      return command.id === saveSnapshotListCommandID
-    case "tools":
-      return command.id === combatEncounterOptionsCommandID
-        || command.id === testSetupStatusCommandID
-        || command.id === merchantTesterCatalogCommandID
-        || command.id === observationCommandID || !integratedCommandIDs.has(command.id)
-  }
+/** The task page that lists this command as a tool; undefined for companion commands owned by another tool. */
+function ownerTask(command: CommandDefinition): TaskID | undefined {
+  const defined = toolDefinitions[command.id]
+  if (defined) return defined.task
+  return integratedCommandIDs.has(command.id) ? undefined : "more"
 }
 
-function primaryWorkspaceForCommand(command: CommandDefinition): WorkspaceID {
-  if (saveSnapshotCommandIDs.includes(command.id)) return "saves"
-  if (command.id === testSetupStatusCommandID) return "tools"
-  if (commandBelongsToWorkspace(command, "system")) return "system"
-  if (commandBelongsToWorkspace(command, "game")) return "game"
-  return "tools"
+function taskCommands(catalog: CommandDefinition[], task: TaskID): CommandDefinition[] {
+  return catalog.filter((command) => isSupportedWorkbenchCommand(command) && ownerTask(command) === task)
+    .sort((left, right) => compareToolOrder(left.id, right.id))
 }
 
-function workspaceLabel(workspace: WorkspaceID): string {
-  return workspaces.find((item) => item.id === workspace)?.label.toLocaleUpperCase() ?? workspace.toLocaleUpperCase()
+function toolName(command: CommandDefinition): string {
+  return toolDefinitions[command.id]?.name ?? command.name
 }
 
-function navigationCategory(command: CommandDefinition, workspace: WorkspaceID): string {
-  let category = command.category
-  if (workspace === "game") {
-    if ([windStatusCommandID, calendarStatusCommandID, worldPositionStatusCommandID, moongateStatusCommandID, searchStatusCommandID].includes(command.id)) category = "World"
-    else if ([partyCharacterCommandID, partyEquipmentLoadoutCommandID, partyCharacterInspectCommandID, inventoryLockerStatusCommandID, spellInventoryStatusCommandID, questItemStatusCommandID].includes(command.id)) category = "Party & Inventory"
-    else if ([activeCombatStatusCommandID, monsterEcosystemStatusCommandID].includes(command.id)) category = "Combat & Creatures"
-    else category = "Vehicles & Progression"
-  } else if (workspace === "system") {
-    category = command.id === loggingStatusCommandID ? "Application" : "Game Window"
-  } else if (workspace === "tools") {
-    if (command.id === observationCommandID) category = "Workflows"
-    else if (command.id === combatEncounterOptionsCommandID) category = "Encounter Setup"
-    else if (command.id === merchantTesterCatalogCommandID) category = "Merchant Testing"
-    else if (command.id === testSetupStatusCommandID) category = "Test Setups"
-    else category = "Advanced Commands"
-  }
-  return commandSearch.value.trim() ? `${workspaceLabel(workspace)} / ${category}` : category
-}
-
-function navigationCategoryOrder(name: string): number {
-  const category = name.includes(" / ") ? name.slice(name.indexOf(" / ") + 3) : name
-  const order = ["World", "Party & Inventory", "Combat & Creatures", "Vehicles & Progression", "Application", "Game Window", "Workflows", "Test Setups", "Encounter Setup", "Merchant Testing", "Advanced Commands"]
-  const index = order.indexOf(category)
-  return index < 0 ? order.length : index
-}
-
-function workspaceCommandName(command: CommandDefinition, workspace = activeWorkspace.value): string {
-	if (command.id === testSetupStatusCommandID) return "Test Setups"
-	if (command.id === saveSnapshotListCommandID) return "Saves"
-	if (command.id === observationCommandID) return "Observation"
-	if (command.id === guardStatusCommandID) return "World Diagnostics"
-	if (command.id === partyCharacterCommandID) return "Character Editor"
-	if (command.id === partyEquipmentLoadoutCommandID) return "Equipment Loadouts"
-	if (command.id === partyCharacterInspectCommandID) return "Party Roster"
-	if (command.id !== shrineStatusCommandID) return command.name
-	return "Shrine Progress"
-}
-
-function workspaceCommandDescription(command: CommandDefinition, workspace = activeWorkspace.value): string {
-	if (command.id === testSetupStatusCommandID) return "Queue the production camping workflow, or wipe the party to test death and resurrection."
-	if (command.id === saveSnapshotListCommandID) return "Capture, inspect, load, and revision-safely remove immutable gameplay checkpoints."
-	if (command.id === observationCommandID) return "Queue the production Telescope, Spyglass, or Crystal Ball workflow and inspect its expected branch and context."
-	if (command.id === guardStatusCommandID) return "Inspect hidden guard hostility, Shadowlord placement, and death/resurrection consequences."
-	if (command.id === partyCharacterCommandID) return "Edit one active character's attributes, resources, individual condition, and party position with a pending-change preview."
-	if (command.id === partyEquipmentLoadoutCommandID) return "Stage and review one partial six-slot plan for one or all active party members as an atomic operation."
-	if (command.id === partyCharacterInspectCommandID) return "Review active Positions 1-6 and inactive companions, then run fingerprint-checked roster and party-wide operations."
-  if (command.id !== shrineStatusCommandID) return command.description
-  return "Inspect and alter authoritative shrine quest and ruined-state progression."
+function toolDescription(command: CommandDefinition): string {
+  return toolDefinitions[command.id]?.description ?? command.description
 }
 
 function companionOwnerCommandID(commandID: string): string {
@@ -1081,7 +993,7 @@ function openCommandPalette(): void {
 function closeCommandPalette(): void {
   commandPaletteOpen.value = false
   setWorkbenchBackgroundInert(false, ".command-palette-modal")
-  void nextTick(() => (commandPalettePreviousFocus ?? commandPaletteLauncher.value)?.focus())
+  void nextTick(() => (commandPalettePreviousFocus ?? document.querySelector<HTMLElement>("[data-command-palette-launcher]"))?.focus())
   commandPalettePreviousFocus = null
 }
 
@@ -1089,7 +1001,6 @@ function navigateToSurface(surface: NavigationSurface): void {
   navigationRecents.value = updateNavigationRecents(navigationRecents.value, surface.id)
   localStorage.setItem(navigationRecentsStorageKey, JSON.stringify(navigationRecents.value))
   activeWorkspace.value = surface.workspace
-  commandSearch.value = ""
   if (surface.commandId === merchantTesterCatalogCommandID) merchantCatalogExplicitRefreshRequired = false
   selectedCommandID.value = surface.commandId
   void nextTick(autoExecuteSelectedQuery)
@@ -1184,8 +1095,8 @@ function autoExecuteSelectedQuery(): void {
 		for (const commandID of worldDiagnosticCommandIDs) runQueryByID(commandID, true)
 		return
 	}
-  if (activeWorkspace.value === "tools" && ![testSetupStatusCommandID, combatEncounterOptionsCommandID, merchantTesterCatalogCommandID].includes(command.id)) return
-  if (command.id === combatEncounterOptionsCommandID && latestResults.value[command.id]) return
+  if (!integratedCommandIDs.has(command.id) || command.id === observationCommandID) return
+if (command.id === combatEncounterOptionsCommandID && latestResults.value[command.id]) return
   runCommand(command, true)
 }
 
@@ -1213,12 +1124,76 @@ function runSpecializedMutation(commandID: string, argumentsByID: Record<string,
 }
 
 function quickExitCombat(): void {
-	const combat = mastheadActiveCombat.value
+	const combat = currentCombat.value
 	if (!combat?.active || !combat.encounterId || !combat.snapshotFingerprint) return
 	runSpecializedMutation(activeCombatExitCommandID, {
 		encounterId: combat.encounterId,
 		expectedSnapshot: combat.snapshotFingerprint,
 	})
+}
+
+function openToolAction(commandID: string): HomeQuickAction[] {
+  const command = supportedCommands.value.find((candidate) => candidate.id === commandID)
+  if (!command) return []
+  return [{ id: `open:${commandID}`, label: toolName(command), description: `Open ${toolName(command)}`, effect: { kind: "open", commandId: commandID } }]
+}
+
+// Quick actions only call commands whose own tool runs them without a review step; everything else just opens its tool.
+function homeQuickActions(task: TaskID): HomeQuickAction[] {
+  const ready = isReady.value
+  switch (task) {
+    case "goto": {
+      if (!commands.value.some((command) => command.id === movementLandmarkTravelCommandID)) return []
+      const preferred = preferredLandmarks.flatMap((value) => worldLandmarkChoices.value.filter((choice) => choice.value === value))
+      return (preferred.length > 0 ? preferred : worldLandmarkChoices.value.slice(0, 3)).map((choice) => ({
+        id: `landmark:${choice.value}`,
+        label: choice.label,
+        description: `Travel to ${choice.label}`,
+        effect: { kind: "landmark", landmark: choice.value },
+        disabled: !ready || commandPending(movementLandmarkTravelCommandID),
+      }))
+    }
+    case "fight": {
+      const actions = openToolAction(combatEncounterOptionsCommandID)
+      if (currentCombat.value?.active) actions.push({ id: "exit-combat", label: "Escape combat", description: "Discard the active debug encounter and return to its pre-combat location", effect: { kind: "exit-combat" }, disabled: quickCombatExitDisabled.value })
+      return actions
+    }
+    case "party":
+      return [partyCharacterInspectCommandID, partyCharacterCommandID, partyEquipmentLoadoutCommandID].flatMap(openToolAction)
+    case "items":
+      return [inventoryLockerStatusCommandID, spellInventoryStatusCommandID, questItemStatusCommandID].flatMap(openToolAction)
+    case "time":
+      if (!commands.value.some((command) => command.id === calendarSetTimeCommandID)) return []
+      return timePresets.map((preset) => ({
+        id: `time:${preset.hour}:${preset.minute}`,
+        label: preset.label,
+        description: `Set the time of day to ${String(preset.hour).padStart(2, "0")}:${String(preset.minute).padStart(2, "0")}`,
+        effect: { kind: "time", hour: preset.hour, minute: preset.minute },
+        disabled: !ready || commandPending(calendarSetTimeCommandID),
+      }))
+    case "checkpoints":
+      return openToolAction(saveSnapshotListCommandID)
+    case "more":
+      return []
+  }
+}
+
+function runHomeQuickAction(action: HomeQuickAction): void {
+  const effect = action.effect
+  if (effect.kind === "open") {
+    const surface = navigationSurfaces.value.find((candidate) => candidate.commandId === effect.commandId)
+    if (surface) navigateToSurface(surface)
+    return
+  }
+  homeQuickState.value = undefined
+  if (effect.kind === "exit-combat") {
+    quickExitCombat()
+    return
+  }
+  const commandID = effect.kind === "landmark" ? movementLandmarkTravelCommandID : calendarSetTimeCommandID
+  const argumentsByID: Record<string, string> = effect.kind === "landmark" ? { landmark: effect.landmark } : { hour: String(effect.hour), minute: String(effect.minute) }
+  const sent = runSpecializedMutation(commandID, argumentsByID, (requestID) => { homeQuickState.value = { requestID } })
+  if (!sent) homeQuickState.value = { error: ownerErrors.value[companionOwnerCommandID(commandID)] || "The action could not be sent." }
 }
 
 function setWorkbenchBackgroundInert(inert: boolean, modalSelector: string): void {
@@ -1289,16 +1264,10 @@ function applyWorldPosition(value: {
 }
 
 function openWorldNavigator(value: { x: number; y: number }): void {
-  activeWorkspace.value = "game"
-  commandSearch.value = ""
+  activeWorkspace.value = "goto"
   linkedWorldCoordinates.value = value
   selectedCommandID.value = worldPositionStatusCommandID
   void nextTick(autoExecuteSelectedQuery)
-}
-
-function updateDraftAndMaybeRun(command: CommandDefinition, parameterID: string, value: string): void {
-  updateDraft(command, parameterID, value)
-  if (activeWorkspace.value !== "tools" && !isMutation(command)) void nextTick(() => runCommand(command, true))
 }
 
 function commandUsesDynamicOptions(command: CommandDefinition): boolean {
@@ -1427,9 +1396,8 @@ function checkPendingOperations(): void {
   }
 	if (!isReady.value || document.hidden) return
   if (selectedCommand.value && commandUsesDynamicOptions(selectedCommand.value)) requestCatalog()
-	runQueryByID(calendarStatusCommandID, true)
-	runQueryByID(activeCombatStatusCommandID, true)
-	if (!selectedCommand.value || [calendarStatusCommandID, activeCombatStatusCommandID].includes(selectedCommand.value.id)) return
+		for (const globalID of globalStatusCommandIDs) runQueryByID(globalID, true)
+		if (!selectedCommand.value || globalStatusCommandIDs.includes(selectedCommand.value.id)) return
 	if (instrumentRequestPending(selectedCommand.value.id)) return
 	if (selectedCommand.value.id === partyEquipmentLoadoutCommandID) {
 		runQueryByID(partyCharacterInspectCommandID, true)
@@ -1621,14 +1589,13 @@ function onKeyDown(event: KeyboardEvent): void {
     stream.value?.focus()
     return
   }
-  if ((event.key === "ArrowDown" || event.key === "ArrowUp") && activeElement?.dataset.commandSelect) {
-    const buttons = commandCategories.value
-      .flatMap((category) => categoryExpanded(category.name) ? category.commands : [])
+  if (["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft"].includes(event.key) && activeElement?.dataset.commandSelect) {
+    const buttons = availableCommands.value
       .map((command) => document.querySelector<HTMLButtonElement>(`button[data-command-select="${command.id}"]`))
       .filter((button): button is HTMLButtonElement => button !== null && !button.disabled)
     if (buttons.length === 0) return
     const currentIndex = buttons.indexOf(activeElement as HTMLButtonElement)
-    const offset = event.key === "ArrowDown" ? 1 : -1
+    const offset = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : -1
     const nextButton = buttons[(currentIndex + offset + buttons.length) % buttons.length]
     nextButton?.focus()
     const command = availableCommands.value.find((candidate) => candidate.id === nextButton?.dataset.commandSelect)
@@ -1677,128 +1644,91 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="workbench-shell" :class="`history-dock-${historyDock}`">
-    <header class="masthead">
-      <div>
-        <p class="eyebrow">ULTIMA V REDUX :: CONTROL PLANE</p>
-        <h1>Britannian Switchboard</h1>
-        <p class="subtitle">Live telemetry / state inspection / operations</p>
-      </div>
-		<div class="masthead-quick-controls">
-		  <button ref="commandPaletteLauncher" type="button" class="command-palette-launcher" data-command-palette-launcher aria-haspopup="dialog" @click="openCommandPalette">GO TO… <kbd>CTRL/⌘K</kbd></button>
-		  <button
-			v-if="mastheadActiveCombat?.active"
-			type="button"
-			class="combat-exit-quick"
-			data-quick-combat-exit
-			:disabled="quickCombatExitDisabled"
-			title="Discard the active debug encounter and return to its pre-combat location"
-			@click="quickExitCombat"
-		  >ESCAPE COMBAT</button>
-		  <button
-			type="button"
-			class="free-move-quick"
-			role="switch"
-			:aria-checked="freeMoveEnabled"
-			:disabled="!isReady || commandPending(movementFreeMoveSetCommandID)"
-			@click="runSpecializedMutation(movementFreeMoveSetCommandID, { enabled: String(!freeMoveEnabled) })"
-		  >FREE MOVE {{ freeMoveEnabled ? 'ON' : 'OFF' }}</button>
-		</div>
-      <div class="telemetry" aria-live="polite">
-        <div v-if="mastheadCalendar" class="masthead-calendar" aria-label="Current Britannian calendar">
-          <MoonPhaseGlyph :phase-index="mastheadCalendar.moonPhaseIndex" :label="mastheadCalendar.moonPhase" :size="20" />
-          <span><strong>{{ mastheadCalendar.date }}</strong><small>{{ mastheadCalendar.time }} · {{ mastheadCalendar.moonPhase }}</small></span>
-        </div>
-        <span class="connection" :class="connectionState"><i />{{ connectionLabel }}</span>
-        <span>SCENE {{ sceneGeneration || "--" }}</span>
-        <small v-if="lastCloseReason">{{ lastCloseReason }} · {{ retryDetail }}</small>
-        <button v-if="connectionState === 'disconnected'" type="button" @click="retryNow">RETRY NOW</button>
-      </div>
-    </header>
-    <nav class="workspace-tabs" aria-label="Workbench workspace">
-      <button
-        v-for="workspace in workspaces"
-        :key="workspace.id"
-        type="button"
-        :data-workspace="workspace.id"
-        :class="{ selected: activeWorkspace === workspace.id }"
-        :aria-current="activeWorkspace === workspace.id ? 'page' : undefined"
-        @click="selectWorkspace(workspace.id)"
-      >
-        <strong>{{ workspace.label }}</strong><small>{{ workspace.detail }}</small>
-      </button>
-    </nav>
+    <WorkbenchTopBar
+      :connection-state="connectionState"
+      :connection-label="connectionLabel"
+      :scene-generation="sceneGeneration"
+      :close-detail="lastCloseReason ? `${lastCloseReason} · ${retryDetail}` : ''"
+      :where="topBarWhere"
+      :clock="topBarClock"
+      :party="topBarParty"
+      :mode="topBarMode"
+      :tasks="taskDefinitions"
+      :active-view="activeWorkspace"
+      :exit-combat-disabled="quickCombatExitDisabled"
+      @open-palette="openCommandPalette"
+      @select-view="selectWorkspace"
+      @exit-combat="quickExitCombat"
+      @retry="retryNow"
+    />
     <p class="sr-only" aria-live="polite">{{ liveStatus }}</p>
 
-    <section class="switchboard" :class="{ 'scenarios-workspace': activeWorkspace === 'home' || activeWorkspace === 'saves' }" aria-label="Command switchboard">
+    <section class="switchboard" aria-label="Workbench tasks">
       <WorkbenchHome
         v-if="activeWorkspace === 'home'"
+        :cards="homeCards"
         :recents="homeRecentSurfaces"
-        @open-palette="openCommandPalette"
-         @open-surface="navigateToSurface"
-       />
-      <aside v-if="activeWorkspace !== 'home' && activeWorkspace !== 'saves'" class="command-rail" aria-labelledby="command-title">
-        <div class="section-heading">
-          <span>01</span>
-          <h2 id="command-title">{{ activeWorkspace }}</h2>
-          <small>{{ filteredCommands.length }}/{{ navigationCommandTotal }}</small>
-        </div>
-        <div class="command-search">
-          <label class="sr-only" for="command-search">Search commands</label>
-          <input id="command-search" ref="commandSearchInput" v-model="commandSearch" type="search" placeholder="SEARCH COMMANDS · CTRL+K" />
-        </div>
-        <nav class="command-catalog" aria-label="Query command catalog">
-          <section v-for="category in commandCategories" :key="category.name">
-            <h3>
-              <button type="button" class="category-toggle" :aria-expanded="categoryExpanded(category.name)" @click="toggleCategory(category.name)">
-                <span>{{ categoryExpanded(category.name) ? '−' : '+' }} {{ category.name }}</span><small>{{ category.commands.length }}</small>
-              </button>
-            </h3>
-            <div v-show="categoryExpanded(category.name)">
+        :feedback="homeFeedback"
+        @open-task="selectWorkspace"
+        @open-surface="navigateToSurface"
+        @quick="runHomeQuickAction"
+      />
+      <div v-else class="task-page" :data-task="activeWorkspace">
+        <header class="task-header">
+          <div><h1>{{ taskDefinition(activeWorkspace).label }}</h1><p>{{ taskDefinition(activeWorkspace).blurb }}</p></div>
+          <button
+            v-if="activeWorkspace === 'goto'"
+            type="button"
+            class="free-move-quick"
+            role="switch"
+            :aria-checked="freeMoveEnabled"
+            :disabled="!isReady || commandPending(movementFreeMoveSetCommandID)"
+            @click="runSpecializedMutation(movementFreeMoveSetCommandID, { enabled: String(!freeMoveEnabled) })"
+          >Walk through walls: {{ freeMoveEnabled ? 'on' : 'off' }}</button>
+        </header>
+        <nav v-if="availableCommands.length > 1" class="tool-picker" :aria-label="`${taskDefinition(activeWorkspace).label} tools`">
+          <section v-for="group in toolGroups" :key="group.name ?? 'tools'" class="tool-group">
+            <h2 v-if="group.name">{{ group.name }}</h2>
+            <div class="tool-buttons">
               <button
-                v-for="command in category.commands"
+                v-for="command in group.commands"
                 :key="command.id"
                 type="button"
-                class="command-option"
+                class="tool-option"
                 :data-command-select="command.id"
                 :class="{ selected: command.id === selectedCommandID }"
                 :aria-current="command.id === selectedCommandID ? 'true' : undefined"
-                :tabindex="command.id === catalogTabCommandID ? 0 : -1"
                 @click="selectCommand(command)"
                 @keydown.enter.prevent="activateCommand(command)"
-              >
-                <strong>{{ workspaceCommandName(command) }}</strong>
-                <small>{{ commandSearch.trim() ? `${workspaceLabel(primaryWorkspaceForCommand(command))} · ${command.id}` : command.id }}</small>
-              </button>
+              >{{ toolName(command) }}</button>
             </div>
           </section>
-          <p v-if="availableCommands.length > 0 && filteredCommands.length === 0" class="empty-state">NO MATCHING COMMANDS</p>
         </nav>
         <p v-if="availableCommands.length === 0" class="empty-state">
           {{ isReady ? "CATALOG REQUESTED" : "WAITING FOR CONTROL PLANE" }}
         </p>
-      </aside>
 
-      <section v-if="activeWorkspace !== 'home'" class="instrument-bank" aria-labelledby="instrument-title">
-        <div v-if="activeWorkspace !== 'saves'" class="section-heading">
-          <span>02</span>
-          <h2 id="instrument-title">Active Instrument</h2>
-          <small>{{ selectedCommand?.category ?? "STANDBY" }}</small>
-        </div>
+        <section class="instrument-bank" aria-labelledby="instrument-title">
+          <div v-if="activeWorkspace !== 'checkpoints'" class="section-heading">
+            <span aria-hidden="true">▸</span>
+            <h2 id="instrument-title">Active Instrument</h2>
+            <small>{{ selectedCommand?.category ?? "STANDBY" }}</small>
+          </div>
 
         <article
           v-if="selectedCommand"
           class="instrument"
           :class="instrumentWidthClass(selectedCommand)"
         >
-          <div v-if="activeWorkspace !== 'saves'" class="instrument-index">{{ selectedCommand.id }} / {{ instrumentExecutionModes(selectedCommand) }}</div>
-          <div v-if="activeWorkspace !== 'saves'" class="instrument-title-row">
-            <h3>{{ workspaceCommandName(selectedCommand) }}</h3>
+          <div v-if="activeWorkspace !== 'checkpoints'" class="instrument-index">{{ selectedCommand.id }} / {{ instrumentExecutionModes(selectedCommand) }}</div>
+          <div v-if="activeWorkspace !== 'checkpoints'" class="instrument-title-row">
+            <h3>{{ toolName(selectedCommand) }}</h3>
             <span class="execution-mode" :class="{ mutation: instrumentOwnsMutation(selectedCommand) }">
               {{ instrumentModeLabel(selectedCommand) }}
             </span>
           </div>
-          <p v-if="activeWorkspace !== 'saves'">{{ workspaceCommandDescription(selectedCommand) }}</p>
-          <code v-if="activeWorkspace !== 'saves'">{{ selectedCommand.aliases?.join(" · ") }}</code>
+          <p v-if="activeWorkspace !== 'checkpoints'">{{ toolDescription(selectedCommand) }}</p>
+          <code v-if="activeWorkspace !== 'checkpoints'">{{ selectedCommand.aliases?.join(" · ") }}</code>
           <section v-if="ownerErrors[selectedCommand.id]" class="operation-banner failure" role="alert" data-owner-error>{{ ownerErrors[selectedCommand.id] }}</section>
           <section v-else-if="latestOperationResult" class="operation-banner" :class="latestOperationResult.success ? 'success' : 'failure'" aria-live="polite">
             <header>
@@ -1811,7 +1741,7 @@ onBeforeUnmount(() => {
                 <code>{{ change.path }}</code><span>{{ formatChangeValue(change.before) }} → {{ formatChangeValue(change.after) }}</span>
               </li>
             </ul>
-            <details v-if="activeWorkspace === 'tools' && latestOperationResult.commandId === selectedCommand.id && latestOperationResult.data">
+            <details v-if="activeWorkspace === 'more' && latestOperationResult.commandId === selectedCommand.id && latestOperationResult.data">
               <summary>Structured result</summary>
               <pre>{{ JSON.stringify(latestOperationResult.data, null, 2) }}</pre>
             </details>
@@ -2080,7 +2010,7 @@ onBeforeUnmount(() => {
                   :required="parameter.required"
                   :aria-describedby="describedBy(selectedCommand, parameter.id)"
                   :aria-invalid="Boolean(errorFor(selectedCommand.id, parameter.id))"
-                  @change="updateDraftAndMaybeRun(selectedCommand, parameter.id, inputValue($event))"
+                  @change="updateDraft(selectedCommand, parameter.id, inputValue($event))"
                 >
                   <option value="">{{ parameter.required ? 'SELECT A VALUE' : 'UNSET' }}</option>
                   <template v-if="parameter.kind === 'boolean'">
@@ -2127,7 +2057,7 @@ onBeforeUnmount(() => {
             <p v-if="commandUnavailableReason(selectedCommand)" class="disabled-reason" role="status">
               {{ commandUnavailableReason(selectedCommand) }}
             </p>
-            <div v-if="activeWorkspace === 'tools' || isMutation(selectedCommand)" class="instrument-actions" :class="{ 'has-reset': Boolean(selectedCommand.parameters?.length) }">
+            <div v-if="activeWorkspace === 'more' || isMutation(selectedCommand)" class="instrument-actions" :class="{ 'has-reset': Boolean(selectedCommand.parameters?.length) }">
               <button
                 type="submit"
                 :data-command-id="selectedCommand.id"
@@ -2143,7 +2073,8 @@ onBeforeUnmount(() => {
           <p v-if="!isReady" class="disabled-reason">EXECUTION DISABLED UNTIL CONNECTION IS READY</p>
         </article>
         <p v-else class="empty-state">SELECT AN INSTRUMENT</p>
-      </section>
+        </section>
+      </div>
     </section>
 
     <section
@@ -2157,7 +2088,7 @@ onBeforeUnmount(() => {
     >
       <div v-show="!historyCollapsed" class="history-resize-handle" role="separator" aria-label="Resize global history" :aria-orientation="historyDock === 'right' ? 'vertical' : 'horizontal'" @pointerdown="startHistoryResize" />
       <div class="section-heading result-heading">
-        <span>03</span>
+        <span aria-hidden="true">▤</span>
         <h2 id="history-title">Global History</h2>
         <div class="stream-actions">
           <button type="button" :aria-expanded="!historyCollapsed" :data-state="historyCollapsed ? 'collapsed' : 'expanded'" data-history-action="collapse" @click="toggleHistory">{{ historyCollapsed ? 'EXPAND HISTORY' : 'COLLAPSE HISTORY' }}</button>
