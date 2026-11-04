@@ -121,7 +121,7 @@ func (g *GameState) ActionJimmyLargeMapWithCharacter(
 func (g *GameState) ActionJimmyCombatMapWithDisarm(direction references.Direction) (bool, *CombatChestIdentity) {
 	combatantPos := g.getActiveCombatantPosition()
 	targetPos := direction.GetNewPositionInDirection(&combatantPos)
-	if targetPos == nil || !combatAdjacentPositionInBounds(*targetPos) {
+	if targetPos == nil || !isCombatMapPosition(*targetPos) {
 		return false, nil
 	}
 

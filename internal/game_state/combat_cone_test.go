@@ -165,7 +165,7 @@ func TestTraceCombatCone_ProducesUniquePositionsWithinCombatBounds(t *testing.T)
 	positions := TraceCombatCone(newOpenCombatConeMap(), references.Position{X: 5, Y: 5}, references.Up, spec)
 	seen := make(map[references.Position]struct{}, len(positions))
 	for _, position := range positions {
-		assert.True(t, combatConePositionInBounds(position))
+		assert.True(t, isCombatMapPosition(position))
 		_, duplicate := seen[position]
 		assert.False(t, duplicate, "each combatant must save at most once")
 		seen[position] = struct{}{}

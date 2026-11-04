@@ -310,7 +310,7 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 	if g.CheckTrap(objectPosition) {
 		return true
 	}
-	if !combatPushPositionInBounds(*objectPosition) || g.combatPushOccupied(*objectPosition) {
+	if !isCombatMapPosition(*objectPosition) || g.combatPushOccupied(*objectPosition) {
 		g.SystemCallbacks.Message.AddRowStr("Won't budge!")
 
 		return false
@@ -325,7 +325,7 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 	legalFloor := originalPushLegalFloor(object)
 
 	forwardPosition := direction.GetNewPositionInDirection(objectPosition)
-	if forwardPosition != nil && combatPushPositionInBounds(*forwardPosition) &&
+	if forwardPosition != nil && isCombatMapPosition(*forwardPosition) &&
 		!g.combatPushOccupied(*forwardPosition) &&
 		g.CombatScene.CombatMapRef.GetTileNumber(*forwardPosition) == legalFloor {
 		g.setCombatTerrain(*objectPosition, legalFloor)
@@ -348,11 +348,6 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 	g.SystemCallbacks.Message.AddRowStr("Won't budge")
 
 	return false
-}
-
-func combatPushPositionInBounds(position references.Position) bool {
-	return position.X >= 0 && position.X < references.XCombatMapTiles &&
-		position.Y >= 0 && position.Y < references.YCombatMapTiles
 }
 
 func (g *GameState) combatPushActorPosition(identity CombatTurnIdentity) (references.Position, bool) {

@@ -82,7 +82,7 @@ func tracePossibleCombatCone(
 			if !plotted {
 				break
 			}
-			if combatConePositionInBounds(position) {
+			if isCombatMapPosition(position) {
 				if _, found := seen[position]; !found {
 					seen[position] = struct{}{}
 					positions = append(positions, position)
@@ -140,7 +140,7 @@ func collectCommittedCombatCone(
 				if !plotted {
 					break
 				}
-				if len(positions) < combatConeCandidateCap && combatConePositionInBounds(position) &&
+				if len(positions) < combatConeCandidateCap && isCombatMapPosition(position) &&
 					buffer[position.X][position.Y] == combatConeMarkerEmpty {
 					positions = append(positions, position)
 					buffer[position.X][position.Y] = combatConeMarkerVisited
@@ -180,7 +180,7 @@ func (g *GameState) projectCombatConeObjectSlot(projection *combatConeProjection
 		}
 		identity := turnQueueIdentity(entry)
 		position := g.CombatScene.GetCombatantPosition(identity)
-		if !combatConePositionInBounds(position) {
+		if !isCombatMapPosition(position) {
 			return
 		}
 		if !identity.IsPartyMember {
@@ -235,7 +235,7 @@ func (projection *combatConeProjection) projectActor(position references.Positio
 }
 
 func (projection *combatConeProjection) projectObject(position references.Position) {
-	if !combatConePositionInBounds(position) {
+	if !isCombatMapPosition(position) {
 		return
 	}
 	current := projection.display[position.X][position.Y]
@@ -246,7 +246,7 @@ func (projection *combatConeProjection) projectObject(position references.Positi
 }
 
 func (projection *combatConeProjection) projectField(position references.Position) {
-	if !combatConePositionInBounds(position) {
+	if !isCombatMapPosition(position) {
 		return
 	}
 	current := projection.display[position.X][position.Y]
@@ -338,11 +338,6 @@ func (ray *combatConeRay) advance() {
 		ray.y -= lateral
 	}
 	ray.distance += combatConeRayDistances[ray.rayIndex]
-}
-
-func combatConePositionInBounds(position references.Position) bool {
-	return position.X >= 0 && position.X < references.XCombatMapTiles &&
-		position.Y >= 0 && position.Y < references.YCombatMapTiles
 }
 
 func (combatState *CombatState) combatConeVictimAt(

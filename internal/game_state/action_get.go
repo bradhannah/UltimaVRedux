@@ -635,7 +635,7 @@ func (g *GameState) getCombatTerrain(
 	direction references.Direction,
 	result CombatPickupResult,
 ) CombatPickupResult {
-	if !combatAdjacentPositionInBounds(target) {
+	if !isCombatMapPosition(target) {
 		return result
 	}
 	tile := g.CombatScene.CombatMapRef.GetTileNumber(target)
