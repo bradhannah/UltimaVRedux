@@ -175,7 +175,7 @@ func (g *GameScene) executeDebugMoongateTravel(request debugging.Request) debugg
 	if mustDebugStringArgument(request, "expectedRouteFingerprint") != fingerprint {
 		return debugging.FailureResult(request, "stale_moongate_route", "moongate route changed after review")
 	}
-	workflowName := moongateTeleportWorkflowName
+	workflowName := game_state.MoongateTeleportWorkflow
 	g.queueReviewedMoongateTravel(travel)
 
 	return debugSuccessResultWithMode(

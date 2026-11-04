@@ -190,9 +190,6 @@ func (g *GameState) LordBritishFinaleOutcome() LordBritishFinaleOutcome {
 
 // GetActiveMoongatePositions returns light-source positions while stage is nonzero.
 func (g *GameState) GetActiveMoongatePositions() []references.Position {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
 	if g.moongateStage == MoongateStageHidden {
 		return []references.Position{}
 	}
@@ -209,20 +206,6 @@ func (ms *MoonstoneSystem) GetMoonstoneIndexForMoonPhase(phase int) int {
 	}
 
 	return 0 // Default to first moonstone
-}
-
-// GetActiveMoongatePositions returns placed source gates on one map and floor.
-func (ms *MoonstoneSystem) GetActiveMoongatePositions(location references.Location, floor references.FloorNumber) []references.Position {
-	var activePositions []references.Position
-
-	for _, moonstone := range ms.Moonstones {
-		if moonstone.Map == uint8(location) && moonstone.Level == uint8(floor) && moonstone.CanCreateMoongate() {
-			position := references.Position{X: references.Coordinate(moonstone.X), Y: references.Coordinate(moonstone.Y)}
-			activePositions = append(activePositions, position)
-		}
-	}
-
-	return activePositions
 }
 
 // SpawnShadowlordNPCAtPosition creates a Shadowlord enemy NPC at an explicit

@@ -25,7 +25,7 @@ const (
 	PriorityCritical = 1
 
 	// PriorityHigh - High priority gameplay events
-	// Use for: Moongate transitions, ship collisions, environmental hazards, combat encounters
+	// Use for: Moongate travel, ship collisions, environmental hazards, combat encounters
 	// Examples: Moongate teleportation, lava damage, earthquake, ship collision
 	// Interrupts: Normal and Low priority queues
 	PriorityHigh = 2

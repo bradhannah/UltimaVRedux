@@ -45,13 +45,13 @@ func TestMoongateSpiritualityHandoffUsesCapturedRouteAndRestoresSource(t *testin
 		if blocked && callbacks.BlockInputCalls == 1 {
 			assert.Equal(t, 1, cleanupCalls, "source must finalize before successor acquires input")
 			assert.Equal(t, 1, callbacks.UnblockInputCalls)
-			assert.False(t, state.EventQueueManager.HasWorkflow(moongateTeleportWorkflowName))
+			assert.False(t, state.EventQueueManager.HasWorkflow(game_state.MoongateTeleportWorkflow))
 		}
 		blockInput(blocked)
 	}
 
 	scene.triggerMoongateTravel()
-	require.True(t, state.EventQueueManager.HasWorkflow(moongateTeleportWorkflowName))
+	require.True(t, state.EventQueueManager.HasWorkflow(game_state.MoongateTeleportWorkflow))
 	assert.Nil(t, state.ShrineScene, "shrine transition must wait for the reserved workflow")
 
 	// Crossing the boundary after review must not change the captured route.

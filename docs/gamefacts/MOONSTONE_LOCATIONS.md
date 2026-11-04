@@ -106,6 +106,13 @@ partially running transition. It does not preserve the original saved stage or
 establish exact display-update cadence. Consistency among Redux consumers is
 different from literal original entry-predicate equivalence.
 
+**REDUX DEVIATION: MOON-0003:** the original steps every gate silently through
+display updates. When growth or shrinking starts while a placed source gate on the
+current map and floor is in the party's line of sight, Redux animates the change
+and adds "Instantly, a shimmering blue door springs up!" or "The shimmering door
+fades from view." Otherwise the stage reaches its target at once, without a message
+or a running workflow, so an unseen change never interrupts held commands.
+
 **Implementation:** `internal/game_state/moongate_events.go`, `internal/game_state/moongate_system_integration.go`
 **Tests:** `internal/game_state/moongate_stage_test.go`
 

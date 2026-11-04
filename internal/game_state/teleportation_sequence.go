@@ -130,5 +130,5 @@ func (gs *GameState) IsTeleportationActive() bool {
 		return false
 	}
 
-	return gs.EventQueueManager.HasWorkflow("moongate_teleport")
+	return gs.EventQueueManager.HasWorkflow(MoongateTeleportWorkflow)
 }

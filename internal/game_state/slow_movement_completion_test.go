@@ -157,6 +157,7 @@ func TestSlowMovementTimeStopFrozenMoongateDoesNotBlockPlayerTail(t *testing.T) 
 	state := newSlowMovementFixture(t, indexes.Desert1)
 	state.DateTime.Hour = 21
 	state.ApplyMoongateTravelEffects(false)
+	state.GetCurrentLayeredMap().SetVisible(true, &moongateStageTestGate)
 	state.UpdateMoongateTransition()
 	state.ActiveDurationEffect = DurationEffect{EffectType: DurationEffectTimeStop, TurnsRemaining: 2}
 	advanceMoongateWorkflow(state, 3)

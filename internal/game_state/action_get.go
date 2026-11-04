@@ -303,11 +303,6 @@ func (g *GameState) lightBorrowedWallTorch() {
 // Legacy exposed items may still have a buried placement record. The exact item
 // and full local source must agree before inventory and physical state commit.
 func (g *GameState) getMoonstoneFromItemStack(pos *references.Position, moonstone references.Moonstone, item *references.ItemAndQuantity) bool {
-	// Initialize moonstone system if needed
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	moonstoneIndex := int(moonstone)
 
 	site := g.localMoonstoneSite(*pos)
@@ -344,11 +339,6 @@ func (g *GameState) getMoonstoneFromItemStack(pos *references.Position, moonston
 // getMoonstoneFromPosition handles getting a found moonstone (Moon sprite) from a position
 // Transitions moonstone from FoundNotCollected to InInventory state
 func (g *GameState) getMoonstoneFromPosition(pos *references.Position) bool {
-	// Initialize moonstone system if needed
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	// Find moonstone at this position in FoundNotCollected state
 	moonstoneIndex := -1
 	location := g.MapState.PlayerLocation
