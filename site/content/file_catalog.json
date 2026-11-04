@@ -1,0 +1,346 @@
+{
+  "note": "Owner-curated. Status is derived at build time from the rules listed: all Established gives Documented, any Incomplete or Conflicting gives Partly, no rules gives Not yet. `status` overrides the derived value when needed. `guides` and `groups` rows may name a topic page by `guide` slug.",
+  "groups": [
+    {
+      "name": "Graphics",
+      "rows": [
+        {
+          "file": "TILES.16 (TILES.4 on CGA)",
+          "holds": "The 512 map tiles",
+          "format": "LZW wrapper; one 128-byte, 16 × 16, 4-bit record per tile",
+          "rules": [
+            "GFX-0001",
+            "GFX-0008"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "MON0–7.16, ITEMS.16",
+          "holds": "Dungeon monsters and items",
+          "format": "LZW; image and 1-bit mask records in pairs",
+          "rules": [
+            "GFX-0003"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "DNG1–3.16",
+          "holds": "Dungeon wall panels",
+          "format": "LZW; 28 slots, two empty",
+          "rules": [
+            "GFX-0002"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "CREATE, TEXT, STORY1–6, END1–2, ULTIMA, STARTSC, ENDSC .16",
+          "holds": "Pictures for creation, the story, the title and the ending",
+          "format": "LZW; count, offsets, then 4-bit records",
+          "rules": [
+            "GFX-0002"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "TITLE.BIT, BRITISH.BIT, WD.BIT",
+          "holds": "One-colour title art",
+          "format": "1-bit archives; WD.BIT is not compressed",
+          "rules": [
+            "GFX-0004"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "PROPORT.PCS",
+          "holds": "Proportional font",
+          "format": "91 glyphs, 12-byte records",
+          "rules": [
+            "GFX-0004"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "IBM.CH, RUNES.CH (.HCS)",
+          "holds": "Fixed fonts, 128 glyphs",
+          "format": "Stored directly; 8 × 8, a byte per row",
+          "rules": [
+            "GFX-0005",
+            "SIGN-0001"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "BRITISH.PTH",
+          "holds": "Lord British's signature",
+          "format": "Pen-movement command bytes",
+          "rules": [
+            "GFX-0007"
+          ],
+          "guide": "graphics"
+        },
+        {
+          "file": "EGA.DRV",
+          "holds": "Display driver and colour tables",
+          "format": "Only the tile-colour boundary is described",
+          "rules": [
+            "GFX-0006"
+          ],
+          "status": "not_yet",
+          "guide": "graphics"
+        }
+      ]
+    },
+    {
+      "name": "Maps",
+      "rows": [
+        {
+          "file": "BRIT.DAT, UNDER.DAT",
+          "holds": "Britannia and the Underworld",
+          "format": "256 × 256 grids in 16 × 16 chunks; BRIT.DAT omits all-water chunks",
+          "rules": [
+            "MAP-0001"
+          ],
+          "guide": "map-files"
+        },
+        {
+          "file": "TOWNE, CASTLE, KEEP, DWELLING .DAT",
+          "holds": "Every settlement, floor by floor",
+          "format": "16 floors of 32 × 32 tiles per file; location numbers and entrances",
+          "rules": [
+            "MAP-0002",
+            "MAP-0003",
+            "MAP-0004"
+          ],
+          "guide": "map-files"
+        },
+        {
+          "file": "DUNGEON.DAT",
+          "holds": "Eight dungeons, eight levels each",
+          "format": "8 × 8 cells of packed families",
+          "rules": [
+            "DNG-0001",
+            "DNG-0002"
+          ]
+        },
+        {
+          "file": "BRIT.CBT, DUNGEON.CBT",
+          "holds": "Combat maps and dungeon rooms",
+          "format": "11 × 11 plus formation and trigger data",
+          "rules": [
+            "CBT-0001",
+            "CBT-0002",
+            "CBT-0003",
+            "CBT-0004",
+            "DNG-0011",
+            "DNG-0012",
+            "DNG-0013",
+            "DNG-0014"
+          ],
+          "guide": "combat-maps"
+        },
+        {
+          "file": "MISCMAPS.DAT",
+          "holds": "Cutscene and intro maps, intro script",
+          "format": "Four 176-byte scenes, then the intro script",
+          "rules": [
+            "MAP-0005",
+            "INTRO-0004"
+          ],
+          "guide": "map-files"
+        }
+      ]
+    },
+    {
+      "name": "Text and people",
+      "rows": [
+        {
+          "file": "TOWNE, CASTLE, KEEP, DWELLING .TLK",
+          "holds": "Conversations",
+          "format": "Records, dictionary, control codes",
+          "rules": [
+            "TALK-0001",
+            "TALK-0002",
+            "TALK-0003",
+            "TALK-0004",
+            "TALK-0005",
+            "TALK-0006"
+          ],
+          "guide": "talk-system"
+        },
+        {
+          "file": "TOWNE, CASTLE, KEEP, DWELLING .NPC",
+          "holds": "Schedules, types, talk numbers",
+          "format": "Three places and four times per person",
+          "rules": [
+            "NPC-0001",
+            "TALK-0001"
+          ]
+        },
+        {
+          "file": "SIGNS.DAT",
+          "holds": "Signs and inscriptions",
+          "format": "Grouped by location; two character sets",
+          "rules": [
+            "SIGN-0001",
+            "SIGN-0002"
+          ],
+          "guide": "signs-and-fonts"
+        },
+        {
+          "file": "LOOK2.DAT",
+          "holds": "Look descriptions for every tile",
+          "format": "512 offsets, then zero-terminated strings",
+          "rules": [
+            "TEXT-0001"
+          ],
+          "guide": "text-files"
+        },
+        {
+          "file": "SHOPPE.DAT",
+          "holds": "Merchant phrases",
+          "format": "Zero-terminated strings, word bytes and fill-in codes",
+          "rules": [
+            "TEXT-0002"
+          ],
+          "guide": "text-files"
+        },
+        {
+          "file": "KARMA.DAT, STORY.DAT, QUESTION.DAT",
+          "holds": "Karma reports, introduction, creation questions",
+          "format": "Where each text starts; text not reproduced",
+          "rules": [
+            "KARMA-0017",
+            "INTRO-0003"
+          ]
+        },
+        {
+          "file": "END.DAT",
+          "holds": "The ending",
+          "format": "Six zero-terminated blocks at fixed offsets",
+          "rules": [
+            "TEXT-0003"
+          ],
+          "guide": "text-files"
+        }
+      ]
+    },
+    {
+      "name": "Code and tables",
+      "rows": [
+        {
+          "file": "DATA.OVL",
+          "holds": "Names, prices, stats and lookup tables",
+          "format": "48,464 bytes; an index of identified regions, each defined by its topic",
+          "rules": [
+            "OVL-0001",
+            "OVL-0002"
+          ],
+          "guide": "data-ovl"
+        }
+      ]
+    },
+    {
+      "name": "Saves",
+      "rows": [
+        {
+          "file": "SAVED.GAM, INIT.GAM",
+          "holds": "Your save, and a new game's template",
+          "format": "4,192 bytes, fully allocated",
+          "rules": [
+            "SAVE-0001",
+            "SAVE-0002",
+            "SAVE-0003",
+            "SAVE-0004",
+            "SAVE-0005",
+            "SAVE-0007"
+          ],
+          "guide": "saved-gam"
+        },
+        {
+          "file": "SAVED.OOL, BRIT.OOL, UNDER.OOL",
+          "holds": "Objects in both worlds",
+          "format": "256-byte object lists, one per world",
+          "rules": [
+            "SAVE-0006"
+          ],
+          "guide": "saved-gam"
+        }
+      ]
+    },
+    {
+      "name": "Reference tables",
+      "rows": [
+        {
+          "file": "Location numbers",
+          "holds": "0 for Britannia, up to 40 for Doom",
+          "format": "Used by saves, signs and people",
+          "rules": [
+            "MAP-0003"
+          ],
+          "guide": "map-files"
+        },
+        {
+          "file": "Item numbers",
+          "holds": "Inventory order, also used by talk gifts",
+          "format": "One table",
+          "rules": [
+            "SAVE-0003",
+            "EQUIP-0001"
+          ]
+        },
+        {
+          "file": "Glyph tables",
+          "holds": "What each rune and symbol draws",
+          "format": "Dungeon and sky symbols",
+          "rules": [
+            "SIGN-0005",
+            "SIGN-0006"
+          ],
+          "guide": "signs-and-fonts"
+        },
+        {
+          "file": "Tile properties",
+          "holds": "Walking, projectile and occupancy tables",
+          "format": "Procedural properties by logical tile index",
+          "rules": [
+            "TILE-0001",
+            "TILE-0002",
+            "TILE-0003",
+            "TILE-0004",
+            "TILE-0005"
+          ],
+          "guide": "tiles"
+        }
+      ]
+    },
+    {
+      "name": "Redux's own formats",
+      "rows": [
+        {
+          "file": "Native save files",
+          "holds": "How Redux saves",
+          "format": "Versioned schema",
+          "status": "documented",
+          "doc": "docs/details/SAVE_SNAPSHOT_SCHEMA.md",
+          "rules": []
+        },
+        {
+          "file": "Legacy-to-native crosswalk",
+          "holds": "Where each SAVED.GAM field goes",
+          "format": "Field-by-field mapping",
+          "status": "documented",
+          "doc": "docs/details/LEGACY_TO_NATIVE_SAVE_CROSSWALK.md",
+          "rules": []
+        },
+        {
+          "file": "Save converter",
+          "holds": "Command-line import tool",
+          "format": "Usage and options",
+          "status": "documented",
+          "doc": "docs/details/SAVE_CONVERTER.md",
+          "rules": []
+        }
+      ]
+    }
+  ]
+}

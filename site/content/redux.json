@@ -1,0 +1,112 @@
+{
+  "note": "Owner-curated Redux section copy. Steps come from README.md and docs/INSTALL.md. Option labels are checked against cmd/ultimav/audio_settings_dialog_rendering.go at build time.",
+  "repo": "https://github.com/bradhannah/UltimaVRedux",
+  "steps": [
+    {
+      "title": "Download",
+      "text": "Get the archive for macOS, Windows or Linux from the releases page. Check it against SHA256SUMS and extract all of it.",
+      "link": "https://github.com/bradhannah/UltimaVRedux/releases",
+      "link_label": "Releases page"
+    },
+    {
+      "title": "Bring the original",
+      "text": "You need the complete MS-DOS PC game folder, such as the GOG edition. The Amiga, Atari ST, Commodore 64 and Apple II versions use different files.",
+      "link": "https://github.com/bradhannah/UltimaVRedux/blob/main/docs/INSTALL.md#locate-the-original-game-data",
+      "link_label": "Which files?"
+    },
+    {
+      "title": "Run it",
+      "text": "Start ultimav. First-run setup looks for your game folder, or tells you where to copy it.",
+      "link": "https://github.com/bradhannah/UltimaVRedux/blob/main/docs/INSTALL.md#start-the-game",
+      "link_label": "If setup cannot find it"
+    },
+    {
+      "title": "Bring a save (optional)",
+      "text": "The title menu imports SAVED.GAM and SAVED.OOL from your game folder. A converter handles saves kept elsewhere.",
+      "link": "https://github.com/bradhannah/UltimaVRedux/blob/main/docs/details/SAVE_CONVERTER.md",
+      "link_label": "Save converter"
+    }
+  ],
+  "platform_status": "https://github.com/bradhannah/UltimaVRedux/blob/main/docs/INSTALL.md#platform-status",
+  "options": [
+    {
+      "label": "Repeated Monster Division",
+      "tag": "original",
+      "effect": "Original: surviving Slimes and Gargoyles can divide repeatedly. Off keeps Redux's one-child split limit; On restores repeated division."
+    },
+    {
+      "label": "Remember Hidden Dungeon Discoveries",
+      "tag": "helper",
+      "effect": "Remember discovered hidden doors and pits between visits. On keeps discoveries. Off resets them each fresh visit."
+    },
+    {
+      "label": "Show Subdued Unlit Dungeons",
+      "tag": "original",
+      "effect": "Original: an unlit dungeon viewport is black. On shows subdued geometry without granting light; Off restores binary darkness."
+    },
+    {
+      "label": "Batch Merchant Theft",
+      "tag": "original",
+      "effect": "On: one Faulinei theft per paid batch. Off: original theft per item, bundle or patient; theft can stop a batch early."
+    },
+    {
+      "label": "Smooth Surface Movement",
+      "tag": "look",
+      "effect": "Scroll while walking, riding, flying or boating. Mounts animate 25% faster. Gameplay timing, combat and dungeons are unchanged."
+    },
+    {
+      "label": "Concealed Turn Slots",
+      "tag": "look",
+      "effect": "On reserves blank NEXT slots for concealed enemies. Off compacts the four-action forecast to avoid revealing hidden actors. Scheduling is unchanged."
+    },
+    {
+      "label": "Flexible Sextant Use",
+      "tag": "original",
+      "effect": "Day or night, including surface settlement interiors. A Sextant is required; no dungeons or Underworld. Off: night use on the world map."
+    },
+    {
+      "label": "Combat Speed",
+      "tag": "look",
+      "effect": "Change how quickly combat actions and animations play. 1x is normal speed; higher values make combat faster."
+    },
+    {
+      "label": "Confirm Quick Save",
+      "tag": "helper",
+      "effect": "Ask before saving with Q. On asks first; Off saves immediately. Q saves to the last slot you loaded or saved. Default: On."
+    },
+    {
+      "label": "Show Combat HP Bars",
+      "tag": "look",
+      "effect": "Show health bars during combat. Off hides the bars and adds injury descriptions to the battle report. Default: On."
+    },
+    {
+      "label": "Maximum Action Popups",
+      "tag": "look",
+      "effect": "Choose how many action messages can appear over the map at once. Off hides them; messages still appear in the lower-right text area."
+    }
+  ],
+  "option_tags": {
+    "original": "Can restore original",
+    "helper": "Helper",
+    "look": "Look and feel only"
+  },
+  "credits": [
+    {
+      "title": "Source code",
+      "text": "MIT licence."
+    },
+    {
+      "title": "Bundled art, sound and fonts",
+      "text": "Each has its own terms, listed in Asset credits."
+    },
+    {
+      "title": "The original game",
+      "text": "Not included. You use your own copy."
+    },
+    {
+      "title": "Trademarks",
+      "text": "Ultima V Redux is an unofficial, non-commercial fan project. It is not affiliated with, endorsed by or sponsored by the owners of Ultima V: Warriors of Destiny or of the Ultima name. Ultima and Ultima V: Warriors of Destiny are trademarks of their respective owners, named here only to identify the game this project recreates."
+    }
+  ],
+  "fan_notice": "Ultima V Redux is an unofficial, non-commercial fan project. It is not affiliated with or endorsed by the owners of Ultima V: Warriors of Destiny. Ultima is a trademark of its owners. No original game content is hosted here."
+}

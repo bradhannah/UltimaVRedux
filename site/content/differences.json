@@ -1,0 +1,96 @@
+{
+  "note": "Owner-curated. Each entry cites one rule. The build fails if the rule does not exist or is no longer marked as a Redux deviation. kind is one of switchable, always_on, helper, look, fix. `setting` names the Configure option that restores the original, if any.",
+  "kinds": {
+    "switchable": "Switchable",
+    "always_on": "Always on",
+    "helper": "Helper",
+    "look": "Look and feel",
+    "fix": "Fixes a bug"
+  },
+  "differences": [
+    {
+      "area": "Combat",
+      "title": "Slimes and Gargoyles split once",
+      "kind": "switchable",
+      "original": "A surviving Slime or Gargoyle can divide again and again, and so can its children.",
+      "redux": "Each splits once at most, and its child cannot split.",
+      "rule": "COMBAT-0009",
+      "setting": "Repeated Monster Division"
+    },
+    {
+      "area": "Party",
+      "title": "A stat award for every level",
+      "kind": "always_on",
+      "original": "A visit from the Wanderer gives one +1 to STR, DEX or INT, even if you gained several levels at once.",
+      "redux": "You get one award for each level gained, and none if a level is corrected downward.",
+      "rule": "PROGRESS-0003"
+    },
+    {
+      "area": "Camping",
+      "title": "Camp on horseback or a carpet",
+      "kind": "always_on",
+      "original": "The party must be on foot to camp.",
+      "redux": "Horses stay mounted. A magic carpet goes into your pack while you rest.",
+      "rule": "CAMP-0001"
+    },
+    {
+      "area": "Ships",
+      "title": "Sails come down when a fight starts",
+      "kind": "always_on",
+      "original": "Sail state and sailing direction carry on after the fight.",
+      "redux": "Every fight furls the sails, so you choose when to sail on. Your heading is kept.",
+      "rule": "SHIP-0001"
+    },
+    {
+      "area": "Dungeons",
+      "title": "The party remembers chests",
+      "kind": "helper",
+      "original": "Each Search rolls again, and a failed search invents how bad a trap is.",
+      "redux": "What you learn about a chest lasts the visit, and Jimmy will not waste a key on one you know is safe.",
+      "rule": "DNG-0004"
+    },
+    {
+      "area": "Navigation",
+      "title": "Located moonstones are marked for you",
+      "kind": "helper",
+      "original": "The Sextant reports where you stand.",
+      "redux": "Locating a moonstone also marks it for navigation, at no extra cost or time.",
+      "rule": "MOON-0008",
+      "note": "Works with Flexible Sextant Use."
+    },
+    {
+      "area": "Moongates",
+      "title": "Gates you cannot see change quietly",
+      "kind": "look",
+      "original": "Every gate rises and sinks silently.",
+      "redux": "A gate in view animates with a message. One out of sight changes at once and never stops you.",
+      "rule": "MOON-0003"
+    },
+    {
+      "area": "Towns",
+      "title": "Cannon shots stop at walls",
+      "kind": "fix",
+      "original": "The inspected cannon code can remove a target behind a wall, and its Shadowlord exclusion has no effect.",
+      "redux": "Shots stop at blocking terrain, and cannons cannot remove Shadowlords.",
+      "rule": "KARMA-0004"
+    },
+    {
+      "area": "Navigation",
+      "title": "Sextant, day or night",
+      "kind": "switchable",
+      "original": "The Sextant works on the world map, at night.",
+      "redux": "Day or night, on the world map and inside surface towns. A Sextant is still required, and dungeons and the Underworld are still excluded.",
+      "rule": "ASTRO-0006",
+      "setting": "Flexible Sextant Use"
+    },
+    {
+      "area": "Dungeons",
+      "title": "Unlit dungeons show dim outlines",
+      "kind": "switchable",
+      "original": "With no light, the dungeon view is black.",
+      "redux": "Dim geometry shows, but you gain no light.",
+      "rule": "DNG-0009",
+      "setting": "Show Subdued Unlit Dungeons"
+    }
+  ]
+}

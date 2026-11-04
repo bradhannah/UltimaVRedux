@@ -1,0 +1,46 @@
+{
+  "slug": "camping",
+  "tier": "how",
+  "title": "Camping, step by step",
+  "summary": "The five-minute loop and every roll in it",
+  "lede": "Camping is a loop of five-minute steps. Each pass checks for an ambush at the top of an hour, then lets the guard wander. This is how the original does it.",
+  "rules": ["CAMP-0003", "CAMP-0004", "CAMP-0005"],
+  "blocks": [
+    {"type": "h2", "text": "Each five-minute step"},
+    {
+      "type": "steps",
+      "items": [
+        {"title": "Status and rings.", "text": "The display updates and Regeneration Rings are checked."},
+        {"title": "Ambush roll.", "text": "Only if the hour changed since the last step: a 1 in 64 chance."},
+        {"title": "On an ambush,", "text": "the loop ends and combat starts. If you posted a guard, the sleepers are woken first; with no guard, they are not."},
+        {"title": "Otherwise", "text": "five minutes pass and the sky refreshes."},
+        {"title": "The guard wanders.", "text": "If you posted one, a 1 in 4 chance to take a step in a random compass direction, on screen and onto legal ground."}
+      ]
+    },
+    {"type": "h2", "text": "How many ambush rolls?"},
+    {
+      "type": "p",
+      "text": "The game stops once it reaches the target hour, so the final hour change is never tested. Resting H hours in the original gives **H − 1** ambush rolls. A 9-hour rest gets 8 rolls: about an 11.8% chance of at least one ambush."
+    },
+    {
+      "type": "callout",
+      "label": "Redux differs",
+      "text": "Redux rests for the full time you chose, so a rest can cross one more hour and face one more roll."
+    },
+    {"type": "h2", "text": "Guards and sleepers"},
+    {
+      "type": "ul",
+      "items": [
+        "Poisoned members are remembered but are not put to sleep.",
+        "A guard does not change the ambush chance. It changes who is awake when the ambush arrives.",
+        "No poison tick, meal or starvation check runs inside the loop."
+      ]
+    },
+    {"type": "h2", "text": "When the rest finishes"},
+    {
+      "type": "p",
+      "text": "A full rest of more than five requested hours, with the cooldown at zero, heals the party and may bring the Wanderer. The details are in [Levelling and the Wanderer](/original/how/levelling/). An ambush skips all of it."
+    },
+    {"type": "myths", "ids": ["longer-rests", "guard-ambush"]}
+  ]
+}

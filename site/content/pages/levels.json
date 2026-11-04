@@ -1,0 +1,35 @@
+{
+  "slug": "levels",
+  "tier": "facts",
+  "title": "Levels and experience",
+  "summary": "XP for each level, and how to level up",
+  "lede": "Your level follows your experience points (XP) and nothing else. Levels are handed out when the Wanderer visits you after a long rest outdoors.",
+  "rules": ["PROGRESS-0001", "PROGRESS-0002", "PROGRESS-0003", "CAMP-0005"],
+  "blocks": [
+    {
+      "type": "stats",
+      "items": [
+        {"label": "Highest level", "value": "8", "note": "XP stops at 9,999."},
+        {"label": "XP for a kill", "value": "HP ÷ 4 + 1", "note": "A Dragon is worth 25."},
+        {"label": "Chance of a visit", "value": "1 in 4", "note": "After a full rest outdoors."},
+        {"label": "Rest needed", "value": "6+ hours", "note": "At most one full rest counts per 14 hours."}
+      ]
+    },
+    {"type": "h2", "text": "XP for each level"},
+    {"type": "computed", "name": "level_table"},
+    {
+      "type": "p",
+      "text": "The level formula has no cap of its own, but every XP gain we have checked stops at 9,999. That makes level 8 the highest you can reach."
+    },
+    {"type": "h2", "text": "XP for a kill"},
+    {
+      "type": "p",
+      "text": "The killing blow earns the creature's **maximum** HP ÷ 4, rounded down, plus 1. All of it goes to the character who lands the blow; nothing is shared with the party. The [Bestiary](/original/bestiary/) shows the figure for every creature."
+    },
+    {"type": "h2", "text": "How you actually gain a level"},
+    {
+      "type": "p",
+      "text": "XP alone does nothing until the Wanderer finds you. After a qualifying rest outdoors he may visit, and only then are levels recalculated. See [Levelling and the Wanderer](/original/how/levelling/) for every step and the exact odds."
+    }
+  ]
+}
