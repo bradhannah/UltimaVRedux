@@ -41,11 +41,11 @@ func worldNavigatorCommands() []CommandDefinition {
 	minimumWorldFloor, maximumWorldFloor := -1, references.DungeonFloorCount-1
 	minimumWorldCoordinate, maximumWorldCoordinate := 0, int(references.XLargeMapTiles)-1
 	reviewedWorldParameters := []ParameterDefinition{
-		{ID: parameterExpectedLocationID, Name: "Reviewed Location", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldLocation, Maximum: &maximumWorldLocation, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
-		{ID: parameterExpectedFloor, Name: "Reviewed Floor", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldFloor, Maximum: &maximumWorldFloor, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
-		{ID: "expectedX", Name: "Reviewed X", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
-		{ID: "expectedY", Name: "Reviewed Y", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
-		{ID: parameterExpectedSource, Name: "Reviewed Source Fingerprint", Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}, ScenarioRuntime: true},
+		{ID: parameterExpectedLocationID, Name: "Reviewed Location", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldLocation, Maximum: &maximumWorldLocation, Availability: []string{contextGameplay, contextOutsideCombat}},
+		{ID: parameterExpectedFloor, Name: "Reviewed Floor", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldFloor, Maximum: &maximumWorldFloor, Availability: []string{contextGameplay, contextOutsideCombat}},
+		{ID: "expectedX", Name: "Reviewed X", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, Availability: []string{contextGameplay, contextOutsideCombat}},
+		{ID: "expectedY", Name: "Reviewed Y", Kind: ParameterInteger, Required: true, Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, Availability: []string{contextGameplay, contextOutsideCombat}},
+		{ID: parameterExpectedSource, Name: "Reviewed Source Fingerprint", Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
 	}
 
 	worldParameters := make([]ParameterDefinition, 0, 6+len(reviewedWorldParameters))

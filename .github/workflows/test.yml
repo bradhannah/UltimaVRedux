@@ -207,10 +207,6 @@ jobs:
           make tools
           make python-tools
           make web-install
-      - name: Require Go and TypeScript scenario wire parity
-        env:
-          ULTIMA5_REQUIRE_WEB_CONTRACT: "1"
-        run: go test ./internal/debugging/scenarios -run '^TestRunRecordMatchesTypeScriptWireContract$' -count=1
       - name: Run canonical logic validation and static policy gates
         env:
           DISPLAY: ""

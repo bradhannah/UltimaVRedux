@@ -68,7 +68,7 @@ Game Facts rule IDs rather than fragile descriptive-heading references.
 |---|---|---|---|
 | [`systems/AUDIO_SYSTEM.md`](systems/AUDIO_SYSTEM.md) | Define Redux integration, policy, assets and acceptance over Berad Audio. | `audio` | System documentation |
 | [`systems/CAMPING_SYSTEM.md`](systems/CAMPING_SYSTEM.md) | Describe camping entry, orchestration, encounters, and cleanup. | `camping` | System documentation |
-| [`systems/DEBUG_WORKBENCH.md`](systems/DEBUG_WORKBENCH.md) | Define control-plane commands, snapshots, and scenarios. | `debug-workbench` | System documentation |
+| [`systems/DEBUG_WORKBENCH.md`](systems/DEBUG_WORKBENCH.md) | Define control-plane commands and snapshots. | `debug-workbench` | System documentation |
 | [`systems/EVENT_QUEUE_SYSTEM.md`](systems/EVENT_QUEUE_SYSTEM.md) | Define workflow, feedback, composition, priority, and input ownership. | `workflows` | System documentation |
 | [`systems/INPUT_HANDLING.md`](systems/INPUT_HANDLING.md) | Define command input routing and primary/secondary state transitions. | `input` | System documentation |
 | [`systems/LINEAR_CONVERSATION_SYSTEM.md`](systems/LINEAR_CONVERSATION_SYSTEM.md) | Describe semantic import, catalog, runtime, patches, and UI boundaries. | `conversations` | System documentation |

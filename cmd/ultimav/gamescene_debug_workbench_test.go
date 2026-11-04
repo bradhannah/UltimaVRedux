@@ -141,27 +141,6 @@ func TestActiveCharacterOptionSetUsesOpaqueSlotAndOccupantToken(t *testing.T) {
 	assert.Equal(t, debugging.Choice{Value: "all", Label: "All active party members"}, loadoutTargets.Choices[0])
 }
 
-func TestResolveScenarioPartyPositionUsesCurrentOccupantAndRejectsEmptyPosition(t *testing.T) {
-	characters := []game_state.ActiveCharacterSnapshot{{Slot: 1, Name: "Shamino"}}
-
-	resolved, err := resolveScenarioPartyPosition(json.RawMessage(`"2"`), characters)
-	require.NoError(t, err)
-	slot, name, err := parseActiveCharacterToken(mustUnmarshalDebugString(t, resolved))
-	require.NoError(t, err)
-	assert.Equal(t, 1, slot)
-	assert.Equal(t, "Shamino", name)
-	all, err := resolveScenarioPartyPosition(json.RawMessage(`"all"`), characters)
-	require.NoError(t, err)
-	assert.JSONEq(t, `"all"`, string(all))
-
-	_, err = resolveScenarioPartyPosition(json.RawMessage(`""`), characters)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "non-empty")
-	_, err = resolveScenarioPartyPosition(json.RawMessage(`"1"`), characters)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "not occupied")
-}
-
 func mustUnmarshalDebugString(t *testing.T, raw json.RawMessage) string {
 	t.Helper()
 	var value string
@@ -364,81 +343,6 @@ func TestExecuteDebugCommandWindSetReturnsSemanticChange(t *testing.T) {
 	assert.Equal(t, debugging.ExecutionLiveSafe, result.EffectiveExecutionMode)
 	require.Len(t, result.Changes, 1)
 	assert.Equal(t, "environment.wind.direction", result.Changes[0].Path)
-}
-
-func TestExecuteDebugCommandCombatMapCatalog(t *testing.T) {
-	tests := []struct {
-		section        string
-		britanniaCount int
-		dungeonCount   int
-	}{
-		{section: debugging.CombatMapSectionAll, britanniaCount: references.TotalCombatMaps, dungeonCount: references.MaxDungeonCombatIndex + 1},
-		{section: debugging.CombatMapSectionBritannia, britanniaCount: references.TotalCombatMaps, dungeonCount: 0},
-		{section: debugging.CombatMapSectionDungeons, britanniaCount: 0, dungeonCount: references.MaxDungeonCombatIndex + 1},
-	}
-
-	for _, test := range tests {
-		t.Run(test.section, func(t *testing.T) {
-			request := debugging.Request{
-				SessionID: "test-session",
-				ID:        "request-1",
-				CommandID: debugging.CommandCombatMapCatalog,
-				Arguments: map[string]json.RawMessage{"section": json.RawMessage(`"` + test.section + `"`)},
-			}
-
-			result := executeDebugCommand(nil, request)
-
-			require.True(t, result.Success)
-			var data combatMapCatalogResult
-			require.NoError(t, json.Unmarshal(result.Data, &data))
-			require.Len(t, data.Britannia, test.britanniaCount)
-			require.Len(t, data.Dungeons, test.dungeonCount)
-			if test.britanniaCount > 0 {
-				assert.Equal(t, "Camping", data.Britannia[0].Name)
-			}
-			if test.dungeonCount > 0 {
-				assert.Equal(t, "deceit", data.Dungeons[0].Name)
-				assert.Equal(t, references.MaxDungeonRooms-1, data.Dungeons[0].RoomMaximum)
-			}
-		})
-	}
-}
-
-func TestExecuteDebugCommandShrineReferenceInspect(t *testing.T) {
-	tests := []struct {
-		index      int
-		virtue     string
-		mantra     string
-		word       string
-		worldX     byte
-		worldY     byte
-		karmaBonus int
-	}{
-		{index: 0, virtue: "Honesty", mantra: "ahm", word: "FALLAX", worldX: 0xE9, worldY: 0x42, karmaBonus: 3},
-		{index: 7, virtue: "Humility", mantra: "lum", word: "VERAMOCOR", worldX: 0xE7, worldY: 0xD8, karmaBonus: 6},
-	}
-
-	for _, test := range tests {
-		request := debugging.Request{
-			SessionID: "test-session",
-			ID:        "request-1",
-			CommandID: debugging.CommandShrineReferenceInspect,
-			Arguments: map[string]json.RawMessage{"index": json.RawMessage(strconv.Quote(strconv.Itoa(test.index)))},
-		}
-
-		result := executeDebugCommand(nil, request)
-
-		require.True(t, result.Success)
-		var data shrineReferenceResult
-		require.NoError(t, json.Unmarshal(result.Data, &data))
-		assert.Equal(t, test.index, data.Index)
-		assert.Equal(t, test.virtue, data.VirtueName)
-		assert.Equal(t, test.mantra, data.Mantra)
-		assert.Equal(t, test.word, data.WordOfPower)
-		assert.Equal(t, test.worldX, data.WorldX)
-		assert.Equal(t, test.worldY, data.WorldY)
-		assert.Equal(t, test.karmaBonus, data.KarmaBonus)
-	}
 }
 
 func TestExecuteDebugCommandShrineStatusCombinesReferenceAndProgress(t *testing.T) {
@@ -656,7 +560,7 @@ func TestExecuteQuestItemStatusEnsureAndRemove(t *testing.T) {
 	assert.Equal(t, uint16(0), state.PartyState.Inventory.QuestItems.Get(references.Sextant))
 }
 
-func TestExecuteWorldPositionAndSameMapTeleport(t *testing.T) {
+func TestExecuteWorldPositionStatus(t *testing.T) {
 	state := newApprovedToolTestState()
 	state.MapState.PlayerLocation = references.PlayerLocation{
 		Location: references.Britain, Position: references.Position{X: 4, Y: 5}, Floor: 1,
@@ -671,14 +575,6 @@ func TestExecuteWorldPositionAndSameMapTeleport(t *testing.T) {
 	assert.Equal(t, 1, status.Floor)
 	require.Len(t, status.Destinations, int(references.Doom)+1)
 
-	teleport := executeDebugCommand(state, debugging.Request{
-		SessionID: "test", ID: "teleport", CommandID: debugging.CommandMovementTeleport,
-		Arguments: map[string]json.RawMessage{"x": json.RawMessage(`30`), "y": json.RawMessage(`29`)},
-	})
-	require.True(t, teleport.Success)
-	assert.Equal(t, debugging.ExecutionSynchronized, teleport.EffectiveExecutionMode)
-	assert.Equal(t, references.Position{X: 30, Y: 29}, state.MapState.PlayerLocation.Position)
-	assert.Len(t, teleport.Changes, 2)
 }
 
 func TestExecuteMoongateStatusReturnsDetachedMoonstonesAndRoute(t *testing.T) {

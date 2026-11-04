@@ -8,7 +8,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/datetime"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/debugging/scenarios"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
@@ -25,17 +24,13 @@ const (
 	snapshotRollbackError              = "snapshot_rollback_failed"
 	snapshotBuildError                 = "snapshot_build_failed"
 	snapshotDeleteError                = "snapshot_delete_failed"
-	snapshotReferencedError            = "snapshot_referenced_by_scenario"
 )
-
-var errSnapshotReferenced = errors.New("snapshot is referenced by a scenario")
 
 type snapshotRepository interface {
 	List() ([]save_snapshot.Summary, error)
 	Load(reference string) (save_snapshot.Record, error)
 	Create(reference string, envelope save_snapshot.Envelope) (save_snapshot.Record, error)
 	Delete(reference, expectedRevision string) error
-	DeleteIfUnreferenced(reference, expectedRevision string, checkReferences func() error) error
 }
 
 type snapshotCapableScene interface {
@@ -81,21 +76,12 @@ func (g *Game) listSnapshots(request debugging.Request) debugging.Result {
 		return snapshotRepositoryFailure(request, snapshotReadError, err)
 	}
 	summaries := make([]debugging.SaveSnapshotSummary, len(records))
-	references, err := g.snapshotScenarioReferences()
-	if err != nil {
-		return debugging.FailureResult(request, snapshotReadError, err.Error())
-	}
 	for index, record := range records {
 		loaded, loadErr := g.snapshotRepository.Load(record.Reference.String())
 		if loadErr != nil {
 			return snapshotRepositoryFailure(request, snapshotReadError, loadErr)
 		}
 		summaries[index] = g.snapshotSummary(record.Reference, record.Metadata, record.Revision, loaded.Envelope.Snapshot)
-		summaries[index].ReferencedBy = references[record.Reference.String()]
-		if len(summaries[index].ReferencedBy) > 0 {
-			summaries[index].Eligibility.CanDelete = false
-			summaries[index].Eligibility.Reason = "referenced by a scripted scenario"
-		}
 	}
 
 	return debugSuccessResult(request, "Save snapshots loaded.", debugging.SaveSnapshotListData{
@@ -112,15 +98,6 @@ func (g *Game) getSnapshot(request debugging.Request) debugging.Result {
 		return snapshotRepositoryFailure(request, snapshotReadError, err)
 	}
 	detail := snapshotDetail(g.snapshotSummary(record.Reference, record.Envelope.Metadata, record.Revision, record.Envelope.Snapshot), record.Envelope.Snapshot)
-	references, referenceErr := g.snapshotScenarioReferences()
-	if referenceErr != nil {
-		return debugging.FailureResult(request, snapshotReadError, referenceErr.Error())
-	}
-	detail.Summary.ReferencedBy = references[record.Reference.String()]
-	if len(detail.Summary.ReferencedBy) > 0 {
-		detail.Summary.Eligibility.CanDelete = false
-		detail.Summary.Eligibility.Reason = "referenced by a scripted scenario"
-	}
 
 	return debugSuccessResult(request, "Save snapshot loaded.", debugging.SaveSnapshotGetData{Snapshot: detail})
 }
@@ -242,27 +219,7 @@ func (g *Game) deleteSnapshot(request debugging.Request) debugging.Result {
 	}
 	reference := mustDebugStringArgument(request, "reference")
 	revision := mustDebugStringArgument(request, "expectedRevision")
-	checkReferences := func() error {
-		if g.scenarioRepository == nil {
-			return nil
-		}
-		summaries, err := g.scenarioRepository.List()
-		if err != nil {
-			return err
-		}
-		for _, summary := range summaries {
-			if summary.Baseline.Type == scenarios.BaselineSnapshot && summary.Baseline.Reference == reference {
-				return fmt.Errorf("%w: snapshot %s is referenced by scenario %s", errSnapshotReferenced, reference, summary.Reference)
-			}
-		}
-
-		return nil
-	}
-	if err := g.snapshotRepository.DeleteIfUnreferenced(reference, revision, checkReferences); err != nil {
-		if errors.Is(err, errSnapshotReferenced) {
-			return debugging.FailureResult(request, snapshotReferencedError, err.Error())
-		}
-
+	if err := g.snapshotRepository.Delete(reference, revision); err != nil {
 		return snapshotRepositoryFailure(request, snapshotDeleteError, err)
 	}
 	result := debugSuccessResultWithMode(request, debugging.ExecutionAlteration, "Save snapshot deleted.", debugging.SaveSnapshotDeleteData{Reference: reference, Revision: revision})
@@ -346,24 +303,6 @@ func (g *Game) snapshotCaptureEligibility() debugging.SaveSnapshotEligibility {
 	}
 
 	return eligibility
-}
-
-func (g *Game) snapshotScenarioReferences() (map[string][]string, error) {
-	references := make(map[string][]string)
-	if g.scenarioRepository == nil {
-		return references, nil
-	}
-	summaries, err := g.scenarioRepository.List()
-	if err != nil {
-		return nil, fmt.Errorf("list snapshot scenario references: %w", err)
-	}
-	for _, summary := range summaries {
-		if summary.Baseline.Type == scenarios.BaselineSnapshot {
-			references[summary.Baseline.Reference] = append(references[summary.Baseline.Reference], summary.Reference.String())
-		}
-	}
-
-	return references, nil
 }
 
 func snapshotLoadFailureAfterRollback(

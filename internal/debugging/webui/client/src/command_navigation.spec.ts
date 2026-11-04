@@ -5,7 +5,7 @@ import type { CommandDefinition } from "./protocol"
 
 const surfaces: NavigationSurface[] = [
   surface("game:shrine", "game", "Game", "Shrine Progress", "Live virtue progression", [command("shrine.status", "Shrine Status", ["meditation"])]),
-  surface("codex:shrine", "codex", "Codex", "Shrine Reference", "Immutable virtue reference", [command("shrine.status", "Shrine Status", ["mantra"])]),
+  surface("system:logging", "system", "System", "Shrine Logging", "Shrine log channels", [command("logging.status", "Logging Status", ["stdout"])]),
   surface("game:ships", "game", "Game", "Ships", "Vehicle controls", [command("vehicle.status", "Vehicle Status", ["frigate"]), command("ship.repair-full", "Repair Ship", ["hull"])]),
 ]
 
@@ -13,14 +13,14 @@ describe("command navigation", () => {
   it("ranks exact, prefix, then deterministic all-token matches", () => {
     expect(rankNavigationSurfaces(surfaces, "Ships").map(({ id, score }) => [id, score])).toEqual([["game:ships", 300]])
     expect(rankNavigationSurfaces(surfaces, "Shr").map(({ id, score }) => [id, score])).toEqual([
-      ["codex:shrine", 200], ["game:shrine", 200],
+      ["game:shrine", 200], ["system:logging", 200],
     ])
     expect(rankNavigationSurfaces(surfaces, "repair hull").map(({ id }) => id)).toEqual(["game:ships"])
   })
 
-  it("keeps workspace-qualified shrine surfaces distinct", () => {
+  it("keeps workspace-qualified surfaces with similar labels distinct", () => {
     expect(rankNavigationSurfaces(surfaces, "Game Shrine Progress").map(({ id }) => id)).toEqual(["game:shrine"])
-    expect(rankNavigationSurfaces(surfaces, "Codex Shrine Reference").map(({ id }) => id)).toEqual(["codex:shrine"])
+    expect(rankNavigationSurfaces(surfaces, "System Shrine Logging").map(({ id }) => id)).toEqual(["system:logging"])
   })
 
   it("aggregates companion intent into its owner surface", () => {

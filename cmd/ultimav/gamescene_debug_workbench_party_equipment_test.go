@@ -133,25 +133,6 @@ func TestPartyEquipmentLoadoutUpdateAppliesAllActiveMembersWithExactChanges(t *t
 	assert.Equal(t, []string{"Avatar", shamino.GetNameAsString()}, data.CharacterNames)
 }
 
-func TestPartyEquipmentLoadoutScenarioRuntimeReviewUsesCurrentState(t *testing.T) {
-	state := newApprovedToolTestState()
-	initializeEmptyInventoryLockerRoster(state)
-	require.NoError(t, state.SetAvatarName("Avatar"))
-	scene := &GameScene{gameState: state}
-	definition, ok := debugging.NewInitialCatalog().Get(debugging.CommandPartyEquipmentLoadoutUpdate)
-	require.True(t, ok)
-	request, err := scene.ResolveScenarioRuntimeParameters(debugging.Request{
-		CommandID: debugging.CommandPartyEquipmentLoadoutUpdate,
-		Arguments: map[string]json.RawMessage{
-			"character": json.RawMessage(`"1"`),
-			"weapon":    json.RawMessage(`"manufacture:30"`),
-		},
-	}, definition)
-	require.NoError(t, err)
-	assert.Equal(t, mustDebugJSON(newInventoryLockerResult(state).SnapshotFingerprint), request.Arguments[inventoryExpectedSnapshotArgument])
-	assert.NotEqual(t, json.RawMessage(`"1"`), request.Arguments["character"])
-}
-
 func TestPartyEquipmentLoadoutUpdateRejectsDialogAndWorkflowContexts(t *testing.T) {
 	t.Run("dialog", func(t *testing.T) {
 		scene := newCommandWorkflowTestScene(t)

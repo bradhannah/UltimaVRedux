@@ -34,20 +34,18 @@ func registerCoreSceneDebugCommands(registry *debugCommandRegistry) {
 		debugging.CommandWorldPositionStatus,
 		debugging.CommandMoongateStatus,
 	)
-	for _, commandID := range []string{debugging.CommandQuestItemEnsure, debugging.CommandQuestItemRemove,
-		debugging.CommandMovementTeleport} {
-		registry.registerScene(commandID, "core gameplay", coreHandler, ritualStateMutationGuard, nil)
+	for _, commandID := range []string{debugging.CommandQuestItemEnsure, debugging.CommandQuestItemRemove} {
+		registry.registerScene(commandID, "core gameplay", coreHandler, ritualStateMutationGuard)
 	}
 	for _, commandID := range []string{debugging.CommandPartyMaximizeLevels, debugging.CommandPartyStatusSet,
 		debugging.CommandPartyFill, debugging.CommandPartyMemberAdd} {
-		registry.registerScene(commandID, "party roster", coreHandler, nil, resolvePartyRosterRuntime)
+		registry.registerScene(commandID, "party roster", coreHandler, nil)
 	}
 	registry.registerScene(
 		debugging.CommandPartyEquipmentLoadoutUpdate,
 		"party equipment",
 		coreHandler,
 		equipmentMutationGuard,
-		resolvePartyEquipmentRuntime,
 	)
 }
 
@@ -76,7 +74,7 @@ func registerThirdBatchDebugCommands(registry *debugCommandRegistry) {
 	handler := sceneHandledDebugCommand(func(scene *GameScene, request debugging.Request) (debugging.Result, bool) {
 		return scene.executeThirdBatchDebugCommand(request)
 	})
-	registry.registerScene(debugging.CommandTestHoleUp, "hole-up workflow", handler, nil, resolveHoleUpRuntime)
+	registry.registerScene(debugging.CommandTestHoleUp, "hole-up workflow", handler, nil)
 	registry.registerGroup("command workflows", debugCommandScene, handler,
 		debugging.CommandTestSearch,
 		debugging.CommandMoongateTravel,
@@ -108,8 +106,8 @@ func registerSixthBatchDebugCommands(registry *debugCommandRegistry) {
 	handler := sceneHandledDebugCommand(func(scene *GameScene, request debugging.Request) (debugging.Result, bool) {
 		return scene.executeSixthBatchDebugCommand(request)
 	})
-	registry.registerScene(debugging.CommandDeathKillParty, "death testing", handler, nil, resolveDeathRuntime)
-	registry.registerScene(debugging.CommandDeathTestSequence, "death testing", handler, nil, resolveDeathRuntime)
+	registry.registerScene(debugging.CommandDeathKillParty, "death testing", handler, nil)
+	registry.registerScene(debugging.CommandDeathTestSequence, "death testing", handler, nil)
 }
 
 func registerSeventhBatchDebugCommands(registry *debugCommandRegistry) {
@@ -121,12 +119,12 @@ func registerSeventhBatchDebugCommands(registry *debugCommandRegistry) {
 	)
 }
 
-func registerScenarioDebugCommands(registry *debugCommandRegistry) {
-	registry.registerGroup("scenario lab", debugCommandScene, sceneHandledDebugCommand(
+func registerTestSetupDebugCommands(registry *debugCommandRegistry) {
+	registry.registerGroup("test setups", debugCommandScene, sceneHandledDebugCommand(
 		func(scene *GameScene, request debugging.Request) (debugging.Result, bool) {
-			return scene.executeScenarioDebugCommand(request)
+			return scene.executeTestSetupDebugCommand(request)
 		}),
-		debugging.CommandScenarioStatus,
+		debugging.CommandTestSetupStatus,
 	)
 }
 
@@ -135,8 +133,6 @@ func registerWorldSetupDebugCommands(registry *debugCommandRegistry) {
 		func(scene *GameScene, request debugging.Request) (debugging.Result, bool) {
 			return scene.executeWorldSetupDebugCommand(request)
 		}),
-		debugging.CommandMovementEnterLocation,
-		debugging.CommandMovementFloorSet,
 		debugging.CommandMovementLandmarkTravel,
 	)
 }
@@ -145,7 +141,7 @@ func registerWorldNavigatorDebugCommands(registry *debugCommandRegistry) {
 	handler := sceneHandledDebugCommand(func(scene *GameScene, request debugging.Request) (debugging.Result, bool) {
 		return scene.executeWorldNavigatorDebugCommand(request)
 	})
-	registry.registerScene(debugging.CommandWorldPositionSet, "world navigator", handler, nil, resolveWorldPositionRuntime)
+	registry.registerScene(debugging.CommandWorldPositionSet, "world navigator", handler, nil)
 }
 
 func registerOperationalDebugCommands(registry *debugCommandRegistry) {
@@ -204,7 +200,6 @@ func registerInventoryLockerDebugCommands(registry *debugCommandRegistry) {
 		"inventory locker",
 		handler,
 		equipmentMutationGuard,
-		nil,
 	)
 }
 
@@ -260,7 +255,7 @@ func registerActiveCombatDebugCommands(registry *debugCommandRegistry) {
 		debugging.CommandCombatMonsterSpawn,
 		debugging.CommandCombatDungeonRoomClear,
 	} {
-		registry.registerScene(commandID, "active combat", handler, activeCombatMutationGuard, nil)
+		registry.registerScene(commandID, "active combat", handler, activeCombatMutationGuard)
 	}
 }
 
@@ -315,41 +310,4 @@ func activeCombatMutationGuard(scene *GameScene, request debugging.Request) *deb
 	}
 
 	return nil
-}
-
-func resolvePartyRosterRuntime(scene *GameScene, request debugging.Request) (debugging.Request, error) {
-	request.Arguments["expectedFingerprint"] = mustDebugJSON(scene.gameState.CurrentPartyRosterSnapshot().Fingerprint)
-
-	return request, nil
-}
-
-func resolveHoleUpRuntime(scene *GameScene, request debugging.Request) (debugging.Request, error) {
-	request.Arguments["expectedPartyFingerprint"] = mustDebugJSON(scene.gameState.CurrentPartyRosterSnapshot().Fingerprint)
-
-	return request, nil
-}
-
-func resolveDeathRuntime(scene *GameScene, request debugging.Request) (debugging.Request, error) {
-	request.Arguments["expectedFingerprint"] = mustDebugJSON(scene.gameState.ReviewActivePartyWipe().Fingerprint)
-
-	return request, nil
-}
-
-func resolvePartyEquipmentRuntime(scene *GameScene, request debugging.Request) (debugging.Request, error) {
-	request.Arguments[inventoryExpectedSnapshotArgument] = mustDebugJSON(
-		newInventoryLockerResult(scene.gameState).SnapshotFingerprint,
-	)
-
-	return request, nil
-}
-
-func resolveWorldPositionRuntime(scene *GameScene, request debugging.Request) (debugging.Request, error) {
-	current := scene.gameState.MapState.PlayerLocation
-	request.Arguments["expectedLocationId"] = mustDebugJSON(int(current.Location))
-	request.Arguments["expectedFloor"] = mustDebugJSON(int(current.Floor))
-	request.Arguments["expectedX"] = mustDebugJSON(int(current.Position.X))
-	request.Arguments["expectedY"] = mustDebugJSON(int(current.Position.Y))
-	request.Arguments["expectedSourceFingerprint"] = mustDebugJSON(debugWorldSourceFingerprint(scene.gameState))
-
-	return request, nil
 }

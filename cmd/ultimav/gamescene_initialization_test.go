@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,30 +38,6 @@ func TestNewGameSceneFromLegacySaveFileRejectsInvalidSizeRecoverably(t *testing.
 	}
 	if !errors.Is(err, legacy_save.ErrInvalidBundle) {
 		t.Fatalf("NewGameSceneFromLegacySaveFile() error = %v, want ErrInvalidBundle", err)
-	}
-}
-
-func TestNewGameSceneFromInitTemplateFileWrapsDungeonAssetErrors(t *testing.T) {
-	t.Parallel()
-
-	dataPath := t.TempDir()
-	filePath := filepath.Join(dataPath, "INIT.GAM")
-	if err := os.WriteFile(filePath, make([]byte, 4192), 0o600); err != nil {
-		t.Fatalf("writing legacy save fixture: %v", err)
-	}
-	gameConfig := &config.UltimaVConfiguration{
-		SavedConfigData: &config.UltimaVConfigurationFlags{
-			DataFilePath: dataPath,
-		},
-	}
-
-	gameScene, err := newGameSceneFromInitTemplateFile(gameConfig, filePath)
-	if gameScene != nil {
-		t.Fatal("newGameSceneFromInitTemplateFile() returned a scene without dungeon assets")
-	}
-	if err == nil || !strings.Contains(err.Error(), "loading dungeon presentation assets") ||
-		!strings.Contains(err.Error(), "DNG1.16") {
-		t.Fatalf("newGameSceneFromInitTemplateFile() error = %v, want wrapped DNG1.16 startup error", err)
 	}
 }
 

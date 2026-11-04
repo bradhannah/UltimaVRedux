@@ -161,13 +161,12 @@ process-only and never appears in native JSON.
 Production `SAVED.GAM` startup and player-facing import both call
 `legacy_save.ReadBundle`, `legacy_save.Convert`, and native snapshot hydration.
 The source pair is read-only. A private `INIT.GAM` template initializer remains
-only for scripted scenario setup that intentionally uses the one-file template
-path.
+only for test fixtures that use the one-file template path.
 
 Outdoor map-window offsets are not imported as durable history. Normal original
 startup overwrites loaded offsets by initializing from the final party position.
 Redux follows that behavior after legacy import and every native hydration,
-including player loads, Workbench rollback and named scenario baselines. The
+including player loads and Workbench rollback. The
 plane-tagged window and temporary Push arrangement remain runtime-only; saving
 and continuing does not reset the live window. See
 [SPELL-0002](../gamefacts/MAGIC_SPELLS.md#spell-0002) for history-dependent Blink

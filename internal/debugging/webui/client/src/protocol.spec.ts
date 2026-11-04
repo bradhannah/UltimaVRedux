@@ -4,28 +4,27 @@ import type { CommandDefinition, CommandResult } from "./protocol"
 import catalog from "./initial_catalog.fixture.json"
 
 describe("CommandResult protocol", () => {
-  it("carries numeric step metadata and preference scenario exclusion losslessly", () => {
+  it("carries numeric step metadata losslessly", () => {
     const command = (JSON.parse(JSON.stringify(catalog)) as CommandDefinition[]).find(command => command.id === "combat.presentation.speed.set")!
     expect(command.parameters?.[0]).toMatchObject({ kind: "integer", minimum: 50, maximum: 2000, step: 50 })
     expect(command.parameters?.[0]?.choices?.map((choice) => choice.value)).toEqual(
       ["50", "100", "150", "200", "300", "400", "600", "800", "1200", "1600", "2000"])
-    expect(command.scenarioExcluded).toBe(true)
   })
   it("preserves a normalized typed invocation without transport ownership fields", () => {
     const result = JSON.parse(`{
       "sessionId":"session-1",
       "requestId":"request-1",
-      "commandId":"scenario.apply",
+      "commandId":"test.apply",
       "sceneGeneration":7,
       "invocation":{
-        "commandId":"scenario.apply",
+        "commandId":"test.apply",
         "arguments":{"count":2,"enabled":true,"mode":"all","members":[1,3]}
       },
       "success":true
     }`) as CommandResult
 
     expect(result.invocation).toEqual({
-      commandId: "scenario.apply",
+      commandId: "test.apply",
       arguments: { count: 2, enabled: true, mode: "all", members: [1, 3] },
     })
     expect(Object.keys(result.invocation ?? {})).toEqual(["commandId", "arguments"])

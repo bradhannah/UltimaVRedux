@@ -130,7 +130,7 @@ linters:
           - exhaustive
         text: "missing cases in switch of type indexes\\.SpriteIndex"
         path: "internal/sprites/water_tile_generator\\.go"
-      # Snapshot and scenario code contains intentionally partial wire
+      # Snapshot code contains intentionally partial wire
       # DTO literals, data-driven records, and compatibility validation branches.
       - linters:
           - cyclop
@@ -143,17 +143,17 @@ linters:
           - nestif
           - nolintlint
           - varnamelen
-        path: "^(cmd/ultimav/|internal/)(gamescene_debug_workbench|gamescene_initialization|gamescene_snapshot|scenario_definition_commands|scenario_runner|scenario_startup|snapshot_commands|snapshot_startup|scene|gamescene|debugging/|game_state/|references/|repositoryfs/|save_snapshot/)"
+        path: "^(cmd/ultimav/|internal/)(gamescene_debug_workbench|gamescene_initialization|gamescene_snapshot|snapshot_commands|snapshot_startup|scene|gamescene|debugging/|game_state/|references/|repositoryfs/|save_snapshot/)"
       # These conversions are guarded by snapshot validation or preserve
       # original binary save-game values.
       - linters:
           - gosec
-        path: "^(cmd/ultimav/|internal/)(scenario_runner|snapshot_commands|game_state/|references/|save_snapshot/)"
+        path: "^(cmd/ultimav/|internal/)(snapshot_commands|game_state/|references/|save_snapshot/)"
       # Validation errors deliberately include field-specific context.
       - linters:
           - err113
           - wrapcheck
-        path: "^(cmd/ultimav/|internal/)(gamescene_initialization|scenario_definition_commands|scenario_runner|scenario_startup|scene|snapshot_commands|debugging/|game_state/|repositoryfs/|save_snapshot/)"
+        path: "^(cmd/ultimav/|internal/)(gamescene_initialization|scene|snapshot_commands|debugging/|game_state/|repositoryfs/|save_snapshot/)"
       # Repeated labels and names are intentional in immutable reference tables.
       - linters:
           - goconst

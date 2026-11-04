@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import SaveLibrary from "./SaveLibrary.vue"
 import type { SaveSnapshotDetail, SaveSnapshotListData } from "./saves"
-import { newScenarioComposerDraft } from "./scenarios"
 
 let app: VueApp<Element> | undefined
 let root: HTMLElement
@@ -35,7 +34,7 @@ describe("SaveLibrary", () => {
     const selected = ref(structuredClone(detail))
     const load = vi.fn()
     app = createApp({ setup: () => () => h(SaveLibrary, {
-      detail: selected.value, pendingList: false, pendingDetail: false, pendingMutation: false, activeScenarioDirty: false, onLoad: load,
+      detail: selected.value, pendingList: false, pendingDetail: false, pendingMutation: false, onLoad: load,
     }) })
     app.mount(root)
     click('[data-save-action="review-load"]')
@@ -77,20 +76,6 @@ describe("SaveLibrary", () => {
     expect(load).toHaveBeenCalledWith({ reference: summary.reference, expectedRevision: revision })
   })
 
-  it("blocks referenced deletion and reviews dirty active-scenario baseline changes", async () => {
-    const useBaseline = vi.fn()
-    const referenced = { ...summary, eligibility: { ...summary.eligibility, canDelete: false, reason: "referenced" }, referencedBy: ["project:doom-run"] }
-    const draft = newScenarioComposerDraft()
-    mount({ snapshots: [referenced], captureEligibility: { canCapture: true, canLoad: true, canDelete: false } }, { ...detail, summary: referenced }, { useBaseline }, draft, true)
-    expect((root.querySelector('[data-save-action="review-delete"]') as HTMLButtonElement).disabled).toBe(true)
-    expect(root.textContent).toContain("project:doom-run")
-    click('[data-save-action="review-baseline"]')
-    await nextTick()
-    expect(root.querySelector('[data-save-review="baseline"]')?.textContent).toContain("UNSAVED CHANGES")
-    click('[data-save-action="confirm-baseline"]')
-    expect(useBaseline).toHaveBeenCalledWith(referenced)
-  })
-
   it("requires the exact snapshot name before emitting a revision-safe delete", async () => {
     const remove = vi.fn()
     mount({ snapshots: [summary], captureEligibility: { canCapture: true, canLoad: true, canDelete: false } }, detail, { delete: remove })
@@ -106,13 +91,11 @@ describe("SaveLibrary", () => {
   })
 })
 
-function mount(data: SaveSnapshotListData, selected?: SaveSnapshotDetail, handlers: { load?: (value: unknown) => void; delete?: (value: unknown) => void; useBaseline?: (value: unknown) => void } = {}, activeScenario?: ReturnType<typeof newScenarioComposerDraft>, activeScenarioDirty = false): void {
+function mount(data: SaveSnapshotListData, selected?: SaveSnapshotDetail, handlers: { load?: (value: unknown) => void; delete?: (value: unknown) => void } = {}): void {
   app = createApp(SaveLibrary, {
     data, detail: selected, pendingList: false, pendingDetail: false, pendingMutation: false,
-    activeScenario, activeScenarioDirty,
     onLoad: handlers.load,
     onDelete: handlers.delete,
-    onUseBaseline: handlers.useBaseline,
   })
   app.mount(root)
 }

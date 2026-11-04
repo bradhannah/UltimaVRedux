@@ -311,38 +311,6 @@ func TestGameApplicationQueryIgnoresSceneGeneration(t *testing.T) {
 	assert.True(t, result.Success)
 }
 
-func TestGameNormalizesAndExecutesParameterizedApplicationQueries(t *testing.T) {
-	game := NewGame(&noDebugDispatchTestScene{})
-	requests := []debugging.Request{
-		{
-			SessionID: "test-session",
-			ID:        "combat-default",
-			CommandID: debugging.CommandCombatMapCatalog,
-		},
-		{
-			SessionID: "test-session",
-			ID:        "shrine-reference",
-			CommandID: debugging.CommandShrineReferenceInspect,
-			Arguments: map[string]json.RawMessage{"index": json.RawMessage(`"7"`)},
-		},
-	}
-
-	for _, request := range requests {
-		require.NoError(t, game.SubmitDebugRequest(request))
-	}
-	require.NoError(t, game.Update())
-
-	for range requests {
-		result, ok := game.NextDebugResult()
-		require.True(t, ok)
-		assert.True(t, result.Success)
-		require.NotNil(t, result.Invocation)
-		if result.Invocation.CommandID == debugging.CommandCombatMapCatalog {
-			assert.JSONEq(t, `"all"`, string(result.Invocation.Arguments["section"]))
-		}
-	}
-}
-
 func TestGameSnapshotsNormalizedInvocationBeforeExecution(t *testing.T) {
 	scene := &debugDispatchTestScene{mutateArguments: true}
 	game := NewGame(scene)

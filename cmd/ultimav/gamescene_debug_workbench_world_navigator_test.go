@@ -412,35 +412,6 @@ func TestWorldPositionSetRejectsStaleReviewsWithoutPartialMutation(t *testing.T)
 	})
 }
 
-func TestWorldPositionScenarioRuntimeReviewUsesCurrentState(t *testing.T) {
-	scene := newWorldNavigatorDebugTestScene(t)
-	catalog := debugging.NewInitialCatalog()
-	worldDefinition, ok := catalog.Get(debugging.CommandWorldPositionSet)
-	require.True(t, ok)
-	worldRequest := worldPositionSetDebugRequest(
-		scene.gameState,
-		references.Minoc,
-		0,
-		references.Position{X: 15, Y: 30},
-	)
-	worldRequest.Arguments["expectedLocationId"] = json.RawMessage(`0`)
-	worldRequest.Arguments["expectedFloor"] = json.RawMessage(`7`)
-	worldRequest.Arguments["expectedX"] = json.RawMessage(`1`)
-	worldRequest.Arguments["expectedY"] = json.RawMessage(`2`)
-	worldRequest.Arguments["expectedSourceFingerprint"] = json.RawMessage(`"persisted"`)
-
-	resolvedWorld, err := scene.ResolveScenarioRuntimeParameters(worldRequest, worldDefinition)
-	require.NoError(t, err)
-	assert.JSONEq(t, strconv.Itoa(int(references.Britain)), string(resolvedWorld.Arguments["expectedLocationId"]))
-	assert.JSONEq(t, `0`, string(resolvedWorld.Arguments["expectedFloor"]))
-	assert.JSONEq(t, `10`, string(resolvedWorld.Arguments["expectedX"]))
-	assert.JSONEq(t, `11`, string(resolvedWorld.Arguments["expectedY"]))
-	assert.JSONEq(t, string(mustDebugJSON(debugWorldSourceFingerprint(scene.gameState))), string(resolvedWorld.Arguments["expectedSourceFingerprint"]))
-	worldResult := scene.ExecuteDebugCommand(resolvedWorld)
-	require.True(t, worldResult.Success, worldResult.ErrorMessage)
-
-}
-
 func TestDungeonSetupChangesReportWandererSemantically(t *testing.T) {
 	before := dungeonAuthoritySnapshot{
 		Active: true,

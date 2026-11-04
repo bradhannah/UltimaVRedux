@@ -191,7 +191,7 @@ func TestServerDiscoversCatalogAndCompletesCommand(t *testing.T) {
 	require.NoError(t, json.Unmarshal(catalogMessage.Payload, &catalog))
 	assert.Equal(t, uint64(7), catalog.SceneGeneration)
 	assert.Equal(t, uint64(3), catalog.OptionsRevision)
-	assert.Len(t, catalog.Commands, 133)
+	assert.Len(t, catalog.Commands, len(control.DebugDiscoverySnapshot().Commands))
 	require.Len(t, catalog.OptionSets, 2)
 	expectedSnapshot, err := json.Marshal(control.DebugDiscoverySnapshot())
 	require.NoError(t, err)

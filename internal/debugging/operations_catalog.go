@@ -2,9 +2,6 @@ package debugging
 
 const (
 	commandCategoryDiagnostics = "Diagnostics"
-	commandCategoryDisplay     = "Display"
-	debugDisplayModeMaximized  = "maximized"
-	debugDisplayModeFullscreen = "fullscreen"
 
 	// CommandGuardsStatus reports current town-guard availability and hostility.
 	CommandGuardsStatus = "guards.status"
@@ -24,18 +21,9 @@ const (
 	CommandUnlimitedCastingResourcesSet = "magic.unlimited-casting-resources.set"
 	// CommandSpellLevelRestrictionsBypassSet explicitly enables or disables spell-circle level enforcement.
 	CommandSpellLevelRestrictionsBypassSet = "magic.spell-level-restrictions-bypass.set"
-	// CommandDisplayStatus reports requested and observed runtime display state.
-	CommandDisplayStatus = "display.status"
-	// CommandDisplayModeSet requests one runtime game-window mode.
-	CommandDisplayModeSet = "display.mode.set"
-	// CommandDisplayResolutionSet requests one runtime game-window preset.
-	CommandDisplayResolutionSet = "display.resolution.set"
-	// CommandDisplayFullscreenSet is the compatibility runtime fullscreen toggle.
-	CommandDisplayFullscreenSet = "display.fullscreen.set"
 )
 
 func operationalCommands() []CommandDefinition {
-	minimumResolution, maximumResolution := 0, 4
 	setBoolean := func(id, category, name, description string, aliases []string, mode ExecutionMode) CommandDefinition {
 		return CommandDefinition{
 			ID: id, Category: category, Name: name, Description: description, Aliases: aliases,
@@ -57,37 +45,5 @@ func operationalCommands() []CommandDefinition {
 		setBoolean(CommandDialogBoundsSet, commandCategoryDiagnostics, "Set Dialog Bounds", "Show or hide dialog text-area bounds in the game window.", []string{"debug dialog boxes"}, ExecutionPresentation),
 		setBoolean(CommandUnlimitedCastingResourcesSet, "Magic", "Set Unlimited Casting Resources", "Cast without prepared spells or current MP consumption while preserving magical-ability requirements.", []string{"unlimited magic", "infinite spells", "infinite mp"}, ExecutionLiveSafe),
 		setBoolean(CommandSpellLevelRestrictionsBypassSet, "Magic", "Set Spell Level Bypass", "Allow magical characters to cast spells above their current level.", []string{"all spell circles", "ignore spell level"}, ExecutionLiveSafe),
-		{ID: CommandDisplayStatus, Category: commandCategoryDisplay, Name: "Game Window Display", Description: "Inspect requested and observed runtime game-window modes and dimensions.", ExecutionModes: []ExecutionMode{ExecutionQuery}},
-		{
-			ID: CommandDisplayResolutionSet, Category: commandCategoryDisplay, Name: "Set Game Window Resolution",
-			Description: "Request one supported runtime window size without changing player display settings.", Aliases: []string{"screen ru", "screen rd"},
-			Parameters: []ParameterDefinition{{
-				ID: "index", Name: "Resolution", Kind: ParameterInteger, Required: true,
-				Minimum: &minimumResolution, Maximum: &maximumResolution, ControlHint: controlHintSelect,
-				Availability: []string{contextGameplay},
-			}},
-			ExecutionModes: []ExecutionMode{ExecutionPresentation},
-		},
-		setBoolean(CommandDisplayFullscreenSet, commandCategoryDisplay, "Set Game Window Fullscreen", "Compatibility control that requests runtime fullscreen or windowed mode without changing player display settings.", []string{"screen fs"}, ExecutionPresentation),
 	}
-}
-
-// displayModeCommands is appended separately to preserve the stable catalog
-// ordering of every command that predates display.mode.set.
-func displayModeCommands() []CommandDefinition {
-	return []CommandDefinition{{
-		ID: CommandDisplayModeSet, Category: commandCategoryDisplay, Name: "Set Game Window Mode",
-		Description: "Request a runtime game-window mode without changing player display settings.",
-		Aliases:     []string{"screen mode"},
-		Parameters: []ParameterDefinition{{
-			ID: "mode", Name: "Display Mode", Kind: ParameterEnum, Required: true,
-			Choices: []Choice{
-				{Value: "windowed", Label: "Windowed"},
-				{Value: debugDisplayModeMaximized, Label: "Maximized Window"},
-				{Value: debugDisplayModeFullscreen, Label: "Borderless Fullscreen"},
-			},
-			ControlHint: controlHintSelect, Availability: []string{contextGameplay},
-		}},
-		ExecutionModes: []ExecutionMode{ExecutionPresentation},
-	}}
 }

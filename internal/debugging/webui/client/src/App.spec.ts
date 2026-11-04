@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import App from "./App.vue"
 import initialCatalog from "./initial_catalog.fixture.json"
-import { sessionReady, successfulQueryCompletion, calendarStatusCompletion, scenarioStatusCompletion, inventoryLockerCompletion } from "./app_test_fixtures"
+import { sessionReady, successfulQueryCompletion, calendarStatusCompletion, testSetupStatusCompletion, inventoryLockerCompletion } from "./app_test_fixtures"
 
 type Listener = (event: { data?: string; code?: number; reason?: string }) => void
 
@@ -128,7 +128,7 @@ describe("debug workbench connection", () => {
     expect(root.querySelector("[data-locker-review-apply]")).toBeNull()
     visibility.mockRestore()
     document.dispatchEvent(new Event("visibilitychange"))
-    await openWorkspace("codex")
+    await openWorkspace("system")
     await openWorkspace("home")
     await openWorkspace("game")
     expect(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]')?.value).toBe("555")
@@ -142,7 +142,7 @@ describe("debug workbench connection", () => {
   })
 
 	it("opens Home on every launch while preserving the saved instrument and history state", async () => {
-		localStorage.setItem("u5r-debug-workbench-workspace", "codex")
+		localStorage.setItem("u5r-debug-workbench-workspace", "game")
 		localStorage.setItem("u5r-debug-workbench-instrument", "shrine.status")
 		localStorage.setItem("u5r-debug-workbench-history-collapsed", "true")
 		mountApp()
@@ -155,10 +155,10 @@ describe("debug workbench connection", () => {
 		expect(root.querySelector('[data-workspace="home"]')?.getAttribute("aria-current")).toBe("page")
 		expect(root.querySelector("[data-home-workspace]")).not.toBeNull()
 		expect(root.querySelector(".instrument-title-row")).toBeNull()
-		await openWorkspace("codex")
+		await openWorkspace("game")
 		expect(root.querySelector('[data-command-select="shrine.status"]')?.getAttribute("aria-current")).toBe("true")
-		expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Reference")
-		expect(root.querySelector(".instrument-title-row .execution-mode")?.textContent).toContain("IMMUTABLE REFERENCE")
+		expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Progress")
+		expect(root.querySelector(".instrument-title-row .execution-mode")?.textContent).toContain("LIVE STATE + EXPLICIT ALTERATION")
 		expect(root.querySelector(".history-panel")?.classList.contains("collapsed")).toBe(true)
 		expect(root.querySelector(".history-panel .stream-actions button")?.textContent).toBe("EXPAND HISTORY")
 	})
@@ -170,7 +170,7 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("codex")
+		await openWorkspace("game")
 		click('button[data-command-select="shrine.status"]')
 		click(".history-panel .stream-actions button")
 		await flushUI()
@@ -181,7 +181,7 @@ describe("debug workbench connection", () => {
 	})
 
 	it("opens a recent Home surface and automatically loads its read-only query", async () => {
-		localStorage.setItem("u5r-debug-workbench-navigation-recents", JSON.stringify(["codex:shrine.status"]))
+		localStorage.setItem("u5r-debug-workbench-navigation-recents", JSON.stringify(["game:shrine.status"]))
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
@@ -189,40 +189,15 @@ describe("debug workbench connection", () => {
 		connection.message(formCatalogSnapshot())
 		await flushUI()
 
-		expect(root.querySelector('[data-home-recent="codex:shrine.status"]')?.textContent).toContain("Shrine Reference")
+		expect(root.querySelector('[data-home-recent="game:shrine.status"]')?.textContent).toContain("Shrine Progress")
 		const sentBeforeNavigation = connection.sent.length
-		click('[data-home-recent="codex:shrine.status"]')
+		click('[data-home-recent="game:shrine.status"]')
 		await flushUI()
 
-		expect(root.querySelector('[data-workspace="codex"]')?.getAttribute("aria-current")).toBe("page")
+		expect(root.querySelector('[data-workspace="game"]')?.getAttribute("aria-current")).toBe("page")
 		expect(root.querySelector('[data-command-select="shrine.status"]')?.getAttribute("aria-current")).toBe("true")
 		expect(connection.sent).toHaveLength(sentBeforeNavigation + 1)
 		expect(executionForCommand(connection, "shrine.status").payload.arguments).toEqual({})
-	})
-
-	it("keeps an existing retained run on Home until Latest Run is opened", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		const runStatus = executionForCommand(connection, "scenario.run.status")
-		connection.message(successfulQueryCompletion(runStatus.id, "scenario.run.status", "Scenario run status loaded.", {
-			run: {
-				runId: "run-guard-test", definitionRevision: "a".repeat(64), startedAt: "2026-08-07T10:00:00Z", finishedAt: "2026-08-07T10:01:00Z", currentProcess: false,
-				reference: "project:guard-test", definitionId: "guard-test", baseline: { type: "current" }, state: "succeeded",
-				nextStep: 2, totalSteps: 2, initialSceneGeneration: 6, sceneGeneration: 7, steps: [],
-			}, runs: [], capacity: 20,
-		}))
-		await flushUI()
-
-		expect(root.querySelector('[data-workspace="home"]')?.getAttribute("aria-current")).toBe("page")
-		expect(root.querySelector(".home-latest-run")?.textContent).toContain("project:guard-test")
-		click("[data-home-open-latest-run]")
-		await flushUI()
-		expect(root.querySelector('[data-workspace="scenarios"]')?.getAttribute("aria-current")).toBe("page")
-		expect(root.querySelector('[data-scenario-screen="latest-run"]')).not.toBeNull()
 	})
 
 	it("shows an explicit failure when an automatically loaded reference query fails", async () => {
@@ -232,11 +207,13 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("codex")
-		const query = executionForCommand(connection, "combat.map-catalog.all")
+		await openWorkspace("game")
+		click('button[data-command-select="shrine.status"]')
+		await flushUI()
+		const query = executionForCommand(connection, "shrine.status")
 		connection.message({
 			version: 1, id: query.id, type: "command.failed", payload: {
-				sessionId: "session-1", requestId: query.id, commandId: "combat.map-catalog.all", sceneGeneration: 1,
+				sessionId: "session-1", requestId: query.id, commandId: "shrine.status", sceneGeneration: 1,
 				success: false, errorCode: "reference_load_failed", errorMessage: "missing reference data",
 			},
 		})
@@ -496,26 +473,6 @@ describe("debug workbench connection", () => {
     expect(connection.readyState).toBe(MockWebSocket.OPEN)
   })
 
-  it("loads combat reference automatically and applies section filters in place", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("codex")
-    const combatExecution = latestCommandExecution(connection)
-    expect(combatExecution.payload.arguments).toEqual({ section: "all" })
-    connection.message(combatCatalogCompletion(combatExecution.id))
-    await flushUI()
-
-    expect(root.querySelector(".combat-catalog")?.textContent).toContain("Camping")
-    expect(root.querySelector(".combat-catalog")?.textContent).toContain("deceit")
-    click('[data-map-section="dungeons"]')
-    await flushUI()
-    expect(latestCommandExecution(connection).payload.arguments).toEqual({ section: "dungeons" })
-  })
-
   it("hides integrated operations from the raw command workspace", async () => {
     mountApp()
     const connection = MockWebSocket.instances[0]
@@ -528,14 +485,13 @@ describe("debug workbench connection", () => {
 		const commandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((button) => button.dataset.commandSelect)
 		expect(commandIDs).toEqual([
 			"command-test.telescope",
+			"test-setup.status",
 			"combat.encounter.options",
 			"merchant.tester.catalog",
 		])
-		expect(commandIDs).not.toContain("scenario.status")
 		expect(commandIDs).not.toContain("command-test.spyglass")
 		expect(commandIDs).not.toContain("command-test.crystal-ball")
     expect(commandIDs).not.toContain("environment.wind.set")
-    expect(commandIDs).not.toContain("shrine.reference.inspect")
     expect(commandIDs).not.toContain("party.character.inspect")
 		expect(commandIDs).not.toContain("party.equipment.loadout.update")
 		expect(commandIDs).not.toContain("party.maximize-levels")
@@ -545,7 +501,6 @@ describe("debug workbench connection", () => {
     expect(commandIDs).not.toContain("calendar.set-time")
     expect(commandIDs).not.toContain("search.progress.reset")
     expect(commandIDs).not.toContain("quest.item.remove")
-    expect(commandIDs).not.toContain("movement.teleport")
 		expect(commandIDs).not.toContain("world.position.set")
     expect(commandIDs).not.toContain("moongate.status")
     expect(commandIDs).not.toContain("moongate.travel")
@@ -555,40 +510,16 @@ describe("debug workbench connection", () => {
     expect(commandIDs).not.toContain("ship.damage-raw")
 		expect(commandIDs).not.toContain("ship.skiff.set")
 		expect(commandIDs).not.toContain("movement.free-move.set")
-		expect(commandIDs).not.toContain("display.fullscreen.set")
-		expect(commandIDs).not.toContain("display.mode.set")
 		expect(commandIDs).not.toContain("guards.status")
 		expect(commandIDs).not.toContain("shadowlord.status")
     expect(commandIDs).not.toContain("death.status")
-		expect(commandIDs).not.toContain("movement.enter-location")
-		expect(commandIDs).not.toContain("movement.floor.set")
 		expect(commandIDs).not.toContain("movement.landmark.travel")
 		expect(commandIDs).not.toContain("party.karma.set")
-		expect(commandIDs).not.toContain("scenario.starvation.trigger")
-		expect(commandIDs).not.toContain("scenario.starvation.force-hourly")
-		expect(commandIDs).not.toContain("scenario.guards.activate")
-		expect(commandIDs).not.toContain("scenario.waterfall.setup")
-		expect(commandIDs).not.toContain("scenario.bridge-troll.start")
-		expect(commandIDs).not.toContain("scenario.word.setup")
-		expect(commandIDs).not.toContain("scenario.definition.list")
-		expect(commandIDs).not.toContain("scenario.definition.get")
-		expect(commandIDs).not.toContain("scenario.definition.validate")
-		expect(commandIDs).not.toContain("scenario.definition.create")
-		expect(commandIDs).not.toContain("scenario.definition.update")
-		expect(commandIDs).not.toContain("scenario.definition.delete")
-		expect(commandIDs).not.toContain("scenario.definition.duplicate")
-		expect(commandIDs).not.toContain("scenario.definition.save")
-		expect(commandIDs).not.toContain("scenario.run.start")
-		expect(commandIDs).not.toContain("scenario.run.status")
 		expect(commandIDs).not.toContain("command-test.hole-up")
 		expect(commandIDs).not.toContain("command-test.search")
 		expect(commandIDs).not.toContain("logging.categories.set-all")
 		expect(commandIDs).not.toContain("merchant.tester.preview.open")
 		expect(commandIDs).not.toContain("merchant.tester.live.open")
-
-		await openWorkspace("scenarios")
-		expect([...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((button) => button.dataset.commandSelect)).toEqual([])
-		expect(root.querySelector("[data-scenarios-workspace]")).not.toBeNull()
   })
 
 	it("exposes three independent party instruments by exact navigation and palette labels", async () => {
@@ -652,7 +583,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("codex")
+    await openWorkspace("game")
 
     const search = root.querySelector<HTMLInputElement>("#command-search")
     if (!search) throw new Error("missing command search")
@@ -679,7 +610,7 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
 
-    for (const workspace of ["scenarios", "saves"] as const) {
+    for (const workspace of ["system", "saves"] as const) {
       await openWorkspace(workspace)
       expect(root.querySelector("[data-command-palette-launcher]")).not.toBeNull()
     }
@@ -690,13 +621,13 @@ describe("debug workbench connection", () => {
     const input = root.querySelector<HTMLInputElement>("#command-palette-input")!
     expect(document.activeElement).toBe(input)
     expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(true)
-    setInputValue(input, "Shrine Reference")
+    setInputValue(input, "Shrine Progress")
     await flushUI()
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
     await flushUI()
 
-    expect(root.querySelector('[data-workspace="codex"]')?.getAttribute("aria-current")).toBe("page")
-    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Reference")
+    expect(root.querySelector('[data-workspace="game"]')?.getAttribute("aria-current")).toBe("page")
+    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Progress")
     expect(connection.sent).toHaveLength(sentBeforePalette + 1)
     expect(executionForCommand(connection, "shrine.status").payload.arguments).toEqual({})
     expect(root.querySelector("[data-command-palette]")).toBeNull()
@@ -783,367 +714,6 @@ describe("debug workbench connection", () => {
     await flushUI()
     expect(root.querySelectorAll(".result-entry")).toHaveLength(0)
     expect(root.querySelector(".operation-banner")).toBeNull()
-  })
-
-  it("chooses a named active scenario before recording and keeps the draft when history is cleared", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-
-    click('[data-history-action="record"]')
-    await flushUI()
-    expect(root.querySelector("[data-scenario-target-dialog]")).not.toBeNull()
-    click("[data-scenario-target-new]")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>("[data-scenario-target-name]"), "Camping Capture")
-    await flushUI()
-    click("[data-scenario-target-create]")
-    await flushUI()
-    connection.message(scenarioCapturedCompletion("capture-1"))
-    connection.message(scenarioCapturedCompletion("capture-1"))
-    await flushUI()
-
-		expect(root.querySelector('[data-workspace="scenarios"]')?.classList.contains("selected")).toBe(true)
-		expect(root.querySelector('[data-scenario-screen="editor"]')).not.toBeNull()
-		expect(root.querySelector('[data-active-scenario]')?.textContent).toContain("Camping Capture")
-		expect(root.querySelector('[data-active-scenario]')?.textContent).toContain("1 STEPS")
-		expect(root.querySelector('[data-active-scenario]')?.getAttribute("data-state")).toBe("recording")
-		expect(root.querySelector('[data-history-action="record"]')?.getAttribute("data-state")).toBe("recording")
-		expect(root.querySelector('[data-history-action="follow"]')?.getAttribute("role")).toBe("switch")
-		expect(root.querySelector('[data-history-action="follow"]')?.getAttribute("data-state")).toBe("active")
-		expect(root.querySelector('[data-scenario-screen="editor"]')?.contains(document.activeElement)).toBe(true)
-
-    expect(root.querySelectorAll("[data-scenario-step]")).toHaveLength(1)
-    expect(root.querySelector('[data-scenario-step="0"]')?.textContent).toContain("command-test.hole-up")
-    expect(root.querySelector('[data-scenario-step="0"]')?.textContent).toContain("8")
-    expect(root.querySelector('[data-scenario-step="0"]')?.textContent).toContain("true")
-
-    click('[data-history-action="clear"]')
-    await flushUI()
-    expect(root.querySelectorAll(".result-entry")).toHaveLength(0)
-    expect(root.querySelectorAll("[data-scenario-step]")).toHaveLength(1)
-  })
-
-  it("captures directly to the visible active target from any workspace", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    connection.message(scenarioCapturedCompletion("capture-direct-1"))
-    await flushUI()
-
-    click('[data-add-scenario="capture-direct-1"]')
-    await flushUI()
-    expect(root.querySelector("[data-scenario-target-dialog]")).not.toBeNull()
-    click("[data-scenario-target-new]")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>("[data-scenario-target-name]"), "Direct Capture")
-    await flushUI()
-    click("[data-scenario-target-create]")
-    await flushUI()
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("Direct Capture")
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("1 STEPS")
-
-    await openWorkspace("codex")
-    connection.message(scenarioCapturedCompletion("capture-direct-2"))
-    await flushUI()
-    expect(root.querySelector('[data-add-scenario="capture-direct-2"]')?.textContent).toContain("CAPTURE IN Direct Capture")
-    click('[data-add-scenario="capture-direct-2"]')
-    await flushUI()
-
-    expect(root.querySelector('[data-workspace="codex"]')?.classList.contains("selected")).toBe(true)
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("2 STEPS")
-    expect(root.querySelector('[data-add-scenario="capture-direct-2"]')?.textContent).toContain("CAPTURED IN Direct Capture")
-    expect(root.querySelector('[data-add-scenario="capture-direct-2"]')?.getAttribute("data-state")).toBe("completed")
-  })
-
-  it("queues normalized recording captures while scenario save is pending and flushes once without duplicates", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-
-    click('[data-history-action="record"]')
-    await flushUI()
-    click("[data-scenario-target-new]")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>("[data-scenario-target-name]"), "Deferred Capture")
-    await flushUI()
-    click("[data-scenario-target-create]")
-    await flushUI()
-    connection.message(scenarioCapturedCompletion("before-save"))
-    await flushUI()
-    click('[data-scenario-action="save"]')
-    const validate = executionForCommand(connection, "scenario.definition.validate")
-
-    connection.message(scenarioCapturedCompletion("during-save"))
-    connection.message(scenarioCapturedCompletion("during-save"))
-    await flushUI()
-    expect(root.querySelector('[data-add-scenario="during-save"]')?.getAttribute("data-state")).toBe("pending")
-    expect(root.querySelector('[data-add-scenario="during-save"]')?.textContent).toContain("CAPTURE QUEUED")
-    expect(root.querySelector('[data-history-action="record"]')?.getAttribute("data-state")).toBe("pending")
-
-    connection.message(successfulQueryCompletion(validate.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-    await flushUI()
-    const create = executionForCommand(connection, "scenario.definition.create")
-    connection.message(scenarioDefinitionSaveCompletion(create.id))
-    await flushUI()
-
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("2 STEPS")
-    expect(root.querySelector('[data-add-scenario="during-save"]')?.getAttribute("data-state")).toBe("completed")
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("UNSAVED")
-  })
-
-  it("loads a selected shared scenario as an unsaved active draft before capture", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    connection.message(scenarioCapturedCompletion("capture-project"))
-    await flushUI()
-
-    click('[data-add-scenario="capture-project"]')
-    const list = executionForCommand(connection, "scenario.definition.list")
-    connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-      definitions: [
-        { reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] },
-        { reference: "personal:other", source: "personal", id: "other", name: "Other", description: "Other scenario.", baseline: { type: "current" }, revision: "b".repeat(64), steps: [] },
-      ],
-    }))
-		await flushUI()
-
-    expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("SAVING REQUIRES SHARED-PROJECT REVIEW")
-		setInputValue(root.querySelector<HTMLInputElement>("[data-scenario-target-search]"), "typed")
-		await flushUI()
-		expect(root.querySelector('[data-scenario-target-reference="personal:other"]')).toBeNull()
-    click('[data-scenario-target-reference="project:typed-run"]')
-		await flushUI()
-		expect(root.querySelector("[data-scenario-target-placement]")?.textContent).toContain("Typed Run")
-		setSelectValue(root.querySelector<HTMLSelectElement>("[data-scenario-target-insertion]"), "0")
-		await flushUI()
-		click("[data-scenario-target-confirm]")
-    const get = executionForCommand(connection, "scenario.definition.get")
-    connection.message(scenarioDefinitionGetCompletion(get.id))
-    await flushUI()
-
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("Typed Run")
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("Project / Shared")
-    expect(root.querySelector("[data-active-scenario]")?.textContent).toContain("2 STEPS")
-    expect(root.querySelectorAll("[data-scenario-step]")).toHaveLength(2)
-		expect(root.querySelector('[data-scenario-step="0"]')?.textContent).toContain("command-test.hole-up")
-		expect(root.querySelector('[data-scenario-step="1"]')?.textContent).toContain("scenario.starvation.trigger")
-		expect(document.activeElement).toBe(root.querySelector('[data-scenario-step="0"]'))
-    expect(root.querySelector('[data-scenario-screen="editor"]')?.contains(document.activeElement)).toBe(true)
-
-    click("[data-active-scenario-change]")
-    await flushUI()
-    click('[data-scenario-target-reference="personal:other"]')
-    await flushUI()
-    expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("has unsaved changes")
-    expect(root.querySelector("[data-scenario-target-discard]")).not.toBeNull()
-  })
-
-	it("requires capture placement to match the loaded scenario revision", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		connection.message(scenarioCapturedCompletion("capture-stale-placement"))
-		await flushUI()
-
-		click('[data-add-scenario="capture-stale-placement"]')
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-target-reference="project:typed-run"]')
-		await flushUI()
-		click("[data-scenario-target-confirm]")
-		const get = executionForCommand(connection, "scenario.definition.get")
-		const changed = scenarioDefinitionGetCompletion(get.id) as { payload: { data: { revision: string } } }
-		changed.payload.data.revision = "c".repeat(64)
-		connection.message(changed)
-		await flushUI()
-
-		expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("changed after placement review")
-		expect(root.querySelector("[data-active-scenario]")).toBeNull()
-		expect(executionsForCommand(connection, "scenario.definition.list")).toHaveLength(2)
-	})
-
-	it("blocks capture target selection while another scenario definition is loading", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioCapturedCompletion("capture-during-get"))
-		await flushUI()
-
-		const capture = root.querySelector<HTMLButtonElement>('[data-add-scenario="capture-during-get"]')
-		expect(capture?.disabled).toBe(true)
-		expect(capture?.textContent).toContain("WAITING FOR SCENARIO LOAD")
-		capture?.click()
-		expect(root.querySelector("[data-scenario-target-dialog]")).toBeNull()
-
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-		expect(root.querySelector<HTMLButtonElement>('[data-add-scenario="capture-during-get"]')?.disabled).toBe(false)
-	})
-
-	it("keeps the capture chooser dismissible when a scenario load cannot be dispatched", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		connection.message(scenarioCapturedCompletion("capture-disconnected"))
-		await flushUI()
-		click('[data-add-scenario="capture-disconnected"]')
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-target-reference="project:typed-run"]')
-		await flushUI()
-
-		connection.close(1006, "test disconnect")
-		click("[data-scenario-target-confirm]")
-		await flushUI()
-
-		expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("could not be requested")
-		expect(root.querySelector<HTMLButtonElement>('[aria-label="Close scenario target dialog"]')?.disabled).toBe(false)
-	})
-
-	it("releases the capture chooser when a dispatched scenario load receives a protocol error", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		connection.message(scenarioCapturedCompletion("capture-protocol-error"))
-		await flushUI()
-		click('[data-add-scenario="capture-protocol-error"]')
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-target-reference="project:typed-run"]')
-		await flushUI()
-		click("[data-scenario-target-confirm]")
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message({ version: 1, id: get.id, type: "protocol.error", payload: { code: "request_rejected", message: "Scenario load rejected." } })
-		await flushUI()
-
-		expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("Scenario load rejected.")
-		expect(root.querySelector<HTMLButtonElement>('[aria-label="Close scenario target dialog"]')?.disabled).toBe(false)
-	})
-
-	it("releases the capture chooser when a dispatched scenario load loses its session", async () => {
-		mountApp()
-		const first = MockWebSocket.instances[0]
-		first.open()
-		first.message(sessionReady("session-1"))
-		first.message(formCatalogSnapshot())
-		first.message(scenarioCapturedCompletion("capture-session-lost"))
-		await flushUI()
-		click('[data-add-scenario="capture-session-lost"]')
-		const list = executionForCommand(first, "scenario.definition.list")
-		first.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-target-reference="project:typed-run"]')
-		await flushUI()
-		click("[data-scenario-target-confirm]")
-		executionForCommand(first, "scenario.definition.get")
-
-		first.close(1006, "connection lost")
-		await flushUI()
-		click(".telemetry button")
-		const second = MockWebSocket.instances[1]
-		second.open()
-		second.message(sessionReady("session-2", false))
-		await flushUI()
-
-		expect(root.querySelector("[data-scenario-target-dialog]")?.textContent).toContain("previous session was not resumed")
-		expect(root.querySelector<HTMLButtonElement>('[aria-label="Close scenario target dialog"]')?.disabled).toBe(false)
-	})
-
-  it("offers a viewed but inactive scenario as a Global History capture target", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("scenarios")
-
-    const list = executionForCommand(connection, "scenario.definition.list")
-    connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-      definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-    }))
-    await flushUI()
-    click('[data-scenario-reference="project:typed-run"]')
-    const get = executionForCommand(connection, "scenario.definition.get")
-    connection.message(scenarioDefinitionGetCompletion(get.id))
-    await flushUI()
-    expect(root.querySelector("[data-active-scenario]")).toBeNull()
-
-    connection.message(scenarioCapturedCompletion("capture-viewed"))
-    await flushUI()
-    click('[data-add-scenario="capture-viewed"]')
-    await flushUI()
-
-    expect(root.querySelector('[data-scenario-target-reference="project:typed-run"]')?.textContent).toContain("Typed Run")
-  })
-
-  it("isolates keyboard focus and shortcuts while choosing a scenario target", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    connection.message(scenarioCapturedCompletion("capture-modal"))
-    await flushUI()
-
-    const addButton = root.querySelector<HTMLButtonElement>('[data-add-scenario="capture-modal"]')
-    addButton?.focus()
-    addButton?.click()
-    await flushUI()
-
-    const dialog = root.querySelector<HTMLElement>("[data-scenario-target-dialog]")
-    expect(dialog?.contains(document.activeElement)).toBe(true)
-    expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(true)
-    const sentBeforeF5 = connection.sent.length
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "F5", bubbles: true, cancelable: true }))
-    expect(connection.sent).toHaveLength(sentBeforeF5)
-
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }))
-    await flushUI()
-    expect(root.querySelector("[data-scenario-target-dialog]")).toBeNull()
-    expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(false)
-    expect(document.activeElement).toBe(addButton)
   })
 
   it("collapses and vertically resizes global history", async () => {
@@ -1411,34 +981,33 @@ describe("debug workbench connection", () => {
 		expect(root.querySelector(".loadout-editor")?.textContent).toContain("0 staged slots")
 	})
 
-	it("owns camping and explicitly confirms reviewed death quick setups", async () => {
+	it("owns camping and explicitly confirms reviewed death test setups", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("scenarios")
+		await openWorkspace("tools")
+		click('[data-command-select="test-setup.status"]')
 		await flushUI()
-		click('[data-scenario-task="quick-setups"]')
-		await flushUI()
-		const status = executionForCommand(connection, "scenario.status")
-		connection.message(scenarioStatusCompletion(status.id))
+		const status = executionForCommand(connection, "test-setup.status")
+		connection.message(testSetupStatusCompletion(status.id))
 		await flushUI()
 
-		expect(root.querySelector(".scenario-lab")?.textContent).toContain("Scenarios")
-		expect(root.querySelector(".scenario-utility-note")?.textContent).toContain("IMMUTABLE BUILT-IN TEST UTILITIES")
+		expect(root.querySelector(".test-setups")?.textContent).toContain("Test Setups")
+		expect(root.querySelector(".test-setups-note")?.textContent).toContain("BUILT-IN UTILITIES")
 		root.querySelector<HTMLButtonElement>(".hole-up-card button")?.click()
 		const holeUpExecution = executionForCommand(connection, "command-test.hole-up")
 		expect(holeUpExecution.payload.arguments).toEqual({
 			hours: 8, forceWanderer: false, forceAmbush: false, expectedPartyFingerprint: "party-1",
 		})
-		const scenarioRefreshes = executionsForCommand(connection, "scenario.status").length
+		const statusRefreshes = executionsForCommand(connection, "test-setup.status").length
 		connection.message(successfulMutationCompletion(holeUpExecution.id, "command-test.hole-up", "workflow"))
 		await flushUI()
-		expect(executionsForCommand(connection, "scenario.status")).toHaveLength(scenarioRefreshes + 1)
-		const refreshedScenario = executionForCommand(connection, "scenario.status")
-		connection.message(scenarioStatusCompletion(refreshedScenario.id))
+		expect(executionsForCommand(connection, "test-setup.status")).toHaveLength(statusRefreshes + 1)
+		const refreshedStatus = executionForCommand(connection, "test-setup.status")
+		connection.message(testSetupStatusCompletion(refreshedStatus.id))
 		await flushUI()
 		const rawCommandIDs = Array.from(root.querySelectorAll<HTMLElement>('[data-command-select]')).map((element) => element.dataset.commandSelect)
 		expect(rawCommandIDs).not.toContain("death.kill-party")
@@ -1450,10 +1019,10 @@ describe("debug workbench connection", () => {
 		killButton?.click()
 		const kill = executionForCommand(connection, "death.kill-party")
 		expect(kill.payload.arguments).toEqual({ expectedFingerprint: "wipe-1" })
-		const scenarioRefreshesBeforeWipe = executionsForCommand(connection, "scenario.status").length
+		const statusRefreshesBeforeWipe = executionsForCommand(connection, "test-setup.status").length
 		connection.message(successfulMutationCompletion(kill.id, "death.kill-party", "synchronized_live"))
 		await flushUI()
-		expect(executionsForCommand(connection, "scenario.status")).toHaveLength(scenarioRefreshesBeforeWipe + 1)
+		expect(executionsForCommand(connection, "test-setup.status")).toHaveLength(statusRefreshesBeforeWipe + 1)
 		expect(executionsForCommand(connection, "death.status")).toHaveLength(1)
 
 		const sequenceButton = root.querySelector<HTMLButtonElement>(".death-sequence-card button")
@@ -1462,465 +1031,6 @@ describe("debug workbench connection", () => {
 		expect(sequenceButton?.textContent).toContain("CONFIRM WIPE + WORKFLOW")
 		sequenceButton?.click()
 		expect(executionForCommand(connection, "death.test-sequence").payload.arguments).toEqual({ expectedFingerprint: "wipe-1" })
-	})
-
-	it("loads details, revision-safely updates, reviews, and launches a source-qualified scenario", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		await flushUI()
-
-		const initialList = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(initialList.id, "scenario.definition.list", "Listed 1 scenario definitions.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		const initialRunStatus = executionForCommand(connection, "scenario.run.status")
-		connection.message(silentScenarioRunStatusCompletion(initialRunStatus.id))
-		await flushUI()
-
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="details"]')?.textContent).toContain("project:typed-run")
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="id"]')?.value).toBe("typed-run")
-		click('[data-history-action="record"]')
-
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Typed Run Updated")
-		await flushUI()
-		click('[data-scenario-action="save"]')
-		await flushUI()
-		click('[data-scenario-action="confirm-project-write"]')
-		const validate = executionForCommand(connection, "scenario.definition.validate")
-		await flushUI()
-		expect(root.querySelector<HTMLFieldSetElement>(".scenario-composer-form")?.disabled).toBe(true)
-		expect(root.querySelector<HTMLButtonElement>("[data-active-scenario-change]")?.disabled).toBe(true)
-		connection.message(scenarioCapturedCompletion("capture-during-save"))
-		await flushUI()
-		expect(root.querySelectorAll("[data-scenario-step]")).toHaveLength(1)
-		expect(root.querySelector('[data-add-scenario="capture-during-save"]')?.textContent).toContain("CAPTURE QUEUED UNTIL SAVE COMPLETES")
-		expect(JSON.parse(validate.payload.arguments.definition as string)).toEqual({
-			schemaVersion: 2,
-			id: "typed-run",
-			name: "Typed Run Updated",
-			description: "Typed values.",
-			baseline: { type: "current" },
-			parameters: [{ id: "seed", name: "Seed", kind: "integer", required: true, default: 3, minimum: 0, maximum: 99 }],
-			steps: [{ type: "command", commandId: "scenario.starvation.trigger", arguments: { seed: { parameter: "seed" } } }],
-		})
-		connection.message(successfulQueryCompletion(validate.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-		const save = executionForCommand(connection, "scenario.definition.update")
-		expect(save.payload.arguments.reference).toBe("project:typed-run")
-		expect(save.payload.arguments.expectedRevision).toBe("a".repeat(64))
-		const listsBeforeSave = executionsForCommand(connection, "scenario.definition.list").length
-		connection.message(scenarioDefinitionSaveCompletion(save.id, "scenario.definition.update"))
-		await flushUI()
-		expect(executionsForCommand(connection, "scenario.definition.list")).toHaveLength(listsBeforeSave + 1)
-
-		// Deferred capture appends after the first save; that new step is not saved yet.
-		expect(root.querySelector<HTMLButtonElement>('[data-scenario-action="review-run"]')?.disabled).toBe(true)
-		expect(root.querySelector('[data-scenario-screen="details"]')?.textContent).toContain("SAVE FIRST")
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		expect(root.querySelectorAll("[data-scenario-step]")).toHaveLength(2)
-		click('[data-scenario-action="save"]')
-		await flushUI()
-		click('[data-scenario-action="confirm-project-write"]')
-		const capturedValidation = executionForCommand(connection, "scenario.definition.validate")
-		expect(JSON.parse(String(capturedValidation.payload.arguments.definition)).steps).toHaveLength(2)
-		connection.message(successfulQueryCompletion(capturedValidation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-		const capturedSave = executionForCommand(connection, "scenario.definition.update")
-		expect(capturedSave.payload.arguments.expectedRevision).toBe("b".repeat(64))
-		connection.message(scenarioDefinitionSaveCompletion(capturedSave.id, "scenario.definition.update", "c".repeat(64)))
-		await flushUI()
-
-		click('[data-scenario-action="review-run"]')
-		const runValidation = executionsForCommand(connection, "scenario.definition.validate").at(-1)
-		if (!runValidation) throw new Error("missing run validation")
-		connection.message(successfulQueryCompletion(runValidation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="run-review"]')?.textContent).toContain("MANDATORY REVIEW")
-		click('[data-scenario-action="confirm-run"]')
-		const run = executionForCommand(connection, "scenario.run.start")
-		expect(run.payload.arguments).toEqual({
-			reference: "project:typed-run",
-			expectedRevision: "c".repeat(64),
-			reviewedSceneGeneration: 7,
-			parameterValues: '{"seed":3}',
-		})
-	})
-
-	it("clears stale server validation issues when the scenario definition changes", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Changed before validation")
-		await flushUI()
-		click('[data-scenario-action="save"]')
-		await flushUI()
-		click('[data-scenario-action="confirm-project-write"]')
-		const validation = executionForCommand(connection, "scenario.definition.validate")
-		connection.message(successfulQueryCompletion(validation.id, "scenario.definition.validate", "Invalid.", {
-			valid: false,
-			issues: [{ path: "$.steps[0]", code: "argument.invalid", message: "Stored issue." }],
-		}))
-		await flushUI()
-		expect(root.querySelector("[data-scenario-validation-issues]")?.textContent).toContain("Stored issue.")
-
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Changed after validation")
-		await flushUI()
-		expect(root.querySelector("[data-scenario-validation-issues]")).toBeNull()
-	})
-
-	it("authorizes Library open, play, and create replacements at one dirty-draft boundary", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		const runStatus = executionForCommand(connection, "scenario.run.status")
-		connection.message(successfulQueryCompletion(runStatus.id, "scenario.run.status", "Loaded run history.", {
-			run: { runId: "run-typed", reference: "project:typed-run", definitionId: "typed-run", definitionRevision: "a".repeat(64), baseline: { type: "current" }, launch: { parameterValues: { seed: 77 }, baselineApplied: true }, state: "succeeded", startedAt: "2026-08-07T10:00:00Z", finishedAt: "2026-08-07T10:01:00Z", currentProcess: false, nextStep: 1, totalSteps: 1, initialSceneGeneration: 7, sceneGeneration: 7, steps: [] },
-			runs: [], capacity: 20,
-		}))
-		await flushUI()
-		await openWorkspace("scenarios")
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Protected Draft")
-		await flushUI()
-		await openWorkspace("home")
-		expect(root.querySelector("[data-scenario-replacement-dialog]")).toBeNull()
-		const homePlay = root.querySelector<HTMLButtonElement>('[data-home-play="project:typed-run"]')!
-		homePlay.focus()
-		homePlay.click()
-		await flushUI()
-		expect(root.querySelector("[data-scenario-replacement-dialog]")?.textContent).toContain("Protected Draft")
-		expect(root.querySelector("[data-scenario-replacement-dialog]")?.contains(document.activeElement)).toBe(true)
-		expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(true)
-		window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true }))
-		expect(root.querySelector(".command-palette-modal")).toBeNull()
-		expect(executionsForCommand(connection, "scenario.definition.get")).toHaveLength(1)
-		window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }))
-		await flushUI()
-		expect(root.querySelector("[data-scenario-replacement-dialog]")).toBeNull()
-		expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(false)
-		expect(document.activeElement).toBe(homePlay)
-
-		await openWorkspace("scenarios")
-		click('[data-scenario-task="library"]')
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="library"]')).not.toBeNull()
-		click('[data-scenario-reference="project:typed-run"]')
-		await flushUI()
-		expect(root.querySelector("[data-scenario-replacement-dialog]")?.textContent).toContain("Protected Draft")
-		expect(executionsForCommand(connection, "scenario.definition.get")).toHaveLength(1)
-		click("[data-scenario-replacement-cancel]")
-
-		click('[data-scenario-play="project:typed-run"]')
-		await flushUI()
-		expect(root.querySelector("[data-scenario-replacement-dialog]")).not.toBeNull()
-		expect(executionsForCommand(connection, "scenario.definition.get")).toHaveLength(1)
-		click("[data-scenario-replacement-cancel]")
-
-		click('[data-scenario-action="new-personal"]')
-		await flushUI()
-		expect(root.querySelector("[data-scenario-replacement-dialog]")).not.toBeNull()
-		click("[data-scenario-replacement-discard]")
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="editor"]')).not.toBeNull()
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]')?.value).toBe("New Scenario")
-	})
-
-	it("does not let a delayed scenario Get replace a newer draft", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-action="new-personal"]')
-		await flushUI()
-		click('[data-scenario-action="add-note"]')
-		click('[data-scenario-task="library"]')
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		await flushUI()
-		click("[data-scenario-replacement-discard]")
-		const get = executionForCommand(connection, "scenario.definition.get")
-
-		click("[data-active-scenario-edit]")
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Newer Local Intent")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]')?.value).toBe("Newer Local Intent")
-		expect(root.querySelector('[data-scenario-screen="details"]')).toBeNull()
-	})
-
-	it("warns before unloading a dirty scenario draft", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		click('[data-scenario-action="new-personal"]')
-		await flushUI()
-		click('[data-scenario-action="add-note"]')
-		const event = new Event("beforeunload", { cancelable: true })
-
-		window.dispatchEvent(event)
-
-		expect(event.defaultPrevented).toBe(true)
-	})
-
-	it("acknowledges replayed Get, Save, Validate, and Start completions without repeating UI effects", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		const getCompletion = scenarioDefinitionGetCompletion(get.id)
-		connection.message(getCompletion)
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Typed Run Updated")
-		connection.message(getCompletion)
-		await flushUI()
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]')?.value).toBe("Typed Run Updated")
-
-		click('[data-scenario-action="save"]')
-		await flushUI()
-		click('[data-scenario-action="confirm-project-write"]')
-		const saveValidation = executionForCommand(connection, "scenario.definition.validate")
-		connection.message(successfulQueryCompletion(saveValidation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-		const save = executionForCommand(connection, "scenario.definition.update")
-		const saveCompletion = scenarioDefinitionSaveCompletion(save.id, "scenario.definition.update")
-		connection.message(saveCompletion)
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Edit After Save")
-		connection.message(saveCompletion)
-		await flushUI()
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]')?.value).toBe("Edit After Save")
-
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Typed Run Updated")
-		click('[data-scenario-action="editor-back"]')
-		await flushUI()
-		click('[data-scenario-action="review-run"]')
-		const runValidation = executionsForCommand(connection, "scenario.definition.validate").at(-1)
-		if (!runValidation) throw new Error("missing run validation")
-		const validationCompletion = successfulQueryCompletion(runValidation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] })
-		connection.message(validationCompletion)
-		await flushUI()
-		click('[data-scenario-screen="run-review"] .scenario-detail-actions button:last-child')
-		connection.message(validationCompletion)
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="details"]')).not.toBeNull()
-
-		click('[data-scenario-action="review-run"]')
-		const finalValidation = executionsForCommand(connection, "scenario.definition.validate").at(-1)
-		if (!finalValidation) throw new Error("missing final run validation")
-		connection.message(successfulQueryCompletion(finalValidation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-		click('[data-scenario-action="confirm-run"]')
-		const start = executionForCommand(connection, "scenario.run.start")
-		const startCompletion = successfulQueryCompletion(start.id, "scenario.run.start", "Started.", {
-			run: { runId: "run-replay", reference: "project:typed-run", definitionId: "typed-run", definitionRevision: "b".repeat(64), baseline: { type: "current" }, state: "queued", startedAt: "2026-08-07T10:00:00Z", currentProcess: true, nextStep: 1, totalSteps: 1, initialSceneGeneration: 7, sceneGeneration: 7, steps: [] },
-			runs: [], capacity: 20,
-		})
-		connection.message(startCompletion)
-		await flushUI()
-		click('[data-scenario-task="library"]')
-		connection.message(startCompletion)
-		await flushUI()
-		expect(root.querySelector('[data-scenario-screen="library"]')).not.toBeNull()
-
-		for (const requestID of [get.id, save.id, runValidation.id, start.id]) {
-			const acknowledgements = connection.sent.filter((message) => {
-				const parsed = JSON.parse(message) as { type: string; payload?: { requestId?: string } }
-				return parsed.type === "command.ack" && parsed.payload?.requestId === requestID
-			})
-			expect(acknowledgements).toHaveLength(2)
-		}
-	})
-
-	it("opens populated mandatory Review from Library play without starting before confirmation", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-
-		click('[data-scenario-play="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-		const validation = executionForCommand(connection, "scenario.definition.validate")
-		connection.message(successfulQueryCompletion(validation.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-
-		expect(executionsForCommand(connection, "scenario.run.start")).toHaveLength(0)
-		expect(root.querySelector('[data-scenario-screen="run-review"]')).not.toBeNull()
-		connection.message(scenarioStatusCompletion(executionForCommand(connection, "scenario.status").id))
-		await flushUI()
-		click('[data-scenario-action="confirm-run"]')
-		await flushUI()
-		const run = executionForCommand(connection, "scenario.run.start")
-		expect(run.payload.arguments).toEqual({
-			reference: "project:typed-run",
-			expectedRevision: "a".repeat(64),
-			reviewedSceneGeneration: 7,
-			parameterValues: '{"seed":3}',
-		})
-		expect(root.querySelector('[data-scenario-screen="run-review"]')).toBeNull()
-	})
-
-	it("rejects a retained scenario Start control after the saved definition is edited", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		connection.message(successfulQueryCompletion(executionForCommand(connection, "scenario.definition.list").id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-play="project:typed-run"]')
-		connection.message(scenarioDefinitionGetCompletion(executionForCommand(connection, "scenario.definition.get").id))
-		await flushUI()
-		connection.message(successfulQueryCompletion(executionForCommand(connection, "scenario.definition.validate").id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		connection.message(scenarioStatusCompletion(executionForCommand(connection, "scenario.status").id))
-		await flushUI()
-		const staleStart = root.querySelector<HTMLButtonElement>('[data-scenario-action="confirm-run"]')!
-		expect(staleStart).not.toBeNull()
-		expect(staleStart.disabled).toBe(false)
-		click('[data-scenario-screen="run-review"] .scenario-detail-actions button:last-child')
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Unsaved changed plan")
-		await flushUI()
-		// Exercise the retained handler as well as the visible disabled control.
-		staleStart.click()
-		await flushUI()
-		expect(root.querySelector("[data-owner-error]")?.textContent).toContain("before starting a run")
-		expect(executionsForCommand(connection, "scenario.run.start")).toHaveLength(0)
-	})
-
-	it("does not rearm rollback review from a delayed response after navigation", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		const run = {
-			runId: "rollback-run", reference: "personal:typed-run", definitionId: "typed-run", definitionRevision: "a".repeat(64),
-			baseline: { type: "current" }, rollback: { reference: "rollback:before", revision: "b".repeat(64) },
-			state: "succeeded", currentProcess: true, startedAt: "2026-08-07T10:00:00Z", finishedAt: "2026-08-07T10:01:00Z",
-			initialSceneGeneration: 7, sceneGeneration: 7, nextStep: 1, totalSteps: 1, steps: [],
-		}
-		connection.message(successfulQueryCompletion(executionForCommand(connection, "scenario.run.status").id, "scenario.run.status", "Runs.", { run, runs: [run], capacity: 20 }))
-		await flushUI()
-		click('[data-home-run="rollback-run"]')
-		await flushUI()
-		click("[data-scenario-review-rollback]")
-		await flushUI()
-		const oldRequest = executionForCommand(connection, "save.snapshot.get")
-		expect(oldRequest.payload.arguments).toEqual({ reference: "rollback:before" })
-		await openWorkspace("home")
-		await openWorkspace("saves")
-		const snapshot = {
-			summary: { reference: "rollback:before", source: "rollback", id: "before", name: "Before", description: "Rollback fixture",
-				revision: "b".repeat(64), createdAt: "2026-08-07T10:00:00Z", gameVersion: "test",
-				compatibility: { compatible: true }, eligibility: { canCapture: true, canLoad: true, canDelete: true } },
-			locationName: "Britain", location: 2, floor: 0, x: 1, y: 1, year: 138, month: 7, day: 12,
-			hour: 16, minute: 15, partyMembers: 1, moonPhaseIndex: 1, moonPhase: "Crescent Waxing",
-		}
-		connection.message(successfulQueryCompletion(oldRequest.id, "save.snapshot.get", "Snapshot.", { snapshot }))
-		await flushUI()
-		expect(root.querySelector(".save-detail-header")?.textContent).toContain("rollback:before")
-		expect(root.querySelector('[data-save-review="load"]')).toBeNull()
-		expect(executionsForCommand(connection, "save.snapshot.load")).toHaveLength(0)
-		// A new explicit handoff must still work; rejecting every response is not a fix.
-		await openWorkspace("home")
-		click('[data-home-run="rollback-run"]')
-		await flushUI()
-		click("[data-scenario-review-rollback]")
-		await flushUI()
-		const freshRequest = executionForCommand(connection, "save.snapshot.get")
-		expect(freshRequest.id).not.toBe(oldRequest.id)
-		connection.message(successfulQueryCompletion(freshRequest.id, "save.snapshot.get", "Snapshot.", { snapshot }))
-		await flushUI()
-		expect(root.querySelector('[data-save-review="load"]')).not.toBeNull()
-		expect(executionsForCommand(connection, "save.snapshot.load")).toHaveLength(0)
 	})
 
 	it("owns all snapshot commands in the Saves workspace and refreshes scene-bound status after load", async () => {
@@ -1967,117 +1077,6 @@ describe("debug workbench connection", () => {
 		await flushUI()
 		expect(executionsForCommand(connection, "calendar.status").length).toBeGreaterThan(calendarBefore)
 		expect(executionsForCommand(connection, "save.snapshot.list").length).toBeGreaterThan(savesBefore)
-	})
-
-	it("uses a snapshot baseline without replacing dirty active-scenario draft fields", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-		const scenarios = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(scenarios.id, "scenario.definition.list", "Listed.", {
-			definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }],
-		}))
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		const getScenario = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(getScenario.id))
-		await flushUI()
-		click('[data-scenario-action="edit"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]'), "Dirty Draft Name")
-		await flushUI()
-		setInputValue(root.querySelector<HTMLTextAreaElement>('[data-scenario-field="description"]'), "Unsaved draft description")
-		await flushUI()
-
-		await openWorkspace("saves")
-		const saves = executionForCommand(connection, "save.snapshot.list")
-		const summary = {
-			reference: "project:baseline", source: "project", id: "baseline", name: "Baseline", description: "Shared checkpoint",
-			createdAt: "2026-08-06T12:00:00Z", gameVersion: "test", revision: "c".repeat(64), compatibility: { compatible: true },
-			eligibility: { canCapture: true, canLoad: true, canDelete: true },
-		}
-		connection.message(successfulQueryCompletion(saves.id, "save.snapshot.list", "Listed.", {
-			captureEligibility: { canCapture: true, canLoad: true, canDelete: false }, snapshots: [summary],
-		}))
-		await flushUI()
-		click('[data-save-reference="project:baseline"]')
-		const getSave = executionForCommand(connection, "save.snapshot.get")
-		connection.message(successfulQueryCompletion(getSave.id, "save.snapshot.get", "Loaded.", { snapshot: {
-			summary, snapshotVersion: 1, location: 0, locationName: "Britannia", x: 10, y: 20, floor: 0, year: 100, month: 4, day: 12, hour: 9, minute: 30,
-			partyMembers: 6, moonPhase: "New Moon", moonPhaseIndex: 0,
-		} }))
-		await flushUI()
-		click('[data-save-action="review-baseline"]')
-		await flushUI()
-		click('[data-save-action="confirm-baseline"]')
-		await flushUI()
-
-		await openWorkspace("scenarios")
-		expect(root.querySelector<HTMLInputElement>('[data-scenario-field="name"]')?.value).toBe("Dirty Draft Name")
-		expect(root.querySelector<HTMLTextAreaElement>('[data-scenario-field="description"]')?.value).toBe("Unsaved draft description")
-		expect(root.querySelector<HTMLSelectElement>('[data-scenario-field="baseline"]')?.value).toBe("snapshot")
-		expect(root.querySelector<HTMLSelectElement>('[data-scenario-field="baseline-reference"]')?.value).toBe("project:baseline")
-	})
-
-	it("validates then creates a new personal scenario with the explicit create command", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-
-		click('[data-scenario-action="new-personal"]')
-		await flushUI()
-		click('[data-scenario-action="add-note"]')
-		await flushUI()
-		click('[data-scenario-action="save"]')
-		const validate = executionForCommand(connection, "scenario.definition.validate")
-		connection.message(successfulQueryCompletion(validate.id, "scenario.definition.validate", "Valid.", { valid: true, issues: [] }))
-		await flushUI()
-
-		const create = executionForCommand(connection, "scenario.definition.create")
-		expect(create.payload.arguments.source).toBe("personal")
-		expect(JSON.parse(create.payload.arguments.definition as string)).toMatchObject({ id: "new-scenario", name: "New Scenario", baseline: { type: "current" } })
-	})
-
-	it("duplicates reviewed revisions to Personal by default and requires the exact project ID for deletion", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("scenarios")
-
-		const list = executionForCommand(connection, "scenario.definition.list")
-		connection.message(successfulQueryCompletion(list.id, "scenario.definition.list", "Listed.", { definitions: [{ reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run", description: "Typed values.", baseline: { type: "current" }, revision: "a".repeat(64), steps: [] }] }))
-		await flushUI()
-		click('[data-scenario-reference="project:typed-run"]')
-		const get = executionForCommand(connection, "scenario.definition.get")
-		connection.message(scenarioDefinitionGetCompletion(get.id))
-		await flushUI()
-
-		click('[data-scenario-action="duplicate"]')
-		await flushUI()
-		click('[data-scenario-action="confirm-duplicate"]')
-		const duplicate = executionForCommand(connection, "scenario.definition.duplicate")
-		expect(duplicate.payload.arguments).toEqual({
-			sourceReference: "project:typed-run", sourceRevision: "a".repeat(64), destinationSource: "personal",
-			destinationId: "typed-run-copy", destinationName: "Typed Run Copy",
-		})
-
-		click('[data-scenario-action="delete"]')
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-scenario-delete-confirmation]'), "typed-run")
-		await flushUI()
-		click('[data-scenario-action="confirm-delete"]')
-		expect(executionForCommand(connection, "scenario.definition.delete").payload.arguments).toEqual({ reference: "project:typed-run", expectedRevision: "a".repeat(64) })
 	})
 
   it("clears dependent alterations and filters Avatar reorder destinations when the target changes", async () => {
@@ -2309,84 +1308,6 @@ describe("debug workbench connection", () => {
 		switches[4].dispatchEvent(new MouseEvent("click", { bubbles: true }))
 		const unlimited = executionForCommand(connection, "magic.unlimited-casting-resources.set")
 		expect(unlimited.payload.arguments).toEqual({ enabled: true })
-	})
-
-	it("owns runtime game-window mode, preset, and pending-state controls", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("system")
-		click('button[data-command-select="display.status"]')
-		await flushUI()
-		const status = executionForCommand(connection, "display.status")
-		const displayData = {
-			requestedMode: "windowed", actualMode: "windowed", transitionPending: false,
-			normalWindowWidth: 1280, normalWindowHeight: 720,
-			actualWindowWidth: 1280, actualWindowHeight: 720,
-			monitorWidth: 2560, monitorHeight: 1440,
-			containerWidth: 1280, containerHeight: 720,
-			logicalWidth: 1280, logicalHeight: 720,
-			deviceScaleFactor: 1.5, outputWidth: 1920, outputHeight: 1080,
-			presetResolutions: [{ index: 0, width: 1280, height: 720 }, { index: 1, width: 1366, height: 768 }],
-		}
-		connection.message(successfulQueryCompletion(status.id, "display.status", "Display loaded.", displayData))
-		await flushUI()
-		expect(root.querySelector('[aria-label="Game window display controls"]')?.textContent).toContain("Game canvas 1280 × 720 px")
-		expect(root.querySelector('[aria-label="Game window display controls"]')?.textContent).toContain("Display scale 1.5×")
-		expect(root.querySelector('[aria-label="Game window display controls"]')?.textContent).toContain("Final output 1920 × 1080 px")
-		expect(root.querySelector('[aria-label="Game window display controls"]')?.textContent).toContain("Runtime-only controls")
-
-		const mode = root.querySelector<HTMLSelectElement>("[data-display-mode]")
-		if (!mode) throw new Error("missing display mode selector")
-		expect([...mode.options].map((option) => option.textContent)).toEqual(["Windowed", "Maximized Window", "Borderless Fullscreen"])
-		mode.value = "maximized"
-		mode.dispatchEvent(new Event("change", { bubbles: true }))
-		await flushUI()
-		connection.message(successfulQueryCompletion("draft-mode-poll", "display.status", "Display loaded.", displayData))
-		await flushUI()
-		expect(mode.value).toBe("maximized")
-		click("[data-display-apply-mode]")
-		const modeRequest = executionForCommand(connection, "display.mode.set")
-		expect(modeRequest.payload.arguments).toEqual({ mode: "maximized" })
-		connection.message(successfulMutationCompletion(modeRequest.id, "display.mode.set", "presentation"))
-		await flushUI()
-		const refresh = executionForCommand(connection, "display.status")
-		connection.message(successfulQueryCompletion(refresh.id, "display.status", "Display loaded.", {
-			...displayData, requestedMode: "maximized", transitionPending: true,
-		}))
-		await flushUI()
-		expect(root.querySelector('[aria-label="Game window display controls"]')?.textContent).toContain("TRANSITION PENDING")
-		expect(root.querySelector<HTMLButtonElement>("[data-display-apply-mode]")?.disabled).toBe(true)
-		expect(root.querySelector<HTMLButtonElement>("[data-display-apply-resolution]")?.disabled).toBe(true)
-
-		connection.message(successfulQueryCompletion("observed-display", "display.status", "Display loaded.", {
-			...displayData, requestedMode: "maximized", actualMode: "maximized",
-		}))
-		await flushUI()
-		const resolution = root.querySelector<HTMLSelectElement>("[data-display-resolution]")
-		if (!resolution) throw new Error("missing resolution selector")
-		resolution.value = "1"
-		resolution.dispatchEvent(new Event("change", { bubbles: true }))
-		await flushUI()
-		connection.message(successfulQueryCompletion("draft-resolution-poll", "display.status", "Display loaded.", {
-			...displayData, requestedMode: "maximized", actualMode: "maximized",
-		}))
-		await flushUI()
-		expect(resolution.value).toBe("1")
-		click("[data-display-apply-resolution]")
-		const resolutionRequest = executionForCommand(connection, "display.resolution.set")
-		expect(resolutionRequest.payload.arguments).toEqual({ index: 1 })
-		connection.message(successfulMutationCompletion(resolutionRequest.id, "display.resolution.set", "presentation"))
-		await flushUI()
-
-		connection.message(successfulQueryCompletion("native-mode-change", "display.status", "Display loaded.", {
-			...displayData, requestedMode: "windowed", actualMode: "maximized",
-		}))
-		await flushUI()
-		expect(root.querySelector<HTMLButtonElement>("[data-display-apply-mode]")?.disabled).toBe(false)
 	})
 
 	it("owns hidden Guard, Shadowlord, and Death state in World Diagnostics", async () => {
@@ -2786,9 +1707,6 @@ describe("debug workbench connection", () => {
 			expectedLocationId: 0, expectedFloor: 0, expectedX: 104, expectedY: 105,
 			expectedSourceFingerprint: "world-source-3",
 		})
-		expect(executionsForCommand(connection, "movement.teleport")).toHaveLength(0)
-		expect(executionsForCommand(connection, "movement.enter-location")).toHaveLength(0)
-		expect(executionsForCommand(connection, "movement.floor.set")).toHaveLength(0)
 		const positionSet = executionForCommand(connection, "world.position.set")
 		await flushUI()
 		expect(root.querySelector('.navigator-form button[type="submit"]')?.textContent).toBe("APPLYING...")
@@ -2870,7 +1788,6 @@ describe("debug workbench connection", () => {
     connection.message(successfulMutationCompletion(travelExecution.id, "moongate.travel", "workflow"))
     await flushUI()
     expect(executionsForCommand(connection, "moongate.status")).toHaveLength(moongateRefreshes + 1)
-    const executionsBefore = executionsForCommand(connection, "movement.teleport").length
     click(".navigator-link")
     await flushUI()
     const navigatorStatus = executionForCommand(connection, "world.position.status")
@@ -2881,7 +1798,6 @@ describe("debug workbench connection", () => {
     expect(root.querySelector('[data-command-select="world.position.status"]')?.getAttribute("aria-current")).toBe("true")
     const linkedCoordinates = root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')
     expect([...linkedCoordinates].map((input) => input.value)).toEqual(["44", "55"])
-    expect(executionsForCommand(connection, "movement.teleport")).toHaveLength(executionsBefore)
   })
 
   it("shows Spirituality as a workflow route without a Navigator destination", async () => {
@@ -2910,7 +1826,7 @@ describe("debug workbench connection", () => {
     })
   })
 
-  it("separates shrine reference from editable progress while preserving selection", async () => {
+  it("reviews shrine quest-state presets and submits edited shrine progress", async () => {
     mountApp()
     const connection = MockWebSocket.instances[0]
     connection.open()
@@ -2921,7 +1837,7 @@ describe("debug workbench connection", () => {
     const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")]
       .map((element) => element.dataset.commandSelect)
     expect(rawCommandIDs).not.toContain("codex.quest-state.set-all")
-    await openWorkspace("codex")
+    await openWorkspace("game")
     click('button[data-command-select="shrine.status"]')
     await flushUI()
 
@@ -2929,15 +1845,8 @@ describe("debug workbench connection", () => {
       connection.message(shrineStatusCompletion(statusExecution.id))
     }
     await flushUI()
-    click('[data-shrine-index="7"]')
+    setControlValue("shrine-progress-selector", "7")
     await flushUI()
-
-    expect(root.querySelector(".shrine-reference-detail")?.textContent).toContain("VERAMOCOR")
-    expect(root.querySelector(".shrine-reference-detail")?.textContent).toContain("Current save progression belongs in Inspect")
-    expect((root.querySelector(".shrine-progress-inspector") as HTMLElement).style.display).toBe("none")
-    click(".shrine-reference-view .cross-workspace-link")
-    await flushUI()
-    expect(root.querySelector<HTMLSelectElement>("#shrine-progress-selector")?.value).toBe("7")
     expect(root.querySelector(".shrine-progress-inspector")?.textContent).toContain("AUTHORITATIVE CURRENT GAME STATE")
 
     const presetExecutionsBefore = executionsForCommand(connection, "codex.quest-state.set-all").length
@@ -2975,11 +1884,6 @@ describe("debug workbench connection", () => {
     connection.message(shrineStatusCompletion(pollExecution.id))
     await flushUI()
 
-    click(".shrine-progress-inspector .cross-workspace-link")
-    await flushUI()
-    expect(root.querySelector(".shrine-reference-detail")?.textContent).toContain("Humility")
-    click(".shrine-reference-view .cross-workspace-link")
-    await flushUI()
     expect(root.querySelector<HTMLSelectElement>("#shrine-quest-state")?.value).toBe("offering")
     click('[data-command-id="shrine.progress.update"]')
     const mutation = latestCommandExecution(connection)
@@ -3771,7 +2675,7 @@ function click(selector: string): void {
   element.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 }
 
-async function openWorkspace(workspace: "home" | "game" | "codex" | "system" | "scenarios" | "saves" | "tools" | "live" | "inspect" | "commands"): Promise<void> {
+async function openWorkspace(workspace: "home" | "game" | "system" | "saves" | "tools" | "live" | "inspect" | "commands"): Promise<void> {
 	const migrated = workspace === "live" || workspace === "inspect" ? "game" : workspace === "commands" ? "tools" : workspace
 	click(`[data-workspace="${migrated}"]`)
   await flushUI()
@@ -4255,83 +3159,6 @@ function failedCommandCompletion(requestId: string, commandId: string, errorCode
   }
 }
 
-function scenarioCapturedCompletion(requestId: string): object {
-  return {
-    version: 1,
-    id: requestId,
-    type: "command.completed",
-    payload: {
-      sessionId: "session-1",
-      requestId,
-      commandId: "command-test.hole-up",
-      sceneGeneration: 7,
-      invocation: {
-        commandId: "command-test.hole-up",
-        arguments: { hours: 8, forceWanderer: true, forceAmbush: false, expectedPartyFingerprint: "party-1" },
-      },
-      effectiveExecutionMode: "workflow",
-      success: true,
-      summary: "Camping workflow queued.",
-    },
-  }
-}
-
-function silentScenarioRunStatusCompletion(requestId: string): object {
-  return {
-    version: 1,
-    id: requestId,
-    type: "command.completed",
-    payload: {
-      sessionId: "session-1",
-      requestId,
-      commandId: "scenario.run.status",
-      sceneGeneration: 7,
-      invocation: { commandId: "scenario.run.status", arguments: {} },
-      effectiveExecutionMode: "query",
-      success: true,
-      summary: "Scenario run status loaded.",
-      data: { run: null, runs: [], capacity: 20 },
-    },
-  }
-}
-
-function scenarioDefinitionGetCompletion(requestId: string): object {
-	return successfulQueryCompletion(requestId, "scenario.definition.get", "Loaded scenario definition project:typed-run.", {
-		reference: "project:typed-run",
-		revision: "a".repeat(64),
-		definition: {
-			schemaVersion: 2,
-			id: "typed-run",
-			name: "Typed Run",
-			description: "Typed values.",
-			baseline: { type: "current" },
-			parameters: [{ id: "seed", name: "Seed", kind: "integer", required: true, default: 3, minimum: 0, maximum: 99 }],
-			steps: [{ type: "command", commandId: "scenario.starvation.trigger", arguments: { seed: { parameter: "seed" } } }],
-		},
-	})
-}
-
-function scenarioDefinitionSaveCompletion(requestId: string, commandId = "scenario.definition.create", revision = "b".repeat(64)): object {
-	return {
-		version: 1,
-		id: requestId,
-		type: "command.completed",
-		payload: {
-			sessionId: "session-1",
-			requestId,
-			commandId,
-			sceneGeneration: 7,
-			effectiveExecutionMode: "coordinated_alteration",
-			success: true,
-			summary: "Saved scenario definition project:typed-run.",
-			data: {
-				reference: "project:typed-run",
-				definition: { reference: "project:typed-run", source: "project", id: "typed-run", name: "Typed Run Updated", description: "Typed values.", baseline: { type: "current" }, revision, steps: [] },
-			},
-		},
-	}
-}
-
 function observationCompletion(requestId: string, commandId: string, expectedBranch: string): object {
   return {
     version: 1,
@@ -4360,27 +3187,6 @@ function observationCompletion(requestId: string, commandId: string, expectedBra
           locationName: "Lord British's Castle",
           floor: 0,
         },
-      },
-    },
-  }
-}
-
-function combatCatalogCompletion(requestId: string): object {
-  return {
-    version: 1,
-    id: requestId,
-    type: "command.completed",
-    payload: {
-      sessionId: "session-1",
-      requestId,
-      commandId: "combat.map-catalog.all",
-      sceneGeneration: 7,
-      effectiveExecutionMode: "query",
-      success: true,
-      summary: "Combat map catalog loaded: all.",
-      data: {
-        britannia: [{ index: 0, name: "Camping" }],
-        dungeons: [{ index: 0, name: "deceit", roomMinimum: 0, roomMaximum: 15 }],
       },
     },
   }

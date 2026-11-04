@@ -1,6 +1,6 @@
 import type { CommandDefinition } from "./protocol"
 
-export type NavigationWorkspace = "game" | "codex" | "system" | "scenarios" | "saves" | "tools"
+export type NavigationWorkspace = "game" | "system" | "saves" | "tools"
 
 export interface NavigationSurface {
   id: string

@@ -152,7 +152,7 @@ function resourceMaximum(parameter: ParameterDefinition): number | undefined {
             <p v-if="errors[parameter.id]" class="field-error">{{ errors[parameter.id] }}</p>
           </div>
           <p class="control-note">Level sets minimum XP and maximum HP without healing or stat boosts. Direct XP edits do not force progression.</p>
-		  <p class="control-note">Only edited fields are submitted and captured. HP zero, death, resurrection, and other combat mutations require synchronized scenario tools.</p>
+		  <p class="control-note">Only edited fields are submitted and captured. HP zero, death, resurrection, and other combat mutations require the synchronized test setup tools.</p>
         </section>
 
         <section class="editor-group status-editor">

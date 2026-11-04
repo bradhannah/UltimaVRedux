@@ -20,22 +20,6 @@ func TestExecuteWorldSetupCommandsUseTypedSceneAdapter(t *testing.T) {
 		Build()
 	scene := &GameScene{gameState: state}
 
-	enter, handled := scene.executeWorldSetupDebugCommand(debugging.Request{
-		SessionID: "test", ID: "enter", CommandID: debugging.CommandMovementEnterLocation,
-		Arguments: map[string]json.RawMessage{"location": json.RawMessage(`"5"`)},
-	})
-	require.True(t, handled)
-	require.True(t, enter.Success)
-	assert.Equal(t, references.Minoc, state.MapState.PlayerLocation.Location)
-
-	floor, handled := scene.executeWorldSetupDebugCommand(debugging.Request{
-		SessionID: "test", ID: "floor", CommandID: debugging.CommandMovementFloorSet,
-		Arguments: map[string]json.RawMessage{"floor": json.RawMessage(`1`)},
-	})
-	require.True(t, handled)
-	require.True(t, floor.Success)
-	assert.Equal(t, references.FloorNumber(1), state.MapState.PlayerLocation.Floor)
-
 	landmark, handled := scene.executeWorldSetupDebugCommand(debugging.Request{
 		SessionID: "test", ID: "landmark", CommandID: debugging.CommandMovementLandmarkTravel,
 		Arguments: map[string]json.RawMessage{"landmark": json.RawMessage(`"honesty"`)},

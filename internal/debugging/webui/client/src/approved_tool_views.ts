@@ -262,7 +262,7 @@ export interface MerchantTesterOpenData {
   y: number
 }
 
-export interface ScenarioStatusData {
+export interface TestSetupStatusData {
   partyFingerprint: string
   wipeReview: ActivePartyWipeReviewData
   locationId: number
@@ -515,64 +515,6 @@ export interface DebugOptionsStatusData {
   unlimitedCastingResources: boolean
   bypassSpellLevelRestrictions: boolean
   lightingOverlayEnabled: boolean
-}
-
-export interface ReduxModificationsStatusData {
-	configurationDiagnostics?: string[]
-	configurationEditing: boolean
-	confirmQuickSave: boolean
-  combat: ReduxCombatModificationsData
-  dungeons: ReduxDungeonModificationsData
-  presentation: ReduxPresentationModificationsData
-  navigation: ReduxNavigationModificationsData
-}
-
-export interface ReduxNavigationModificationsData {
-  flexibleSextantUse: boolean
-}
-
-export interface ReduxPresentationModificationsData {
-	maxVisibleActionPopups: number
-  smoothSurfaceMovement: boolean
-}
-
-export interface ReduxCombatModificationsData {
-	speedPercent: number
-	showHealthBars: boolean
-  allowRepeatedMonsterDivision: boolean
-}
-
-export interface ReduxDungeonModificationsData {
-  persistHiddenDungeonDiscoveries: boolean
-  showSubduedUnlitDungeons: boolean
-}
-
-export type DisplayMode = "windowed" | "maximized" | "fullscreen"
-
-export interface DisplayResolutionData {
-  index: number
-  width: number
-  height: number
-}
-
-export interface DisplayStatusData {
-  requestedMode: DisplayMode
-  actualMode: DisplayMode
-  transitionPending: boolean
-  normalWindowWidth: number
-  normalWindowHeight: number
-  actualWindowWidth: number
-  actualWindowHeight: number
-  monitorWidth: number
-  monitorHeight: number
-  containerWidth: number
-  containerHeight: number
-  logicalWidth: number
-  logicalHeight: number
-  deviceScaleFactor: number
-  outputWidth: number
-  outputHeight: number
-  presetResolutions: DisplayResolutionData[]
 }
 
 export interface GuardStatusData {

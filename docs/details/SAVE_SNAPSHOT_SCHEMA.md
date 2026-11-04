@@ -47,7 +47,7 @@ the structural schema.
 `GameScene` owns `journal.Excerpts`, captures a detached copy and restores it
 without merging the departing scene. Keep, archive, restore, delete and attribution
 changes are unsaved state until a normal save. This also applies to Quick Save,
-named snapshots, scenario baselines, rollback and pre-Doom recovery. Two saves
+named snapshots, rollback and pre-Doom recovery. Two saves
 with the same playthrough ID are independent. Current-format loads and Journal
 browsing never access external notebooks, including when the saved list is empty.
 An unsaved game can keep excerpts; a portable save needs no companion notebook.
@@ -772,7 +772,7 @@ tool that hydrates and recaptures a whole checkpoint must explicitly carry the
 loaded `Presentation` forward instead of replacing it with core defaults.
 
 Whole-scene equality remains strict, including `presentation`, for player slots/
-Quick Save, named captures and rollback, frozen scenario baselines, and pre-Doom/
+Quick Save, named captures and rollback, and pre-Doom/
 Return Before Doom checkpoints. Do not strip this field from full
 `reflect.DeepEqual` comparisons. Core-only equality has the explicit default
 semantics above. The active dialog, selection/search/reading cursor, notice,
@@ -870,9 +870,8 @@ to the recorded source state without replaying gameplay or consuming extra draws
 Outdoor Blink window origins and quadrant retention are runtime-only gameplay
 state, not serialized camera state. Every actual hydration initializes them from
 the final loaded outdoor position and plane, following normal original startup.
-This includes legacy import, player loads, Workbench loads/rollback and named
-scenario baselines. Saving alone preserves live history; a current-state scenario
-without hydration also preserves it. Thus the next Blink may differ after a load
+This includes legacy import, player loads and Workbench loads/rollback. Saving alone
+preserves live history. Thus the next Blink may differ after a load
 at unchanged coordinates. Failed candidate construction/activation preserves the
 old scene's window. No schema change is required for this explicit reset contract.
 Temporary outdoor Push writes are already excluded from capture; initialization
@@ -951,7 +950,7 @@ The implemented metadata fields are `name`, `description`, UTC `createdAt`,
 The format is `ultima5redux-native-snapshot`; only envelope version 2 is accepted.
 Envelope-1 files are intentionally unsupported: no upgrade, identity backfill,
 or name-based association is performed. This also invalidates prior named
-Workbench captures, rollback records, and saved scenario snapshot baselines.
+Workbench captures, rollback records, and (retired) scenario snapshot baselines.
 Reading or rejecting an old file never rewrites or deletes it. New original-save
 imports remain supported and create fresh playthroughs.
 
@@ -1011,13 +1010,12 @@ Metadata is not part of gameplay equality comparisons unless explicitly requeste
 
 ## Named Repositories
 
-Records use `project:<id>`, `personal:<id>`, or `rollback:<id>` references. IDs contain lowercase letters, digits, and interior hyphens. Project and personal records are user-named immutable captures; rollback records are generated automatically before snapshot loads and non-current scenario baselines. Creation is atomic and no-overwrite, deletion is revision-conditional, and cooperating scenario/snapshot processes use one stable-order advisory lock set while establishing or removing snapshot references. Reads use descriptor-based no-follow opens on Unix. Personal and rollback roots/files use `0700`/`0600`; project roots/files remain collaborative at `0755`/`0644`. The Workbench does not edit or patch snapshot JSON in place.
+Records use `project:<id>`, `personal:<id>`, or `rollback:<id>` references. IDs contain lowercase letters, digits, and interior hyphens. Project and personal records are user-named immutable captures; rollback records are generated automatically before snapshot loads. Creation is atomic and no-overwrite, deletion is revision-conditional, and cooperating snapshot processes use one stable-order advisory lock set while establishing or removing snapshot references. Reads use descriptor-based no-follow opens on Unix. Personal and rollback roots/files use `0700`/`0600`; project roots/files remain collaborative at `0755`/`0644`. The Workbench does not edit or patch snapshot JSON in place.
 
 Named captures and automatic rollbacks copy the source scene's playthrough ID
 and player note independently of their developer/system description. Loading a
 named or rollback checkpoint restores that metadata without granting player-slot
-provenance. Scenario snapshot baselines freeze metadata with the reviewed
-snapshot/revision; current baselines retain the active metadata. Explicit fresh
+provenance. Explicit fresh
 generic or INIT gameplay starts without identity create a fresh playthrough and
 blank note at the application boundary, not as an old-player-save upgrade.
 

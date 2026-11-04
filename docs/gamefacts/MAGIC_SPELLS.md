@@ -196,7 +196,7 @@ bounds. These asymmetries are part of the inspected original behavior.
 | Outdoor Push/Pull | Direct displacement preserves origins. |
 | Guardian pushback | Preserve the attempted step's window, including any completed shift. |
 | Save and continue | Preserve the live window. |
-| Actual load/import/rollback/scenario hydration | Initialize from loaded coordinates. |
+| Actual load/import/rollback hydration | Initialize from loaded coordinates. |
 
 Logical quadrants are NW/NE/SW/SE. East scrolling copies old NE→NW and SE→SW;
 west copies NW→NE and SW→SE; south copies SW→NW and SE→NE; north copies NW→SW
@@ -209,7 +209,6 @@ matching the owned write, preserving unrelated durable mutations, actors and fla
 Redux implements these outdoor rules with runtime-only plane-tagged window state.
 Normal original loading rebuilds the outdoor window despite serialized offsets;
 native consumers share that reset contract rather than persisting movement history.
-A scenario using the current live state without hydration preserves history.
 See the [snapshot restoration contract](../details/SAVE_SNAPSHOT_SCHEMA.md#capture-and-hydration).
 First-person dungeon Blink remains unavailable; combat uses its separate placement
 rules in SPELL-0005.

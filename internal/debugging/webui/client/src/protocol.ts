@@ -33,9 +33,6 @@ export interface ParameterDefinition {
   optionsProvider?: string
   controlHint?: string
   availability?: string[]
-  scenarioRuntime?: boolean
-  scenarioChoices?: Choice[]
-  scenarioValueResolver?: string
 }
 
 export interface CommandDefinition {
@@ -48,8 +45,6 @@ export interface CommandDefinition {
   parameters?: ParameterDefinition[]
   executionModes: ExecutionMode[]
   destructive: boolean
-  scenarioTerminal?: boolean
-  scenarioExcluded?: boolean
 }
 
 export interface CommandResult {

@@ -27,22 +27,18 @@ import PartyRoster from "./PartyRoster.vue"
 import ActiveCombatConsole from "./ActiveCombatConsole.vue"
 import LoggingConsole from "./LoggingConsole.vue"
 import CombatEncounterComposer from "./CombatEncounterComposer.vue"
-import CombatMapCatalog, { type CombatMapCatalogData } from "./CombatMapCatalog.vue"
 import MerchantTester from "./MerchantTester.vue"
 import MoongateAtlas from "./MoongateAtlas.vue"
 import MonsterEcosystemConsole from "./MonsterEcosystemConsole.vue"
 import QuestInventoryInspector from "./QuestInventoryInspector.vue"
 import SearchItemStacksInspector from "./SearchItemStacksInspector.vue"
-import ScenarioLab from "./ScenarioLab.vue"
+import TestSetups from "./TestSetups.vue"
 import SaveLibrary from "./SaveLibrary.vue"
 import ShrineProgressInspector from "./ShrineProgressInspector.vue"
-import ShrineReference from "./ShrineReference.vue"
 import WorkbenchCalendar from "./WorkbenchCalendar.vue"
 import WorkbenchWind from "./WorkbenchWind.vue"
 import ShipsConsole from "./ShipsConsole.vue"
 import DebugOptionsConsole from "./DebugOptionsConsole.vue"
-import DisplayConsole from "./DisplayConsole.vue"
-import ReduxModificationsConsole from "./ReduxModificationsConsole.vue"
 import WorldDiagnostics from "./WorldDiagnostics.vue"
 import InventoryLocker from "./InventoryLocker.vue"
 import SpellInventory from "./SpellInventory.vue"
@@ -68,43 +64,13 @@ import type {
   LoggingStatusData,
 	PartyCharacterInspectData,
 	DebugOptionsStatusData,
-	DisplayStatusData,
-	ReduxModificationsStatusData,
 	DeathStatusData,
 	GuardStatusData,
   ShadowlordStatusData,
-  ScenarioStatusData,
+  TestSetupStatusData,
   ObservationResultData,
 } from "./approved_tool_views"
 import type { ShrineStatusData } from "./shrine_views"
-import {
-  hydrateScenarioComposer,
-  cloneScenarioDefinition,
-  newScenarioComposerDraft,
-  scenarioDraftIsDirty,
-  scenarioDraftHasPendingMigrations,
-  scenarioIDFromName,
-  scenarioLaunchValueIssues,
-  scenarioSafeCommands,
-	scenarioSourceLabel,
-	scenarioStepFromInvocation,
-	insertScenarioStep,
-	scenarioTerminalStepIndex,
-  serializeScenarioDefinition,
-  serializeScenarioLaunchValues,
-  type ScenarioComposerDraft,
-  type ScenarioDefinition,
-  type ScenarioDefinitionGetResult,
-  type ScenarioDefinitionListResult,
-  type ScenarioDefinitionSaveResult,
-  type ScenarioDefinitionValidationResult,
-  type ScenarioRunStatusResult,
-  type ScenarioRunStatus,
-  type ScenarioSource,
-  type ScenarioStep,
-  type ScenarioTask,
-  type ScenarioValidationIssue,
-} from "./scenarios"
 import type { SaveSnapshotGetData, SaveSnapshotListData, SaveSnapshotSummary } from "./saves"
 import {
   hydratePartyCharacterDraft,
@@ -122,21 +88,6 @@ type ConnectionState = "connecting" | "handshaking" | "ready" | "reconnecting" |
 type CatalogWorkspaceID = NavigationSurface["workspace"]
 type WorkspaceID = "home" | CatalogWorkspaceID
 type HistoryDock = "bottom" | "right"
-type ScenarioCaptureIntent = "capture" | "record" | "select"
-type ScenarioCaptureDialogMode = "choose" | "new" | "dirty"
-type ScenarioDefinitionLoadIntent = "details" | "direct-run" | "capture"
-type ScenarioReplacementAction =
-  | { type: "load"; reference: string; intent: ScenarioDefinitionLoadIntent; navigateToScenarios?: boolean; historicalRun?: ScenarioRunStatus }
-  | { type: "create"; source: ScenarioSource; name?: string }
-
-interface ScenarioDefinitionGetRequest {
-  version: number
-  draftFingerprint: string
-  reference: string
-  intent: ScenarioDefinitionLoadIntent
-  historicalRun?: ScenarioRunStatus
-}
-
 interface ResultEntry extends CommandResult {
   entryID: string
   receivedAt: Date
@@ -180,42 +131,23 @@ const questShardUseCommandID = "quest.shard.use"
 const usableInventoryPresetCommandID = "quest.inventory.preset-usable"
 const worldPositionStatusCommandID = "world.position.status"
 const worldPositionSetCommandID = "world.position.set"
-const movementTeleportCommandID = "movement.teleport"
-const movementEnterLocationCommandID = "movement.enter-location"
-const movementFloorSetCommandID = "movement.floor.set"
 const movementLandmarkTravelCommandID = "movement.landmark.travel"
-const legacyWorldSetupCommandIDs = [movementTeleportCommandID, movementEnterLocationCommandID, movementFloorSetCommandID]
 const partyKarmaSetCommandID = "party.karma.set"
 const partyCharacterInspectCommandID = "party.character.inspect"
 const partyRosterMutationCommandIDs = ["party.maximize-levels", "party.status.set", "party.fill", "party.member.add"]
-const scenarioStatusCommandID = "scenario.status"
-const scenarioDefinitionListCommandID = "scenario.definition.list"
-const scenarioDefinitionGetCommandID = "scenario.definition.get"
-const scenarioDefinitionValidateCommandID = "scenario.definition.validate"
-const scenarioDefinitionCreateCommandID = "scenario.definition.create"
-const scenarioDefinitionUpdateCommandID = "scenario.definition.update"
-const scenarioDefinitionDeleteCommandID = "scenario.definition.delete"
-const scenarioDefinitionDuplicateCommandID = "scenario.definition.duplicate"
-const scenarioRunStartCommandID = "scenario.run.start"
-const scenarioRunStatusCommandID = "scenario.run.status"
-const scenarioRunCancelCommandID = "scenario.run.cancel"
+const testSetupStatusCommandID = "test-setup.status"
 const saveSnapshotListCommandID = "save.snapshot.list"
 const saveSnapshotGetCommandID = "save.snapshot.get"
 const saveSnapshotCaptureCommandID = "save.snapshot.capture"
 const saveSnapshotLoadCommandID = "save.snapshot.load"
 const saveSnapshotDeleteCommandID = "save.snapshot.delete"
 const saveSnapshotCommandIDs = [saveSnapshotListCommandID, saveSnapshotGetCommandID, saveSnapshotCaptureCommandID, saveSnapshotLoadCommandID, saveSnapshotDeleteCommandID]
-const scenarioCompanionCommandIDs = [
-  scenarioDefinitionListCommandID, scenarioDefinitionGetCommandID, scenarioDefinitionValidateCommandID,
-  scenarioDefinitionCreateCommandID, scenarioDefinitionUpdateCommandID, scenarioDefinitionDeleteCommandID,
-  scenarioDefinitionDuplicateCommandID, scenarioRunStartCommandID, scenarioRunStatusCommandID, scenarioRunCancelCommandID,
-]
 const commandTestHoleUpCommandID = "command-test.hole-up"
 const deathKillPartyCommandID = "death.kill-party"
 const deathTestSequenceCommandID = "death.test-sequence"
 const observationCommandID = "command-test.telescope"
 const observationCommandIDs: ObservationCommandID[] = [observationCommandID, "command-test.spyglass", "command-test.crystal-ball"]
-const scenarioMutationCommandIDs = [commandTestHoleUpCommandID, deathKillPartyCommandID, deathTestSequenceCommandID]
+const testSetupMutationCommandIDs = [commandTestHoleUpCommandID, deathKillPartyCommandID, deathTestSequenceCommandID]
 const moongateStatusCommandID = "moongate.status"
 const moongateOverlaySetCommandID = "overlay.moongate.set"
 const moongateTravelCommandID = "moongate.travel"
@@ -245,29 +177,7 @@ const dialogBoundsSetCommandID = "overlay.dialog-bounds.set"
 const unlimitedCastingResourcesSetCommandID = "magic.unlimited-casting-resources.set"
 const spellLevelRestrictionsBypassSetCommandID = "magic.spell-level-restrictions-bypass.set"
 const debugOptionsMutationCommandIDs = [movementFreeMoveSetCommandID, textPlaceholdersSetCommandID, dialogBoundsSetCommandID, lightingOverlaySetCommandID, unlimitedCastingResourcesSetCommandID, spellLevelRestrictionsBypassSetCommandID]
-const displayStatusCommandID = "display.status"
-const displayModeSetCommandID = "display.mode.set"
-const displayResolutionSetCommandID = "display.resolution.set"
-const displayFullscreenSetCommandID = "display.fullscreen.set"
-const displayMutationCommandIDs = [displayModeSetCommandID, displayResolutionSetCommandID, displayFullscreenSetCommandID]
-const reduxModificationsStatusCommandID = "redux.modifications.status"
-const repeatedMonsterDivisionSetCommandID = "redux.combat.repeated-monster-division.set"
-const persistentDungeonDiscoveriesSetCommandID = "redux.dungeons.persist-hidden-discoveries.set"
-const subduedUnlitDungeonVisibilitySetCommandID = "redux.dungeons.subdued-unlit-visibility.set"
-const smoothSurfaceMovementSetCommandID = "redux.presentation.smooth-surface-movement.set"
-const flexibleSextantUseSetCommandID = "redux.navigation.flexible_sextant_use.set"
 const combatPresentationSpeedSetCommandID = "combat.presentation.speed.set"
-const reduxModificationCommandIDs = [
-  repeatedMonsterDivisionSetCommandID,
-  persistentDungeonDiscoveriesSetCommandID,
-  subduedUnlitDungeonVisibilitySetCommandID,
-  smoothSurfaceMovementSetCommandID,
-  flexibleSextantUseSetCommandID,
-	combatPresentationSpeedSetCommandID,
-	"redux.saves.confirm-quick-save.set",
-	"redux.combat.health-bars.set",
-	"redux.presentation.action-popups.set",
-]
 const guardStatusCommandID = "guards.status"
 const shadowlordStatusCommandID = "shadowlord.status"
 const deathStatusCommandID = "death.status"
@@ -303,8 +213,6 @@ const integratedCommandIDs = new Set([
   ...loggingMutationCommandIDs,
   windStatusCommandID,
   windSetCommandID,
-  "combat.map-catalog.all",
-  "shrine.reference.inspect",
   shrineStatusCommandID,
   shrineProgressCommandID,
   codexQuestStateSetAllCommandID,
@@ -326,11 +234,9 @@ const integratedCommandIDs = new Set([
 	questShardUseCommandID,
   worldPositionStatusCommandID,
   worldPositionSetCommandID,
-  ...legacyWorldSetupCommandIDs,
   movementLandmarkTravelCommandID,
   partyKarmaSetCommandID,
-  scenarioStatusCommandID,
-  ...scenarioCompanionCommandIDs,
+  testSetupStatusCommandID,
   ...saveSnapshotCommandIDs,
   commandTestHoleUpCommandID,
   deathKillPartyCommandID,
@@ -355,11 +261,6 @@ const integratedCommandIDs = new Set([
 	shipSkiffSetCommandID,
 	debugOptionsStatusCommandID,
 	...debugOptionsMutationCommandIDs,
-	displayStatusCommandID,
-  scenarioStatusCommandID,
-	...displayMutationCommandIDs,
-	reduxModificationsStatusCommandID,
-	...reduxModificationCommandIDs,
 	...worldDiagnosticCommandIDs,
   inventoryLockerStatusCommandID,
   ...inventoryLockerMutationCommandIDs,
@@ -384,8 +285,7 @@ const polledIntegratedQueryIDs = new Set([
   spellInventoryStatusCommandID,
   activeCombatStatusCommandID,
 	debugOptionsStatusCommandID,
-	displayStatusCommandID,
-	scenarioStatusCommandID,
+	testSetupStatusCommandID,
 ])
 const connectionTimeoutMs = 5000
 const operationStallMs = 10000
@@ -395,7 +295,6 @@ const instrumentStorageKey = "u5r-debug-workbench-instrument"
 const historyCollapsedStorageKey = "u5r-debug-workbench-history-collapsed"
 const historyDockStorageKey = "u5r-debug-workbench-history-dock"
 const navigationRecentsStorageKey = "u5r-debug-workbench-navigation-recents"
-const deferredScenarioCaptureLimit = 20
 const token = document.querySelector<HTMLMetaElement>('meta[name="u5r-workbench-token"]')?.content ?? ""
 
 function restoredHistoryDock(): HistoryDock {
@@ -441,37 +340,6 @@ const pending = ref(new Map<string, PendingRequest>())
 const results = ref<ResultEntry[]>([])
 const latestResults = ref<Record<string, ResultEntry>>({})
 const lastSuccessfulWorldPositionResult = ref<ResultEntry>()
-const scenarioComposer = ref<ScenarioComposerDraft>(newScenarioComposerDraft())
-const scenarioRecording = ref(false)
-const scenarioTask = ref<ScenarioTask>("library")
-const scenarioTargetActive = ref(false)
-const scenarioCaptureDialogOpen = ref(false)
-const scenarioCaptureDialogMode = ref<ScenarioCaptureDialogMode>("choose")
-const scenarioCaptureIntent = ref<ScenarioCaptureIntent>("select")
-const scenarioCaptureResult = ref<ResultEntry>()
-const scenarioCaptureNewName = ref("")
-const scenarioCaptureSearch = ref("")
-const scenarioCaptureSelectedReference = ref("")
-const scenarioCaptureExpectedRevision = ref("")
-const scenarioCaptureInsertionIndex = ref(0)
-const scenarioCaptureError = ref("")
-const scenarioCaptureLoadingReference = ref("")
-const scenarioReplacementReview = ref<ScenarioReplacementAction>()
-const scenarioTargetDialog = ref<HTMLElement | null>(null)
-const scenarioReplacementDialog = ref<HTMLElement | null>(null)
-const scenarioValidationSnapshot = ref("")
-const scenarioValidationContext = ref("")
-const scenarioValidationIssues = ref<ScenarioValidationIssue[]>([])
-const scenarioValidationIntent = ref<"save" | "review-run" | "direct-run">()
-const scenarioReviewedSceneGeneration = ref(0)
-const scenarioReviewedBaselineRevision = ref("")
-const scenarioReviewedDefinition = ref("")
-const scenarioHistoricalRun = ref<ScenarioRunStatus>()
-const saveLoadReviewTarget = ref<{ reference: string; revision: string; requestID: string }>()
-let rollbackReviewEpoch = 0
-const rollbackRequests = new Map<string, { reference: string; revision: string; epoch: number }>()
-const scenarioRunStatusChecked = ref(false)
-const selectedScenarioRunID = ref("")
 const trimmedResults = ref(0)
 const reconnectAttempt = ref(0)
 const stream = ref<HTMLElement | null>(null)
@@ -489,8 +357,6 @@ const now = ref(Date.now())
 const processedRequestIDs = new Set<string>()
 const processedRequestOrder: string[] = []
 const silentRequestIDs = new Set<string>()
-const capturedScenarioTargets = ref(new Map<string, string>())
-const deferredScenarioCaptures = ref<ResultEntry[]>([])
 const commandPaletteOpen = ref(false)
 const commandPaletteLauncher = ref<HTMLButtonElement | null>(null)
 const navigationRecents = ref<string[]>(restoredNavigationRecents())
@@ -501,12 +367,8 @@ let requestSequence = 0
 let connectionGeneration = 0
 let localEntrySequence = 0
 let stopHistoryResize: (() => void) | undefined
-let scenarioTargetPreviousFocus: HTMLElement | null = null
-let scenarioReplacementPreviousFocus: HTMLElement | null = null
 let commandPalettePreviousFocus: HTMLElement | null = null
 let merchantCatalogExplicitRefreshRequired = false
-let scenarioReplacementVersion = 0
-const scenarioDefinitionGetRequests = new Map<string, ScenarioDefinitionGetRequest>()
 
 watch(selectedCommandID, (commandID) => {
   if (activeWorkspace.value !== "home") workspaceSelections.set(activeWorkspace.value, commandID)
@@ -518,13 +380,6 @@ watch(historyDock, (dock) => localStorage.setItem(historyDockStorageKey, dock))
 watch([sessionID, sceneGeneration], () => {
   lastSuccessfulWorldPositionResult.value = undefined
 }, { flush: "sync" })
-watch([sessionID, sceneGeneration, connectionState, activeWorkspace, scenarioTask], () => {
-  if (activeWorkspace.value !== "scenarios" || scenarioTask.value !== "run-review" || connectionState.value !== "ready"
-    || scenarioReviewedSceneGeneration.value !== sceneGeneration.value) disarmScenarioReview()
-}, { flush: "sync" })
-watch(sessionID, disarmScenarioReview, { flush: "sync" })
-watch([sessionID, sceneGeneration, connectionState, activeWorkspace, selectedCommandID, scenarioTask, selectedScenarioRunID, pageHidden], revokeRollbackReview, { flush: "sync" })
-
 const connectionLabel = computed(() => connectionState.value.replaceAll("_", " ").toUpperCase())
 const historyPanelStyle = computed(() => historyDock.value === "right"
   ? { width: historyCollapsed.value ? "38px" : `${historyWidth.value}px` }
@@ -582,7 +437,6 @@ const latestOperationResult = computed(() => {
 const latestWindResult = computed(() => latestResults.value[windStatusCommandID])
 const latestLoggingResult = computed(() => latestResults.value[loggingStatusCommandID])
 const latestShrineStatusResult = computed(() => latestResults.value[shrineStatusCommandID])
-const latestCombatMapResult = computed(() => latestResults.value["combat.map-catalog.all"])
 const latestCalendarResult = computed(() => latestResults.value[calendarStatusCommandID])
 const mastheadCalendar = computed(() => latestCalendarResult.value?.data ? calendarStatusData(latestCalendarResult.value.data) : undefined)
 const latestSearchResult = computed(() => latestResults.value[searchStatusCommandID])
@@ -605,62 +459,14 @@ const quickCombatExitDisabled = computed(() => {
 		|| combat.map?.pendingAdvanceTurn || combat.map?.activeMonsterIndex !== -1
 })
 const latestDebugOptionsResult = computed(() => latestResults.value[debugOptionsStatusCommandID])
-const latestDisplayResult = computed(() => latestResults.value[displayStatusCommandID])
-const displayModeChoices = computed(() => commands.value
-  .find((command) => command.id === displayModeSetCommandID)
-  ?.parameters?.find((parameter) => parameter.id === "mode")?.choices ?? [])
-const latestReduxModificationsResult = computed(() => latestResults.value[reduxModificationsStatusCommandID])
 const freeMoveEnabled = computed(() => latestDebugOptionsResult.value?.data ? debugOptionsStatusData(latestDebugOptionsResult.value.data).freeMove : false)
 const latestGuardStatusResult = computed(() => latestResults.value[guardStatusCommandID])
 const latestShadowlordStatusResult = computed(() => latestResults.value[shadowlordStatusCommandID])
 const latestDeathStatusResult = computed(() => latestResults.value[deathStatusCommandID])
-const latestScenarioStatusResult = computed(() => latestResults.value[scenarioStatusCommandID])
-const latestScenarioDefinitionListResult = computed(() => latestResults.value[scenarioDefinitionListCommandID])
-const latestScenarioRunStatusResult = computed(() => latestResults.value[scenarioRunStatusCommandID] ?? latestResults.value[scenarioRunStartCommandID])
+const latestTestSetupStatusResult = computed(() => latestResults.value[testSetupStatusCommandID])
 const latestSaveListResult = computed(() => latestResults.value[saveSnapshotListCommandID])
 const latestSaveDetailResult = computed(() => latestResults.value[saveSnapshotGetCommandID])
 const saveList = computed(() => latestSaveListResult.value?.data ? saveSnapshotListData(latestSaveListResult.value.data) : undefined)
-const scenarioDefinitionList = computed(() => latestScenarioDefinitionListResult.value?.data
-  ? scenarioDefinitionListData(latestScenarioDefinitionListResult.value.data).definitions
-  : [])
-const activeScenarioDirty = computed(() => scenarioTargetActive.value && scenarioDraftIsDirty(scenarioComposer.value))
-const activeScenarioLabel = computed(() => scenarioComposer.value.savedReference ?? `${scenarioComposer.value.source}:${scenarioComposer.value.definition.id}`)
-const activeScenarioStatus = computed(() => scenarioComposer.value.savedReference
-  ? activeScenarioDirty.value ? "UNSAVED" : "SAVED"
-  : activeScenarioDirty.value ? "UNSAVED" : "DRAFT")
-const activeScenarioSemanticState = computed(() => scenarioRecording.value ? "recording" : activeScenarioStatus.value.toLocaleLowerCase())
-const scenarioCaptureNewID = computed(() => scenarioIDFromName(scenarioCaptureNewName.value))
-const scenarioCaptureNewIDExists = computed(() => scenarioDefinitionList.value.some((definition) =>
-  definition.reference === `personal:${scenarioCaptureNewID.value}`,
-))
-const scenarioCaptureSelectedDefinition = computed(() => scenarioDefinitionList.value.find((definition) =>
-  definition.reference === scenarioCaptureSelectedReference.value,
-))
-const scenarioCaptureInsertionOptions = computed(() => {
-  const definition = scenarioCaptureSelectedDefinition.value
-  if (!definition) return []
-  const capturedCommand = commands.value.find((command) => command.id === scenarioCaptureResult.value?.invocation?.commandId)
-  if (capturedCommand?.scenarioTerminal) {
-    return [{ index: definition.steps.length, label: "After all setup steps · Final" }]
-  }
-  const terminalIndex = scenarioTerminalStepIndex(definition.steps, commands.value)
-  const maximumIndex = terminalIndex < 0 ? definition.steps.length : terminalIndex
-  return Array.from({ length: maximumIndex + 1 }, (_, index) => ({
-    index,
-    label: scenarioCaptureInsertionLabel(definition.steps, index, terminalIndex),
-  }))
-})
-const scenarioCapturePlacementIssue = computed(() => {
-  const definition = scenarioCaptureSelectedDefinition.value
-  const capturedCommand = commands.value.find((command) => command.id === scenarioCaptureResult.value?.invocation?.commandId)
-  if (!definition || !capturedCommand?.scenarioTerminal) return ""
-  return scenarioTerminalStepIndex(definition.steps, commands.value) >= 0
-    ? "This scenario already has a final step. Remove or replace it before capturing another terminal command."
-    : ""
-})
-const scenarioDefinitionWritePending = computed(() => [
-  scenarioDefinitionValidateCommandID, scenarioDefinitionCreateCommandID, scenarioDefinitionUpdateCommandID,
-].some(commandPending))
 const latestPartyCharacterInspectResult = computed(() => latestResults.value[partyCharacterInspectCommandID])
 const latestPartyEquipmentLoadoutResult = computed(() => latestResults.value[partyEquipmentLoadoutCommandID])
 const latestObservationResult = computed(() => [...results.value].reverse().find((result) =>
@@ -670,10 +476,8 @@ const observationPending = computed(() => observationCommandIDs.some(commandPend
 const worldLandmarkChoices = computed(() => commands.value.find((command) => command.id === movementLandmarkTravelCommandID)?.parameters?.find((parameter) => parameter.id === "landmark")?.choices ?? [])
 const catalogWorkspaces: { id: CatalogWorkspaceID; label: string; detail: string }[] = [
   { id: "game", label: "Game", detail: "State & setup" },
-  { id: "codex", label: "Codex", detail: "Reference" },
-  { id: "system", label: "System", detail: "App & display" },
-  { id: "scenarios", label: "Scenarios", detail: "Library & runs" },
-  { id: "saves", label: "Saves", detail: "Captures & rollback" },
+  { id: "system", label: "System", detail: "App & overlays" },
+  { id: "saves", label: "Saves", detail: "Checkpoints" },
   { id: "tools", label: "Tools", detail: "Tests & workflows" },
 ]
 const workspaces: { id: WorkspaceID; label: string; detail: string }[] = [
@@ -689,14 +493,9 @@ const navigationSurfaces = computed<NavigationSurface[]>(() => catalogWorkspaces
     label: workspaceCommandName(command, workspace.id),
     description: workspaceCommandDescription(command, workspace.id),
     commandId: command.id,
-    commands: navigationSurfaceCommands(command, workspace.id),
+    commands: navigationSurfaceCommands(command),
   }))))
 const homeRecentSurfaces = computed(() => recentNavigationSurfaces(navigationSurfaces.value, navigationRecents.value))
-watch(latestScenarioRunStatusResult, (result) => {
-  const data = result?.data as ScenarioRunStatusResult | undefined
-  const runs = data?.runs?.length ? data.runs : data?.run ? [data.run] : []
-  if (!runs.some((run) => run.runId === selectedScenarioRunID.value)) selectedScenarioRunID.value = runs[0]?.runId ?? ""
-})
 const retryDetail = computed(() => {
   if (retryScheduled.value) return `automatic retry ${reconnectAttempt.value} scheduled`
   if (["connecting", "reconnecting", "handshaking"].includes(connectionState.value)) return "connecting now"
@@ -805,7 +604,6 @@ function handleMessage(message: Envelope): void {
       reconnectAttempt.value = 0
       lastCloseReason.value = ""
       connectionState.value = "ready"
-      scenarioRunStatusChecked.value = false
       if (ready.resumed) {
         for (const [requestID, request] of pending.value) {
           pending.value.set(requestID, { ...request, lastConfirmedAt: Date.now(), statusRequested: false })
@@ -860,10 +658,6 @@ function handleMessage(message: Envelope): void {
         if (!latest || latest.sceneGeneration !== sceneGeneration.value || latest.sessionId !== sessionID.value) runQueryByID(globalID, true)
       }
 			runQueryByID(debugOptionsStatusCommandID, true)
-			if (!scenarioRunStatusChecked.value) {
-				scenarioRunStatusChecked.value = true
-				runQueryByID(scenarioRunStatusCommandID, true)
-			}
 		})
       break
     }
@@ -1008,12 +802,6 @@ function updateEquipmentLoadoutCharacter(value: string): void {
 	if (command) updateDraft(command, "character", value)
 }
 
-function updateSelectedCombatSection(section: string): void {
-  if (!selectedCommand.value || selectedCommand.value.id !== "combat.map-catalog.all") return
-
-  updateDraftAndMaybeRun(selectedCommand.value, "section", section)
-}
-
 function resetCommand(command: CommandDefinition): void {
   drafts.value[command.id] = command.id === partyCharacterCommandID
     ? hydratePartyCharacterDraft(command, draftFor(command).character ?? "", optionSets.value)
@@ -1024,7 +812,6 @@ function resetCommand(command: CommandDefinition): void {
 }
 
 function selectCommand(command: CommandDefinition): void {
-  revokeRollbackReview()
   if (commandSearch.value.trim()) {
     activeWorkspace.value = primaryWorkspaceForCommand(command)
     commandSearch.value = ""
@@ -1036,8 +823,6 @@ function selectCommand(command: CommandDefinition): void {
 }
 
 function selectWorkspace(workspace: WorkspaceID): void {
-  revokeRollbackReview()
-  if (commandPending(scenarioDefinitionGetCommandID)) scenarioReplacementVersion += 1
   if (activeWorkspace.value !== "home") workspaceSelections.set(activeWorkspace.value, selectedCommandID.value)
   activeWorkspace.value = workspace
   commandSearch.value = ""
@@ -1051,12 +836,6 @@ function selectWorkspace(workspace: WorkspaceID): void {
 
 function selectShrine(index: number): void {
   selectedShrineIndex.value = index
-}
-
-function openShrineWorkspace(workspace: "codex" | "game"): void {
-  selectWorkspace(workspace)
-  selectedCommandID.value = shrineStatusCommandID
-  void nextTick(autoExecuteSelectedQuery)
 }
 
 function openCombatEncounterComposer(): void {
@@ -1111,7 +890,6 @@ function receiveResult(result: CommandResult): void {
     latestResults.value = { ...latestResults.value, [result.commandId]: entry }
   } else {
     appendResult(entry)
-    if (scenarioRecording.value && scenarioTargetActive.value) appendResultToActiveScenario(entry)
   }
   if (result.success && result.commandId === partyCharacterCommandID) dirtyFields.value[result.commandId] = []
   if (result.errorCode === "stale_options") {
@@ -1131,139 +909,7 @@ function receiveResult(result: CommandResult): void {
   if (result.success && result.commandId === searchOverlaySetCommandID) void nextTick(() => runQueryByID(searchStatusCommandID, true))
   if (result.success && (result.commandId === questItemEnsureCommandID || result.commandId === questItemRemoveCommandID || result.commandId === questShardUseCommandID)) void nextTick(() => runQueryByID(questItemStatusCommandID, true))
   if (result.success && (result.commandId === worldPositionSetCommandID || result.commandId === movementLandmarkTravelCommandID)) void nextTick(() => runQueryByID(worldPositionStatusCommandID, true))
-  if (result.success && scenarioMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(scenarioStatusCommandID, true))
-  if (result.success && result.commandId === scenarioDefinitionGetCommandID && result.data) {
-    const loaded = result.data as ScenarioDefinitionGetResult
-    const request = scenarioDefinitionGetRequests.get(result.requestId)
-    scenarioDefinitionGetRequests.delete(result.requestId)
-    if (!request || request.version !== scenarioReplacementVersion || request.reference !== loaded.reference
-      || request.draftFingerprint !== scenarioDraftFingerprint()) {
-      if (request?.intent === "capture" && scenarioCaptureLoadingReference.value === request.reference) {
-        failScenarioCaptureLoad("The active scenario draft or navigation intent changed while this scenario loaded. Review the target and retry.")
-      }
-      return
-    }
-    const captureRevisionChanged = scenarioCaptureLoadingReference.value === loaded.reference
-      && Boolean(scenarioCaptureExpectedRevision.value)
-      && scenarioCaptureExpectedRevision.value !== loaded.revision
-    if (captureRevisionChanged) {
-      scenarioCaptureLoadingReference.value = ""
-      scenarioCaptureSelectedReference.value = ""
-      scenarioCaptureExpectedRevision.value = ""
-      scenarioCaptureError.value = "The selected scenario changed after placement review. Review the refreshed definition and choose its insertion position again."
-      runQueryByID(scenarioDefinitionListCommandID, true)
-    } else {
-      scenarioComposer.value = hydrateScenarioComposer(loaded)
-      scenarioHistoricalRun.value = request.historicalRun
-      if (request.historicalRun?.launch) scenarioComposer.value.launchValues = JSON.parse(JSON.stringify(request.historicalRun.launch.parameterValues)) as Record<string, unknown>
-      scenarioValidationIssues.value = []
-      if (scenarioCaptureLoadingReference.value === loaded.reference) {
-        scenarioCaptureLoadingReference.value = ""
-        scenarioTargetActive.value = true
-        scenarioRecording.value = false
-        finishScenarioTargetSelection()
-      } else if (request.intent === "direct-run") {
-        scenarioTargetActive.value = false
-        scenarioRecording.value = false
-        validateScenarioRun("direct-run")
-      } else {
-        scenarioTargetActive.value = false
-        scenarioRecording.value = false
-        scenarioTask.value = "details"
-      }
-    }
-  }
-  if (!result.success && result.commandId === scenarioDefinitionGetCommandID && scenarioCaptureLoadingReference.value) {
-    failScenarioCaptureLoad(result.errorMessage ?? "The scenario could not be loaded.")
-  }
-  if (result.commandId === scenarioDefinitionGetCommandID) scenarioDefinitionGetRequests.delete(result.requestId)
-  if (!result.success && result.commandId === scenarioDefinitionListCommandID && scenarioCaptureDialogOpen.value) {
-    scenarioCaptureError.value = result.errorMessage ?? "The scenario library could not be loaded."
-  }
-  if (result.success && result.commandId === scenarioDefinitionValidateCommandID && result.data) {
-    const validation = result.data as ScenarioDefinitionValidationResult
-    const intent = scenarioValidationIntent.value
-    scenarioValidationIntent.value = undefined
-    if (scenarioValidationSnapshot.value !== serializeScenarioDefinition(scenarioComposer.value)
-      || ((intent === "review-run" || intent === "direct-run") && (scenarioValidationContext.value !== `${sceneGeneration.value}:${scenarioReviewIdentity()}`
-        || scenarioDraftIsDirty(scenarioComposer.value) || scenarioDraftHasPendingMigrations(scenarioComposer.value)))) {
-      scenarioValidationIssues.value = [{
-        path: "$", code: "definition.changed_during_validation",
-        message: "The scenario changed during validation. Review the updated draft and retry.",
-      }]
-      scenarioValidationSnapshot.value = ""
-    } else if (validation.valid && intent === "save") {
-      scenarioValidationIssues.value = validation.issues
-      dispatchScenarioSave(scenarioValidationSnapshot.value)
-    } else if (validation.valid && (intent === "review-run" || intent === "direct-run")) {
-      scenarioValidationIssues.value = validation.issues
-      scenarioReviewedSceneGeneration.value = sceneGeneration.value
-      scenarioReviewedBaselineRevision.value = reviewedScenarioBaselineRevision()
-      scenarioTask.value = "run-review"
-      scenarioReviewedDefinition.value = scenarioReviewIdentity()
-      scenarioValidationSnapshot.value = ""
-    } else if (!validation.valid) {
-      scenarioValidationIssues.value = validation.issues
-      scenarioValidationSnapshot.value = ""
-      if (intent === "review-run" || intent === "direct-run") {
-        scenarioTargetActive.value = true
-        scenarioTask.value = "editor"
-      }
-    }
-  }
-  if (result.success && [scenarioDefinitionCreateCommandID, scenarioDefinitionUpdateCommandID].includes(result.commandId) && result.data) {
-    const saved = result.data as ScenarioDefinitionSaveResult
-    const savedDefinition = scenarioValidationSnapshot.value
-      ? JSON.parse(scenarioValidationSnapshot.value) as ScenarioDefinition
-      : cloneScenarioDefinition(scenarioComposer.value.definition)
-    scenarioComposer.value = {
-      ...scenarioComposer.value,
-      savedReference: saved.reference,
-      loadedRevision: saved.definition.revision,
-      originalDefinition: cloneScenarioDefinition(savedDefinition),
-    }
-    scenarioValidationSnapshot.value = ""
-    scenarioValidationIssues.value = []
-    scenarioTask.value = "details"
-    void nextTick(() => runQueryByID(scenarioDefinitionListCommandID, true))
-  }
-  if (result.success && result.commandId === scenarioDefinitionDeleteCommandID) {
-    scenarioComposer.value = newScenarioComposerDraft()
-    scenarioTargetActive.value = false
-    scenarioRecording.value = false
-    scenarioTask.value = "library"
-    void nextTick(() => runQueryByID(scenarioDefinitionListCommandID, true))
-  }
-  if (!result.success && [scenarioDefinitionValidateCommandID, scenarioDefinitionCreateCommandID, scenarioDefinitionUpdateCommandID].includes(result.commandId)) {
-    scenarioValidationIntent.value = undefined
-    scenarioValidationSnapshot.value = ""
-  }
-  if (result.success && result.commandId === scenarioDefinitionDuplicateCommandID && result.data) {
-    const duplicated = result.data as ScenarioDefinitionSaveResult
-    void nextTick(() => {
-      runQueryByID(scenarioDefinitionListCommandID, true)
-      getScenarioDefinition(duplicated.reference)
-    })
-  }
-  if (result.success && [scenarioRunStartCommandID, scenarioRunCancelCommandID].includes(result.commandId)) {
-	latestResults.value[scenarioRunStatusCommandID] = entry
-	const startedRun = (result.data as ScenarioRunStatusResult | undefined)?.run
-	if (startedRun) selectedScenarioRunID.value = startedRun.runId
-    scenarioTask.value = "latest-run"
-    void nextTick(() => runQueryByID(scenarioRunStatusCommandID, true))
-  }
-  if (result.success && result.commandId === saveSnapshotListCommandID) invalidateStaleScenarioBaselineReview()
-  if (result.commandId === saveSnapshotGetCommandID) {
-    const rollback = rollbackRequests.get(result.requestId)
-    rollbackRequests.delete(result.requestId)
-    if (rollback && rollback.epoch === rollbackReviewEpoch && activeWorkspace.value === "saves"
-      && selectedCommandID.value === saveSnapshotListCommandID && isReady.value && !pageHidden.value) {
-      const snapshot = result.success && result.data ? saveSnapshotDetailData(result.data) : undefined
-      if (snapshot?.summary.reference === rollback.reference && snapshot.summary.revision === rollback.revision) {
-        saveLoadReviewTarget.value = { ...rollback, requestID: result.requestId }
-      } else ownerErrors.value[saveSnapshotListCommandID] = "The recorded rollback is missing, changed, or unavailable. No load was authorized."
-    }
-  }
+  if (result.success && testSetupMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(testSetupStatusCommandID, true))
   if (result.success && [saveSnapshotCaptureCommandID, saveSnapshotDeleteCommandID].includes(result.commandId)) {
     void nextTick(() => runQueryByID(saveSnapshotListCommandID, true))
   }
@@ -1272,8 +918,7 @@ function receiveResult(result: CommandResult): void {
     void nextTick(() => {
       runQueryByID(calendarStatusCommandID, true)
       runQueryByID(saveSnapshotListCommandID, true)
-      runQueryByID(scenarioStatusCommandID, true)
-      runQueryByID(scenarioRunStatusCommandID, true)
+      runQueryByID(testSetupStatusCommandID, true)
     })
   }
   if (result.success && (result.commandId === deathKillPartyCommandID || result.commandId === deathTestSequenceCommandID)) void nextTick(() => runQueryByID(deathStatusCommandID, true))
@@ -1283,8 +928,6 @@ function receiveResult(result: CommandResult): void {
   }
 	if (result.success && shipMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(vehicleStatusCommandID, true))
 	if (result.success && debugOptionsMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(debugOptionsStatusCommandID, true))
-	if (result.success && reduxModificationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(reduxModificationsStatusCommandID, true))
-	if (result.success && displayMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(displayStatusCommandID, true))
   if (result.success && inventoryLockerMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(inventoryLockerStatusCommandID, true))
   if (result.success && spellInventoryMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(spellInventoryStatusCommandID, true))
 	if (result.success && activeCombatMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(activeCombatStatusCommandID, true))
@@ -1297,9 +940,6 @@ function receiveResult(result: CommandResult): void {
 			runQueryByID(inventoryLockerStatusCommandID, true)
 		})
 	}
-  if ([scenarioDefinitionValidateCommandID, scenarioDefinitionCreateCommandID, scenarioDefinitionUpdateCommandID].includes(result.commandId)) {
-    flushDeferredScenarioCaptures()
-  }
 }
 
 function requestCatalog(): void {
@@ -1324,18 +964,13 @@ function commandBelongsToWorkspace(command: CommandDefinition, workspace: Worksp
         || command.id === searchStatusCommandID || command.id === questItemStatusCommandID
         || command.id === vehicleStatusCommandID || command.id === inventoryLockerStatusCommandID
         || command.id === spellInventoryStatusCommandID || command.id === guardStatusCommandID
-    case "codex":
-      return command.id === "combat.map-catalog.all" || command.id === shrineStatusCommandID
     case "system":
-      return command.id === loggingStatusCommandID
-		 || command.id === debugOptionsStatusCommandID || command.id === displayStatusCommandID
-		 || command.id === reduxModificationsStatusCommandID
-    case "scenarios":
-      return command.id === scenarioStatusCommandID
+      return command.id === loggingStatusCommandID || command.id === debugOptionsStatusCommandID
     case "saves":
       return command.id === saveSnapshotListCommandID
     case "tools":
       return command.id === combatEncounterOptionsCommandID
+        || command.id === testSetupStatusCommandID
         || command.id === merchantTesterCatalogCommandID
         || command.id === observationCommandID || !integratedCommandIDs.has(command.id)
   }
@@ -1343,8 +978,7 @@ function commandBelongsToWorkspace(command: CommandDefinition, workspace: Worksp
 
 function primaryWorkspaceForCommand(command: CommandDefinition): WorkspaceID {
   if (saveSnapshotCommandIDs.includes(command.id)) return "saves"
-  if (command.id === scenarioStatusCommandID) return "scenarios"
-  if (command.id === "combat.map-catalog.all") return "codex"
+  if (command.id === testSetupStatusCommandID) return "tools"
   if (commandBelongsToWorkspace(command, "system")) return "system"
   if (commandBelongsToWorkspace(command, "game")) return "game"
   return "tools"
@@ -1362,31 +996,26 @@ function navigationCategory(command: CommandDefinition, workspace: WorkspaceID):
     else if ([activeCombatStatusCommandID, monsterEcosystemStatusCommandID].includes(command.id)) category = "Combat & Creatures"
     else category = "Vehicles & Progression"
   } else if (workspace === "system") {
-    if (command.id === loggingStatusCommandID) category = "Application"
-    else if (command.id === reduxModificationsStatusCommandID) category = "Redux Modifications"
-    else category = "Game Window"
-  } else if (workspace === "scenarios") {
-    category = "Scenarios"
+    category = command.id === loggingStatusCommandID ? "Application" : "Game Window"
   } else if (workspace === "tools") {
     if (command.id === observationCommandID) category = "Workflows"
     else if (command.id === combatEncounterOptionsCommandID) category = "Encounter Setup"
     else if (command.id === merchantTesterCatalogCommandID) category = "Merchant Testing"
+    else if (command.id === testSetupStatusCommandID) category = "Test Setups"
     else category = "Advanced Commands"
-  } else if (workspace === "codex") {
-    category = command.id === shrineStatusCommandID ? "Virtues" : "World & Maps"
   }
   return commandSearch.value.trim() ? `${workspaceLabel(workspace)} / ${category}` : category
 }
 
 function navigationCategoryOrder(name: string): number {
   const category = name.includes(" / ") ? name.slice(name.indexOf(" / ") + 3) : name
-  const order = ["World", "Party & Inventory", "Combat & Creatures", "Vehicles & Progression", "World & Maps", "Virtues", "Application", "Game Window", "Redux Modifications", "Scenarios", "Workflows", "Encounter Setup", "Merchant Testing", "Advanced Commands"]
+  const order = ["World", "Party & Inventory", "Combat & Creatures", "Vehicles & Progression", "Application", "Game Window", "Workflows", "Test Setups", "Encounter Setup", "Merchant Testing", "Advanced Commands"]
   const index = order.indexOf(category)
   return index < 0 ? order.length : index
 }
 
 function workspaceCommandName(command: CommandDefinition, workspace = activeWorkspace.value): string {
-	if (command.id === scenarioStatusCommandID) return "Scenarios"
+	if (command.id === testSetupStatusCommandID) return "Test Setups"
 	if (command.id === saveSnapshotListCommandID) return "Saves"
 	if (command.id === observationCommandID) return "Observation"
 	if (command.id === guardStatusCommandID) return "World Diagnostics"
@@ -1394,11 +1023,11 @@ function workspaceCommandName(command: CommandDefinition, workspace = activeWork
 	if (command.id === partyEquipmentLoadoutCommandID) return "Equipment Loadouts"
 	if (command.id === partyCharacterInspectCommandID) return "Party Roster"
 	if (command.id !== shrineStatusCommandID) return command.name
-	return workspace === "game" ? "Shrine Progress" : "Shrine Reference"
+	return "Shrine Progress"
 }
 
 function workspaceCommandDescription(command: CommandDefinition, workspace = activeWorkspace.value): string {
-	if (command.id === scenarioStatusCommandID) return "Manage shared and personal scenario definitions, use camping and death quick setups, and review retained runs."
+	if (command.id === testSetupStatusCommandID) return "Queue the production camping workflow, or wipe the party to test death and resurrection."
 	if (command.id === saveSnapshotListCommandID) return "Capture, inspect, load, and revision-safely remove immutable gameplay checkpoints."
 	if (command.id === observationCommandID) return "Queue the production Telescope, Spyglass, or Crystal Ball workflow and inspect its expected branch and context."
 	if (command.id === guardStatusCommandID) return "Inspect hidden guard hostility, Shadowlord placement, and death/resurrection consequences."
@@ -1406,8 +1035,7 @@ function workspaceCommandDescription(command: CommandDefinition, workspace = act
 	if (command.id === partyEquipmentLoadoutCommandID) return "Stage and review one partial six-slot plan for one or all active party members as an atomic operation."
 	if (command.id === partyCharacterInspectCommandID) return "Review active Positions 1-6 and inactive companions, then run fingerprint-checked roster and party-wide operations."
   if (command.id !== shrineStatusCommandID) return command.description
-  if (workspace === "game") return "Inspect and alter authoritative shrine quest and ruined-state progression."
-  return "Browse immutable virtue, mantra, location, and reward reference data."
+  return "Inspect and alter authoritative shrine quest and ruined-state progression."
 }
 
 function companionOwnerCommandID(commandID: string): string {
@@ -1415,7 +1043,6 @@ function companionOwnerCommandID(commandID: string): string {
   if (loggingMutationCommandIDs.includes(commandID)) return loggingStatusCommandID
   if (commandID === windSetCommandID) return windStatusCommandID
   if ([shrineProgressCommandID, codexQuestStateSetAllCommandID].includes(commandID)) return shrineStatusCommandID
-  if (commandID === "shrine.reference.inspect") return shrineStatusCommandID
   if (partyRosterMutationCommandIDs.includes(commandID) || commandID === partyKarmaSetCommandID) return partyCharacterInspectCommandID
   if (commandID === partyCharacterInspectCommandID) return partyCharacterInspectCommandID
   if (commandID === partyEquipmentLoadoutCommandID) return partyEquipmentLoadoutCommandID
@@ -1424,7 +1051,7 @@ function companionOwnerCommandID(commandID: string): string {
   if ([searchItemStackAddCommandID, searchProgressResetCommandID, searchOverlaySetCommandID, commandTestSearchCommandID].includes(commandID)) return searchStatusCommandID
   if ([questItemEnsureCommandID, questItemRemoveCommandID, questShardUseCommandID, usableInventoryPresetCommandID].includes(commandID)) return questItemStatusCommandID
   if (commandID === worldPositionSetCommandID || commandID === movementLandmarkTravelCommandID) return worldPositionStatusCommandID
-  if (scenarioCompanionCommandIDs.includes(commandID) || scenarioMutationCommandIDs.includes(commandID)) return scenarioStatusCommandID
+  if (testSetupMutationCommandIDs.includes(commandID)) return testSetupStatusCommandID
   if (saveSnapshotCommandIDs.includes(commandID)) return saveSnapshotListCommandID
   if (observationCommandIDs.includes(commandID as ObservationCommandID)) return observationCommandID
   if ([moongateOverlaySetCommandID, moongateTravelCommandID].includes(commandID)) return moongateStatusCommandID
@@ -1433,8 +1060,6 @@ function companionOwnerCommandID(commandID: string): string {
   if ([monsterGenerationSetCommandID, monsterClearMapEnemiesCommandID, monsterSpawnWhirlpoolCommandID, monsterSpawnPirateCommandID].includes(commandID)) return monsterEcosystemStatusCommandID
   if (shipMutationCommandIDs.includes(commandID)) return vehicleStatusCommandID
   if (debugOptionsMutationCommandIDs.includes(commandID)) return debugOptionsStatusCommandID
-  if (displayMutationCommandIDs.includes(commandID)) return displayStatusCommandID
-  if (reduxModificationCommandIDs.includes(commandID)) return reduxModificationsStatusCommandID
   if (worldDiagnosticCommandIDs.includes(commandID)) return guardStatusCommandID
   if (inventoryLockerMutationCommandIDs.includes(commandID)) return inventoryLockerStatusCommandID
   if (spellInventoryMutationCommandIDs.includes(commandID)) return spellInventoryStatusCommandID
@@ -1442,18 +1067,12 @@ function companionOwnerCommandID(commandID: string): string {
   return commandID
 }
 
-function navigationSurfaceCommands(owner: CommandDefinition, workspace: WorkspaceID): CommandDefinition[] {
-  return commands.value.filter((candidate) => {
-    if (companionOwnerCommandID(candidate.id) !== owner.id) return false
-    if (owner.id !== shrineStatusCommandID) return true
-    return workspace === "codex"
-      ? candidate.id === shrineStatusCommandID || candidate.id === "shrine.reference.inspect"
-      : candidate.id !== "shrine.reference.inspect"
-  })
+function navigationSurfaceCommands(owner: CommandDefinition): CommandDefinition[] {
+  return commands.value.filter((candidate) => companionOwnerCommandID(candidate.id) === owner.id)
 }
 
 function openCommandPalette(): void {
-  if (scenarioCaptureDialogOpen.value || scenarioReplacementReview.value || commandPaletteOpen.value) return
+  if (commandPaletteOpen.value) return
   commandPalettePreviousFocus = document.activeElement as HTMLElement | null
   commandPaletteOpen.value = true
   void nextTick(() => setWorkbenchBackgroundInert(true, ".command-palette-modal"))
@@ -1467,7 +1086,6 @@ function closeCommandPalette(): void {
 }
 
 function navigateToSurface(surface: NavigationSurface): void {
-  if (commandPending(scenarioDefinitionGetCommandID)) scenarioReplacementVersion += 1
   navigationRecents.value = updateNavigationRecents(navigationRecents.value, surface.id)
   localStorage.setItem(navigationRecentsStorageKey, JSON.stringify(navigationRecents.value))
   activeWorkspace.value = surface.workspace
@@ -1482,26 +1100,16 @@ function activateNavigationSurface(surface: NavigationSurface): void {
   closeCommandPalette()
 }
 
-function openScenarioFromHome(task: "library" | "latest-run", runID?: string): void {
-  scenarioReplacementVersion += 1
-  if (runID) selectedScenarioRunID.value = runID
-  selectWorkspace("scenarios")
-  selectedCommandID.value = scenarioStatusCommandID
-  scenarioTask.value = task
-  void nextTick(autoExecuteSelectedQuery)
-}
-
 function instrumentModeLabel(command: CommandDefinition): string {
   if (command.id === observationCommandID) return "GAME-WINDOW OBSERVATION WORKFLOWS"
-  if (command.id === shrineStatusCommandID && activeWorkspace.value === "game") return "LIVE STATE + EXPLICIT ALTERATION"
-  if (command.id === shrineStatusCommandID || command.id === "combat.map-catalog.all") return "IMMUTABLE REFERENCE"
+  if (command.id === shrineStatusCommandID) return "LIVE STATE + EXPLICIT ALTERATION"
   if (command.id === combatEncounterOptionsCommandID) return "SYNCHRONIZED COMPOSER"
 	if (command.id === merchantTesterCatalogCommandID) return "QUERY + PREVIEW + DESTRUCTIVE LIVE"
 	if (command.id === worldPositionStatusCommandID) return "POSITION SNAPSHOT + EXPLICIT CONTROL"
   if (command.id === windStatusCommandID || command.id === calendarStatusCommandID || command.id === searchStatusCommandID
     || command.id === questItemStatusCommandID) return "LIVE TELEMETRY + EXPLICIT CONTROL"
   if (command.id === moongateStatusCommandID) return "LIVE TELEMETRY + ROUTING REFERENCE"
-	if (command.id === monsterEcosystemStatusCommandID || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID || command.id === displayStatusCommandID) return "LIVE TELEMETRY + EXPLICIT CONTROL"
+	if (command.id === monsterEcosystemStatusCommandID || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID) return "LIVE TELEMETRY + EXPLICIT CONTROL"
   if (command.id === activeCombatStatusCommandID) return "LIVE TACTICAL TELEMETRY + REVIEWED CONTROL"
 	if (command.id === partyCharacterCommandID) return "ACTIVE CHARACTER + PREVIEWED ALTERATION"
 	if (command.id === partyEquipmentLoadoutCommandID) return "ATOMIC SIX-SLOT LOADOUT REVIEW"
@@ -1514,7 +1122,7 @@ function instrumentModeLabel(command: CommandDefinition): string {
 
 function instrumentExecutionModes(command: CommandDefinition): string {
 	if (command.id !== merchantTesterCatalogCommandID) return command.executionModes.join(" · ")
-	return navigationSurfaceCommands(command, activeWorkspace.value)
+	return navigationSurfaceCommands(command)
 		.map((candidate) => `${candidate.id === merchantTesterCatalogCommandID ? "catalog" : candidate.id === merchantTesterPreviewCommandID ? "preview" : "live"}: ${candidate.executionModes.join(" / ")}`)
 		.join(" · ")
 }
@@ -1523,30 +1131,29 @@ function instrumentOwnsMutation(command: CommandDefinition): boolean {
   return isMutation(command) || command.id === windStatusCommandID || command.id === calendarStatusCommandID
     || command.id === searchStatusCommandID || command.id === questItemStatusCommandID || command.id === worldPositionStatusCommandID
      || command.id === combatEncounterOptionsCommandID || command.id === monsterEcosystemStatusCommandID
-     || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID || command.id === displayStatusCommandID
+     || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID
      || command.id === inventoryLockerStatusCommandID
      || command.id === spellInventoryStatusCommandID
      || command.id === activeCombatStatusCommandID
 	 || command.id === partyCharacterInspectCommandID
-	 || command.id === scenarioStatusCommandID
+	 || command.id === testSetupStatusCommandID
      || command.id === merchantTesterCatalogCommandID
-    || command.id === shrineStatusCommandID && activeWorkspace.value === "game"
+    || command.id === shrineStatusCommandID
 }
 
 function instrumentWidthClass(command: CommandDefinition): string {
   if (command.id === windStatusCommandID || command.id === calendarStatusCommandID) return "instrument--narrow"
-  if (command.id === partyCharacterCommandID || command.id === partyCharacterInspectCommandID || command.id === shrineStatusCommandID && activeWorkspace.value === "game"
+  if (command.id === partyCharacterCommandID || command.id === partyCharacterInspectCommandID || command.id === shrineStatusCommandID
     || command.id === searchStatusCommandID || command.id === questItemStatusCommandID || command.id === worldPositionStatusCommandID) return "instrument--editor"
-  if (command.id === "combat.map-catalog.all" || command.id === shrineStatusCommandID) return "instrument--reference"
   if (command.id === combatEncounterOptionsCommandID
-	 || command.id === monsterEcosystemStatusCommandID || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID || command.id === displayStatusCommandID) return "instrument--editor"
+	 || command.id === monsterEcosystemStatusCommandID || command.id === vehicleStatusCommandID || command.id === debugOptionsStatusCommandID) return "instrument--editor"
 	if (command.id === guardStatusCommandID) return "instrument--reference"
   if (command.id === inventoryLockerStatusCommandID || command.id === spellInventoryStatusCommandID) return "instrument--reference"
 	if (command.id === partyEquipmentLoadoutCommandID) return "instrument--reference"
   if (command.id === activeCombatStatusCommandID) return "instrument--reference"
 	if (command.id === merchantTesterCatalogCommandID) return "instrument--reference"
-	if (command.id === scenarioStatusCommandID) return "instrument--scenario"
-	if (command.id === saveSnapshotListCommandID) return "instrument--scenario"
+	if (command.id === testSetupStatusCommandID) return "instrument--wide"
+	if (command.id === saveSnapshotListCommandID) return "instrument--wide"
   if (command.id === observationCommandID) return "instrument--editor"
   return "instrument--form"
 }
@@ -1561,15 +1168,9 @@ function autoExecuteSelectedQuery(): void {
 	if (!command) return
 	if (command.id === merchantTesterCatalogCommandID
 		&& (merchantCatalogExplicitRefreshRequired || instrumentRequestPending(merchantTesterCatalogCommandID))) return
-	if (command.id === scenarioStatusCommandID) {
-		runQueryByID(scenarioStatusCommandID, true)
-		runQueryByID(scenarioDefinitionListCommandID, true)
-		runQueryByID(scenarioRunStatusCommandID, true)
-		runQueryByID(saveSnapshotListCommandID, true)
-		return
-	}
 	if (command.id === saveSnapshotListCommandID) {
 		runQueryByID(saveSnapshotListCommandID, true)
+		runQueryByID(testSetupStatusCommandID, true)
 		return
 	}
 	if (command.id === partyCharacterCommandID) return
@@ -1583,8 +1184,8 @@ function autoExecuteSelectedQuery(): void {
 		for (const commandID of worldDiagnosticCommandIDs) runQueryByID(commandID, true)
 		return
 	}
-  if (activeWorkspace.value === "tools" && ![scenarioStatusCommandID, combatEncounterOptionsCommandID, merchantTesterCatalogCommandID].includes(command.id)) return
-  if (["combat.map-catalog.all", combatEncounterOptionsCommandID].includes(command.id) && latestResults.value[command.id]) return
+  if (activeWorkspace.value === "tools" && ![testSetupStatusCommandID, combatEncounterOptionsCommandID, merchantTesterCatalogCommandID].includes(command.id)) return
+  if (command.id === combatEncounterOptionsCommandID && latestResults.value[command.id]) return
   runCommand(command, true)
 }
 
@@ -1620,536 +1221,18 @@ function quickExitCombat(): void {
 	})
 }
 
-function saveScenarioDefinition(): void {
-  scenarioValidationIssues.value = []
-  scenarioValidationIntent.value = "save"
-  scenarioValidationSnapshot.value = serializeScenarioDefinition(scenarioComposer.value)
-  runSpecializedMutation(scenarioDefinitionValidateCommandID, {
-    definition: scenarioValidationSnapshot.value,
-  })
-}
-
-function dispatchScenarioSave(definition: string): void {
-  if (scenarioComposer.value.savedReference && scenarioComposer.value.loadedRevision) {
-    runSpecializedMutation(scenarioDefinitionUpdateCommandID, {
-      reference: scenarioComposer.value.savedReference,
-      expectedRevision: scenarioComposer.value.loadedRevision,
-      definition,
-    })
-    return
-  }
-  runSpecializedMutation(scenarioDefinitionCreateCommandID, {
-    source: scenarioComposer.value.source,
-    definition,
-  })
-}
-
-function reviewScenarioRun(): void {
-  validateScenarioRun("review-run")
-}
-
-function validateScenarioRun(intent: "review-run" | "direct-run"): void {
-  if (scenarioDraftIsDirty(scenarioComposer.value) || scenarioDraftHasPendingMigrations(scenarioComposer.value)) {
-    disarmScenarioReview()
-    if (intent === "direct-run") scenarioTask.value = "details"
-    ownerErrors.value[scenarioStatusCommandID] = "Save the scenario changes and pending migrations before reviewing a run. Only a saved definition revision can run."
-    return
-  }
-  if (!scenarioComposer.value.savedReference || !scenarioComposer.value.loadedRevision) return
-  scenarioValidationIssues.value = []
-  scenarioValidationIntent.value = intent
-  scenarioValidationContext.value = `${sceneGeneration.value}:${scenarioReviewIdentity()}`
-  scenarioValidationSnapshot.value = serializeScenarioDefinition(scenarioComposer.value)
-  runSpecializedMutation(scenarioDefinitionValidateCommandID, {
-    definition: scenarioValidationSnapshot.value,
-  })
-}
-
-function deleteScenarioDefinition(): void {
-  if (!scenarioComposer.value.savedReference || !scenarioComposer.value.loadedRevision) return
-  runSpecializedMutation(scenarioDefinitionDeleteCommandID, {
-    reference: scenarioComposer.value.savedReference,
-    expectedRevision: scenarioComposer.value.loadedRevision,
-  })
-}
-
-function duplicateScenarioDefinition(value: { destinationSource: ScenarioSource; destinationId: string; destinationName: string }): void {
-  if (!scenarioComposer.value.savedReference || !scenarioComposer.value.loadedRevision) return
-  runSpecializedMutation(scenarioDefinitionDuplicateCommandID, {
-    sourceReference: scenarioComposer.value.savedReference,
-    sourceRevision: scenarioComposer.value.loadedRevision,
-    destinationSource: value.destinationSource,
-    destinationId: value.destinationId,
-    destinationName: value.destinationName,
-  })
-}
-
-function getScenarioDefinition(reference: string): void {
-  requestScenarioReplacement({ type: "load", reference, intent: "details" })
-}
-
-function playScenarioDefinition(reference: string): void {
-  requestScenarioReplacement({ type: "load", reference, intent: "direct-run" })
-}
-
-function reviewHistoricalRun(run: ScenarioRunStatus): void {
-  if (!run.launch) return
-  requestScenarioReplacement({ type: "load", reference: run.reference, intent: "direct-run", navigateToScenarios: true,
-    historicalRun: JSON.parse(JSON.stringify(run)) as ScenarioRunStatus })
-}
-
-function cancelRemainingScenarioSteps(run: ScenarioRunStatus): void {
-  if (!run.currentProcess || !["queued", "running"].includes(run.state)) return
-  runSpecializedMutation(scenarioRunCancelCommandID, { runId: run.runId })
-}
-
-function reviewScenarioRollback(run: ScenarioRunStatus): void {
-  if (!run.rollback) return
-  selectWorkspace("saves")
-  selectedCommandID.value = saveSnapshotListCommandID
-  const rollback = { ...run.rollback, epoch: rollbackReviewEpoch }
-  runSpecializedMutation(saveSnapshotGetCommandID, { reference: rollback.reference }, (requestID) => rollbackRequests.set(requestID, rollback))
-}
-
-function revokeRollbackReview(): void {
-  rollbackReviewEpoch += 1
-  rollbackRequests.clear()
-  saveLoadReviewTarget.value = undefined
-}
-
-function createScenarioDefinition(source: ScenarioSource): void {
-  requestScenarioReplacement({ type: "create", source })
-}
-
-function updateScenarioTask(task: ScenarioTask): void {
-  if (scenarioDefinitionWritePending.value && task !== "editor") return
-  if (commandPending(scenarioDefinitionGetCommandID)) scenarioReplacementVersion += 1
-  scenarioTask.value = task
-  if (task === "editor") scenarioTargetActive.value = true
-}
-
-function scenarioDraftFingerprint(): string {
-  return JSON.stringify(scenarioComposer.value)
-}
-
-function requestScenarioReplacement(action: ScenarioReplacementAction): void {
-  if (scenarioDefinitionWritePending.value) return
-  scenarioReplacementVersion += 1
-  if (scenarioDraftIsDirty(scenarioComposer.value)) {
-    scenarioReplacementReview.value = action
-    if (scenarioCaptureDialogOpen.value) scenarioCaptureDialogMode.value = "dirty"
-    else {
-      scenarioReplacementPreviousFocus = document.activeElement as HTMLElement | null
-      void nextTick(() => {
-        setWorkbenchBackgroundInert(true, ".scenario-replacement-modal")
-        scenarioReplacementDialog.value?.querySelector<HTMLElement>("button:not(:disabled)")?.focus()
-      })
-    }
-    return
-  }
-  performScenarioReplacement(action, scenarioReplacementVersion)
-}
-
-function performScenarioReplacement(action: ScenarioReplacementAction, version: number): void {
-  scenarioReplacementReview.value = undefined
-  if (!scenarioCaptureDialogOpen.value) closeStandaloneScenarioReplacementReview()
-  if (action.type === "create") {
-    scenarioHistoricalRun.value = undefined
-    const draft = newScenarioComposerDraft()
-    draft.source = action.source
-    if (action.name) {
-      draft.definition.id = scenarioIDFromName(action.name)
-      draft.definition.name = action.name
-      draft.originalDefinition = cloneScenarioDefinition(draft.definition)
-    }
-    scenarioComposer.value = draft
-    scenarioTargetActive.value = true
-    scenarioRecording.value = false
-    scenarioTask.value = "editor"
-    if (action.name) {
-      scenarioCaptureInsertionIndex.value = 0
-      finishScenarioTargetSelection()
-    }
-    return
-  }
-
-  if (action.navigateToScenarios) {
-    selectWorkspace("scenarios")
-    selectedCommandID.value = scenarioStatusCommandID
-    scenarioTask.value = "library"
-  }
-
-  const draftFingerprint = scenarioDraftFingerprint()
-  if (action.intent === "capture") {
-    scenarioCaptureDialogMode.value = "choose"
-    scenarioCaptureError.value = ""
-    scenarioCaptureLoadingReference.value = action.reference
-  }
-  const sent = runSpecializedMutation(scenarioDefinitionGetCommandID, { reference: action.reference }, (requestID) => {
-    scenarioDefinitionGetRequests.set(requestID, {
-      version,
-      draftFingerprint,
-      reference: action.reference,
-      intent: action.intent,
-      historicalRun: action.historicalRun,
-    })
-  })
-  if (!sent && action.intent === "capture") {
-    scenarioCaptureLoadingReference.value = ""
-    scenarioCaptureError.value = "The scenario definition could not be requested. Check the Workbench connection and retry."
-  }
-}
-
-function discardScenarioDraftAndReplace(): void {
-  const action = scenarioReplacementReview.value
-  if (!action) return
-  scenarioComposer.value = {
-    ...scenarioComposer.value,
-    definition: cloneScenarioDefinition(scenarioComposer.value.originalDefinition),
-  }
-  performScenarioReplacement(action, scenarioReplacementVersion)
-}
-
-function cancelScenarioReplacement(): void {
-  scenarioReplacementReview.value = undefined
-  if (!scenarioCaptureDialogOpen.value) closeStandaloneScenarioReplacementReview()
-  if (scenarioCaptureDialogOpen.value && scenarioCaptureDialogMode.value === "dirty") scenarioCaptureDialogMode.value = "choose"
-}
-
-function closeStandaloneScenarioReplacementReview(): void {
-  setWorkbenchBackgroundInert(false, ".scenario-replacement-modal")
-  const previousFocus = scenarioReplacementPreviousFocus
-  scenarioReplacementPreviousFocus = null
-  void nextTick(() => previousFocus?.focus())
-}
-
-function openActiveScenarioEditor(stepIndex?: number): void {
-  if (!scenarioTargetActive.value) return
-  selectWorkspace("scenarios")
-  selectedCommandID.value = scenarioStatusCommandID
-  scenarioTask.value = "editor"
-  void nextTick(() => {
-    const step = stepIndex === undefined ? undefined : document.querySelector<HTMLElement>(`[data-scenario-screen="editor"] [data-scenario-step="${stepIndex}"]`)
-    if (typeof step?.scrollIntoView === "function") step.scrollIntoView({ block: "center" })
-    const target = step ?? document.querySelector<HTMLElement>('[data-scenario-screen="editor"] input:not(:disabled), [data-scenario-screen="editor"] select:not(:disabled), [data-scenario-screen="editor"] button:not(:disabled)')
-    target?.focus()
-  })
-}
-
-function updateScenarioComposer(draft: ScenarioComposerDraft): void {
-  if (scenarioDefinitionWritePending.value) return
-  if (serializeScenarioDefinition(scenarioComposer.value) !== serializeScenarioDefinition(draft)) scenarioValidationIssues.value = []
-  scenarioComposer.value = draft
-  if (scenarioReviewedDefinition.value && scenarioReviewedDefinition.value !== scenarioReviewIdentity()) disarmScenarioReview()
-}
-
-function openScenarioTargetChooser(intent: ScenarioCaptureIntent, result?: ResultEntry): void {
-  if (scenarioDefinitionWritePending.value || commandPending(scenarioDefinitionGetCommandID)) {
-    liveStatus.value = "Wait for the current scenario definition operation before choosing a capture target."
-    return
-  }
-  scenarioTargetPreviousFocus = document.activeElement as HTMLElement | null
-  scenarioCaptureIntent.value = intent
-  scenarioCaptureResult.value = result
-  scenarioCaptureDialogMode.value = "choose"
-  scenarioCaptureDialogOpen.value = true
-  scenarioCaptureNewName.value = ""
-  scenarioCaptureSearch.value = ""
-  scenarioCaptureSelectedReference.value = ""
-  scenarioCaptureExpectedRevision.value = ""
-  scenarioCaptureInsertionIndex.value = 0
-  scenarioCaptureError.value = ""
-  scenarioReplacementReview.value = undefined
-  runQueryByID(scenarioDefinitionListCommandID, true)
-  void nextTick(() => {
-    setScenarioBackgroundInert(true)
-    focusFirstScenarioTargetControl()
-  })
-}
-
-function closeScenarioTargetChooser(): void {
-  if (scenarioCaptureLoadingReference.value) return
-  scenarioCaptureDialogOpen.value = false
-  scenarioCaptureResult.value = undefined
-  scenarioReplacementReview.value = undefined
-  scenarioCaptureSelectedReference.value = ""
-  scenarioCaptureExpectedRevision.value = ""
-  scenarioCaptureError.value = ""
-  setScenarioBackgroundInert(false)
-  scenarioTargetPreviousFocus?.focus()
-  scenarioTargetPreviousFocus = null
-}
-
-function setScenarioBackgroundInert(inert: boolean): void {
-  setWorkbenchBackgroundInert(inert, ".scenario-target-modal")
-}
-
 function setWorkbenchBackgroundInert(inert: boolean, modalSelector: string): void {
   for (const element of document.querySelectorAll<HTMLElement>(".workbench-shell > *")) {
     if (!element.matches(modalSelector)) element.inert = inert
   }
 }
 
-function focusFirstScenarioTargetControl(): void {
-  scenarioTargetDialog.value?.querySelector<HTMLElement>("input:not(:disabled), select:not(:disabled), button:not(:disabled)")?.focus()
-}
-
-function chooseScenarioTarget(reference: string): void {
-  if (scenarioCaptureIntent.value === "capture" && scenarioCaptureResult.value) {
-    const definition = scenarioDefinitionList.value.find((candidate) => candidate.reference === reference)
-    if (!definition) return
-    scenarioCaptureSelectedReference.value = reference
-    scenarioCaptureExpectedRevision.value = definition.revision
-    const capturedCommand = commands.value.find((command) => command.id === scenarioCaptureResult.value?.invocation?.commandId)
-    const terminalIndex = scenarioTerminalStepIndex(definition.steps, commands.value)
-    scenarioCaptureInsertionIndex.value = capturedCommand?.scenarioTerminal || terminalIndex < 0 ? definition.steps.length : terminalIndex
-    return
-  }
-  activateScenarioTarget(reference)
-}
-
-function confirmScenarioCaptureTarget(): void {
-  if (!scenarioCaptureSelectedReference.value) return
-  activateScenarioTarget(scenarioCaptureSelectedReference.value)
-}
-
-function activateScenarioTarget(reference: string): void {
-  if (scenarioTargetActive.value && reference === scenarioComposer.value.savedReference) {
-    finishScenarioTargetSelection()
-    return
-  }
-  requestScenarioReplacement({ type: "load", reference, intent: "capture" })
-}
-
-function scenarioTargetChoices(source: ScenarioSource): ScenarioDefinitionListResult["definitions"] {
-  const search = scenarioCaptureSearch.value.trim().toLocaleLowerCase()
-  return scenarioDefinitionList.value.filter((definition) => definition.source === source
-    && (!scenarioTargetActive.value || definition.reference !== scenarioComposer.value.savedReference)
-    && (!search || [definition.name, definition.id, definition.reference, definition.description]
-      .some((value) => value.toLocaleLowerCase().includes(search))))
-}
-
-function failScenarioCaptureLoad(message: string): void {
-  if (!scenarioCaptureLoadingReference.value) return
-  scenarioCaptureLoadingReference.value = ""
-  scenarioCaptureError.value = message
-}
-
-function requestNewScenarioTarget(): void {
-  scenarioCaptureDialogMode.value = "new"
-  scenarioCaptureNewName.value = ""
-  void nextTick(() => scenarioTargetDialog.value?.querySelector<HTMLInputElement>("[data-scenario-target-name]")?.focus())
-}
-
-function returnToActiveScenarioEditor(): void {
-  closeScenarioTargetChooser()
-  openActiveScenarioEditor()
-}
-
-function createScenarioCaptureTarget(): void {
-  const name = scenarioCaptureNewName.value.trim()
-  const id = scenarioCaptureNewID.value
-  if (!name || !id || scenarioCaptureNewIDExists.value) return
-  requestScenarioReplacement({ type: "create", source: "personal", name })
-}
-
-function finishScenarioTargetSelection(): void {
-  const capture = scenarioCaptureResult.value
-  const intent = scenarioCaptureIntent.value
-  scenarioCaptureDialogOpen.value = false
-  scenarioCaptureResult.value = undefined
-  scenarioReplacementReview.value = undefined
-  scenarioCaptureError.value = ""
-  setScenarioBackgroundInert(false)
-  scenarioTargetPreviousFocus = null
-  const insertedStep = capture ? appendResultToActiveScenario(capture, scenarioCaptureInsertionIndex.value) : undefined
-  if (intent === "record") scenarioRecording.value = true
-  openActiveScenarioEditor(insertedStep)
-}
-
-function toggleScenarioRecording(): void {
-  if (scenarioRecording.value) {
-    scenarioRecording.value = false
-    return
-  }
-  if (scenarioTargetActive.value) {
-    scenarioRecording.value = true
-    return
-  }
-  openScenarioTargetChooser("record")
-}
-
-function startScenarioRun(): void {
-  if (scenarioDraftIsDirty(scenarioComposer.value) || scenarioDraftHasPendingMigrations(scenarioComposer.value)) {
-    disarmScenarioReview()
-    ownerErrors.value[scenarioStatusCommandID] = "Save the scenario changes and pending migrations before starting a run. Only a saved definition revision can run."
-    return
-  }
-  if (!scenarioComposer.value.savedReference || !scenarioComposer.value.loadedRevision || scenarioReviewedSceneGeneration.value === 0
-    || scenarioTask.value !== "run-review" || scenarioReviewedDefinition.value !== scenarioReviewIdentity()
-    || scenarioReviewedSceneGeneration.value !== sceneGeneration.value
-    || scenarioReviewedBaselineRevision.value !== reviewedScenarioBaselineRevision()
-    || historicalRunIssue.value
-    || Object.keys(scenarioLaunchValueIssues(scenarioComposer.value.definition.parameters ?? [], scenarioComposer.value.launchValues)).length) return
-  const sent = runSpecializedMutation(scenarioRunStartCommandID, {
-    reference: scenarioComposer.value.savedReference,
-    expectedRevision: scenarioComposer.value.loadedRevision,
-    expectedBaselineRevision: scenarioReviewedBaselineRevision.value,
-    reviewedSceneGeneration: String(scenarioReviewedSceneGeneration.value),
-    parameterValues: serializeScenarioLaunchValues(scenarioComposer.value.launchValues),
-  })
-  if (sent) disarmScenarioReview()
-}
-
-function scenarioReviewIdentity(): string {
-  return JSON.stringify([sessionID.value, scenarioComposer.value.savedReference, scenarioComposer.value.loadedRevision, scenarioComposer.value.definition])
-}
-
-const historicalRunIssue = computed(() => {
-  const run = scenarioHistoricalRun.value
-  if (!run) return ""
-  if (run.definitionRevision !== scenarioComposer.value.loadedRevision) return `Historical definition revision ${run.definitionRevision} differs from current revision ${scenarioComposer.value.loadedRevision}. Review Again is unsupported; open the Library explicitly to configure a new run.`
-  if (run.baseline.type === "snapshot" && (run.baselineReference !== scenarioComposer.value.definition.baseline.reference || run.baselineRevision !== reviewedScenarioBaselineRevision())) return "The recorded baseline revision is no longer available. Review Again cannot substitute a newer snapshot."
-  return ""
-})
-
-function disarmScenarioReview(): void {
-  if (scenarioValidationIntent.value === "review-run" || scenarioValidationIntent.value === "direct-run") scenarioValidationIntent.value = undefined
-  scenarioReviewedSceneGeneration.value = 0
-  scenarioReviewedDefinition.value = ""
-  if (scenarioTask.value === "run-review") scenarioTask.value = "details"
-}
-
-function reviewedScenarioBaselineRevision(): string {
-  const baseline = scenarioComposer.value.definition.baseline
-  if (baseline.type !== "snapshot" || !baseline.reference) return ""
-  return saveList.value?.snapshots.find((snapshot) => snapshot.reference === baseline.reference)?.revision ?? ""
-}
-
-function invalidateStaleScenarioBaselineReview(): void {
-  if (!scenarioReviewedBaselineRevision.value) return
-  const current = reviewedScenarioBaselineRevision()
-  if (current === scenarioReviewedBaselineRevision.value) return
-  scenarioReviewedSceneGeneration.value = 0
-  scenarioReviewedBaselineRevision.value = ""
-  if (scenarioTask.value === "run-review") scenarioTask.value = "details"
-  liveStatus.value = "Scenario baseline revision changed. Review the run again."
-}
-
 function inspectSaveSnapshot(reference: string): void {
-  revokeRollbackReview()
   runSpecializedMutation(saveSnapshotGetCommandID, { reference })
-}
-
-function useSaveAsScenarioBaseline(snapshot: SaveSnapshotSummary): void {
-  if (!scenarioTargetActive.value) return
-  scenarioValidationIssues.value = []
-  scenarioComposer.value = {
-    ...scenarioComposer.value,
-    definition: { ...scenarioComposer.value.definition, baseline: { type: "snapshot", reference: snapshot.reference } },
-  }
-  scenarioReviewedSceneGeneration.value = 0
-  scenarioReviewedBaselineRevision.value = ""
-  liveStatus.value = `Set ${snapshot.reference} as the active scenario draft baseline.`
 }
 
 function saveSnapshotListData(value: unknown): SaveSnapshotListData { return value as SaveSnapshotListData }
 function saveSnapshotDetailData(value: unknown) { return (value as SaveSnapshotGetData).snapshot }
-
-function scenarioDefinitionListData(value: unknown): ScenarioDefinitionListResult {
-  return value as ScenarioDefinitionListResult
-}
-
-function scenarioRunStatusData(value: unknown): ScenarioRunStatusResult {
-  return value as ScenarioRunStatusResult
-}
-
-function resultEligibleForScenario(result: CommandResult): boolean {
-  if (!result.success || !result.invocation || scenarioCompanionCommandIDs.includes(result.invocation.commandId) || saveSnapshotCommandIDs.includes(result.invocation.commandId)) return false
-	const command = commands.value.find((candidate) => candidate.id === result.invocation?.commandId)
-  return Boolean(command && scenarioSafeCommands([command]).length === 1)
-}
-
-function requestAddResultToScenario(result: ResultEntry): void {
-  if (!resultEligibleForScenario(result) || capturedScenarioTargets.value.has(result.requestId)) return
-  if (!scenarioTargetActive.value) {
-    openScenarioTargetChooser("capture", result)
-    return
-  }
-  appendResultToActiveScenario(result)
-}
-
-function appendResultToActiveScenario(result: ResultEntry, requestedIndex?: number): number | undefined {
-  if (!scenarioTargetActive.value || !resultEligibleForScenario(result) || capturedScenarioTargets.value.has(result.requestId) || !result.invocation) return undefined
-  if (scenarioDefinitionWritePending.value) {
-    queueDeferredScenarioCapture(result)
-    return undefined
-	}
-	const command = commands.value.find((candidate) => candidate.id === result.invocation?.commandId)
-	const terminalIndex = scenarioTerminalStepIndex(scenarioComposer.value.definition.steps, commands.value)
-	if (command?.scenarioTerminal && terminalIndex >= 0) {
-		liveStatus.value = "Capture not added. This scenario already has a final combat-start step."
-		return undefined
-	}
-	const insertion = insertScenarioStep(
-		scenarioComposer.value.definition.steps,
-		scenarioStepFromInvocation(result.invocation, command),
-		commands.value,
-		requestedIndex,
-	)
-	scenarioValidationIssues.value = []
-	scenarioComposer.value = {
-    ...scenarioComposer.value,
-    definition: {
-      ...scenarioComposer.value.definition,
-		steps: insertion.steps,
-    },
-  }
-  const captured = new Map(capturedScenarioTargets.value)
-  captured.set(result.requestId, scenarioComposer.value.definition.name)
-  capturedScenarioTargets.value = captured
-  if (scenarioTask.value === "run-review") {
-    scenarioReviewedSceneGeneration.value = 0
-    scenarioTask.value = "editor"
-  }
-	liveStatus.value = terminalIndex >= 0
-		? `Inserted ${commandName(result.invocation.commandId)} before the final scenario step.`
-		: `Added ${commandName(result.invocation.commandId)} to ${scenarioComposer.value.definition.name}.`
-	return insertion.index
-}
-
-function scenarioCaptureInsertionLabel(steps: ScenarioStep[], index: number, terminalIndex: number): string {
-	if (steps.length === 0) return "First step"
-	if (index === 0) return "Before Step 01"
-	const previous = steps[index - 1]
-	const previousName = previous.type === "command" ? commandName(previous.commandId) : "Note"
-	if (index === steps.length && terminalIndex < 0) return `After Step ${String(index).padStart(2, "0")} · ${previousName} · End`
-	return `After Step ${String(index).padStart(2, "0")} · ${previousName}`
-}
-
-function queueDeferredScenarioCapture(result: ResultEntry): void {
-  if (deferredScenarioCaptures.value.some((capture) => capture.requestId === result.requestId)) return
-  if (deferredScenarioCaptures.value.length >= deferredScenarioCaptureLimit) {
-    liveStatus.value = `Scenario capture queue full. ${commandName(result.commandId)} was not captured; review Global History and add it after the save finishes.`
-    return
-  }
-  deferredScenarioCaptures.value = [...deferredScenarioCaptures.value, result]
-  liveStatus.value = `Capture queued: ${commandName(result.commandId)} will be added after ${scenarioComposer.value.definition.name} finishes saving.`
-}
-
-function flushDeferredScenarioCaptures(): void {
-  if (scenarioDefinitionWritePending.value || deferredScenarioCaptures.value.length === 0) return
-  const captures = deferredScenarioCaptures.value
-  deferredScenarioCaptures.value = []
-  for (const capture of captures) appendResultToActiveScenario(capture)
-  liveStatus.value = `Added ${captures.length} queued capture${captures.length === 1 ? "" : "s"} to ${scenarioComposer.value.definition.name}.`
-}
-
-function scenarioCaptureState(result: ResultEntry): "completed" | "pending" | "ready" | "unavailable" {
-  if (capturedScenarioTargets.value.has(result.requestId)) return "completed"
-  if (deferredScenarioCaptures.value.some((capture) => capture.requestId === result.requestId)) return "pending"
-  return resultEligibleForScenario(result) ? "ready" : "unavailable"
-}
 
 function setMonsterGeneration(value: { enabled: boolean; odds: number }): void {
   runSpecializedMutation(monsterGenerationSetCommandID, { enabled: String(value.enabled), odds: String(value.odds) })
@@ -2260,10 +1343,6 @@ function receiveProtocolError(message: Envelope): void {
   if (message.id) {
     pending.value.delete(message.id)
     silentRequestIDs.delete(message.id)
-    scenarioDefinitionGetRequests.delete(message.id)
-  }
-  if (pendingRequest?.commandID === scenarioDefinitionGetCommandID) {
-    failScenarioCaptureLoad(payload.message ?? "The scenario definition request failed.")
   }
   appendResult({
     entryID: `protocol-${++localEntrySequence}`,
@@ -2283,7 +1362,6 @@ function reportLostPendingRequests(): void {
   for (const [requestID, request] of pending.value) {
     silentRequestIDs.delete(requestID)
     rememberProcessedRequest(requestID)
-    scenarioDefinitionGetRequests.delete(requestID)
     appendResult({
       entryID: `lost-${++localEntrySequence}`,
       sessionId: sessionID.value,
@@ -2296,9 +1374,6 @@ function reportLostPendingRequests(): void {
       errorMessage: "The previous session was not resumed; this command's outcome is unknown.",
       receivedAt: new Date(),
     })
-    if (request.commandID === scenarioDefinitionGetCommandID) {
-      failScenarioCaptureLoad("The previous session was not resumed. Review the scenario and retry capture placement.")
-    }
   }
 }
 
@@ -2356,11 +1431,6 @@ function checkPendingOperations(): void {
 	runQueryByID(activeCombatStatusCommandID, true)
 	if (!selectedCommand.value || [calendarStatusCommandID, activeCombatStatusCommandID].includes(selectedCommand.value.id)) return
 	if (instrumentRequestPending(selectedCommand.value.id)) return
-	if (selectedCommand.value.id === scenarioStatusCommandID) {
-		runQueryByID(scenarioStatusCommandID, true)
-		runQueryByID(scenarioRunStatusCommandID, true)
-		return
-	}
 	if (selectedCommand.value.id === partyEquipmentLoadoutCommandID) {
 		runQueryByID(partyCharacterInspectCommandID, true)
 		runQueryByID(inventoryLockerStatusCommandID, true)
@@ -2426,10 +1496,6 @@ function shrineStatusData(value: unknown): ShrineStatusData {
   return value as ShrineStatusData
 }
 
-function combatMapData(value: unknown): CombatMapCatalogData {
-  return value as CombatMapCatalogData
-}
-
 function calendarStatusData(value: unknown): CalendarStatusData {
   return value as CalendarStatusData
 }
@@ -2472,14 +1538,6 @@ function vehicleStatusData(value: unknown): VehicleStatusData {
 
 function debugOptionsStatusData(value: unknown): DebugOptionsStatusData {
   return value as DebugOptionsStatusData
-}
-
-function displayStatusData(value: unknown): DisplayStatusData {
-  return value as DisplayStatusData
-}
-
-function reduxModificationsStatusData(value: unknown): ReduxModificationsStatusData {
-  return value as ReduxModificationsStatusData
 }
 
 function guardStatusData(value: unknown): GuardStatusData {
@@ -2549,52 +1607,12 @@ function inputValue(event: Event): string {
 
 function onKeyDown(event: KeyboardEvent): void {
   const activeElement = document.activeElement as HTMLElement | null
-  if (scenarioReplacementReview.value && !scenarioCaptureDialogOpen.value) {
-    if (event.key === "Escape") {
-      event.preventDefault()
-      cancelScenarioReplacement()
-      return
-    }
-    if (event.key === "Tab") {
-      const controls = [...(scenarioReplacementDialog.value?.querySelectorAll<HTMLElement>("button:not(:disabled)") ?? [])]
-      if (controls.length > 0) {
-        const currentIndex = controls.indexOf(activeElement ?? controls[0])
-        const offset = event.shiftKey ? -1 : 1
-        controls[(currentIndex + offset + controls.length) % controls.length]?.focus()
-        event.preventDefault()
-      }
-      return
-    }
-    if (event.key === "F5" || ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k")) {
-      event.preventDefault()
-    }
-    return
-  }
   if ((event.ctrlKey || event.metaKey) && event.key.toLocaleLowerCase() === "k") {
     event.preventDefault()
     openCommandPalette()
     return
   }
   if (commandPaletteOpen.value) {
-    if (event.key === "F5") event.preventDefault()
-    return
-  }
-  if (scenarioCaptureDialogOpen.value) {
-    if (event.key === "Escape") {
-      event.preventDefault()
-      closeScenarioTargetChooser()
-      return
-    }
-    if (event.key === "Tab") {
-      const controls = [...(scenarioTargetDialog.value?.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex='0']") ?? [])]
-      if (controls.length > 0) {
-        const currentIndex = controls.indexOf(activeElement ?? controls[0])
-        const offset = event.shiftKey ? -1 : 1
-        controls[(currentIndex + offset + controls.length) % controls.length]?.focus()
-        event.preventDefault()
-      }
-      return
-    }
     if (event.key === "F5") event.preventDefault()
     return
   }
@@ -2634,27 +1652,17 @@ function onKeyDown(event: KeyboardEvent): void {
   runCommand(selectedCommand.value)
 }
 
-function warnBeforeUnload(event: BeforeUnloadEvent): void {
-  if (!scenarioDraftIsDirty(scenarioComposer.value)) return
-  event.preventDefault()
-  event.returnValue = ""
-}
-
 function updatePageVisibility(): void {
   pageHidden.value = document.hidden
-  if (pageHidden.value) disarmScenarioReview()
 }
 
 onMounted(() => {
   operationTimer = window.setInterval(checkPendingOperations, 1000)
   window.addEventListener("keydown", onKeyDown)
-  window.addEventListener("beforeunload", warnBeforeUnload)
   document.addEventListener("visibilitychange", updatePageVisibility)
   connect()
 })
 onBeforeUnmount(() => {
-  setScenarioBackgroundInert(false)
-  setWorkbenchBackgroundInert(false, ".scenario-replacement-modal")
   setWorkbenchBackgroundInert(false, ".command-palette-modal")
   connectionGeneration += 1
   window.clearTimeout(reconnectTimer)
@@ -2662,7 +1670,6 @@ onBeforeUnmount(() => {
   window.clearInterval(operationTimer)
   stopHistoryResize?.()
   window.removeEventListener("keydown", onKeyDown)
-  window.removeEventListener("beforeunload", warnBeforeUnload)
   document.removeEventListener("visibilitychange", updatePageVisibility)
   socket.value?.close()
 })
@@ -2674,17 +1681,10 @@ onBeforeUnmount(() => {
       <div>
         <p class="eyebrow">ULTIMA V REDUX :: CONTROL PLANE</p>
         <h1>Britannian Switchboard</h1>
-        <p class="subtitle">Live telemetry / codex reference / state inspection / operations</p>
+        <p class="subtitle">Live telemetry / state inspection / operations</p>
       </div>
 		<div class="masthead-quick-controls">
 		  <button ref="commandPaletteLauncher" type="button" class="command-palette-launcher" data-command-palette-launcher aria-haspopup="dialog" @click="openCommandPalette">GO TO… <kbd>CTRL/⌘K</kbd></button>
-		  <section v-if="scenarioTargetActive" class="active-scenario-target" :data-state="activeScenarioSemanticState" :aria-label="`Active scenario ${scenarioComposer.definition.name}, ${activeScenarioSemanticState}`" data-active-scenario>
-			<span>{{ scenarioRecording ? 'RECORDING TO SCENARIO' : 'ACTIVE SCENARIO' }}</span>
-			<strong>{{ scenarioComposer.definition.name }}</strong>
-			<small>{{ scenarioSourceLabel(scenarioComposer.source) }} · {{ scenarioComposer.definition.steps.length }} STEPS · {{ activeScenarioStatus }}</small>
-			<div><button type="button" data-active-scenario-edit @click="openActiveScenarioEditor()">EDIT</button><button type="button" data-active-scenario-change :disabled="scenarioDefinitionWritePending" @click="openScenarioTargetChooser('select')">CHANGE</button></div>
-		  </section>
-		  <button v-else type="button" class="scenario-target-empty" data-active-scenario-select @click="openScenarioTargetChooser('select')">NO ACTIVE SCENARIO<br /><small>SELECT TARGET</small></button>
 		  <button
 			v-if="mastheadActiveCombat?.active"
 			type="button"
@@ -2729,18 +1729,14 @@ onBeforeUnmount(() => {
     </nav>
     <p class="sr-only" aria-live="polite">{{ liveStatus }}</p>
 
-    <section class="switchboard" :class="{ 'scenarios-workspace': activeWorkspace === 'home' || activeWorkspace === 'scenarios' || activeWorkspace === 'saves' }" aria-label="Command switchboard">
+    <section class="switchboard" :class="{ 'scenarios-workspace': activeWorkspace === 'home' || activeWorkspace === 'saves' }" aria-label="Command switchboard">
       <WorkbenchHome
         v-if="activeWorkspace === 'home'"
         :recents="homeRecentSurfaces"
-        :run-status="latestScenarioRunStatusResult?.data ? scenarioRunStatusData(latestScenarioRunStatusResult.data) : undefined"
-        :connected="isReady"
         @open-palette="openCommandPalette"
          @open-surface="navigateToSurface"
-         @open-scenarios="openScenarioFromHome"
-         @review-again="reviewHistoricalRun"
        />
-      <aside v-if="activeWorkspace !== 'home' && activeWorkspace !== 'scenarios' && activeWorkspace !== 'saves'" class="command-rail" aria-labelledby="command-title">
+      <aside v-if="activeWorkspace !== 'home' && activeWorkspace !== 'saves'" class="command-rail" aria-labelledby="command-title">
         <div class="section-heading">
           <span>01</span>
           <h2 id="command-title">{{ activeWorkspace }}</h2>
@@ -2783,7 +1779,7 @@ onBeforeUnmount(() => {
       </aside>
 
       <section v-if="activeWorkspace !== 'home'" class="instrument-bank" aria-labelledby="instrument-title">
-        <div v-if="activeWorkspace !== 'scenarios' && activeWorkspace !== 'saves'" class="section-heading">
+        <div v-if="activeWorkspace !== 'saves'" class="section-heading">
           <span>02</span>
           <h2 id="instrument-title">Active Instrument</h2>
           <small>{{ selectedCommand?.category ?? "STANDBY" }}</small>
@@ -2794,8 +1790,8 @@ onBeforeUnmount(() => {
           class="instrument"
           :class="instrumentWidthClass(selectedCommand)"
         >
-          <div v-if="activeWorkspace !== 'scenarios' && activeWorkspace !== 'saves'" class="instrument-index">{{ selectedCommand.id }} / {{ instrumentExecutionModes(selectedCommand) }}</div>
-          <div v-if="activeWorkspace !== 'scenarios' && activeWorkspace !== 'saves'" class="instrument-title-row">
+          <div v-if="activeWorkspace !== 'saves'" class="instrument-index">{{ selectedCommand.id }} / {{ instrumentExecutionModes(selectedCommand) }}</div>
+          <div v-if="activeWorkspace !== 'saves'" class="instrument-title-row">
             <h3>{{ workspaceCommandName(selectedCommand) }}</h3>
             <span class="execution-mode" :class="{ mutation: instrumentOwnsMutation(selectedCommand) }">
               {{ instrumentModeLabel(selectedCommand) }}
@@ -2866,67 +1862,29 @@ onBeforeUnmount(() => {
             :pending-list="commandPending(saveSnapshotListCommandID)"
             :pending-detail="commandPending(saveSnapshotGetCommandID)"
             :pending-mutation="commandPending(saveSnapshotCaptureCommandID) || commandPending(saveSnapshotLoadCommandID) || commandPending(saveSnapshotDeleteCommandID)"
-            :current-scene="latestScenarioStatusResult?.data ? {
-              locationName: (latestScenarioStatusResult.data as ScenarioStatusData).locationName,
-              floor: (latestScenarioStatusResult.data as ScenarioStatusData).floor,
-              date: (latestScenarioStatusResult.data as ScenarioStatusData).date,
-              time: (latestScenarioStatusResult.data as ScenarioStatusData).time,
-              partyMembers: (latestScenarioStatusResult.data as ScenarioStatusData).party.length,
+            :current-scene="latestTestSetupStatusResult?.data ? {
+              locationName: (latestTestSetupStatusResult.data as TestSetupStatusData).locationName,
+              floor: (latestTestSetupStatusResult.data as TestSetupStatusData).floor,
+              date: (latestTestSetupStatusResult.data as TestSetupStatusData).date,
+              time: (latestTestSetupStatusResult.data as TestSetupStatusData).time,
+              partyMembers: (latestTestSetupStatusResult.data as TestSetupStatusData).party.length,
             } : undefined"
-            :active-scenario="scenarioTargetActive ? scenarioComposer : undefined"
-            :active-scenario-dirty="activeScenarioDirty"
-            :load-review-target="saveLoadReviewTarget"
-            @review-target-consumed="saveLoadReviewTarget = undefined"
             @refresh="runQueryByID(saveSnapshotListCommandID, false)"
             @inspect="inspectSaveSnapshot"
             @capture="(value) => runSpecializedMutation(saveSnapshotCaptureCommandID, value)"
             @load="(value) => runSpecializedMutation(saveSnapshotLoadCommandID, value)"
             @delete="(value) => runSpecializedMutation(saveSnapshotDeleteCommandID, value)"
-            @use-baseline="useSaveAsScenarioBaseline"
           />
-          <ScenarioLab
-            v-else-if="selectedCommand.id === scenarioStatusCommandID"
-            :data="latestScenarioStatusResult?.data as ScenarioStatusData | undefined"
-            :updated-at="latestScenarioStatusResult?.receivedAt"
-            :pending-status="commandPending(scenarioStatusCommandID)"
+          <TestSetups
+            v-else-if="selectedCommand.id === testSetupStatusCommandID"
+            :data="latestTestSetupStatusResult?.data as TestSetupStatusData | undefined"
+            :updated-at="latestTestSetupStatusResult?.receivedAt"
+            :pending-status="commandPending(testSetupStatusCommandID)"
             :pending-hole-up="commandPending(commandTestHoleUpCommandID)"
             :pending-kill-party="commandPending(deathKillPartyCommandID)"
             :pending-death-sequence="commandPending(deathTestSequenceCommandID)"
-            :pending-definition-list="commandPending(scenarioDefinitionListCommandID)"
-            :pending-definition-get="commandPending(scenarioDefinitionGetCommandID)"
-            :pending-definition-save="commandPending(scenarioDefinitionValidateCommandID) || commandPending(scenarioDefinitionCreateCommandID) || commandPending(scenarioDefinitionUpdateCommandID) || commandPending(scenarioDefinitionDeleteCommandID) || commandPending(scenarioDefinitionDuplicateCommandID)"
-            :pending-run-start="commandPending(scenarioRunStartCommandID)"
-            :pending-run-cancel="commandPending(scenarioRunCancelCommandID)"
-            :historical-run="scenarioHistoricalRun"
-            :historical-run-issue="historicalRunIssue"
-            :reviewed-baseline-revision="scenarioReviewedBaselineRevision"
-            :reviewed-scene-generation="scenarioReviewedSceneGeneration"
-            :composer="scenarioComposer"
-            :definition-list="latestScenarioDefinitionListResult?.data ? scenarioDefinitionListData(latestScenarioDefinitionListResult.data) : undefined"
-            :run-status="latestScenarioRunStatusResult?.data ? scenarioRunStatusData(latestScenarioRunStatusResult.data) : undefined"
-            :selected-run-id="selectedScenarioRunID"
-            :validation-issues="scenarioValidationIssues"
-            :active-task="scenarioTask"
-            :commands="commands"
-            :option-sets="optionSets"
-            :snapshots="saveList?.snapshots ?? []"
-            @refresh="runQueryByID(scenarioStatusCommandID, false)"
+            @refresh="runQueryByID(testSetupStatusCommandID, false)"
             @run="(operation) => runSpecializedMutation(operation.commandID, operation.argumentsByID)"
-            @update-composer="updateScenarioComposer"
-            @create-definition="createScenarioDefinition"
-            @list-definitions="runQueryByID(scenarioDefinitionListCommandID, true)"
-            @get-definition="getScenarioDefinition"
-            @play-definition="playScenarioDefinition"
-            @save-definition="saveScenarioDefinition"
-            @delete-definition="deleteScenarioDefinition"
-            @duplicate-definition="duplicateScenarioDefinition"
-            @review-run="reviewScenarioRun"
-            @start-run="startScenarioRun"
-            @review-again="reviewHistoricalRun"
-            @cancel-remaining="cancelRemainingScenarioSteps"
-            @review-rollback="reviewScenarioRollback"
-            @select-run="selectedScenarioRunID = $event"
-            @update-active-task="updateScenarioTask"
           />
           <LoggingConsole
             v-else-if="selectedCommand.id === loggingStatusCommandID"
@@ -3002,33 +1960,16 @@ onBeforeUnmount(() => {
             @set-overlay="(enabled) => runSpecializedMutation(moongateOverlaySetCommandID, { enabled: String(enabled) })"
             @travel="(value) => runSpecializedMutation(moongateTravelCommandID, value)"
           />
-          <template v-else-if="selectedCommand.id === shrineStatusCommandID">
-            <ShrineReference
-              v-show="activeWorkspace === 'codex'"
-              :data="latestShrineStatusResult?.data ? shrineStatusData(latestShrineStatusResult.data) : undefined"
-              :selected-index="selectedShrineIndex"
-              @select="selectShrine"
-              @inspect="openShrineWorkspace('game')"
-            />
-            <ShrineProgressInspector
-              v-show="activeWorkspace === 'game'"
-              :data="latestShrineStatusResult?.data ? shrineStatusData(latestShrineStatusResult.data) : undefined"
-              :selected-index="selectedShrineIndex"
-              :updated-at="latestShrineStatusResult?.receivedAt"
-              :pending="commandPending(shrineProgressCommandID)"
-              :preset-pending="commandPending(codexQuestStateSetAllCommandID)"
-              @select="selectShrine"
-              @apply="(argumentsByID) => runSpecializedMutation(shrineProgressCommandID, argumentsByID)"
-              @preset="(argumentsByID) => runSpecializedMutation(codexQuestStateSetAllCommandID, argumentsByID)"
-              @reference="openShrineWorkspace('codex')"
-            />
-          </template>
-          <CombatMapCatalog
-            v-else-if="selectedCommand.id === 'combat.map-catalog.all'"
-            :data="latestCombatMapResult?.data ? combatMapData(latestCombatMapResult.data) : undefined"
-            :section="draftFor(selectedCommand).section ?? 'all'"
-            :pending="commandPending(selectedCommand.id)"
-            @section="updateSelectedCombatSection"
+          <ShrineProgressInspector
+            v-else-if="selectedCommand.id === shrineStatusCommandID"
+            :data="latestShrineStatusResult?.data ? shrineStatusData(latestShrineStatusResult.data) : undefined"
+            :selected-index="selectedShrineIndex"
+            :updated-at="latestShrineStatusResult?.receivedAt"
+            :pending="commandPending(shrineProgressCommandID)"
+            :preset-pending="commandPending(codexQuestStateSetAllCommandID)"
+            @select="selectShrine"
+            @apply="(argumentsByID) => runSpecializedMutation(shrineProgressCommandID, argumentsByID)"
+            @preset="(argumentsByID) => runSpecializedMutation(codexQuestStateSetAllCommandID, argumentsByID)"
           />
           <CombatEncounterComposer
             v-else-if="selectedCommand.id === combatEncounterOptionsCommandID"
@@ -3068,29 +2009,6 @@ onBeforeUnmount(() => {
 			:updated-at="latestDebugOptionsResult?.receivedAt"
 			:pending="debugOptionsMutationCommandIDs.some(commandPending)"
 			@set-option="(commandID, enabled) => runSpecializedMutation(commandID, { enabled: String(enabled) })"
-		  />
-		  <DisplayConsole
-			v-else-if="selectedCommand.id === displayStatusCommandID"
-			:data="latestDisplayResult?.data ? displayStatusData(latestDisplayResult.data) : undefined"
-			:modes="displayModeChoices"
-			:updated-at="latestDisplayResult?.receivedAt"
-			:pending="displayMutationCommandIDs.some(commandPending)"
-			@set-mode="(mode) => runSpecializedMutation(displayModeSetCommandID, { mode })"
-			@set-resolution="(index) => runSpecializedMutation(displayResolutionSetCommandID, { index: String(index) })"
-		  />
-		  <ReduxModificationsConsole
-			v-else-if="selectedCommand.id === reduxModificationsStatusCommandID"
-			:commands="commands"
-			@mutate="(mutation) => runSpecializedMutation(mutation.commandID, mutation.argumentsByID)"
-			:data="latestReduxModificationsResult?.data ? reduxModificationsStatusData(latestReduxModificationsResult.data) : undefined"
-			:updated-at="latestReduxModificationsResult?.receivedAt"
-			:pending="reduxModificationCommandIDs.some(commandPending)"
-			@set-repeated-division="(enabled) => runSpecializedMutation(repeatedMonsterDivisionSetCommandID, { enabled: String(enabled) })"
-			@set-persistent-discoveries="(enabled) => runSpecializedMutation(persistentDungeonDiscoveriesSetCommandID, { enabled: String(enabled) })"
-			@set-subdued-visibility="(enabled) => runSpecializedMutation(subduedUnlitDungeonVisibilitySetCommandID, { enabled: String(enabled) })"
-			@set-smooth-surface-movement="(enabled) => runSpecializedMutation(smoothSurfaceMovementSetCommandID, { enabled: String(enabled) })"
-			@set-flexible-sextant-use="(enabled) => runSpecializedMutation(flexibleSextantUseSetCommandID, { enabled: String(enabled) })"
-			@refresh="runQueryByID(reduxModificationsStatusCommandID, false)"
 		  />
 		  <ShipsConsole
             v-else-if="selectedCommand.id === vehicleStatusCommandID"
@@ -3244,7 +2162,6 @@ onBeforeUnmount(() => {
         <div class="stream-actions">
           <button type="button" :aria-expanded="!historyCollapsed" :data-state="historyCollapsed ? 'collapsed' : 'expanded'" data-history-action="collapse" @click="toggleHistory">{{ historyCollapsed ? 'EXPAND HISTORY' : 'COLLAPSE HISTORY' }}</button>
           <button type="button" :data-state="historyDock" data-history-action="dock" @click="toggleHistoryDock">DOCK {{ historyDock === 'bottom' ? 'RIGHT' : 'BOTTOM' }}</button>
-          <button type="button" role="switch" :aria-checked="scenarioRecording" :aria-label="scenarioTargetActive ? `Record commands to ${scenarioComposer.definition.name}: ${scenarioRecording ? 'on' : 'off'}` : 'Record commands: unavailable until a scenario is selected'" :data-state="scenarioDefinitionWritePending ? 'pending' : scenarioRecording ? 'recording' : scenarioTargetActive ? 'ready' : 'unavailable'" data-history-action="record" @click="toggleScenarioRecording">{{ scenarioDefinitionWritePending ? `RECORD QUEUED ${deferredScenarioCaptures.length}` : scenarioRecording ? 'RECORDING ON' : scenarioTargetActive ? 'RECORD READY' : 'RECORD UNAVAILABLE' }}</button>
           <button type="button" role="switch" :aria-checked="followResults" :data-state="followResults ? 'active' : 'off'" data-history-action="follow" @click="toggleFollow">FOLLOW {{ followResults ? "ON" : "OFF" }}</button>
           <button type="button" :data-state="results.length ? 'ready' : 'unavailable'" data-history-action="clear" :disabled="results.length === 0" @click="clearResults">CLEAR HISTORY</button>
         </div>
@@ -3259,59 +2176,9 @@ onBeforeUnmount(() => {
           </header>
           <p v-if="result.summary" class="summary">{{ result.summary }}</p>
           <p v-if="!result.success" class="error-line">{{ result.errorCode }} :: {{ result.errorMessage }}</p>
-          <div class="history-entry-actions">
-            <button v-if="resultEligibleForScenario(result)" type="button" :disabled="scenarioCaptureState(result) === 'completed' || scenarioCaptureState(result) === 'pending' || commandPending(scenarioDefinitionGetCommandID)" :data-state="scenarioCaptureState(result)" :data-add-scenario="result.requestId" @click="requestAddResultToScenario(result)">{{ capturedScenarioTargets.has(result.requestId) ? `CAPTURED IN ${capturedScenarioTargets.get(result.requestId)}` : deferredScenarioCaptures.some((capture) => capture.requestId === result.requestId) ? 'CAPTURE QUEUED UNTIL SAVE COMPLETES' : commandPending(scenarioDefinitionGetCommandID) ? 'WAITING FOR SCENARIO LOAD' : scenarioDefinitionWritePending ? 'QUEUE CAPTURE AFTER SAVE' : scenarioTargetActive ? `CAPTURE IN ${scenarioComposer.definition.name}` : 'CHOOSE SCENARIO…' }}</button>
-            <span v-else-if="!result.success">ATTACH AS NOTE UNAVAILABLE</span>
-          </div>
           <footer>REQ {{ result.requestId }} · SCENE {{ result.sceneGeneration }}</footer>
         </article>
         <div v-if="results.length === 0" class="empty-history">NO COMMAND HISTORY</div>
-      </div>
-    </section>
-
-    <section v-if="scenarioCaptureDialogOpen" class="scenario-target-modal" role="dialog" aria-modal="true" aria-labelledby="scenario-target-title" data-scenario-target-dialog>
-      <div ref="scenarioTargetDialog" class="scenario-target-dialog">
-        <header><div><span>GLOBAL HISTORY CAPTURE</span><h2 id="scenario-target-title">{{ scenarioCaptureDialogMode === 'new' ? 'Create Scenario Draft' : scenarioCaptureDialogMode === 'dirty' ? 'Unsaved Scenario Draft' : 'Choose Scenario Target' }}</h2></div><button type="button" :disabled="Boolean(scenarioCaptureLoadingReference)" aria-label="Close scenario target dialog" @click="closeScenarioTargetChooser">CLOSE</button></header>
-        <p v-if="scenarioCaptureError" class="error-line" role="alert">{{ scenarioCaptureError }}</p>
-
-        <template v-if="scenarioCaptureDialogMode === 'dirty'">
-          <p><strong>{{ scenarioComposer.definition.name }}</strong> has unsaved changes. Replacing it would discard those changes.</p>
-          <div class="scenario-target-dialog-actions"><button type="button" @click="cancelScenarioReplacement">CANCEL</button><button type="button" data-scenario-target-return @click="returnToActiveScenarioEditor">RETURN TO EDITOR</button><button type="button" class="danger-button" data-scenario-target-discard @click="discardScenarioDraftAndReplace">DISCARD &amp; CONTINUE</button></div>
-        </template>
-
-        <template v-else-if="scenarioCaptureDialogMode === 'new'">
-          <label>SCENARIO NAME<input v-model="scenarioCaptureNewName" data-scenario-target-name autofocus placeholder="Waterfall Regression" /></label>
-          <dl><div><dt>Destination</dt><dd>Personal / Local</dd></div><div><dt>Reference</dt><dd><code>{{ scenarioCaptureNewID ? `personal:${scenarioCaptureNewID}` : 'Enter a name' }}</code></dd></div></dl>
-          <p v-if="scenarioCaptureNewIDExists" class="error-line">A Personal scenario already uses this reference.</p>
-          <p>Nothing is saved until you review and save the draft in Scenario Editor.</p>
-          <div class="scenario-target-dialog-actions"><button type="button" @click="scenarioCaptureDialogMode = 'choose'">BACK</button><button type="button" data-scenario-target-create :disabled="!scenarioCaptureNewName.trim() || !scenarioCaptureNewID || scenarioCaptureNewIDExists" @click="createScenarioCaptureTarget">CREATE DRAFT &amp; ACTIVATE</button></div>
-        </template>
-
-        <template v-else>
-          <button v-if="scenarioTargetActive" type="button" class="scenario-target-choice current" data-scenario-target-current @click="finishScenarioTargetSelection"><span>CURRENT ACTIVE</span><strong>{{ scenarioComposer.definition.name }}</strong><small>{{ activeScenarioLabel }} · {{ scenarioComposer.definition.steps.length }} STEPS{{ activeScenarioDirty ? ' · UNSAVED' : '' }}</small></button>
-          <label>FIND EXISTING SCENARIO<input v-model="scenarioCaptureSearch" type="search" data-scenario-target-search placeholder="NAME, ID, REFERENCE, OR DESCRIPTION" /></label>
-          <section v-for="source in (['personal', 'project'] as ScenarioSource[])" :key="source" class="scenario-target-group">
-            <header><strong>{{ scenarioSourceLabel(source) }}</strong><small v-if="source === 'project'">SAVING REQUIRES SHARED-PROJECT REVIEW</small></header>
-            <button v-for="definition in scenarioTargetChoices(source)" :key="definition.reference" type="button" class="scenario-target-choice" :class="{ selected: scenarioCaptureSelectedReference === definition.reference }" :aria-pressed="scenarioCaptureSelectedReference === definition.reference" :disabled="Boolean(scenarioCaptureLoadingReference)" :data-scenario-target-reference="definition.reference" @click="chooseScenarioTarget(definition.reference)"><strong>{{ definition.name }}</strong><small>{{ definition.reference }} · {{ definition.steps.length }} STEPS</small></button>
-            <p v-if="scenarioTargetChoices(source).length === 0" class="empty-state">NO {{ source.toUpperCase() }} SCENARIOS</p>
-          </section>
-          <section v-if="scenarioCaptureSelectedDefinition && scenarioCaptureResult" class="scenario-target-placement" data-scenario-target-placement>
-            <header><strong>ADD {{ commandName(scenarioCaptureResult.commandId) }}</strong><small>{{ scenarioCaptureSelectedDefinition.name }}</small></header>
-            <label>INSERT POSITION<select v-model.number="scenarioCaptureInsertionIndex" data-scenario-target-insertion><option v-for="option in scenarioCaptureInsertionOptions" :key="option.index" :value="option.index">{{ option.label }}</option></select></label>
-            <p v-if="scenarioCapturePlacementIssue" class="error-line" role="alert">{{ scenarioCapturePlacementIssue }}</p>
-            <p>The server-normalized command and arguments will be added to an unsaved draft, then opened for review.</p>
-          </section>
-          <p v-if="commandPending(scenarioDefinitionListCommandID)" class="summary">REFRESHING SCENARIO LIBRARY…</p>
-          <div class="scenario-target-dialog-actions"><button type="button" @click="closeScenarioTargetChooser">CANCEL</button><button type="button" data-scenario-target-new @click="requestNewScenarioTarget">CREATE NEW PERSONAL…</button><button v-if="scenarioCaptureResult" type="button" data-scenario-target-confirm :disabled="!scenarioCaptureSelectedReference || Boolean(scenarioCaptureLoadingReference) || Boolean(scenarioCapturePlacementIssue)" @click="confirmScenarioCaptureTarget">{{ scenarioCaptureLoadingReference ? 'LOADING…' : 'ADD &amp; OPEN EDITOR' }}</button></div>
-        </template>
-      </div>
-    </section>
-
-    <section v-if="scenarioReplacementReview && !scenarioCaptureDialogOpen" ref="scenarioReplacementDialog" class="scenario-target-modal scenario-replacement-modal" role="dialog" aria-modal="true" aria-labelledby="scenario-replacement-title" data-scenario-replacement-dialog>
-      <div class="scenario-target-dialog">
-        <header><div><span>SCENARIO DRAFT REPLACEMENT</span><h2 id="scenario-replacement-title">Unsaved Scenario Draft</h2></div><button type="button" @click="cancelScenarioReplacement">CLOSE</button></header>
-        <p><strong>{{ scenarioComposer.definition.name }}</strong> has unsaved changes. Replacing it would discard those changes.</p>
-        <div class="scenario-target-dialog-actions"><button type="button" data-scenario-replacement-cancel @click="cancelScenarioReplacement">KEEP DRAFT</button><button type="button" class="danger-button" data-scenario-replacement-discard @click="discardScenarioDraftAndReplace">DISCARD &amp; CONTINUE</button></div>
       </div>
     </section>
 

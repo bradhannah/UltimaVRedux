@@ -16,7 +16,6 @@ const emit = defineEmits<{
   select: [index: number]
   apply: [argumentsByID: Record<string, string>]
   preset: [argumentsByID: Record<string, string>]
-  reference: []
 }>()
 
 interface ReviewedPreset {
@@ -127,7 +126,6 @@ function applyPreset(): void {
       <select id="shrine-progress-selector" :value="selectedIndex" @change="selectShrine">
         <option v-for="shrine in data?.shrines ?? []" :key="shrine.index" :value="shrine.index">{{ shrine.virtueName }}</option>
       </select>
-      <button type="button" class="cross-workspace-link" @click="emit('reference')">← OPEN CODEX REFERENCE</button>
     </div>
 
     <template v-if="selected">

@@ -1,41 +1,12 @@
 package main
 
 import (
-	"math"
-	"strconv"
-
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
 func (g *GameScene) executeWorldSetupDebugCommand(request debugging.Request) (debugging.Result, bool) {
 	switch request.CommandID {
-	case debugging.CommandMovementEnterLocation:
-		if result, blocked := g.worldSetupBlockedResult(request); blocked {
-			return result, true
-		}
-		locationID, err := strconv.Atoi(mustDebugStringArgument(request, "location"))
-		if err != nil {
-			panic("validated world setup location is not an integer")
-		}
-		if locationID < 0 || locationID > math.MaxUint8 {
-			panic("validated world setup location is outside the byte range")
-		}
-		operation, err := g.gameState.DebugEnterSmallLocation(references.Location(locationID))
-
-		return worldSetupOperationResult(request, "Named location entered.", g.gameState, operation, err), true
-	case debugging.CommandMovementFloorSet:
-		if result, blocked := g.worldSetupBlockedResult(request); blocked {
-			return result, true
-		}
-		floor := mustDebugIntegerArgument(request, "floor")
-		if floor < math.MinInt8 || floor > math.MaxInt8 {
-			panic("validated world setup floor is outside the int8 range")
-		}
-		operation, err := g.gameState.DebugSetFloor(references.FloorNumber(floor))
-
-		return worldSetupOperationResult(request, "Exact floor selected.", g.gameState, operation, err), true
 	case debugging.CommandMovementLandmarkTravel:
 		if result, blocked := g.worldSetupBlockedResult(request); blocked {
 			return result, true
@@ -90,4 +61,12 @@ func worldSetupOperationResult(
 	appendWorldSetupChanges(&result.Changes, operation)
 
 	return result
+}
+
+func appendWorldSetupChanges(changes *[]debugging.StateChange, operation game_state.WorldSetupResult) {
+	appendSemanticChange(changes, "world.locationId", int(operation.Before.Location), int(operation.After.Location))
+	appendSemanticChange(changes, "world.floor", int(operation.Before.Floor), int(operation.After.Floor))
+	appendSemanticChange(changes, "world.position.x", int(operation.Before.Position.X), int(operation.After.Position.X))
+	appendSemanticChange(changes, "world.position.y", int(operation.Before.Position.Y), int(operation.After.Position.Y))
+	appendSemanticChange(changes, "effects.smashed", operation.SmashedBefore, operation.SmashedAfter)
 }
