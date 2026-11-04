@@ -22,6 +22,11 @@ import (
 // a subprocess per test or a caller-controlled selection that could hide tests.
 const nativeCohortFileThreshold = 128
 
+// nativeSelectionLimit bounds one cohort process's -test.run pattern. Windows
+// rejects command lines over 32,767 characters, so a large cohort runs as several
+// consecutive processes, each still a fixed, complete slice of the cohort.
+const nativeSelectionLimit = 16_000
+
 func nativeCohort(name string) string {
 	switch {
 	case containsTerm(name, "Combat", "Projectile", "Corpser", "FleeChevron", "AttackBrackets", "Ettin"):
@@ -178,18 +183,58 @@ func runNativeCohorts(ctx context.Context, settings options, environment []strin
 		if len(selected) == 0 {
 			continue
 		}
-		_, err := fmt.Fprintf(stderr, "Native cohort %s: %s (%d top-level workloads)\n", name, group, len(selected))
+		parts := nativeSelectionParts(selected, nativeSelectionLimit)
+		_, err := fmt.Fprintf(stderr, "Native cohort %s: %s (%d top-level workloads, %d process(es))\n",
+			name, group, len(selected), len(parts))
 		if err != nil {
 			return fmt.Errorf("reporting native cohort: %w", err)
 		}
-		err = runNativeCohort(ctx, settings, environment, binary, name, selected, result, stdout, stderr, runner)
-		if err != nil {
-			return err
+		for _, part := range parts {
+			err = runNativeCohort(ctx, settings, environment, binary, name, part, result, stdout, stderr, runner)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	result.terminal = actionPass
 
 	return nil
+}
+
+// nativeSelection anchors and escapes workload names as one -test.run pattern.
+func nativeSelection(selected []string) string {
+	patterns := make([]string, len(selected))
+	for index, workload := range selected {
+		patterns[index] = regexp.QuoteMeta(workload)
+	}
+
+	return "^(" + strings.Join(patterns, "|") + ")$"
+}
+
+// nativeSelectionParts splits selected, in order, into the fewest consecutive
+// parts whose selection patterns fit within limit. A single over-long name still
+// forms its own part rather than being dropped.
+func nativeSelectionParts(selected []string, limit int) [][]string {
+	const frame = len("^(") + len(")$")
+	var parts [][]string
+	start, length := 0, frame
+	for index, workload := range selected {
+		size := len(regexp.QuoteMeta(workload))
+		if index > start {
+			if length+1+size > limit {
+				parts = append(parts, selected[start:index])
+				start, length = index, frame
+			} else {
+				size++ // The "|" separator before this name.
+			}
+		}
+		length += size
+	}
+	if start < len(selected) {
+		parts = append(parts, selected[start:])
+	}
+
+	return parts
 }
 
 func runNativeCohort(ctx context.Context, settings options, environment []string, binary, name string,
@@ -198,12 +243,7 @@ func runNativeCohort(ctx context.Context, settings options, environment []string
 	local := &packageResult{hasTests: true, tests: make(map[string]*testResult), terminal: "",
 		scope: result.scope, selected: true, directory: result.directory, cohorts: false}
 	expected := map[string]*packageResult{name: local}
-	patterns := make([]string, len(selected))
-	for index, workload := range selected {
-		patterns[index] = regexp.QuoteMeta(workload)
-	}
-	selection := "^(" + strings.Join(patterns, "|") + ")$"
-	arguments := nativeBinaryArguments(settings, result.directory, binary, name, selection, "")
+	arguments := nativeBinaryArguments(settings, result.directory, binary, name, nativeSelection(selected), "")
 	runErr := runTestPackages(ctx, arguments, environment, expected, stdout, stderr, runner)
 	mergeErr := mergeNativeCohort(name, selected, result, local)
 

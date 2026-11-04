@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -55,12 +56,18 @@ func TestSyntheticExtractionIntegration(t *testing.T) {
 	audit, err := LoadAudit(filepath.Join(first, auditFilename))
 	require.NoError(t, err)
 	assert.Empty(t, audit.Entries)
+	for _, name := range manifest.ActualFiles {
+		_, err := semantic.LoadFile(filepath.Join(first, filepath.FromSlash(name)))
+		require.NoError(t, err, name)
+	}
+	// Windows has no Unix permission bits; Go reports every file there as 0666.
+	if runtime.GOOS == "windows" {
+		return
+	}
 	auditInfo, err := os.Stat(filepath.Join(first, auditFilename))
 	require.NoError(t, err)
 	assert.Equal(t, fs.FileMode(filePermissions), auditInfo.Mode().Perm())
 	for _, name := range manifest.ActualFiles {
-		_, err := semantic.LoadFile(filepath.Join(first, filepath.FromSlash(name)))
-		require.NoError(t, err, name)
 		info, err := os.Stat(filepath.Join(first, filepath.FromSlash(name)))
 		require.NoError(t, err)
 		assert.Equal(t, fs.FileMode(filePermissions), info.Mode().Perm())
