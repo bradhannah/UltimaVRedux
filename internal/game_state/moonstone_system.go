@@ -110,19 +110,11 @@ func (ms *MoonstoneSystem) GetMoonstoneAtPositionOnMap(x, y, level, mapNum uint8
 
 // GetMoonstoneSystem returns the moonstone system for direct manipulation
 func (g *GameState) GetMoonstoneSystem() *MoonstoneSystem {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	return g.moonstoneSystem
 }
 
 // GetMoonstones returns all moonstone locations and states - delegation to MoonstoneSystem
 func (g *GameState) GetMoonstones() []MoonstoneLocation {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	return g.moonstoneSystem.GetMoonstonesFromSystem()
 }
 
@@ -154,20 +146,12 @@ type MoongateTravelRoute struct {
 
 // GetMoongateTravelRoute returns the current semantic moongate route.
 func (g *GameState) GetMoongateTravelRoute() (MoongateTravelRoute, error) {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	return g.moonstoneSystem.GetMoongateTravelRoute(&g.DateTime)
 }
 
 // GetMoongateDestinationForPhase resolves a Vas Rel Por destination from the
 // selected phase without applying the current moons or midnight shrine override.
 func (g *GameState) GetMoongateDestinationForPhase(phase datetime.MoonPhase) (MoongateDestination, error) {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	return g.moonstoneSystem.GetMoongateDestinationForPhase(phase)
 }
 
@@ -177,6 +161,20 @@ func (g *GameState) AreMoongatesVisible() bool {
 }
 
 // Pure logic methods - moved from GameState for better separation of concerns
+
+// GetActiveMoongatePositions returns placed source gates on one map and floor.
+func (ms *MoonstoneSystem) GetActiveMoongatePositions(location references.Location, floor references.FloorNumber) []references.Position {
+	var activePositions []references.Position
+
+	for _, moonstone := range ms.Moonstones {
+		if moonstone.Map == uint8(location) && moonstone.Level == uint8(floor) && moonstone.CanCreateMoongate() {
+			position := references.Position{X: references.Coordinate(moonstone.X), Y: references.Coordinate(moonstone.Y)}
+			activePositions = append(activePositions, position)
+		}
+	}
+
+	return activePositions
+}
 
 // GetMoonstonesFromSystem returns all moonstone locations and states
 func (ms *MoonstoneSystem) GetMoonstonesFromSystem() []MoonstoneLocation {

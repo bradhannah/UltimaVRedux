@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
 
 const originalDungeonNPCBaseTile = byte(0x40)
@@ -215,7 +214,6 @@ func dungeonRoomEntryDirection(direction references.DungeonLastDirection) Combat
 
 func (g *GameState) populateFixedDungeonRoom(combat *CombatState, floor references.FloorNumber) error {
 	choices := fixedDungeonVariableMonsterChoices()
-	variableDescriptor := originalDungeonNPCBaseTile + 4*byte(references.MonsterWhirlpool)
 	entityCount := 0
 	// REDUX DEVIATION: Original dungeon encounter setup accepts invalid coordinates and can write
 	// before the first object slot when the 32-slot list is full. Redux rejects malformed room
@@ -231,11 +229,10 @@ func (g *GameState) populateFixedDungeonRoom(combat *CombatState, floor referenc
 			position.Y < 0 || position.Y >= references.YCombatMapTiles {
 			return fmt.Errorf("fixed dungeon room slot %d position %v is out of bounds", slot, position)
 		}
-		base := descriptor & 0xfc
-		if descriptor < originalDungeonNPCBaseTile || base == 0xb4 || base == 0xe8 {
+		switch fixedDungeonEntityKind(descriptor) {
+		case CombatEncounterEntityField, CombatEncounterEntityObject, CombatEncounterEntityLoot:
 			continue
-		}
-		if base == variableDescriptor {
+		case CombatEncounterEntityRandomMonster:
 			for _, monsterType := range choices {
 				if _, err := g.enemyReferenceForCombat(monsterType); err != nil {
 					return fmt.Errorf("fixed dungeon room variable slot %d: %w", slot, err)
@@ -243,8 +240,9 @@ func (g *GameState) populateFixedDungeonRoom(combat *CombatState, floor referenc
 			}
 
 			continue
+		case CombatEncounterEntityMonster:
 		}
-		monsterType := references.MonsterType((descriptor - originalDungeonNPCBaseTile) / 4)
+		monsterType := fixedDungeonMonsterType(descriptor)
 		if _, err := g.enemyReferenceForCombat(monsterType); err != nil {
 			return fmt.Errorf("fixed dungeon room slot %d descriptor 0x%02x: %w", slot, descriptor, err)
 		}
@@ -268,24 +266,19 @@ func (g *GameState) populateFixedDungeonRoom(combat *CombatState, floor referenc
 			continue
 		}
 		position := combat.CombatMapRef.MonsterPositions[slot]
-		base := descriptor & 0xfc
-		if base == 0xe8 {
+		monsterType := fixedDungeonMonsterType(descriptor)
+		switch fixedDungeonEntityKind(descriptor) {
+		case CombatEncounterEntityField:
 			if !combat.AddField(NewCombatField(CombatFieldKind(descriptor&3), position)) {
 				panic("fixed dungeon-room field capacity exceeded")
 			}
 
 			continue
-		}
-		if descriptor < originalDungeonNPCBaseTile || base == 0xb4 {
-			if descriptor >= 0x10 && base != 0xb4 {
-				combat.AddObject(NewCombatDungeonObject(
-					position,
-					indexes.SpriteIndex(int(indexes.StarPattern)+int(descriptor)),
-					int(descriptor),
-				))
+		case CombatEncounterEntityObject:
+			combat.AddObject(NewCombatDungeonObject(position, fixedDungeonDescriptorSprite(descriptor), int(descriptor)))
 
-				continue
-			}
+			continue
+		case CombatEncounterEntityLoot:
 			object, err := g.fixedDungeonLootObject(descriptor, floor, position)
 			if err != nil {
 				return fmt.Errorf("fixed dungeon room slot %d descriptor 0x%02x: %w", slot, descriptor, err)
@@ -293,10 +286,9 @@ func (g *GameState) populateFixedDungeonRoom(combat *CombatState, floor referenc
 			combat.AddObject(object)
 
 			continue
-		}
-		monsterType := references.MonsterType((descriptor - originalDungeonNPCBaseTile) / 4)
-		if base == variableDescriptor {
+		case CombatEncounterEntityRandomMonster:
 			monsterType = variableMonsters[descriptor&3]
+		case CombatEncounterEntityMonster:
 		}
 		enemyRef, refErr := g.enemyReferenceForCombat(monsterType)
 		if refErr != nil {
@@ -355,12 +347,7 @@ func (g *GameState) fixedDungeonLootObject(
 		return CombatObject{}, errors.New("unsupported fixed-room loot descriptor")
 	}
 
-	return NewCombatLooseItem(
-		position,
-		item,
-		quantity,
-		indexes.SpriteIndex(int(indexes.StarPattern)+int(descriptor)),
-	), nil
+	return NewCombatLooseItem(position, item, quantity, fixedDungeonDescriptorSprite(descriptor)), nil
 }
 
 func fixedDungeonVariableMonsterChoices() [8]references.MonsterType {

@@ -128,7 +128,7 @@ func (g *GameState) prepareCampingParty(
 			continue
 		}
 		position := campingScene.GetPartyMemberPosition(partyIndex)
-		if !campingPositionInBounds(position) {
+		if !isCombatMapPosition(position) {
 			return nil, fmt.Errorf(
 				"%w: party position %d is outside combat map: %v",
 				ErrInvalidCampingCombat,
@@ -147,7 +147,7 @@ func (g *GameState) prepareCampingParty(
 		combat.PartyPositions[partyIndex] = position
 	}
 	for positionIndex, position := range combatMap.MonsterPositions {
-		if !campingPositionInBounds(position) {
+		if !isCombatMapPosition(position) {
 			return nil, fmt.Errorf(
 				"%w: monster position %d is outside combat map: %v",
 				ErrInvalidCampingCombat,
@@ -215,11 +215,6 @@ func (g *GameState) populateOutdoorCampingCombat(
 	}
 
 	return result, nil
-}
-
-func campingPositionInBounds(position references.Position) bool {
-	return position.X >= 0 && position.X < references.XCombatMapTiles &&
-		position.Y >= 0 && position.Y < references.YCombatMapTiles
 }
 
 func (g *GameState) resolveCampingAmbushCount(maximum int) int {

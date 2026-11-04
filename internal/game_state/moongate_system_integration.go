@@ -11,10 +11,6 @@ import (
 // IsPlayerOnActiveMoongate checks if the player is standing on an active moongate
 // A placed moonstone on the current map/floor is active while the shared stage is nonzero.
 func (g *GameState) IsPlayerOnActiveMoongate() bool {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	playerPos := g.MapState.PlayerLocation.Position
 
 	location := g.MapState.PlayerLocation
@@ -27,10 +23,6 @@ func (g *GameState) IsPlayerOnActiveMoongate() bool {
 // A moongate is active when the shared stage is nonzero and a placed stone matches this position.
 // Any buried or exposed stone can source a gate, regardless of the current destination phase.
 func (g *GameState) IsMoongateActiveAt(pos references.Position) bool {
-	if g.moonstoneSystem == nil {
-		g.moonstoneSystem = NewMoonstoneSystem()
-	}
-
 	location := g.MapState.PlayerLocation
 
 	return g.moongateStage > MoongateStageHidden &&

@@ -43,6 +43,9 @@ type CombatEncounterRequest struct {
 	CountMode      CombatEncounterCountMode
 	ExactCount     int
 	FriendsEnabled bool
+	// Authored loads a fixed dungeon room exactly as walking into it would, always live.
+	// MonsterType, CountMode, ExactCount and FriendsEnabled are then unused.
+	Authored bool
 	// Seed is optional. When non-nil, composing the encounter calls SetRandomSeed,
 	// which resets the centralized GameState RNG sequence before any encounter rolls.
 	Seed *uint64
@@ -81,6 +84,9 @@ func (g *GameState) startCombatEncounter(
 	if err := g.validateCombatEncounterStartState(); err != nil {
 		return nil, err
 	}
+	if request.Authored {
+		return g.startAuthoredDungeonRoom(request)
+	}
 
 	prepared, err := g.prepareCombatEncounter(request)
 	if err != nil {
@@ -114,6 +120,57 @@ func (g *GameState) startCombatEncounter(
 		PrimaryCount: primaryCount,
 		FriendCount:  friendCount,
 		Positions:    append([]references.Position(nil), prepared.positions[:count]...),
+	}, nil
+}
+
+// startAuthoredDungeonRoom runs the same fixed-room setup as walking into the room. The
+// encounter has no dungeon origin, so its victory leaves the save's room progress untouched.
+func (g *GameState) startAuthoredDungeonRoom(request CombatEncounterRequest) (*CombatEncounterResult, error) {
+	if request.Map.Territory != references.DungeonCombatTerritory {
+		return nil, fmt.Errorf("%w: authored contents need a dungeon room", ErrInvalidCombatEncounter)
+	}
+	mapIndex, err := resolveCombatEncounterMap(request.Map)
+	if err != nil {
+		return nil, err
+	}
+	if err = validateCombatEncounterOptions(request); err != nil {
+		return nil, err
+	}
+	placement, placed := g.DungeonRoomPlacement(request.Map.Dungeon, request.Map.DungeonRoom)
+	if !placed {
+		return nil, fmt.Errorf("%w: dungeon room %d is not placed on any level",
+			ErrInvalidCombatEncounter, request.Map.DungeonRoom)
+	}
+	combatMap, err := references.LoadCombatMap(mapIndex, request.Map.Territory, g.GameConfig)
+	if err != nil {
+		return nil, fmt.Errorf("loading authored dungeon room %d: %w", mapIndex, err)
+	}
+	combatState := NewCombatState(combatMap, request.EntryDirection, &g.PartyState)
+	g.configureCombatTurnQueue(combatState)
+	seed := cloneEncounterSeed(request.Seed)
+	if seed != nil {
+		g.SetRandomSeed(*seed)
+	}
+	if err = g.populateFixedDungeonRoom(combatState, placement.Floor); err != nil {
+		return nil, err
+	}
+	g.commitCombatTransition(combatState, request.Map.Territory)
+	g.CombatScene.ExitContext = CombatExitDungeonRoom
+
+	positions := make([]references.Position, 0, combatState.MonsterManager.Count())
+	for index := range combatState.MonsterManager.Count() {
+		positions = append(positions, combatState.MonsterManager.GetMonster(index).Position())
+	}
+
+	return &CombatEncounterResult{
+		Territory:    request.Map.Territory,
+		MapIndex:     mapIndex,
+		Dungeon:      request.Map.Dungeon,
+		DungeonRoom:  request.Map.DungeonRoom,
+		Seed:         seed,
+		PrimaryCount: len(positions),
+		FriendCount:  0,
+		Positions:    positions,
 	}, nil
 }
 

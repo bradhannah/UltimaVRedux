@@ -134,6 +134,17 @@ func CalculateDungeonCombatMapIndex(dungeonIndex DungeonCombatIndex, roomIndex i
 	return int(dungeonIndex)*MaxDungeonRooms + roomIndex
 }
 
+// DungeonCombatIndexLocation is the inverse of DungeonLocationToCombatIndex.
+func DungeonCombatIndexLocation(index DungeonCombatIndex) (Location, bool) {
+	for location := Deceit; location <= Doom; location++ {
+		if candidate, ok := DungeonLocationToCombatIndex(location); ok && candidate == index {
+			return location, true
+		}
+	}
+
+	return 0, false
+}
+
 // DungeonLocationToCombatIndex converts a room-bearing dungeon location to its
 // compressed DUNGEON.CBT index. Despise has no fixed-room records.
 func DungeonLocationToCombatIndex(location Location) (DungeonCombatIndex, bool) {

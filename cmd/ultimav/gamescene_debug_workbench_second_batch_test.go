@@ -14,20 +14,25 @@ import (
 )
 
 func TestCombatEncounterOptionsReturnStableSpawnableReferences(t *testing.T) {
-	state := newApprovedToolTestState()
-	tiles := references.NewTileReferences()
-	state.GameReferences.EnemyReferences = references.NewAllEnemyReferences(tiles)
+	state, _ := game_state.NewIntegrationTestBuilder(t).Build()
 
 	result := executeSecondBatchStateDebugCommand(debugging.Request{
 		SessionID: "test", ID: "options", CommandID: debugging.CommandCombatEncounterOptions,
 	}, state)
 
-	require.True(t, result.Success)
+	require.True(t, result.Success, result.ErrorMessage)
 	var options combatEncounterOptionsResult
 	require.NoError(t, json.Unmarshal(result.Data, &options))
 	assert.Len(t, options.BritanniaMaps, references.TotalCombatMaps)
+	assert.Len(t, options.BritanniaMaps[0].Preview.Tiles, int(references.XCombatMapTiles*references.YCombatMapTiles))
 	assert.Len(t, options.Dungeons, references.MaxDungeonCombatIndex+1)
 	assert.Len(t, options.Dungeons[0].Rooms, references.MaxDungeonRooms)
+	graveRoom := options.Dungeons[references.CovetousDungeon].Rooms[12]
+	require.NotNil(t, graveRoom.Floor)
+	assert.Equal(t, 5, *graveRoom.Floor)
+	assert.Equal(t, &debugPositionResult{X: 3, Y: 4}, graveRoom.Cell)
+	assert.NotEmpty(t, graveRoom.Preview.Entities)
+	assert.Len(t, graveRoom.Preview.Party["west"], references.MaxPlayersPerMap)
 	assert.NotEmpty(t, options.Monsters)
 	orc := findEncounterMonster(options.Monsters, references.MonsterOrc.Index())
 	require.NotNil(t, orc)
@@ -48,6 +53,17 @@ func TestCombatEncounterStartValidatesConditionalArgumentsAndTranslatesActiveCom
 	}, state)
 	assert.False(t, missingMap.Success)
 	assert.Equal(t, "invalid_combat_encounter", missingMap.ErrorCode)
+
+	authoredWithMonster := executeSecondBatchStateDebugCommand(debugging.Request{
+		SessionID: "test", ID: "authored-monster", CommandID: debugging.CommandCombatEncounterStart,
+		Arguments: map[string]json.RawMessage{
+			"territory": json.RawMessage(`"dungeon"`), "dungeon": json.RawMessage(`3`), "dungeonRoom": json.RawMessage(`12`),
+			"entryDirection": json.RawMessage(`"west"`), "contents": json.RawMessage(`"authored"`),
+			"monsterType": json.RawMessage(`"32"`),
+		},
+	}, state)
+	assert.False(t, authoredWithMonster.Success)
+	assert.Equal(t, "invalid_combat_encounter", authoredWithMonster.ErrorCode)
 
 	state.CombatScene = &game_state.CombatState{}
 	active := executeSecondBatchStateDebugCommand(validEncounterDebugRequest(), state)

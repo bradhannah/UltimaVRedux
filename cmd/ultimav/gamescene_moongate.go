@@ -13,8 +13,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
 
-const moongateTeleportWorkflowName = "moongate_teleport"
-
 //nolint:gochecknoglobals // Immutable sprite resources are shared by every moongate renderer.
 var (
 	// moongateSprite holds the actual Ultima V moongate sprite (tile 220) for rendering.
@@ -197,7 +195,7 @@ func (g *GameScene) triggerMoongateTravel() {
 
 // queueReviewedMoongateTravel starts the route captured before workflow-owned time advances.
 func (g *GameScene) queueReviewedMoongateTravel(travelResult game_state.MoongateTravelResult) {
-	q := g.gameState.EventQueueManager.Workflow(moongateTeleportWorkflowName).
+	q := g.gameState.EventQueueManager.Workflow(game_state.MoongateTeleportWorkflow).
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput()
 

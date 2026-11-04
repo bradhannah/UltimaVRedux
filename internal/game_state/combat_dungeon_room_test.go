@@ -185,7 +185,7 @@ func TestPopulateFixedDungeonRoomDecodesQuestLootAndPreservesOtherObjects(t *tes
 		WithSystemCallbacks().
 		Build()
 	combatMap := references.NewCombatMapReference(0, references.DungeonCombatTerritory)
-	descriptors := [...]byte{0xb4, 0xb5, 0xb6, 0xb7, 0x3c}
+	descriptors := [...]byte{0xb4, 0xb5, 0xb6, 0xb7, 0x3c, 0x1e, 0x1f}
 	for slot, descriptor := range descriptors {
 		combatMap.DungeonEntityTiles[slot] = descriptor
 		combatMap.MonsterPositions[slot] = references.Position{X: references.Coordinate(slot + 1), Y: 2}
@@ -210,6 +210,8 @@ func TestPopulateFixedDungeonRoomDecodesQuestLootAndPreservesOtherObjects(t *tes
 	assert.False(t, loose, "Doom's mirror descriptor remains a blocking tactical object")
 	assert.True(t, combat.objects[4].BlocksMovement())
 	assert.Equal(t, int(0x3c), combat.objects[4].number)
+	assert.False(t, combat.objects[5].BlocksMovement(), "authored DEAD_PC is walkable")
+	assert.False(t, combat.objects[6].BlocksMovement(), "authored DEAD_MONST is walkable")
 	assert.Equal(t, rngCalls+4, state.GetRNG().Calls())
 }
 

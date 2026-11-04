@@ -288,7 +288,7 @@ type CombatOpenResult struct {
 func (g *GameState) ActionOpenCombatMap(direction references.Direction) CombatOpenResult {
 	combatantPos := g.getActiveCombatantPosition()
 	targetPos := direction.GetNewPositionInDirection(&combatantPos)
-	if targetPos == nil || !combatAdjacentPositionInBounds(*targetPos) {
+	if targetPos == nil || !isCombatMapPosition(*targetPos) {
 		return CombatOpenResult{Handled: false, RevealLines: nil}
 	}
 

@@ -89,7 +89,7 @@ func (g *GameState) SetCombatAdjacentSpellDirection(direction references.Directi
 	}
 	targeting := g.CombatScene.AdjacentSpellTargeting
 	target := direction.GetNewPositionInDirection(&targeting.Origin)
-	if target == nil || !combatAdjacentPositionInBounds(*target) {
+	if target == nil || !isCombatMapPosition(*target) {
 		return CombatAdjacentSpellTargetInvalid
 	}
 	targeting.Direction = direction
@@ -122,7 +122,7 @@ func (g *GameState) CombatAdjacentSpellPreview() (references.Position, bool, boo
 		return references.Position{}, false, true
 	}
 	target := targeting.Direction.GetNewPositionInDirection(&targeting.Origin)
-	if target == nil || !combatAdjacentPositionInBounds(*target) {
+	if target == nil || !isCombatMapPosition(*target) {
 		return references.Position{}, false, false
 	}
 
@@ -134,7 +134,7 @@ func (g *GameState) CombatAdjacentSpellPreview() (references.Position, bool, boo
 }
 
 func (g *GameState) isValidCombatAdjacentSpellTarget(spell references.Spell, target references.Position) bool {
-	if !combatAdjacentPositionInBounds(target) {
+	if !isCombatMapPosition(target) {
 		return false
 	}
 	//nolint:exhaustive // Only implemented adjacent combat spells require a target rule.
@@ -194,11 +194,6 @@ func (g *GameState) ConfirmCombatAdjacentSpellTarget() CombatAdjacentSpellTarget
 	g.CombatScene.AdjacentSpellTargeting = nil
 
 	return result
-}
-
-func combatAdjacentPositionInBounds(position references.Position) bool {
-	return position.X >= 0 && position.Y >= 0 &&
-		position.X < references.XCombatMapTiles && position.Y < references.YCombatMapTiles
 }
 
 // IsCombatDoorSpell identifies the adjacent lock/disarm family sharing a retained workflow.

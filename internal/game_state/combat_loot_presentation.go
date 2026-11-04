@@ -78,7 +78,7 @@ func (s *CombatState) combatGroundDisplayAt(position references.Position) (index
 		if object.position != position {
 			continue
 		}
-		if object.Sprite() != indexes.DeadBody && object.Sprite() != indexes.Splat {
+		if !isCombatCorpseMarker(object.Sprite()) {
 			return object.Sprite(), object.originalObjectSlot, false
 		}
 		if object.originalObjectSlot > fallbackSlot {

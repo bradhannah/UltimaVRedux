@@ -126,6 +126,7 @@ func NewCombatLooseItem(
 }
 
 // NewCombatDungeonObject preserves a non-collectible fixed-room object descriptor.
+// Authored corpses stay walkable like battle corpses. ref:COMBAT-0003
 func NewCombatDungeonObject(
 	position references.Position,
 	sprite indexes.SpriteIndex,
@@ -135,7 +136,7 @@ func NewCombatDungeonObject(
 		position:           position,
 		sprite:             sprite,
 		number:             number,
-		blocksMovement:     true,
+		blocksMovement:     !isCombatCorpseMarker(sprite),
 		item:               nil,
 		quantity:           0,
 		searchable:         false,
@@ -156,6 +157,12 @@ func (object CombatObject) Sprite() indexes.SpriteIndex {
 // IsChest reports whether the object is a chest.
 func (object CombatObject) IsChest() bool {
 	return object.sprite == indexes.Chest
+}
+
+// isCombatCorpseMarker reports the original DEAD_PC and DEAD_MONST shapes, which
+// never block movement. ref:COMBAT-0003
+func isCombatCorpseMarker(sprite indexes.SpriteIndex) bool {
+	return sprite == indexes.DeadBody || sprite == indexes.Splat
 }
 
 // IsCorpse reports whether the object is a searchable monster corpse.
@@ -392,7 +399,7 @@ func (combatState *CombatState) hasMonsterBlockingObjectAt(position references.P
 		if object.Position() != position {
 			continue
 		}
-		if object.sprite != indexes.Splat && object.sprite != indexes.DeadBody {
+		if !isCombatCorpseMarker(object.sprite) {
 			return true
 		}
 	}

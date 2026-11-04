@@ -217,7 +217,8 @@ type CombatState struct {
 	pendingMonsterMissile  *pendingMonsterMissile
 
 	// LastAttackTargets remembers each PC's most recent monster target. Original
-	// plraim() reuses object.misc when that target remains visible and in range.
+	// plraim() reuses object.misc while that target lives, is not magically
+	// invisible or underground, and is in range, even on concealing terrain.
 	LastAttackTargets [party_state.MaxActiveParty]int
 	// meleeEngagers remembers the last adjacent attacker for each exact
 	// encounter identity; clones do not alias their source PC. ref:EQUIP-0016

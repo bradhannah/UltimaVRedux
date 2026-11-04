@@ -100,7 +100,7 @@ func TestDebugMoongateTravelUsesReviewedRouteAndDefersEffects(t *testing.T) {
 	assert.Equal(t, debugging.ExecutionWorkflow, result.EffectiveExecutionMode)
 	assert.Empty(t, callbacks.TimeAdvanced(), "time must not advance before the workflow starts")
 	assert.Empty(t, callbacks.SoundEffectsPlayed, "audio must not play before the workflow starts")
-	assert.True(t, state.EventQueueManager.HasWorkflow("moongate_teleport"))
+	assert.True(t, state.EventQueueManager.HasWorkflow(game_state.MoongateTeleportWorkflow))
 
 	state.EventQueueManager.Update()
 	assert.Empty(t, callbacks.TimeAdvanced(), "moongate activation has no intrinsic minute (ref:MOON-0005)")
@@ -132,7 +132,7 @@ func TestDebugMoongateTravelHandsOffSpiritualityRouteAndRestoresSourceOnCancel(t
 
 	require.True(t, result.Success, result.ErrorMessage)
 	assert.Empty(t, callbacks.TimeAdvanced())
-	assert.True(t, state.EventQueueManager.HasWorkflow(moongateTeleportWorkflowName))
+	assert.True(t, state.EventQueueManager.HasWorkflow(game_state.MoongateTeleportWorkflow))
 	var data moongateTravelWorkflowResult
 	require.NoError(t, json.Unmarshal(result.Data, &data))
 	assert.Equal(t, "spirituality", data.Route.Kind)
@@ -150,7 +150,7 @@ func TestDebugMoongateTravelHandsOffSpiritualityRouteAndRestoresSourceOnCancel(t
 	assert.Equal(t, references.ShrineLocation, state.MapState.PlayerLocation.Location)
 	assert.Equal(t, game_state.SpiritualityShrineIndex, state.ShrineScene.ShrineIndex)
 	assert.Equal(t, source, state.ShrineScene.OriginalPlayerLocation)
-	assert.False(t, state.EventQueueManager.HasWorkflow(moongateTeleportWorkflowName))
+	assert.False(t, state.EventQueueManager.HasWorkflow(game_state.MoongateTeleportWorkflow))
 	assert.True(t, callbacks.InputBlocked)
 	assert.Empty(t, callbacks.TimeAdvanced())
 

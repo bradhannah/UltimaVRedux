@@ -30,11 +30,7 @@ func (g *GameState) ActionPushSmallMap(direction references.Direction) bool {
 		return false
 	}
 
-	// Determine legal floor based on object type
-	legalFloorIndex := indexes.SpriteIndex(indexes.BrickFloor)
-	if pushableThingTile.IsCannon() {
-		legalFloorIndex = indexes.SpriteIndex(indexes.MetalFloor) // Cannons require metal floor
-	}
+	legalFloorIndex := originalPushLegalFloor(pushableThingTile.Index)
 
 	farSideOfPushableThingPosition := direction.GetNewPositionInDirection(pushableThingPosition)
 	if farSideOfPushableThingPosition == nil {
@@ -84,20 +80,16 @@ func (g *GameState) ActionPushSmallMap(direction references.Direction) bool {
 // Helper function to handle pushing object forward
 func (g *GameState) pushIt(smallMap *map_state.LayeredMap, objTile *references.Tile, fromPos, toPos *references.Position, direction references.Direction) {
 	smallMap.SwapTiles(fromPos, toPos)
-	if objTile.IsChair() {
-		smallMap.SetTileByLayer(map_state.MapLayer, toPos, g.GameReferences.TileReferences.GetChairByPushDirection(direction).Index)
-	} else if objTile.IsCannon() {
-		smallMap.SetTileByLayer(map_state.MapLayer, toPos, g.GameReferences.TileReferences.GetCannonByPushDirection(direction).Index)
+	if objTile.IsChair() || objTile.IsCannon() {
+		smallMap.SetTileByLayer(map_state.MapLayer, toPos, originalPushFacing(objTile.Index, direction))
 	}
 }
 
 // Helper function to handle swapping player with object (pull)
 func (g *GameState) swapIt(smallMap *map_state.LayeredMap, objTile *references.Tile, playerPos, objPos *references.Position, direction references.Direction) {
 	smallMap.SwapTiles(playerPos, objPos)
-	if objTile.IsChair() {
-		smallMap.SetTileByLayer(map_state.MapLayer, playerPos, g.GameReferences.TileReferences.GetChairByPushDirection(direction.GetOppositeDirection()).Index)
-	} else if objTile.IsCannon() {
-		smallMap.SetTileByLayer(map_state.MapLayer, playerPos, g.GameReferences.TileReferences.GetCannonByPushDirection(direction.GetOppositeDirection()).Index)
+	if objTile.IsChair() || objTile.IsCannon() {
+		smallMap.SetTileByLayer(map_state.MapLayer, playerPos, originalPushFacing(objTile.Index, direction.GetOppositeDirection()))
 	}
 }
 
@@ -125,10 +117,7 @@ func (g *GameState) ActionPushLargeMap(direction references.Direction) bool {
 		return false
 	}
 
-	legalFloor := indexes.SpriteIndex(indexes.BrickFloor)
-	if object >= indexes.CannonUp && object <= indexes.CannonLeft {
-		legalFloor = indexes.SpriteIndex(indexes.MetalFloor)
-	}
+	legalFloor := originalPushLegalFloor(object)
 	forwardPosition, _ := largeMapPushPosition(targetPosition, direction)
 	forwardTile := largeMap.SpriteIndexByLayer(map_state.MapLayer, forwardPosition)
 	actorTile := largeMap.SpriteIndexByLayer(map_state.MapLayer, actorPosition)
@@ -192,6 +181,16 @@ func isOriginalPushableTile(tile indexes.SpriteIndex) bool {
 	default:
 		return false
 	}
+}
+
+// originalPushLegalFloor is the floor a push or pull needs: cannons roll only on
+// metal floor, other furniture on brick floor.
+func originalPushLegalFloor(object indexes.SpriteIndex) indexes.SpriteIndex {
+	if object >= indexes.CannonUp && object <= indexes.CannonLeft {
+		return indexes.SpriteIndex(indexes.MetalFloor)
+	}
+
+	return indexes.SpriteIndex(indexes.BrickFloor)
 }
 
 func originalPushFacing(tile indexes.SpriteIndex, direction references.Direction) indexes.SpriteIndex {
@@ -311,7 +310,7 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 	if g.CheckTrap(objectPosition) {
 		return true
 	}
-	if !combatPushPositionInBounds(*objectPosition) || g.combatPushOccupied(*objectPosition) {
+	if !isCombatMapPosition(*objectPosition) || g.combatPushOccupied(*objectPosition) {
 		g.SystemCallbacks.Message.AddRowStr("Won't budge!")
 
 		return false
@@ -323,13 +322,10 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 
 		return false
 	}
-	legalFloor := indexes.SpriteIndex(indexes.BrickFloor)
-	if object >= indexes.CannonUp && object <= indexes.CannonLeft {
-		legalFloor = indexes.SpriteIndex(indexes.MetalFloor)
-	}
+	legalFloor := originalPushLegalFloor(object)
 
 	forwardPosition := direction.GetNewPositionInDirection(objectPosition)
-	if forwardPosition != nil && combatPushPositionInBounds(*forwardPosition) &&
+	if forwardPosition != nil && isCombatMapPosition(*forwardPosition) &&
 		!g.combatPushOccupied(*forwardPosition) &&
 		g.CombatScene.CombatMapRef.GetTileNumber(*forwardPosition) == legalFloor {
 		g.setCombatTerrain(*objectPosition, legalFloor)
@@ -352,11 +348,6 @@ func (g *GameState) ActionPushCombatMap(direction references.Direction) bool {
 	g.SystemCallbacks.Message.AddRowStr("Won't budge")
 
 	return false
-}
-
-func combatPushPositionInBounds(position references.Position) bool {
-	return position.X >= 0 && position.X < references.XCombatMapTiles &&
-		position.Y >= 0 && position.Y < references.YCombatMapTiles
 }
 
 func (g *GameState) combatPushActorPosition(identity CombatTurnIdentity) (references.Position, bool) {

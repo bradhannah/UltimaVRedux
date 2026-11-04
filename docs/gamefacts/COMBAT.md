@@ -33,8 +33,9 @@ spawn replacements. Replacing a suppressing tile reveals the same occupant next
 update; restoring it conceals again without a discovery flag.
 
 Redux uses live map-only terrain, including overrides, for this concealment.
-Passive identity, HUD, and targeting assistance respect it; authoritative turns
-and manually selected attack/spell effects remain available. Its shared-slot
+Passive identity, HUD, and targeting assistance respect it; authoritative turns,
+manually selected attack/spell effects, and remembered aim (COMBAT-0004) remain
+available. Its shared-slot
 capacity includes fields, loot, corpses, and combatants. Removing loot frees its
 object slot, not a retained dead combat source slot. Summoning capacity depends
 on available source/object slots, not historical manager length.
@@ -186,6 +187,15 @@ same range contract. This covers PCs, controlled and hostile monsters, reach
 weapons, and forced misses; accepted in-range scatter and primary hits retain
 their normal rules.
 
+Each PC's next physical aim starts on the monster it last attacked while that
+monster lives, is not magically invisible or underground, and is within the
+current source's range. There is no terrain test: the crosshair follows a
+remembered monster onto concealing Nothing or Arch at its current square, which
+reveals where it moved. Redux keeps this original behavior because players expect
+it, although the maintainer regards it as a deficiency. A ranged or reach shot at
+a square with no target forgets the remembered monster; a melee swing at an empty
+square keeps it.
+
 The original controlled-monster player-attack path passes sentinel 255 into a
 weapon-indexed path. It satisfies a literal magical-weapon comparison but also
 indexes a range table outside its valid domain and fails to establish a monster
@@ -200,8 +210,8 @@ missile suppression/Turning checks; control does not itself upgrade physical
 damage to magic. This is an approved coherent combat policy under unresolved
 original behavior, not a blanket parity claim.
 
-**Implementation:** `internal/game_state/combat_formulas.go`, `internal/game_state/combat_controlled_monster.go`, `internal/game_state/combat_loyalty_attack.go`, `internal/game_state/combat_ranged_attack.go`
-**Tests:** `internal/game_state/combat_controlled_monster_test.go`, `internal/game_state/combat_miss_range_test.go`
+**Implementation:** `internal/game_state/combat_formulas.go`, `internal/game_state/combat_controlled_monster.go`, `internal/game_state/combat_loyalty_attack.go`, `internal/game_state/combat_ranged_attack.go`, `internal/game_state/combat_attack_targeting.go`
+**Tests:** `internal/game_state/combat_controlled_monster_test.go`, `internal/game_state/combat_miss_range_test.go`, `internal/game_state/combat_terrain_test.go`
 
 ### COMBAT-0005
 

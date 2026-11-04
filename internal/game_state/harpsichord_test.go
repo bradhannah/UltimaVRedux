@@ -231,7 +231,8 @@ func TestLordBritishSecretRoomFurniturePullsClearPathToShelf(t *testing.T) {
 	require.True(t, state.ActionPushSmallMap(references.Left))
 	assert.Equal(t, references.Position{X: 13, Y: 12}, state.MapState.PlayerLocation.Position)
 	assert.Equal(t, indexes.SpriteIndex(indexes.CoffeeTable), secretRoomMap.GetTileByLayer(map_state.MapLayer, &chairPosition).Index)
-	assert.Equal(t, indexes.SpriteIndex(indexes.ChairBackRight), secretRoomMap.GetTileByLayer(map_state.MapLayer, &chairDestination).Index)
+	assert.Equal(t, indexes.SpriteIndex(indexes.ChairBackLeft), secretRoomMap.GetTileByLayer(map_state.MapLayer, &chairDestination).Index,
+		"a pulled chair faces away from the puller")
 	assert.Equal(t, indexes.SpriteIndex(indexes.Bookcase), secretRoomMap.GetTileByLayer(map_state.MapLayer, &shelfPosition).Index)
 	assert.Equal(t, []string{"Pulled!", "Pulled!"}, callbacks.Messages)
 }

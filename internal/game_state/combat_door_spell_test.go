@@ -197,7 +197,7 @@ func TestCombatDoorSpellEdgesInvalidSelectionAndCancelAreFree(t *testing.T) {
 				state.SetCombatAdjacentSpellDirection(direction)
 				position, _, active := state.CombatAdjacentSpellPreview()
 				require.True(t, active)
-				assert.True(t, combatAdjacentPositionInBounds(position))
+				assert.True(t, isCombatMapPosition(position))
 				assert.NotEqual(t, references.NoneDirection, directionBetween(origin, position), "only a cardinal neighbour")
 				assert.Equal(t, CombatAdjacentSpellTargetInvalid, state.ConfirmCombatAdjacentSpellTarget().Outcome)
 			}

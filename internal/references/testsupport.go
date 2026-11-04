@@ -90,20 +90,6 @@ func IsSpellValidInContext(spell Spell, context SpellContext) bool {
 	return info.Context.HasContext(context)
 }
 
-// DungeonTriggerSlots returns a detached snapshot and whether this map has
-// DUNGEON.CBT trigger metadata. The bool, rather than coordinate sentinels,
-// distinguishes an active (0,0) trigger from a map with no trigger slots.
-func (c *CombatMapReference) DungeonTriggerSlots() (
-	[DungeonCombatTriggerSlotCount]DungeonCombatMapTrigger,
-	bool,
-) {
-	if c.dungeonTriggerSlots == nil {
-		return [DungeonCombatTriggerSlotCount]DungeonCombatMapTrigger{}, false
-	}
-
-	return *c.dungeonTriggerSlots, true
-}
-
 // GetStringName returns the missile type's display name.
 func (m MissileType) GetStringName() string {
 	switch m {

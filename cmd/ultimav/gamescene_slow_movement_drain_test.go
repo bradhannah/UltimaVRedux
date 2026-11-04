@@ -39,6 +39,9 @@ func TestSlowMovementProductionDrainIgnoresTimeStoppedMoongateRegrowth(t *testin
 	}
 	state.CurrentNPCAIController.GetNpcs().RemoveAllEnemies()
 	state.ApplyMoongateTravelEffects(false)
+	// A source gate in sight makes regrowth run as a workflow instead of completing at once.
+	moonglowGate := references.Position{X: 224, Y: 133}
+	state.GetCurrentLayeredMap().SetVisible(true, &moonglowGate)
 	state.UpdateMoongateTransition()
 	state.ActiveDurationEffect = game_state.DurationEffect{EffectType: game_state.DurationEffectTimeStop, TurnsRemaining: 2}
 	state.EventQueueManager.Update()

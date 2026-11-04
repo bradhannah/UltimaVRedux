@@ -1215,7 +1215,7 @@
         "kind": "integer",
         "required": true,
         "minimum": -1,
-        "maximum": 3,
+        "maximum": 7,
         "controlHint": "number",
         "availability": [
           "gameplay"
@@ -1326,7 +1326,7 @@
     "id": "combat.encounter.start",
     "category": "Combat",
     "name": "Start Encounter",
-    "description": "Validate, compose, and synchronously start a tactical encounter.",
+    "description": "Validate, compose, and synchronously start a tactical encounter, or load a fixed dungeon room as authored.",
     "parameters": [
       {
         "id": "territory",
@@ -1402,10 +1402,28 @@
         "controlHint": "select"
       },
       {
+        "id": "contents",
+        "name": "Contents",
+        "kind": "enum",
+        "required": false,
+        "default": "custom",
+        "choices": [
+          {
+            "value": "custom",
+            "label": "Custom monsters"
+          },
+          {
+            "value": "authored",
+            "label": "Authored room"
+          }
+        ],
+        "controlHint": "select"
+      },
+      {
         "id": "monsterType",
         "name": "Monster",
         "kind": "enum",
-        "required": true,
+        "required": false,
         "choices": [
           {
             "value": "0",
@@ -1606,7 +1624,7 @@
         "id": "countMode",
         "name": "Count Mode",
         "kind": "enum",
-        "required": true,
+        "required": false,
         "choices": [
           {
             "value": "automatic",

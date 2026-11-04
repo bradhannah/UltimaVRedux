@@ -43,7 +43,7 @@ func TestMoonstoneJournalSceneMoongateUsesReviewedPhaseAndArrivalClock(t *testin
 			}
 			scene := newProductionCastTestScene(state)
 			scene.queueReviewedMoongateTravel(route)
-			drainSceneWorkflow(t, scene, moongateTeleportWorkflowName, 1000)
+			drainSceneWorkflow(t, scene, game_state.MoongateTeleportWorkflow, 1000)
 			after := state.CurrentQuestJournalDossier().Moonstones
 			for index, entry := range after {
 				if index != int(phase) {

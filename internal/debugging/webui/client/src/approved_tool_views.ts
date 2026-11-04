@@ -368,10 +368,42 @@ export interface CombatMapSummaryData {
   name: string
 }
 
+export type CombatEncounterEntityKind = "monster" | "random" | "object" | "loot" | "field"
+
+export interface CombatEncounterEntityData {
+  kind: CombatEncounterEntityKind
+  name: string
+  sprite: number
+  x: number
+  y: number
+  concealed: boolean
+}
+
+export interface CombatEncounterPreviewData {
+  tiles: number[]
+  party: Record<string, DebugPositionData[]>
+  monsterSlots: DebugPositionData[]
+  entities: CombatEncounterEntityData[]
+  triggers: DebugPositionData[]
+}
+
+export interface CombatEncounterMapData {
+  index: number
+  name: string
+  preview: CombatEncounterPreviewData
+}
+
+export interface CombatEncounterRoomData {
+  room: number
+  floor?: number
+  cell?: DebugPositionData
+  preview: CombatEncounterPreviewData
+}
+
 export interface CombatEncounterDungeonData {
   id: number
   name: string
-  rooms: number[]
+  rooms: CombatEncounterRoomData[]
 }
 
 export interface CombatEncounterFriendData {
@@ -393,7 +425,7 @@ export interface CombatEncounterMonsterData {
 }
 
 export interface CombatEncounterOptionsData {
-  britanniaMaps: CombatMapSummaryData[]
+  britanniaMaps: CombatEncounterMapData[]
   dungeons: CombatEncounterDungeonData[]
   entryDirections: DebugOptionData[]
   countModes: DebugOptionData[]
@@ -402,11 +434,12 @@ export interface CombatEncounterOptionsData {
 
 export interface CombatEncounterStartData {
   territory: string
+  contents: "custom" | "authored"
   mapIndex: number
   dungeon: number
   dungeonRoom: number
-  monsterType: number
-  monsterName: string
+  monsterType?: number
+  monsterName?: string
   seed?: number
   primaryCount: number
   friendCount: number

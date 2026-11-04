@@ -192,8 +192,8 @@ const (
 	Brazier                                     = 178
 	CampFire                                    = 179
 	CannonUp                                    = 180
-	CannonDown                                  = 181
-	CannonRight                                 = 182
+	CannonRight                                 = 181
+	CannonDown                                  = 182
 	CannonLeft                                  = 183
 	RegularDoor                                 = 184
 	LockedDoor                                  = 185

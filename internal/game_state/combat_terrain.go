@@ -11,9 +11,19 @@ const originalCombatPlayerShape = 0x1c
 // The actors and objects remain authoritative while their authored underlay conceals them.
 // See ref:COMBAT-0001.
 func (g *GameState) CombatTerrainAllowsObjectDisplay(position references.Position) bool {
-	terrain := g.combatMapOnlyTerrain(position)
+	return !CombatTerrainConceals(g.combatMapOnlyTerrain(position))
+}
 
-	return terrain != indexes.BlackSquare && terrain != indexes.BrickWallArchway
+// isCombatMapPosition reports whether a position lies on the 11x11 tactical map.
+func isCombatMapPosition(position references.Position) bool {
+	return position.X >= 0 && position.X < references.XCombatMapTiles &&
+		position.Y >= 0 && position.Y < references.YCombatMapTiles
+}
+
+// CombatTerrainConceals reports the authored underlays, Nothing and Arch, that hide
+// the objects and actors standing on them. See ref:COMBAT-0001.
+func CombatTerrainConceals(terrain indexes.SpriteIndex) bool {
+	return terrain == indexes.BlackSquare || terrain == indexes.BrickWallArchway
 }
 
 func (g *GameState) combatTerrainAllowsDestination(position references.Position) bool {
