@@ -123,7 +123,7 @@ in your home folder; see [files and folders](docs/INSTALL.md#files-and-folders).
 
 ## Reports and suggestions
 
-The [Game Facts](docs/gamefacts/README.md) cover 39 topics with stable behavioral
+The [Game Facts](docs/gamefacts/README.md) cover 42 topics with stable behavioral
 IDs, algorithms, compatibility formats, and explicit Redux comparisons. See the
 [documentation catalog](docs/README.md) for system contracts and the
 [development guide](docs/DEVELOPMENT_GUIDE.md) for contributor setup.

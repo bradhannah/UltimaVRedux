@@ -99,12 +99,12 @@ Game Facts rule IDs rather than fragile descriptive-heading references.
 
 ## Original Gamefacts
 
-The 39 topics below retain canonical rule IDs. The index and conventions are
+The 42 topics below retain canonical rule IDs. The index and conventions are
 separate catalog entries; they are not additional behavioral topics.
 
 | Document | One-line purpose | Primary owner | Authority classification |
 |---|---|---|---|
-| [`gamefacts/README.md`](gamefacts/README.md) | Navigate the 39 behavioral and compatibility topics. | `game-facts` | Index |
+| [`gamefacts/README.md`](gamefacts/README.md) | Navigate the 42 behavioral and compatibility topics. | `game-facts` | Index |
 | [`gamefacts/CONVENTIONS.md`](gamefacts/CONVENTIONS.md) | Define stable IDs, rule statuses, pseudocode, and relationships. | `game-facts` | General policy |
 | [`gamefacts/ASTRONOMY.md`](gamefacts/ASTRONOMY.md) | Record instrument gates, star rendering, planets, and comets. | `astronomy` | Gamefact |
 | [`gamefacts/BRIT_CBT_FORMAT.md`](gamefacts/BRIT_CBT_FORMAT.md) | Specify combat-map records, formations, and selection. | `combat` | Gamefact |
@@ -114,6 +114,7 @@ separate catalog entries; they are not additional behavioral topics.
 | [`gamefacts/COMBAT.md`](gamefacts/COMBAT.md) | Record combat flow, formulas, AI, status, and Redux differences. | `combat` | Gamefact |
 | [`gamefacts/COMMANDS_REFERENCE.md`](gamefacts/COMMANDS_REFERENCE.md) | Catalog command behavior, completion, doors, and chests. | `commands` | Gamefact |
 | [`gamefacts/CRIME_PRISON.md`](gamefacts/CRIME_PRISON.md) | Record crime, guards, arrest, interrogation, and rescue. | `crime` | Gamefact |
+| [`gamefacts/DATA_OVL_LAYOUT.md`](gamefacts/DATA_OVL_LAYOUT.md) | Specify DATA.OVL conventions and index its identified tables. | `data-formats` | Gamefact |
 | [`gamefacts/DEATH_RESURRECTION.md`](gamefacts/DEATH_RESURRECTION.md) | Record death, revival, and party recovery. | `characters` | Gamefact |
 | [`gamefacts/DUNGEON_SYSTEM.md`](gamefacts/DUNGEON_SYSTEM.md) | Record dungeon layout, movement, rooms, hazards, and transitions. | `dungeons` | Gamefact |
 | [`gamefacts/ENEMIES.md`](gamefacts/ENEMIES.md) | Catalog enemy statistics, abilities, groups, and behavior. | `enemies` | Gamefact |
@@ -125,6 +126,7 @@ separate catalog entries; they are not additional behavioral topics.
 | [`gamefacts/KARMA.md`](gamefacts/KARMA.md) | Record karma changes, thresholds, and consequences. | `karma` | Gamefact |
 | [`gamefacts/LIGHTING.md`](gamefacts/LIGHTING.md) | Record sight, illumination, darkness, and Redux tint contracts. | `lighting` | Gamefact |
 | [`gamefacts/MAGIC_SPELLS.md`](gamefacts/MAGIC_SPELLS.md) | Catalog casting order, all 48 effects, resolution, and Redux gaps. | `magic` | Gamefact |
+| [`gamefacts/MAP_FILE_FORMATS.md`](gamefacts/MAP_FILE_FORMATS.md) | Specify world and settlement map files, location numbers, and entrances. | `maps` | Gamefact |
 | [`gamefacts/MERCHANT_SERVICES.md`](gamefacts/MERCHANT_SERVICES.md) | Record merchant catalogs, pricing, services, and transaction timing. | `merchants` | Gamefact |
 | [`gamefacts/MOONSTONE_LOCATIONS.md`](gamefacts/MOONSTONE_LOCATIONS.md) | Record placements, phases, gate routes, and destination knowledge. | `moongates` | Gamefact |
 | [`gamefacts/NPC_SCHEDULES.md`](gamefacts/NPC_SCHEDULES.md) | Specify schedule records, selection, arrival, and availability. | `npcs` | Gamefact |
@@ -139,6 +141,7 @@ separate catalog entries; they are not additional behavioral topics.
 | [`gamefacts/SIGNS_AND_FONTS.md`](gamefacts/SIGNS_AND_FONTS.md) | Specify sign records, font selection, glyph uses, and symbolic displays. | `text-formats` | Gamefact |
 | [`gamefacts/STARTUP_MENU_AND_INTRODUCTIONS.md`](gamefacts/STARTUP_MENU_AND_INTRODUCTIONS.md) | Record startup, menu, credits, Introduction, and attract sequence. | `startup` | Gamefact |
 | [`gamefacts/TALK_SYSTEM_STRUCTURE.md`](gamefacts/TALK_SYSTEM_STRUCTURE.md) | Specify conversation records, controls, matching, and runtime boundaries. | `conversations` | Gamefact |
+| [`gamefacts/TEXT_FILE_FORMATS.md`](gamefacts/TEXT_FILE_FORMATS.md) | Specify Look, merchant-phrase, and ending text files. | `text-formats` | Gamefact |
 | [`gamefacts/TILES.md`](gamefacts/TILES.md) | Catalog tile identity, properties, animation, and passability. | `maps` | Gamefact |
 | [`gamefacts/TIME_COSTS.md`](gamefacts/TIME_COSTS.md) | Record calendar modifiers, context ownership, actor cadence, and special loops. | `time` | Gamefact |
 | [`gamefacts/VEHICLES.md`](gamefacts/VEHICLES.md) | Record traversal, boarding, Exit, ownership, and state. | `vehicles` | Gamefact |

@@ -34,7 +34,9 @@ clear. Redux validates declared output length and zero terminal padding.
 The compression catalogue is established, but this pass did not independently
 verify all stream transitions, full-dictionary cases, padding, or corruption
 acceptance against original binary samples. A functioning Redux decoder is not
-independent proof of every original decoder rule.
+independent proof of every original decoder rule. One complete file has since been
+checked: expanding the shipped `TILES.16` with this model reproduces its source
+sheets byte for byte ([GFX-0008](#gfx-0008)).
 
 **Implementation:** `pkg/graphics/legacy/lzw.go`
 **Tests:** `pkg/graphics/legacy/lzw_test.go`, `pkg/graphics/legacy/integration_test.go`
@@ -178,9 +180,38 @@ every file contains exactly four segments without trailing bytes.
 
 Dungeon assets use DNG/ITEMS/MON families; creation uses CREATE/PROPORT; illustrated
 introduction uses TEXT/STORY; startup uses TITLE/BRITISH/WD/ULTIMA/STARTSC; ending
-uses END/ENDSC. `TILES.16` shares the compression wrapper but its physical archive
-layout is not specified by these non-tile records. Intermediate build inputs are
-not automatically shipped runtime formats.
+uses END/ENDSC. `TILES.16` shares the compression wrapper but not these archive
+layouts; its layout is given in [GFX-0008](#gfx-0008). Intermediate build inputs
+are not automatically shipped runtime formats.
 
 **Implementation:** `pkg/graphics/legacy/decode.go`, `pkg/graphics/legacy/catalog.go`
 **Tests:** `pkg/graphics/legacy/decode_test.go`
+
+### GFX-0008
+
+**Tile sheet**
+
+**Kind:** rule
+**Uses:** GFX-0001
+**Original:** Established
+**Redux:** Not implemented
+
+`TILES.16` expands to 65,536 bytes with no header or offset table: 512 tiles of
+16 x 16 pixels, 128 bytes each, in tile-number order. Each tile is 16 rows of 8
+bytes, top to bottom, at 4 bits per pixel. The expanded data is exactly the four
+16,384-byte sheets `EGA0.T` to `EGA3.T` from the original source tree, joined in
+order; the tile editor worked on 128 tiles at a time.
+
+The left pixel is in the high nibble, as in [GFX-0002](#gfx-0002) pictures. This
+order is inferred from agreement with Redux's derived tile sheet; the display
+driver's own reading was not examined.
+
+`TILES.4`, used for CGA, expands to 32,768 bytes: the four 8,192-byte sheets
+`CGA0.TC` to `CGA3.TC` joined, 64 bytes per tile, consistent with 16 x 16 pixels at
+2 bits per pixel. Its pixel order within a byte was not verified.
+
+Redux does not decode `TILES.16`. It draws tiles from a bundled 512 x 256 sheet,
+32 tiles across, with tile n at column n mod 32 and row n / 32 (integer division).
+
+**Implementation:** `internal/sprites/spritesheet.go`
+**Tests:** `internal/sprites/spritesheet_pixels_test.go`

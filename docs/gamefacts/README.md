@@ -14,11 +14,14 @@ Release availability is described in the repository's installation guidance.
 | [Karma](KARMA.md) | Party karma, moral events, dialogue, recovery, and reports. |
 | [Legacy saves](SAVED_GAM_STRUCTURE.md) | Saved allocation, roster, inventory, effects, and object-list ownership. |
 | [Combat records](BRIT_CBT_FORMAT.md) | Battlefield storage, formations, selection, and dungeon-only metadata. |
+| [Map files](MAP_FILE_FORMATS.md) | World chunks, settlement floors, location numbers, entrances, and fixed scenes. |
 | [Equipment data](EQUIPMENT_ORIGINAL_DATA.md) | Canonical equipment identities and semantic reference ratings. |
 | [Equipment mechanics](EQUIPMENT_STATS.md) | Ready, attacks, commitment, special equipment, and pricing. |
 | [Inventory](INVENTORY_SYSTEM.md) | Ownership categories, capacities, and resource commitment. |
 | [Graphics formats](GRAPHICS_FORMATS.md) | Archive layouts, decoder assumptions, fonts, and signature paths. |
+| [DATA.OVL layout](DATA_OVL_LAYOUT.md) | Initialized-data conventions, pointer bases, and an index of identified tables. |
 | [Signs and fonts](SIGNS_AND_FONTS.md) | Text/control semantics and symbolic displays. |
+| [Text files](TEXT_FILE_FORMATS.md) | Look descriptions, merchant phrases, and ending text storage. |
 | [Tiles](TILES.md) | Contextual identity, movement, occupancy, animation, and presentation. |
 | [Time costs](TIME_COSTS.md) | Calendar modifiers, context ownership, actor cadence, slow steps, and special loops. |
 | [Provisions](PROVISIONS_CONSUMPTION.md) | Poison/meal ordering, observed hours, fuel, and key/gem commitment. |
