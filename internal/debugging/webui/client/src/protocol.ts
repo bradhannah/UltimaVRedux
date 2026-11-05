@@ -163,3 +163,29 @@ type ProtocolWireParity = [
 ]
 
 export type { ProtocolWireParity }
+
+// Room arrival (world.position.set placement "dungeon_outside_room", parameter "room").
+// Mirrors debugging.WorldPositionDungeonRoomData; WorldPositionDestinationData gains
+// `rooms?: WorldPositionDungeonRoomData[]` for dungeons, ordered by floor then room number.
+export type WorldPlacementDungeonOutsideRoom = "dungeon_outside_room"
+
+export interface WorldPositionDungeonRoomData {
+  room: number
+  label: string
+  floor: number
+  roomX: number
+  roomY: number
+  available: boolean
+  unavailableReason?: string
+  /** The approach cell: one step forward from here enters the room. */
+  setup?: { floor: number, x: number, y: number }
+  facingLabel?: string
+  /** Fixed monsters from the room preview, for example "Ghost ×3, Insects". */
+  summary?: string
+}
+
+// New command IDs: party.restore (reviewed with expectedFingerprint like party.fill, returns the
+// same before/after roster payload) and combat.monster.sleep-all (encounterId + expectedSnapshot
+// like combat.monster.kill-all; its data is the refreshed combat.status payload).
+export type PartyRestoreCommandID = "party.restore"
+export type CombatMonsterSleepAllCommandID = "combat.monster.sleep-all"

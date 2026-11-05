@@ -267,6 +267,33 @@ func TestKillAllDebugCombatMonstersIsAtomicAndSynchronizesVictory(t *testing.T) 
 	}
 }
 
+func TestSleepAllDebugCombatMonstersWakesNobodyAndSkipsTheDefeated(t *testing.T) {
+	state, monsters, _ := newCombatMutationTestState(t, 3)
+	monsters[0].SetAsleep(true)
+	expected := debugCombatSnapshotForTest(t, state)
+	expected.Monsters[2].CurrentHP--
+
+	changes, err := state.SleepAllDebugCombatMonsters(DebugCombatBatchRequest{EncounterID: 21, Expected: expected})
+
+	require.ErrorIs(t, err, ErrDebugCombatStale)
+	assert.Nil(t, changes)
+	assert.False(t, monsters[1].IsAsleep(), "a stale review changes nothing")
+
+	_, err = state.KillDebugCombatMonster(DebugCombatKillRequest{
+		EncounterID: 21, CombatantID: monsters[2].CombatantID(), ExpectedHP: monsters[2].CurrentHP(),
+	})
+	require.NoError(t, err)
+	changes, err = state.SleepAllDebugCombatMonsters(DebugCombatBatchRequest{
+		EncounterID: 21, Expected: debugCombatSnapshotForTest(t, state),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, []DebugCombatSleepChange{{CombatantID: monsters[1].CombatantID(), Before: false, After: true}}, changes)
+	assert.True(t, monsters[0].IsAsleep())
+	assert.True(t, monsters[1].IsAsleep())
+	assert.False(t, monsters[2].IsAsleep(), "the defeated are not put to sleep")
+}
+
 func TestClearDebugCombatMonstersIsOutcomeFreeAndRemovesMonsterQueueEntries(t *testing.T) {
 	state, monsters, mock := newCombatMutationTestState(t, 2)
 	state.CombatScene.LastAttackTargets[0] = 1

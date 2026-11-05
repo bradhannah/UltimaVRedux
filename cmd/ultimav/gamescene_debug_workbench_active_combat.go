@@ -143,6 +143,8 @@ func executeActiveCombatDebugCommand(
 		return debugSuccessResult(request, "Active combat status loaded.", newActiveCombatResult(state)), true
 	case debugging.CommandCombatMonsterSleepSet:
 		return executeActiveCombatSleepSet(request, state), true
+	case debugging.CommandCombatMonsterSleepAll:
+		return executeActiveCombatSleepAll(request, state), true
 	case debugging.CommandCombatExitDebug:
 		return executeActiveCombatExit(request, state), true
 	case debugging.CommandCombatMonsterSpawn:
@@ -597,6 +599,40 @@ func executeActiveCombatSleepSet(request debugging.Request, state *game_state.Ga
 		change.Before,
 		change.After,
 	)
+
+	return result
+}
+
+func executeActiveCombatSleepAll(request debugging.Request, state *game_state.GameState) debugging.Result {
+	_, encounterID, failure := reviewedActiveCombatRequest(request, state)
+	if failure != nil {
+		return *failure
+	}
+	expected, err := state.DebugActiveCombatSnapshot(encounterID)
+	if err != nil {
+		return activeCombatMutationFailure(request, err)
+	}
+	changes, err := state.SleepAllDebugCombatMonsters(game_state.DebugCombatBatchRequest{
+		EncounterID: encounterID,
+		Expected:    expected,
+	})
+	if err != nil {
+		return activeCombatMutationFailure(request, err)
+	}
+	result := debugSuccessResultWithMode(
+		request,
+		debugging.ExecutionSynchronized,
+		"All live monsters put to sleep.",
+		newActiveCombatResult(state),
+	)
+	for _, change := range changes {
+		appendSemanticChange(
+			&result.Changes,
+			fmt.Sprintf("combat.encounters.%d.monsters.%d.asleep", encounterID, change.CombatantID),
+			change.Before,
+			change.After,
+		)
+	}
 
 	return result
 }

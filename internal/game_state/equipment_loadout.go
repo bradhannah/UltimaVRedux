@@ -43,22 +43,11 @@ type EquipmentLoadoutStateChange struct {
 	After  int
 }
 
-// EquipmentLoadoutAlterationResult reports the target and exact applied changes.
+// EquipmentLoadoutAlterationResult reports the target and exact applied slot and inventory changes.
 type EquipmentLoadoutAlterationResult struct {
 	CharacterSlot int
 	CharacterName string
 	Changes       []EquipmentLoadoutStateChange
-}
-
-// EquipmentLoadoutBatchAlteration describes one partial slot plan applied atomically to multiple characters.
-type EquipmentLoadoutBatchAlteration struct {
-	Targets []EquipmentLoadoutAlteration
-}
-
-// EquipmentLoadoutBatchAlterationResult reports every target and exact applied changes.
-type EquipmentLoadoutBatchAlterationResult struct {
-	Targets []EquipmentLoadoutAlterationResult
-	Changes []EquipmentLoadoutStateChange
 }
 
 type equipmentLoadoutPlan struct {
@@ -70,37 +59,29 @@ type equipmentLoadoutPlan struct {
 	changedSlots  []references.EquipmentSlot
 }
 
-// AlterEquipmentLoadouts validates and atomically applies one partial plan to every supplied target.
-func (g *GameState) AlterEquipmentLoadouts(
-	input EquipmentLoadoutBatchAlteration,
-) (EquipmentLoadoutBatchAlterationResult, error) {
-	result := EquipmentLoadoutBatchAlterationResult{Targets: nil, Changes: nil}
-	if len(input.Targets) == 0 {
-		return result, fmt.Errorf("%w: at least one equipment target is required", ErrInvalidEquipmentLoadout)
+// AlterEquipmentLoadout validates and atomically applies a partial character loadout.
+func (g *GameState) AlterEquipmentLoadout(
+	input EquipmentLoadoutAlteration,
+) (EquipmentLoadoutAlterationResult, error) {
+	result := EquipmentLoadoutAlterationResult{
+		CharacterSlot: input.CharacterSlot,
+		CharacterName: "",
+		Changes:       nil,
+	}
+	plan, err := g.planEquipmentLoadout(input)
+	if err != nil {
+		return result, err
 	}
 
-	plans := make([]equipmentLoadoutPlan, 0, len(input.Targets))
 	inventoryDeltas := make(map[references.Equipment]int)
-	seenTargets := make(map[int]struct{}, len(input.Targets))
-	for _, target := range input.Targets {
-		if _, duplicate := seenTargets[target.CharacterSlot]; duplicate {
-			return result, fmt.Errorf("%w: character position %d was targeted more than once", ErrInvalidEquipmentLoadout, target.CharacterSlot+1)
+	for _, slot := range plan.changedSlots {
+		if oldEquipment := plan.current[slot]; oldEquipment != references.NoEquipment {
+			inventoryDeltas[oldEquipment]++
 		}
-		seenTargets[target.CharacterSlot] = struct{}{}
-		plan, err := g.planEquipmentLoadout(target)
-		if err != nil {
-			return result, err
+		newEquipment := plan.requested[slot]
+		if newEquipment != references.NoEquipment && plan.changeSources[slot] == EquipmentSourceInventory {
+			inventoryDeltas[newEquipment]--
 		}
-		for _, slot := range plan.changedSlots {
-			if oldEquipment := plan.current[slot]; oldEquipment != references.NoEquipment {
-				inventoryDeltas[oldEquipment]++
-			}
-			newEquipment := plan.requested[slot]
-			if newEquipment != references.NoEquipment && plan.changeSources[slot] == EquipmentSourceInventory {
-				inventoryDeltas[newEquipment]--
-			}
-		}
-		plans = append(plans, plan)
 	}
 
 	resultingInventory := make(map[references.Equipment]uint16, len(inventoryDeltas))
@@ -116,27 +97,17 @@ func (g *GameState) AlterEquipmentLoadouts(
 		resultingInventory[equipment] = uint16(after)
 	}
 
-	result.Targets = make([]EquipmentLoadoutAlterationResult, 0, len(plans))
-	result.Changes = make([]EquipmentLoadoutStateChange, 0)
-	for _, plan := range plans {
-		targetResult := EquipmentLoadoutAlterationResult{
-			CharacterSlot: plan.input.CharacterSlot,
-			CharacterName: plan.character.GetNameAsString(),
-			Changes:       make([]EquipmentLoadoutStateChange, 0, len(plan.changedSlots)),
-		}
-		for _, slot := range plan.changedSlots {
-			before := plan.current[slot]
-			after := plan.requested[slot]
-			plan.character.SetEquippedItem(slot, after)
-			change := EquipmentLoadoutStateChange{
-				Path:   fmt.Sprintf("party.roster.%d.equipment.%s", plan.input.CharacterSlot, equipmentSlotID(slot)),
-				Before: before.ID(),
-				After:  after.ID(),
-			}
-			targetResult.Changes = append(targetResult.Changes, change)
-			result.Changes = append(result.Changes, change)
-		}
-		result.Targets = append(result.Targets, targetResult)
+	result.CharacterName = plan.character.GetNameAsString()
+	result.Changes = make([]EquipmentLoadoutStateChange, 0, len(plan.changedSlots))
+	for _, slot := range plan.changedSlots {
+		before := plan.current[slot]
+		after := plan.requested[slot]
+		plan.character.SetEquippedItem(slot, after)
+		result.Changes = append(result.Changes, EquipmentLoadoutStateChange{
+			Path:   fmt.Sprintf("party.roster.%d.equipment.%s", plan.input.CharacterSlot, equipmentSlotID(slot)),
+			Before: before.ID(),
+			After:  after.ID(),
+		})
 	}
 	for equipment := references.LeatherHelm; equipment <= references.Ankh; equipment++ {
 		after, changed := resultingInventory[equipment]

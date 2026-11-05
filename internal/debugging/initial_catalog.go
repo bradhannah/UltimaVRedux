@@ -21,7 +21,7 @@ const (
 	categoryQuestItems            = "Quest Items"
 	contextGameplay               = "gameplay"
 	contextOutsideCombat          = "outside_combat"
-	initialCatalogSize            = 133
+	initialCatalogSize            = 132
 	reviewedRosterFingerprintName = "Reviewed Roster Fingerprint"
 )
 
@@ -30,9 +30,6 @@ const OptionProviderActivePartyCharacters = "party.active-characters"
 
 // OptionProviderActivePartyPositions resolves current occupied party positions.
 const OptionProviderActivePartyPositions = "party.active-positions"
-
-// OptionProviderEquipmentLoadoutTargets resolves all-party and current character loadout targets.
-const OptionProviderEquipmentLoadoutTargets = "party.equipment-loadout-targets"
 
 const (
 	// CommandEnvironmentWindStatus reports the current wind direction.
@@ -51,8 +48,8 @@ const (
 	CommandPartyCharacterUpdate = "party.character.update"
 	// CommandPartyMaximizeLevels raises every active character to level eight.
 	CommandPartyMaximizeLevels = "party.maximize-levels"
-	// CommandPartyStatusSet applies one explicit status to reviewed active roster indices.
-	CommandPartyStatusSet = "party.status.set"
+	// CommandPartyRestore heals and cures every active character.
+	CommandPartyRestore = "party.restore"
 	// CommandPartyFill fills open active-party positions in roster order.
 	CommandPartyFill = "party.fill"
 	// CommandPartyMemberAdd adds one reviewed inactive roster member.
@@ -454,15 +451,11 @@ func NewInitialCatalog() *Catalog {
 			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
 		},
 		{
-			ID: CommandPartyStatusSet, Category: partyEquipmentCategory, Name: "Set Party Status",
-			Description: "Atomically set an explicit status for one or a reviewed list of stable active roster indices.",
-			Aliases:     []string{"pc status"},
-			Parameters: []ParameterDefinition{
-				{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
-				{ID: "rosterIndices", Name: "Active Roster Indices", Kind: ParameterIntegerList, Required: true, Minimum: &minimumRosterIndex, Maximum: &maximumRosterIndex},
-				{ID: "status", Name: "Status", Kind: ParameterEnum, Required: true, Choices: []Choice{{Value: "good", Label: "Good"}, {Value: "poisoned", Label: "Poisoned"}, {Value: "sleep", Label: "Sleep"}, {Value: "charmed", Label: "Charmed"}, {Value: "dead", Label: "Dead"}}, ControlHint: controlHintSelect},
-			},
-			ExecutionModes: []ExecutionMode{ExecutionSynchronized}, Destructive: true,
+			ID: CommandPartyRestore, Category: partyEquipmentCategory, Name: "Heal and Cure Active Party",
+			Description:    "Restore every reviewed active roster member to full hit points and magic points with Good status.",
+			Aliases:        []string{"pc party heal", "heal cure everyone"},
+			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}}},
+			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
 		},
 		{
 			ID: CommandPartyFill, Category: partyEquipmentCategory, Name: "Fill Active Party",

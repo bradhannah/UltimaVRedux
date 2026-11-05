@@ -164,79 +164,19 @@ func TestAlterEquipmentLoadoutRejectsChangedDeadOrCombatRestrictedTargetWithoutM
 	assert.Equal(t, uint16(1), state.PartyState.Inventory.Equipment.Get(references.ChainMail))
 }
 
-func TestAlterEquipmentLoadoutsAppliesAggregateInventoryAtomically(t *testing.T) {
+func TestAlterEquipmentLoadoutRejectsInsufficientCarriedInventoryBeforeMutation(t *testing.T) {
 	state := newEquipmentLoadoutTestState(t)
 	avatar := state.PartyState.GetCharacter(0)
-	ally := state.PartyState.GetCharacter(1)
-	ally.PartyMap = party_state.PartyMapActive
-	ally.SetStatus(party_state.Good)
-	ally.SetHp(max(ally.GetCurrentHp(), 1))
-	ally.Strength = 30
-	for _, character := range []*party_state.PlayerCharacter{avatar, ally} {
-		for _, slot := range references.EquipmentSlots() {
-			character.SetEquippedItem(slot, references.NoEquipment)
-		}
-		character.SetEquippedItem(references.SlotWeapon, references.Dagger)
-	}
-	state.PartyState.Inventory.Equipment.Set(references.LongSword, 2)
-
-	result, err := state.AlterEquipmentLoadouts(EquipmentLoadoutBatchAlteration{Targets: []EquipmentLoadoutAlteration{
-		{CharacterSlot: 0, ExpectedOccupant: avatar.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-		{CharacterSlot: 1, ExpectedOccupant: ally.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-	}})
-	require.NoError(t, err)
-	assert.Equal(t, references.LongSword, avatar.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, references.LongSword, ally.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, uint16(0), state.PartyState.Inventory.Equipment.Get(references.LongSword))
-	assert.Equal(t, uint16(2), state.PartyState.Inventory.Equipment.Get(references.Dagger))
-	assert.Len(t, result.Targets, 2)
-	assert.Len(t, result.Changes, 4)
-}
-
-func TestAlterEquipmentLoadoutsRejectsAnyInvalidTargetBeforeAggregateMutation(t *testing.T) {
-	state := newEquipmentLoadoutTestState(t)
-	avatar := state.PartyState.GetCharacter(0)
-	ally := state.PartyState.GetCharacter(1)
-	ally.PartyMap = party_state.PartyMapActive
-	ally.SetStatus(party_state.Good)
-	ally.SetHp(max(ally.GetCurrentHp(), 1))
-	ally.Strength = 1
 	for _, slot := range references.EquipmentSlots() {
-		ally.SetEquippedItem(slot, references.NoEquipment)
+		avatar.SetEquippedItem(slot, references.NoEquipment)
 	}
-	state.PartyState.Inventory.Equipment.Set(references.LongSword, 2)
+	state.PartyState.Inventory.Equipment.Set(references.LongSword, 0)
 
-	_, err := state.AlterEquipmentLoadouts(EquipmentLoadoutBatchAlteration{Targets: []EquipmentLoadoutAlteration{
-		{CharacterSlot: 0, ExpectedOccupant: avatar.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-		{CharacterSlot: 1, ExpectedOccupant: ally.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-	}})
+	_, err := state.AlterEquipmentLoadout(EquipmentLoadoutAlteration{
+		CharacterSlot: 0, ExpectedOccupant: avatar.GetNameAsString(),
+		Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}},
+	})
 	require.ErrorIs(t, err, ErrInvalidEquipmentLoadout)
 	assert.Equal(t, references.NoEquipment, avatar.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, references.NoEquipment, ally.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, uint16(2), state.PartyState.Inventory.Equipment.Get(references.LongSword))
-}
-
-func TestAlterEquipmentLoadoutsRejectsInsufficientAggregateInventoryBeforeMutation(t *testing.T) {
-	state := newEquipmentLoadoutTestState(t)
-	avatar := state.PartyState.GetCharacter(0)
-	ally := state.PartyState.GetCharacter(1)
-	ally.PartyMap = party_state.PartyMapActive
-	ally.SetStatus(party_state.Good)
-	ally.SetHp(max(ally.GetCurrentHp(), 1))
-	ally.Strength = 30
-	for _, character := range []*party_state.PlayerCharacter{avatar, ally} {
-		for _, slot := range references.EquipmentSlots() {
-			character.SetEquippedItem(slot, references.NoEquipment)
-		}
-	}
-	state.PartyState.Inventory.Equipment.Set(references.LongSword, 1)
-
-	_, err := state.AlterEquipmentLoadouts(EquipmentLoadoutBatchAlteration{Targets: []EquipmentLoadoutAlteration{
-		{CharacterSlot: 0, ExpectedOccupant: avatar.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-		{CharacterSlot: 1, ExpectedOccupant: ally.GetNameAsString(), Changes: []EquipmentSlotChange{{Slot: references.SlotWeapon, Equipment: references.LongSword, Source: EquipmentSourceInventory}}},
-	}})
-	require.ErrorIs(t, err, ErrInvalidEquipmentLoadout)
-	assert.Equal(t, references.NoEquipment, avatar.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, references.NoEquipment, ally.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, uint16(1), state.PartyState.Inventory.Equipment.Get(references.LongSword))
+	assert.Equal(t, uint16(0), state.PartyState.Inventory.Equipment.Get(references.LongSword))
 }

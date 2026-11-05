@@ -388,12 +388,13 @@
     "destructive": true
   },
   {
-    "id": "party.status.set",
+    "id": "party.restore",
     "category": "Party",
-    "name": "Set Party Status",
-    "description": "Atomically set an explicit status for one or a reviewed list of stable active roster indices.",
+    "name": "Heal and Cure Active Party",
+    "description": "Restore every reviewed active roster member to full hit points and magic points with Good status.",
     "aliases": [
-      "pc status"
+      "pc party heal",
+      "heal cure everyone"
     ],
     "parameters": [
       {
@@ -405,47 +406,10 @@
           "gameplay",
           "outside_combat"
         ]
-      },
-      {
-        "id": "rosterIndices",
-        "name": "Active Roster Indices",
-        "kind": "integer_list",
-        "required": true,
-        "minimum": 0,
-        "maximum": 15
-      },
-      {
-        "id": "status",
-        "name": "Status",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "good",
-            "label": "Good"
-          },
-          {
-            "value": "poisoned",
-            "label": "Poisoned"
-          },
-          {
-            "value": "sleep",
-            "label": "Sleep"
-          },
-          {
-            "value": "charmed",
-            "label": "Charmed"
-          },
-          {
-            "value": "dead",
-            "label": "Dead"
-          }
-        ],
-        "controlHint": "select"
       }
     ],
     "executionModes": [
-      "synchronized_live"
+      "coordinated_alteration"
     ],
     "destructive": true
   },
@@ -2900,6 +2864,36 @@
     "destructive": false
   },
   {
+    "id": "combat.monster.sleep-all",
+    "category": "Active Combat",
+    "name": "Put All Monsters to Sleep",
+    "description": "Put every live monster in the exact reviewed snapshot to sleep at a quiescent player-turn boundary; monsters that already sleep are unchanged.",
+    "aliases": [
+      "combat sleep all"
+    ],
+    "parameters": [
+      {
+        "id": "encounterId",
+        "name": "Encounter",
+        "kind": "string",
+        "required": true,
+        "pattern": "^[1-9][0-9]*$",
+        "controlHint": "text"
+      },
+      {
+        "id": "expectedSnapshot",
+        "name": "Reviewed Status Fingerprint",
+        "kind": "string",
+        "required": true,
+        "controlHint": "text"
+      }
+    ],
+    "executionModes": [
+      "synchronized_live"
+    ],
+    "destructive": false
+  },
+  {
     "id": "combat.exit-debug",
     "category": "Active Combat",
     "name": "Discard Active Encounter",
@@ -4412,7 +4406,7 @@
     "id": "party.equipment.loadout.update",
     "category": "Party",
     "name": "Equipment Loadout",
-    "description": "Atomically change one or more equipment slots for one or all active party members using carried or explicitly manufactured items.",
+    "description": "Atomically change one or more equipment slots for one active party member using carried or explicitly manufactured items.",
     "aliases": [
       "ready equipment",
       "party loadout"
@@ -4421,10 +4415,10 @@
       {
         "id": "character",
         "name": "Character",
-        "description": "Select all active party members or one current member.",
+        "description": "Select a current active-party member.",
         "kind": "character",
         "required": true,
-        "optionsProvider": "party.equipment-loadout-targets",
+        "optionsProvider": "party.active-characters",
         "controlHint": "select",
         "availability": [
           "gameplay"
@@ -4957,6 +4951,10 @@
             "label": "Inside dungeon start"
           },
           {
+            "value": "dungeon_outside_room",
+            "label": "Outside a room"
+          },
+          {
             "value": "dungeon_underworld_exit",
             "label": "Dungeon Underworld-exit ladder"
           }
@@ -5214,6 +5212,20 @@
           }
         ],
         "controlHint": "select",
+        "availability": [
+          "gameplay",
+          "outside_combat"
+        ]
+      },
+      {
+        "id": "room",
+        "name": "Room",
+        "description": "Fixed room to stand beside; required for the outside-a-room placement.",
+        "kind": "integer",
+        "required": false,
+        "minimum": 0,
+        "maximum": 15,
+        "controlHint": "number",
         "availability": [
           "gameplay",
           "outside_combat"

@@ -20,7 +20,6 @@ import (
 
 const (
 	activeCharacterTokenPartCount = 2
-	allActivePartyValue           = "all"
 	characterChangeCapacity       = 11
 	shrineChangeCapacity          = 4
 	calendarChangeCapacity        = 3
@@ -69,7 +68,7 @@ type debugWorkbenchState interface {
 	AlterActiveCharacter(input game_state.ActiveCharacterAlteration) (game_state.ActiveCharacterAlterationResult, error)
 	CurrentPartyRosterSnapshot() game_state.PartyRosterSnapshot
 	MaximizeActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
-	SetPartyRosterStatuses(request game_state.PartyStatusMutationRequest) (game_state.PartyRosterMutationResult, error)
+	RestoreActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
 	FillActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
 	AddInactiveRosterMember(
 		request game_state.AddInactiveRosterMemberRequest,
@@ -370,7 +369,6 @@ func (g *GameScene) DebugOptionSets() []debugging.OptionSet {
 	return []debugging.OptionSet{
 		activeCharacterOptionSet(characters, g.gameState.PartyState.Karma.Value, ""),
 		activePartyPositionOptionSet(characters, g.gameState.PartyState.Karma.Value, ""),
-		equipmentLoadoutTargetOptionSet(characters, g.gameState.PartyState.Karma.Value, ""),
 		g.merchantTesterOptionSet(),
 	}
 }
@@ -440,23 +438,6 @@ func activePartyPositionOptionSet(
 
 	return debugging.OptionSet{
 		Provider:          debugging.OptionProviderActivePartyPositions,
-		Choices:           choices,
-		UnavailableReason: unavailableReason,
-	}
-}
-
-func equipmentLoadoutTargetOptionSet(
-	characters []game_state.ActiveCharacterSnapshot,
-	karma int,
-	unavailableReason string,
-) debugging.OptionSet {
-	characterOptions := activeCharacterOptionSet(characters, karma, unavailableReason)
-	choices := make([]debugging.Choice, 0, len(characterOptions.Choices)+1)
-	choices = append(choices, debugging.Choice{Value: allActivePartyValue, Label: "All active party members"})
-	choices = append(choices, characterOptions.Choices...)
-
-	return debugging.OptionSet{
-		Provider:          debugging.OptionProviderEquipmentLoadoutTargets,
 		Choices:           choices,
 		UnavailableReason: unavailableReason,
 	}
@@ -568,18 +549,10 @@ func executeDebugCommand(gameState debugWorkbenchState, request debugging.Reques
 		mutation, err := gameState.MaximizeActiveParty(mustDebugStringArgument(request, "expectedFingerprint"))
 
 		return partyRosterMutationDebugResult(request, "Active party maximized to level eight.", mutation, err)
-	case debugging.CommandPartyStatusSet:
-		status, ok := debugRosterStatus(mustDebugStringArgument(request, "status"))
-		if !ok {
-			return debugging.FailureResult(request, "invalid_party_mutation", "unknown party status")
-		}
-		mutation, err := gameState.SetPartyRosterStatuses(game_state.PartyStatusMutationRequest{
-			ExpectedFingerprint: mustDebugStringArgument(request, "expectedFingerprint"),
-			RosterIndices:       mustDebugIntegerListArgument(request, "rosterIndices"),
-			Status:              status,
-		})
+	case debugging.CommandPartyRestore:
+		mutation, err := gameState.RestoreActiveParty(mustDebugStringArgument(request, "expectedFingerprint"))
 
-		return partyRosterMutationDebugResult(request, "Party status updated.", mutation, err)
+		return partyRosterMutationDebugResult(request, "Active party healed and cured.", mutation, err)
 	case debugging.CommandPartyFill:
 		mutation, err := gameState.FillActiveParty(mustDebugStringArgument(request, "expectedFingerprint"))
 
@@ -652,7 +625,8 @@ func executeDebugCommand(gameState debugWorkbenchState, request debugging.Reques
 
 		return result
 	case debugging.CommandCombatStatus,
-		debugging.CommandCombatMonsterSleepSet:
+		debugging.CommandCombatMonsterSleepSet,
+		debugging.CommandCombatMonsterSleepAll:
 		result, _ := executeActiveCombatDebugCommand(request, concreteDebugGameState(gameState))
 
 		return result
@@ -1119,19 +1093,6 @@ func mustDebugIntegerArgument(request debugging.Request, argumentID string) int 
 	}
 
 	return value
-}
-
-func mustDebugIntegerListArgument(request debugging.Request, argumentID string) []int {
-	raw, ok := request.Arguments[argumentID]
-	if !ok {
-		panic(fmt.Sprintf("validated debug command %q missing argument %q", request.CommandID, argumentID))
-	}
-	var values []int
-	if err := json.Unmarshal(raw, &values); err != nil {
-		panic(fmt.Sprintf("decoding validated debug command %q argument %q: %v", request.CommandID, argumentID, err))
-	}
-
-	return values
 }
 
 func mustDebugBooleanArgument(request debugging.Request, argumentID string) bool {
@@ -1704,14 +1665,6 @@ func debugCharacterStatus(value string) (party_state.CharacterStatus, bool) {
 	}
 }
 
-func debugRosterStatus(value string) (party_state.CharacterStatus, bool) {
-	if value == debugStatusDead {
-		return party_state.Dead, true
-	}
-
-	return debugCharacterStatus(value)
-}
-
 func activeCharacterToken(slot int, name string) string {
 	return strconv.Itoa(slot) + "." + base64.RawURLEncoding.EncodeToString([]byte(name))
 }
@@ -1860,13 +1813,9 @@ func partyRosterMutationDebugResult(
 
 		return debugging.FailureResult(request, code, err.Error())
 	}
-	mode := debugging.ExecutionAlteration
-	if request.CommandID == debugging.CommandPartyStatusSet {
-		mode = debugging.ExecutionSynchronized
-	}
 	before := newPartyRosterResult(mutation.Before)
 	after := newPartyRosterResult(mutation.After)
-	result := debugSuccessResultWithMode(request, mode, summary, partyRosterMutationResult{Before: before, After: after})
+	result := debugSuccessResultWithMode(request, debugging.ExecutionAlteration, summary, partyRosterMutationResult{Before: before, After: after})
 	result.Changes = partyRosterChanges(before, after)
 
 	return result

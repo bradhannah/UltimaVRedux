@@ -37,8 +37,10 @@ func registerCoreSceneDebugCommands(registry *debugCommandRegistry) {
 	for _, commandID := range []string{debugging.CommandQuestItemEnsure, debugging.CommandQuestItemRemove} {
 		registry.registerScene(commandID, "core gameplay", coreHandler, ritualStateMutationGuard)
 	}
-	for _, commandID := range []string{debugging.CommandPartyMaximizeLevels, debugging.CommandPartyStatusSet,
-		debugging.CommandPartyFill, debugging.CommandPartyMemberAdd} {
+	for _, commandID := range []string{
+		debugging.CommandPartyMaximizeLevels, debugging.CommandPartyRestore,
+		debugging.CommandPartyFill, debugging.CommandPartyMemberAdd,
+	} {
 		registry.registerScene(commandID, "party roster", coreHandler, nil)
 	}
 	registry.registerScene(
@@ -251,6 +253,7 @@ func registerActiveCombatDebugCommands(registry *debugCommandRegistry) {
 	)
 	for _, commandID := range []string{
 		debugging.CommandCombatMonsterSleepSet,
+		debugging.CommandCombatMonsterSleepAll,
 		debugging.CommandCombatExitDebug,
 		debugging.CommandCombatMonsterSpawn,
 		debugging.CommandCombatDungeonRoomClear,

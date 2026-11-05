@@ -94,45 +94,6 @@ func TestPartyEquipmentLoadoutUpdateRejectsManufacturedAmmo(t *testing.T) {
 	assert.Equal(t, references.NoEquipment, avatar.GetEquippedItem(references.SlotWeapon))
 }
 
-func TestPartyEquipmentLoadoutUpdateAppliesAllActiveMembersWithExactChanges(t *testing.T) {
-	state := newApprovedToolTestState()
-	initializeEmptyInventoryLockerRoster(state)
-	require.NoError(t, state.SetAvatarName("Avatar"))
-	avatar := state.PartyState.GetCharacter(0)
-	shamino := state.PartyState.GetCharacter(1)
-	copy(shamino.Name[:], "Shamino")
-	for slot := 2; slot < party_state.MaxActiveParty; slot++ {
-		state.PartyState.GetCharacter(slot).PartyMap = party_state.PartyMapUnrecruited
-	}
-	for _, character := range []*party_state.PlayerCharacter{avatar, shamino} {
-		prepareEquipmentTestCharacter(character)
-		character.Strength = 30
-	}
-	state.PartyState.Inventory.Equipment.Set(references.Dagger, 2)
-	status := newInventoryLockerResult(state)
-
-	result := executePartyEquipmentLoadoutUpdate(debugging.Request{
-		SessionID: "test", ID: "all-loadout", CommandID: debugging.CommandPartyEquipmentLoadoutUpdate,
-		Arguments: map[string]json.RawMessage{
-			"character": json.RawMessage(`"all"`), "weapon": json.RawMessage(`"inventory:16"`),
-			inventoryExpectedSnapshotArgument: mustDebugJSON(status.SnapshotFingerprint),
-		},
-	}, state)
-
-	require.True(t, result.Success, result.ErrorMessage)
-	assert.Equal(t, references.Dagger, avatar.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, references.Dagger, shamino.GetEquippedItem(references.SlotWeapon))
-	assert.Equal(t, uint16(0), state.PartyState.Inventory.Equipment.Get(references.Dagger))
-	assert.Contains(t, result.Summary, "2 active party members")
-	assert.ElementsMatch(t, []string{
-		"party.roster.0.equipment.weapon", "party.roster.1.equipment.weapon", "inventory.equipment.16.quantity",
-	}, stateChangePaths(result.Changes))
-	var data partyEquipmentLoadoutResult
-	require.NoError(t, json.Unmarshal(result.Data, &data))
-	assert.Equal(t, 2, data.TargetCount)
-	assert.Equal(t, []string{"Avatar", shamino.GetNameAsString()}, data.CharacterNames)
-}
-
 func TestPartyEquipmentLoadoutUpdateRejectsDialogAndWorkflowContexts(t *testing.T) {
 	t.Run("dialog", func(t *testing.T) {
 		scene := newCommandWorkflowTestScene(t)

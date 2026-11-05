@@ -26,6 +26,9 @@ ifeq ($(OS),Windows_NT)
 TEST_PROFILE_CASE_KEYS := $(shell env | awk -F= 'toupper($$1) ~ /^(GOMAXPROCS|GOMEMLIMIT)$$/ && $$1 != toupper($$1) { print $$1 }')
 endif
 
+# Keep in step with workbench.DefaultPort; make debug prints the address it opens.
+WORKBENCH_PORT ?= 8585
+
 CONVERSATION_DATA_DIR ?= ./OLD
 CONVERSATION_WORKSPACE ?= $(HOME)/.ultima_v_redux/conversations
 CONVERSATION_PATCH_DIR ?= data/conversation-patches
@@ -66,7 +69,7 @@ test-profile-check:
 		fi; \
 	done
 
-.PHONY: help all dev run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test site site-publish validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
+.PHONY: help all dev debug run tools format format-check lint lint-all lint-config-check core-dependencies-check vet test test-short test-race test-provisioned test-race-provisioned test-integration generate web-install web-build web-test-browser build audio-editor build-check check pre-commit policy-check docs-check gamefacts-check tooling-test site site-publish validate quality-gate conversations-init conversations-diff conversations-check conversations-patches conversations-verify clean
 
 help: ## Show available targets
 	@printf "$(PROJECT_NAME) development targets:\n\n"
@@ -76,6 +79,10 @@ all: check build ## Run checks and build the game
 
 dev: build ## Build and play the game (pass options with ARGS="...")
 	@./$(BINARY) $(ARGS)
+
+debug: build ## Build and play with the Debug Workbench on (WORKBENCH_PORT=8585, ARGS="...")
+	@printf 'Debug Workbench: http://127.0.0.1:%s\n' "$(WORKBENCH_PORT)"
+	@./$(BINARY) -debug-workbench -debug-workbench-port $(WORKBENCH_PORT) $(ARGS)
 
 run: ## Run the existing game binary (pass options with ARGS="...")
 	@./$(BINARY) $(ARGS)

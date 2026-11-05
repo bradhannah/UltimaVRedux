@@ -194,7 +194,7 @@ func validateParameterDefinition(commandID string, parameter ParameterDefinition
 
 func validateParameterConstraints(commandID string, parameter ParameterDefinition) error {
 	if parameter.Step != nil && (*parameter.Step <= 0 || parameter.Minimum == nil ||
-		(parameter.Kind != ParameterInteger && parameter.Kind != ParameterIntegerList)) {
+		parameter.Kind != ParameterInteger) {
 		return fmt.Errorf("%w: command %q parameter %q requires a positive integer step and minimum", ErrInvalidCatalog, commandID, parameter.ID)
 	}
 	if parameter.Minimum != nil && parameter.Maximum != nil && *parameter.Minimum > *parameter.Maximum {
@@ -238,8 +238,6 @@ func validateArgument(parameter ParameterDefinition, raw json.RawMessage) error 
 	switch parameter.Kind {
 	case ParameterInteger:
 		return validateIntegerArgument(parameter, raw)
-	case ParameterIntegerList:
-		return validateIntegerListArgument(parameter, raw)
 	case ParameterBoolean:
 		var value bool
 		if err := json.Unmarshal(raw, &value); err != nil {
@@ -249,27 +247,6 @@ func validateArgument(parameter ParameterDefinition, raw json.RawMessage) error 
 		return validateStringArgument(parameter, raw)
 	default:
 		return fmt.Errorf("%w: unsupported parameter kind %q", ErrInvalidArgument, parameter.Kind)
-	}
-
-	return nil
-}
-
-func validateIntegerListArgument(parameter ParameterDefinition, raw json.RawMessage) error {
-	var values []int
-	if err := json.Unmarshal(raw, &values); err != nil {
-		return fmt.Errorf("%w: must be an integer list", ErrInvalidArgument)
-	}
-	if len(values) == 0 {
-		return fmt.Errorf("%w: must contain at least one integer", ErrInvalidArgument)
-	}
-	for _, value := range values {
-		encoded, err := json.Marshal(value)
-		if err != nil {
-			panic("marshalling validated integer: " + err.Error())
-		}
-		if err = validateIntegerArgument(parameter, encoded); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -314,7 +291,7 @@ func validateStringArgument(parameter ParameterDefinition, raw json.RawMessage) 
 
 func isSupportedParameterKind(kind ParameterKind) bool {
 	switch kind {
-	case ParameterString, ParameterInteger, ParameterIntegerList, ParameterBoolean, ParameterEnum,
+	case ParameterString, ParameterInteger, ParameterBoolean, ParameterEnum,
 		ParameterCharacter, ParameterLocation, ParameterMonster, ParameterEquipment:
 		return true
 	default:

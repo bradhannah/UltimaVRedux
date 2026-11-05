@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
@@ -146,6 +147,9 @@ func (g *GameScene) resolveWorldPositionPlacement(
 			placement,
 		)
 	}
+	if placement == debugging.WorldPlacementDungeonOutsideRoom {
+		return g.resolveDungeonRoomPlacement(request, location)
+	}
 	route, routeSupplied, routeErr := optionalDebugStringArgument(request, "route")
 	if routeErr != nil {
 		return debugWorldPositionPlacement{}, routeErr
@@ -183,6 +187,43 @@ func (g *GameScene) resolveWorldPositionPlacement(
 		placement,
 		location.String(),
 		route,
+	)
+}
+
+func (g *GameScene) resolveDungeonRoomPlacement(
+	request debugging.Request,
+	location references.Location,
+) (debugWorldPositionPlacement, error) {
+	room, supplied, err := optionalDebugIntegerArgument(request, "room")
+	if err != nil {
+		return debugWorldPositionPlacement{}, err
+	}
+	if !supplied {
+		return debugWorldPositionPlacement{}, fmt.Errorf(
+			"%w: placement %q requires a room", errInvalidWorldPlacement, debugging.WorldPlacementDungeonOutsideRoom,
+		)
+	}
+	for _, approach := range g.gameState.DungeonRoomApproaches(location) {
+		if approach.Room != room {
+			continue
+		}
+		if !approach.Available {
+			return debugWorldPositionPlacement{}, fmt.Errorf("%w: %s", errInvalidWorldPlacement, approach.UnavailableReason)
+		}
+
+		return debugWorldPositionPlacement{
+			Placement:     debugging.WorldPlacementDungeonOutsideRoom,
+			Location:      location,
+			Floor:         approach.Floor,
+			Position:      approach.Approach,
+			Facing:        approach.Facing,
+			LastDirection: references.DungeonLastDirection(approach.Facing),
+			FreshDungeon:  true,
+		}, nil
+	}
+
+	return debugWorldPositionPlacement{}, fmt.Errorf(
+		"%w: room %d is not placed in %s", errInvalidWorldPlacement, room, location.String(),
 	)
 }
 
@@ -432,6 +473,7 @@ func debugWorldPositionDestination(
 		for _, target := range targets {
 			destination.PlacementTargets = append(destination.PlacementTargets, debugWorldPlacementTargetData(target))
 		}
+		destination.Rooms = debugWorldPositionRooms(state, location)
 	} else if location != references.BritanniaUnderworld && state.GameReferences != nil &&
 		state.GameReferences.LocationReferences != nil &&
 		state.GameReferences.LocationReferences.WorldLocations != nil {
@@ -447,6 +489,76 @@ func debugWorldPositionDestination(
 	}
 
 	return destination
+}
+
+func debugWorldPositionRooms(
+	state *game_state.GameState,
+	location references.Location,
+) []debugging.WorldPositionDungeonRoomData {
+	if state.GameReferences == nil || state.GameReferences.LocationReferences == nil {
+		return nil
+	}
+	approaches := state.DungeonRoomApproaches(location)
+	if len(approaches) == 0 {
+		return nil
+	}
+	dungeonIndex, _ := references.DungeonLocationToCombatIndex(location)
+	rooms := make([]debugging.WorldPositionDungeonRoomData, 0, len(approaches))
+	for _, approach := range approaches {
+		room := debugging.WorldPositionDungeonRoomData{
+			Room:              approach.Room,
+			Label:             "Room " + strconv.Itoa(approach.Room),
+			Floor:             int(approach.Floor),
+			RoomX:             int(approach.RoomCell.X),
+			RoomY:             int(approach.RoomCell.Y),
+			Available:         approach.Available,
+			UnavailableReason: approach.UnavailableReason,
+			Summary:           debugDungeonRoomSummary(state, dungeonIndex, approach.Room),
+		}
+		if approach.Available {
+			setup := debugWorldPositionSetupData(approach.Floor, approach.Approach)
+			room.Setup = &setup
+			room.FacingLabel = debugDungeonFacingLabel(approach.Facing)
+		}
+		rooms = append(rooms, room)
+	}
+
+	return rooms
+}
+
+// debugDungeonRoomSummary names the fixed monsters a room preview shows, such as "Ghost ×3, Insects".
+func debugDungeonRoomSummary(
+	state *game_state.GameState,
+	dungeon references.DungeonCombatIndex,
+	room int,
+) string {
+	preview, err := state.CombatEncounterPreview(game_state.CombatEncounterMap{
+		Territory: references.DungeonCombatTerritory, Dungeon: dungeon, DungeonRoom: room,
+	})
+	if err != nil {
+		return ""
+	}
+	names := make([]string, 0, len(preview.Entities))
+	counts := map[string]int{}
+	for _, entity := range preview.Entities {
+		if entity.Kind != game_state.CombatEncounterEntityMonster &&
+			entity.Kind != game_state.CombatEncounterEntityRandomMonster {
+			continue
+		}
+		if counts[entity.Name] == 0 {
+			names = append(names, entity.Name)
+		}
+		counts[entity.Name]++
+	}
+	parts := make([]string, 0, len(names))
+	for _, name := range names {
+		if counts[name] > 1 {
+			name += " ×" + strconv.Itoa(counts[name])
+		}
+		parts = append(parts, name)
+	}
+
+	return strings.Join(parts, ", ")
 }
 
 func debugDungeonPlacementTargets(
@@ -557,6 +669,8 @@ func debugWorldPlacementLabel(placement string) string {
 		return "Outside dungeon entrance"
 	case debugging.WorldPlacementDungeonInsideStart:
 		return "Inside dungeon start"
+	case debugging.WorldPlacementDungeonOutsideRoom:
+		return "Outside a room"
 	case debugging.WorldPlacementDungeonUnderworldExit:
 		return "Underworld exit ladder"
 	default:

@@ -34,7 +34,7 @@ func TestGoProtocolMatchesTypeScriptContract(t *testing.T) {
 	expected := protocolParityContract{
 		ProtocolVersion: ProtocolVersion,
 		ParameterKinds: stringSet(
-			debugging.ParameterString, debugging.ParameterInteger, debugging.ParameterIntegerList,
+			debugging.ParameterString, debugging.ParameterInteger,
 			debugging.ParameterBoolean, debugging.ParameterEnum, debugging.ParameterCharacter,
 			debugging.ParameterLocation, debugging.ParameterMonster, debugging.ParameterEquipment,
 		),

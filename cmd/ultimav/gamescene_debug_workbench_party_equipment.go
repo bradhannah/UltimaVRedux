@@ -36,46 +36,22 @@ func executePartyEquipmentLoadoutUpdate(
 	if err != nil {
 		return debugging.FailureResult(request, "invalid_loadout", err.Error())
 	}
-	targetValue := mustDebugStringArgument(request, "character")
-	targets := make([]game_state.EquipmentLoadoutAlteration, 0, 1)
-	if targetValue == allActivePartyValue {
-		characters := state.ActivePartyCharacters()
-		targets = make([]game_state.EquipmentLoadoutAlteration, 0, len(characters))
-		for _, character := range characters {
-			targets = append(targets, game_state.EquipmentLoadoutAlteration{
-				CharacterSlot: character.Slot, ExpectedOccupant: character.Name, Changes: changes,
-			})
-		}
-	} else {
-		slot, expectedOccupant, parseErr := parseActiveCharacterToken(targetValue)
-		if parseErr != nil {
-			return debugging.FailureResult(request, "invalid_character", parseErr.Error())
-		}
-		targets = append(targets, game_state.EquipmentLoadoutAlteration{
-			CharacterSlot: slot, ExpectedOccupant: expectedOccupant, Changes: changes,
-		})
+	slot, expectedOccupant, err := parseActiveCharacterToken(mustDebugStringArgument(request, "character"))
+	if err != nil {
+		return debugging.FailureResult(request, "invalid_character", err.Error())
 	}
-	alteration, err := state.AlterEquipmentLoadouts(game_state.EquipmentLoadoutBatchAlteration{Targets: targets})
+	alteration, err := state.AlterEquipmentLoadout(game_state.EquipmentLoadoutAlteration{
+		CharacterSlot: slot, ExpectedOccupant: expectedOccupant, Changes: changes,
+	})
 	if err != nil {
 		return debugging.FailureResult(request, "invalid_loadout", err.Error())
 	}
 
-	names := make([]string, 0, len(alteration.Targets))
-	for _, target := range alteration.Targets {
-		names = append(names, target.CharacterName)
-	}
-	summary := fmt.Sprintf("Equipment updated for %s.", strings.Join(names, ", "))
-	if targetValue == allActivePartyValue {
-		summary = fmt.Sprintf("Equipment loadout applied to %d active party members.", len(alteration.Targets))
-	}
 	result := debugSuccessResultWithMode(
 		request,
 		debugging.ExecutionAlteration,
-		summary,
-		partyEquipmentLoadoutResult{
-			Target: targetValue, TargetCount: len(alteration.Targets), CharacterNames: names,
-			Inventory: newInventoryLockerResult(state),
-		},
+		fmt.Sprintf("Equipment updated for %s.", alteration.CharacterName),
+		partyEquipmentLoadoutResult{CharacterName: alteration.CharacterName, Inventory: newInventoryLockerResult(state)},
 	)
 	result.Changes = make([]debugging.StateChange, 0, len(alteration.Changes))
 	for _, change := range alteration.Changes {
@@ -86,10 +62,8 @@ func executePartyEquipmentLoadoutUpdate(
 }
 
 type partyEquipmentLoadoutResult struct {
-	Target         string                `json:"target"`
-	TargetCount    int                   `json:"targetCount"`
-	CharacterNames []string              `json:"characterNames"`
-	Inventory      inventoryLockerResult `json:"inventory"`
+	CharacterName string                `json:"characterName"`
+	Inventory     inventoryLockerResult `json:"inventory"`
 }
 
 func equipmentSlotChangesFromRequest(request debugging.Request) ([]game_state.EquipmentSlotChange, error) {

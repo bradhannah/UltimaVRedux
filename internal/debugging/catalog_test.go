@@ -117,12 +117,13 @@ func TestWorldNavigatorCatalogDefinitionsAndNormalization(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "World", world.Category)
 	assert.Contains(t, world.SearchTerms, "navigator")
-	require.Len(t, world.Parameters, 11)
+	require.Len(t, world.Parameters, 12)
 	assert.Equal(t, ParameterEnum, world.Parameters[0].Kind)
 	assert.Equal(t, []Choice{
 		{Value: WorldPlacementExact, Label: "Arbitrary exact position"},
 		{Value: WorldPlacementDungeonOutside, Label: "Outside dungeon entrance"},
 		{Value: WorldPlacementDungeonInsideStart, Label: "Inside dungeon start"},
+		{Value: WorldPlacementDungeonOutsideRoom, Label: "Outside a room"},
 		{Value: WorldPlacementDungeonUnderworldExit, Label: "Dungeon Underworld-exit ladder"},
 	}, world.Parameters[0].Choices)
 	assert.Equal(t, ParameterEnum, world.Parameters[1].Kind)
@@ -139,12 +140,14 @@ func TestWorldNavigatorCatalogDefinitionsAndNormalization(t *testing.T) {
 	assert.Equal(t, "-1", world.Parameters[3].Choices[0].Value)
 	assert.Equal(t, "7", world.Parameters[3].Choices[8].Value)
 	assert.Equal(t, []string{"expectedLocationId", "expectedFloor", "expectedX", "expectedY", "expectedSourceFingerprint"}, []string{
-		world.Parameters[6].ID,
 		world.Parameters[7].ID,
 		world.Parameters[8].ID,
 		world.Parameters[9].ID,
 		world.Parameters[10].ID,
+		world.Parameters[11].ID,
 	})
+	assert.Equal(t, "room", world.Parameters[4].ID)
+	assert.False(t, world.Parameters[4].Required, "only the outside-a-room placement needs a room")
 	require.NoError(t, catalog.ValidateRequest(Request{
 		SessionID: "test", ID: "world", CommandID: CommandWorldPositionSet,
 		Arguments: map[string]json.RawMessage{
@@ -176,7 +179,7 @@ func TestPartyEquipmentLoadoutCatalogUsesSlotSpecificAtomicChoices(t *testing.T)
 	definition, ok := NewInitialCatalog().Get(CommandPartyEquipmentLoadoutUpdate)
 	require.True(t, ok)
 	require.Len(t, definition.Parameters, 8)
-	assert.Equal(t, OptionProviderEquipmentLoadoutTargets, definition.Parameters[0].OptionsProvider)
+	assert.Equal(t, OptionProviderActivePartyCharacters, definition.Parameters[0].OptionsProvider)
 	assert.Equal(t, "helm", definition.Parameters[1].ID)
 	assert.Equal(t, "amulet", definition.Parameters[6].ID)
 	assert.Equal(t, inventoryExpectedSnapshotID, definition.Parameters[7].ID)
@@ -326,23 +329,6 @@ func TestInitialCatalogValidatesFourthBatchReviewedParameters(t *testing.T) {
 	require.NoError(t, catalog.ValidateRequest(Request{SessionID: "test", ID: "preset", CommandID: CommandQuestInventoryPresetUsable, Arguments: map[string]json.RawMessage{
 		"expectedFingerprint": json.RawMessage(`"reviewed"`),
 	}}))
-}
-
-func TestInitialCatalogValidatesPartyRosterIndexLists(t *testing.T) {
-	catalog := NewInitialCatalog()
-	request := Request{SessionID: "test", ID: "status", CommandID: CommandPartyStatusSet, Arguments: map[string]json.RawMessage{
-		"expectedFingerprint": json.RawMessage(`"reviewed"`),
-		"rosterIndices":       json.RawMessage(`[0,5]`),
-		"status":              json.RawMessage(`"dead"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(request))
-
-	request.Arguments["rosterIndices"] = json.RawMessage(`[]`)
-	require.Error(t, catalog.ValidateRequest(request))
-	request.Arguments["rosterIndices"] = json.RawMessage(`[16]`)
-	require.Error(t, catalog.ValidateRequest(request))
-	request.Arguments["rosterIndices"] = json.RawMessage(`"0"`)
-	require.Error(t, catalog.ValidateRequest(request))
 }
 
 func TestInitialCatalogValidatesApprovedToolBoundaries(t *testing.T) {
