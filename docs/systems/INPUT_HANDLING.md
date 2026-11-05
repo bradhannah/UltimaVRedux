@@ -479,10 +479,10 @@ The guard selector explicitly opts into `GuardResources`, showing detached
 current/max HP and MP for every party row and blank resource cells for No One.
 Arrows and number keys inspect; Enter confirms. It does not automatically choose
 a guard from those values. A Poisoned row is confirmable with the warning that it
-**cancels camping**; the scene rechecks Good status before accepting a guard.
-This describes the existing Redux cancellation path, distinct from the original
-non-Good-selection-to-unguarded rule in
-[CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001).
+**camps without a watch**; the scene rechecks Good status and turns a non-Good
+selection into No One, following the original rule in
+[CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001). Escape cancels setup,
+a recorded deviation from that rule.
 
 Cast gathers required targets/directions before final confirmation spends MP and
 one mixture. Cancellation before that boundary preserves resources, gameplay

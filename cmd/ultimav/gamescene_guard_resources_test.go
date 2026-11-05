@@ -270,33 +270,31 @@ func TestDungeonGuardResourcesExplicitChoicesKeepWorkflowOwnership(t *testing.T)
 			scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
 			update()
 			if choice == "poisoned" {
-				drainDungeonInputWorkflowThroughUpdate(t, scene, state, "dungeon_hole_up")
-				require.Nil(t, state.CampingScene)
-				require.Equal(t, before, state.DateTime, "poison warning preserves existing cancellation/precharge")
-			} else {
-				for range 100 {
-					update()
-					if state.CampingScene != nil {
-						break
-					}
-				}
-				require.NotNil(t, state.CampingScene)
-				require.Equal(t, selected, state.CampingScene.GuardIndex)
-				require.False(t, scene.dialogStack.ContainsWidgetInstance(guard))
-				anyKeyChecks := 0
-				state.SystemCallbacks.Visual.IsAnyKeyPressed = func() bool {
-					anyKeyChecks++
-					return anyKeyChecks%2 == 0
-				}
-				for range 2000 {
-					state.ElapsedMs += 500
-					require.NoError(t, scene.Update(nil))
-					if !state.EventQueueManager.HasWorkflow("dungeon_hole_up") {
-						break
-					}
-				}
-				require.False(t, state.EventQueueManager.HasWorkflow("dungeon_hole_up"))
+				// The original turns a non-Good guard into No One. ref:CAMP-0001
+				selected = game_state.NoGuardAssigned
 			}
+			for range 100 {
+				update()
+				if state.CampingScene != nil {
+					break
+				}
+			}
+			require.NotNil(t, state.CampingScene)
+			require.Equal(t, selected, state.CampingScene.GuardIndex)
+			require.False(t, scene.dialogStack.ContainsWidgetInstance(guard))
+			anyKeyChecks := 0
+			state.SystemCallbacks.Visual.IsAnyKeyPressed = func() bool {
+				anyKeyChecks++
+				return anyKeyChecks%2 == 0
+			}
+			for range 2000 {
+				state.ElapsedMs += 500
+				require.NoError(t, scene.Update(nil))
+				if !state.EventQueueManager.HasWorkflow("dungeon_hole_up") {
+					break
+				}
+			}
+			require.False(t, state.EventQueueManager.HasWorkflow("dungeon_hole_up"))
 			require.True(t, state.IsAtDungeonCommandBoundary())
 			require.Zero(t, scene.dialogStack.Count())
 			require.False(t, callbacks.InputBlocked)

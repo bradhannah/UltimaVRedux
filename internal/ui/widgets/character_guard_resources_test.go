@@ -24,7 +24,7 @@ func guardResourceTestOptions() []CharacterSelectionOption {
 		details []string
 	}{
 		{"Good", party_state.Good, CharacterSelectionAvailable, []string{"Standing guard means no rest HP or MP recovery."}},
-		{"Poisoned", party_state.Poisoned, CharacterSelectionWarning, []string{"A poisoned selection cancels camping.", "Choose No One to camp without a watch."}},
+		{"Poisoned", party_state.Poisoned, CharacterSelectionWarning, []string{"A poisoned member cannot keep watch.", "Choosing them camps without a watch."}},
 		{"Asleep", party_state.Sleep, CharacterSelectionUnavailable, []string{"This character is asleep and cannot act."}},
 		{"Dead", party_state.Dead, CharacterSelectionUnavailable, []string{"This character is dead and cannot act."}},
 		{"Charmed", party_state.Charmed, CharacterSelectionUnavailable, []string{"This character is charmed and cannot act."}},

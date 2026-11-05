@@ -75,15 +75,14 @@ Arrows and number keys inspect without confirmation; Enter accepts an actionable
 or warning row, and Escape cancels. No resource-based guard recommendation or
 automatic choice is made. Good members can stand watch; their explanation notes
 that guarding forfeits ordinary rest HP/MP recovery. Poisoned members remain
-warning rows, now accurately saying **A poisoned selection cancels camping.**
-The scene rechecks Good status when accepting a character; a non-Good selection
-cancels setup rather than silently choosing No One. Other unavailable rows stay
-inspectable but cannot confirm. Only explicit No One starts an unguarded camp.
+warning rows saying **A poisoned member cannot keep watch.** The scene rechecks
+Good status when accepting a character; a non-Good selection camps without a
+watch, as the original does. Other unavailable rows stay inspectable but cannot
+confirm. No One also starts an unguarded camp.
 
-The poisoned-selection cancellation is an existing Redux discrepancy from the
-original non-Good-selection-to-unguarded rule, not a newly approved fidelity
-deviation. The corrected warning preserves that behavior and the surface/dungeon
-cancellation costs above. See [CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001)
+Escape backs out of setup with the surface/dungeon cancellation costs above. The
+original instead camps unguarded on a cancelled guard prompt; this is a recorded
+deviation. See [CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001)
 and [detached selectors](../ui/WIDGET_COMPONENTS.md#detached-selectors).
 
 Projection, detached snapshots, measured full-party layout and input/workflow

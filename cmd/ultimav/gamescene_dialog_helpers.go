@@ -512,15 +512,18 @@ func (g *GameScene) thenShowGuardSelection(
 
 						return
 					}
+					// A non-Good selection camps without a watch, as in the original.
+					// ref:CAMP-0001
 					if !g.gameState.PartyState.GetCharacter(characterIndex).IsGood() {
-						onResult(game_state.NoGuardAssigned, true)
+						onResult(game_state.NoGuardAssigned, false)
 
 						return
 					}
 					onResult(characterIndex, false)
 				},
 				OnCancel: func() {
-					// Escape abandons setup; only the explicit No One row camps unguarded.
+					// REDUX DEVIATION: CAMP-0001. The original treats a cancelled guard
+					// prompt as No One and camps anyway; Redux Escape backs out of setup.
 					selectionComplete = true
 					onResult(game_state.NoGuardAssigned, true)
 				},

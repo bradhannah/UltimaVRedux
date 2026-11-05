@@ -80,9 +80,11 @@ func TestSurfaceCampingGuardCancellationAndExplicitChoices(t *testing.T) {
 				scene.keyboard.SimulateKeyPress(ebiten.Key2)
 				update()
 				require.Equal(t, 1, guard.GetCurrentSelection())
-				require.Equal(t, "A poisoned selection cancels camping.", guard.GetCurrentOption().Details[0])
+				require.Equal(t, "A poisoned member cannot keep watch.", guard.GetCurrentOption().Details[0])
 				require.Same(t, guard, scene.dialogStack.PeekTopModalDialog())
 				require.Nil(t, state.CampingScene)
+				// The original turns a non-Good guard into No One. ref:CAMP-0001
+				selected = game_state.NoGuardAssigned
 				scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
 			case "cancel":
 				scene.keyboard.SimulateKeyPress(ebiten.KeyEscape)
@@ -103,7 +105,7 @@ func TestSurfaceCampingGuardCancellationAndExplicitChoices(t *testing.T) {
 					break
 				}
 			}
-			if choice != "cancel" && choice != "poisoned" {
+			if choice != "cancel" {
 				require.NotNil(t, state.CampingScene)
 				require.Equal(t, selected, state.CampingScene.GuardIndex)
 				require.Equal(t, 1, state.CampingScene.Hours)

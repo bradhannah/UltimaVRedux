@@ -136,7 +136,7 @@ func TestCharacterSelectionGuardAndCrystalBallProfilesExposeConsequences(t *test
 	guard := scene.characterSelectionOptions(characterSelectionContext{Profile: characterSelectionGuard})
 	assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, guard, 0).State)
 	assert.Equal(t, []string{
-		"A poisoned selection cancels camping.", "Choose No One to camp without a watch.",
+		"A poisoned member cannot keep watch.", "Choosing them camps without a watch.",
 	}, selectionOption(t, guard, 0).Details)
 	assert.Equal(t, widgets.CharacterSelectionUnavailable, selectionOption(t, guard, 1).State)
 

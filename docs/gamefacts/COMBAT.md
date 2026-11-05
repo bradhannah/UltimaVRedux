@@ -160,8 +160,14 @@ Redux additionally offers a post-victory group exit after a route is established
 avoiding repetitive individual departures; original physical edges/ladders remove
 one PC at a time. Collision and established-route requirements remain authoritative.
 
-**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`
-**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`
+**REDUX DEVIATION: COMBAT-0003 — walkable loose loot:** in the original, loose
+items left by opening or searching block every combatant. Redux lets party
+members step onto them; monsters stay blocked, as in the original, and Get still
+takes items from an adjacent square. Kept by owner decision, so dropped loot
+never walls the party out of narrow room lanes or exits.
+
+**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_object.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`
+**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`
 
 ### COMBAT-0004
 

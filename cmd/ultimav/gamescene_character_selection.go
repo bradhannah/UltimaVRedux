@@ -278,7 +278,7 @@ func populateGuardOption(option *widgets.CharacterSelectionOption, character *pa
 	case character.IsGood():
 		option.Details = []string{"Standing guard means no rest HP or MP recovery."}
 	case character.IsPoisoned():
-		markCharacterWarning(option, "A poisoned selection cancels camping.", "Choose No One to camp without a watch.")
+		markCharacterWarning(option, "A poisoned member cannot keep watch.", "Choosing them camps without a watch.")
 	default:
 		markCharacterUnavailable(option, characterActorUnavailableReason(character))
 	}
