@@ -30,13 +30,14 @@ ambush/death and leaves it carried afterward. No ground carpet is created.
 Cancelling before commitment leaves it mounted; full carpet stock refuses the
 transfer without loss. Water/skiff rejection and frigate repair stay separate.
 
-**Known discrepancy — watch selection:** Redux's explicit No One row confirms an
-unguarded camp, while Escape cancels setup. Confirming a Poisoned warning row
-also cancels setup because the scene rechecks that a selected guard is Good.
-Unlike the original non-Good-selection fallback, it does not start an unguarded
-camp. The warning now describes that existing cancellation accurately and directs
-the player to No One for unguarded rest; this wording correction does not fix or
-reclassify the discrepancy as an intentional fidelity deviation. Surface
+Confirming a non-Good member, such as a Poisoned warning row, camps without a
+watch, as in the original. The warning row says so before confirmation. The
+explicit No One row also starts an unguarded camp.
+
+**REDUX DEVIATION: CAMP-0001 — cancelling the watch prompt:** the original treats
+a cancelled guard prompt like No One and still camps. Redux Escape backs out of
+camp setup instead, because Escape never commits a time-consuming action
+elsewhere in Redux; No One gives the original's unguarded outcome. Surface
 cancellation has no ordinary completion cycle; dungeon cancellation retains its
 accepted precharge and exact full end-player cleanup without camp setup RNG.
 
