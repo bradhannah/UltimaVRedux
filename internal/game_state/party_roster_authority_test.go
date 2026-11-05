@@ -72,6 +72,54 @@ func TestMaximizeActivePartyUsesProgressionAndRecoveryRules(t *testing.T) {
 	assert.Equal(t, byte(4), second.GetCurrentMp())
 }
 
+func TestRestoreActivePartyHealsCuresAndRevivesOnlyTheActiveParty(t *testing.T) {
+	state, _ := newPartyRosterAuthorityTestState(t, 3)
+	dead := state.PartyState.GetCharacter(0)
+	dead.Class, dead.Intelligence, dead.Level = party_state.Wizard, 20, 3
+	dead.SetMaxHp(90)
+	dead.SetHp(0)
+	dead.SetMp(1)
+	dead.SetStatus(party_state.Dead)
+	poisoned := state.PartyState.GetCharacter(1)
+	poisoned.SetMaxHp(60)
+	poisoned.SetHp(5)
+	poisoned.SetStatus(party_state.Poisoned)
+	asleep := state.PartyState.GetCharacter(2)
+	asleep.SetMaxHp(40)
+	asleep.SetHp(40)
+	asleep.SetStatus(party_state.Sleep)
+	bench := state.PartyState.GetCharacter(3)
+	bench.SetMaxHp(50)
+	bench.SetHp(7)
+	bench.SetStatus(party_state.Poisoned)
+	before := state.CurrentPartyRosterSnapshot()
+
+	result, err := state.RestoreActiveParty(before.Fingerprint)
+
+	require.NoError(t, err)
+	assert.Equal(t, before, result.Before)
+	for index, maximum := range []uint16{90, 60, 40} {
+		character := state.PartyState.GetCharacter(index)
+		assert.Equal(t, maximum, character.GetCurrentHp(), "member %d", index)
+		assert.Equal(t, party_state.Good, character.GetStatus(), "member %d", index)
+	}
+	assert.Equal(t, byte(20), dead.GetCurrentMp())
+	assert.Equal(t, byte(3), dead.Level, "restoring does not change progression")
+	assert.Equal(t, uint16(7), bench.GetCurrentHp(), "inactive companions are not part of the party")
+	assert.Equal(t, party_state.Poisoned, bench.GetStatus())
+}
+
+func TestRestoreActivePartyRejectsStaleReview(t *testing.T) {
+	state, _ := newPartyRosterAuthorityTestState(t, 2)
+	snapshot := state.CurrentPartyRosterSnapshot()
+	state.PartyState.GetCharacter(0).SetHp(1)
+
+	_, err := state.RestoreActiveParty(snapshot.Fingerprint)
+
+	require.ErrorIs(t, err, ErrStalePartyRoster)
+	assert.Equal(t, uint16(1), state.PartyState.GetCharacter(0).GetCurrentHp())
+}
+
 func TestMaximizeActivePartySupportsVacantNativeSlots(t *testing.T) {
 	state, _ := newPartyRosterAuthorityTestState(t, 1)
 	var roster [party_state.NRosterSlots]*party_state.PlayerCharacter

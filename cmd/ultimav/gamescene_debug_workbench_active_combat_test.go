@@ -330,6 +330,36 @@ func TestActiveCombatKillAllAndClearReturnDistinctOutcomePolicies(t *testing.T) 
 	}
 }
 
+func TestActiveCombatSleepAllSleepsEveryLiveMonsterUnderTheReviewedSnapshot(t *testing.T) {
+	state, monster := newActiveCombatWorkbenchTestState()
+	status := newActiveCombatResult(state)
+	request := debugging.Request{
+		SessionID: "test", ID: "sleep-all", CommandID: debugging.CommandCombatMonsterSleepAll,
+		Arguments: map[string]json.RawMessage{
+			"encounterId": json.RawMessage(`"9"`), "expectedSnapshot": mustDebugJSON("stale"),
+		},
+	}
+
+	stale, handled := executeActiveCombatDebugCommand(request, state)
+	require.True(t, handled)
+	assert.Equal(t, "stale_combat", stale.ErrorCode)
+	assert.False(t, monster.IsAsleep())
+
+	request.Arguments["expectedSnapshot"] = mustDebugJSON(status.SnapshotFingerprint)
+	result, handled := executeActiveCombatDebugCommand(request, state)
+
+	require.True(t, handled)
+	require.True(t, result.Success, result.ErrorMessage)
+	assert.True(t, monster.IsAsleep())
+	assert.False(t, state.CombatScene.Victory, "sleeping monsters are still part of the fight")
+	require.Len(t, result.Changes, 1)
+	assert.Contains(t, result.Changes[0].Path, ".asleep")
+	var after activeCombatResult
+	require.NoError(t, json.Unmarshal(result.Data, &after))
+	require.Len(t, after.Monsters, 1)
+	assert.True(t, after.Monsters[0].Asleep)
+}
+
 func TestActiveCombatClearRoomRequiresFixedOriginAndDeclaresVictory(t *testing.T) {
 	state, monster := newActiveCombatWorkbenchTestState()
 	status := newActiveCombatResult(state)

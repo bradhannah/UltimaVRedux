@@ -1,3 +1,5 @@
+import type { WorldPositionDungeonRoomData } from "./protocol"
+
 export interface LoggingStatusData {
   enabled: boolean
   stdoutEnabled: boolean
@@ -203,6 +205,8 @@ export interface WorldPositionDestinationData {
   defaultSetup: WorldPositionSetupData
   worldEntrance?: WorldPositionSetupData
   placementTargets?: WorldPositionPlacementTargetData[]
+  /** Dungeons only: every fixed-monster room, ordered by floor then room number. */
+  rooms?: WorldPositionDungeonRoomData[]
 }
 
 export interface WorldPositionStatusData {

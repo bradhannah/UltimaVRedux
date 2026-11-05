@@ -69,6 +69,7 @@ type debugWorkbenchState interface {
 	AlterActiveCharacter(input game_state.ActiveCharacterAlteration) (game_state.ActiveCharacterAlterationResult, error)
 	CurrentPartyRosterSnapshot() game_state.PartyRosterSnapshot
 	MaximizeActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
+	RestoreActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
 	SetPartyRosterStatuses(request game_state.PartyStatusMutationRequest) (game_state.PartyRosterMutationResult, error)
 	FillActiveParty(expectedFingerprint string) (game_state.PartyRosterMutationResult, error)
 	AddInactiveRosterMember(
@@ -568,6 +569,10 @@ func executeDebugCommand(gameState debugWorkbenchState, request debugging.Reques
 		mutation, err := gameState.MaximizeActiveParty(mustDebugStringArgument(request, "expectedFingerprint"))
 
 		return partyRosterMutationDebugResult(request, "Active party maximized to level eight.", mutation, err)
+	case debugging.CommandPartyRestore:
+		mutation, err := gameState.RestoreActiveParty(mustDebugStringArgument(request, "expectedFingerprint"))
+
+		return partyRosterMutationDebugResult(request, "Active party healed and cured.", mutation, err)
 	case debugging.CommandPartyStatusSet:
 		status, ok := debugRosterStatus(mustDebugStringArgument(request, "status"))
 		if !ok {
@@ -652,7 +657,8 @@ func executeDebugCommand(gameState debugWorkbenchState, request debugging.Reques
 
 		return result
 	case debugging.CommandCombatStatus,
-		debugging.CommandCombatMonsterSleepSet:
+		debugging.CommandCombatMonsterSleepSet,
+		debugging.CommandCombatMonsterSleepAll:
 		result, _ := executeActiveCombatDebugCommand(request, concreteDebugGameState(gameState))
 
 		return result

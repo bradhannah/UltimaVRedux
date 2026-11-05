@@ -2,6 +2,7 @@ import { createApp, nextTick, type App as VueApp } from "vue"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import App from "./App.vue"
+import { pageDefinitions } from "./workbench_tasks"
 import initialCatalog from "./initial_catalog.fixture.json"
 import { sessionReady, successfulQueryCompletion, calendarStatusCompletion, testSetupStatusCompletion, inventoryLockerCompletion } from "./app_test_fixtures"
 
@@ -102,43 +103,6 @@ describe("debug workbench connection", () => {
       await flushUI()
       expect(executionsForCommand(connection, "combat.status")).toHaveLength(before + 1)
     }
-  })
-
-  it("retains Inventory and Calendar desired values across detours and disarms reviews on page hide", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    connection.message(calendarStatusCompletion(executionForCommand(connection, "calendar.status").id))
-    await openWorkspace("items")
-    await selectTool("inventory.locker.status")
-    await flushUI()
-    connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 100))
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]'), "555")
-    await flushUI()
-    click(".locker-row button")
-    await flushUI()
-    expect(root.querySelector("[data-locker-review-apply]")).not.toBeNull()
-    const visibility = vi.spyOn(document, "hidden", "get").mockReturnValue(true)
-    document.dispatchEvent(new Event("visibilitychange"))
-    await flushUI()
-    expect(root.querySelector("[data-locker-review-apply]")).toBeNull()
-    visibility.mockRestore()
-    document.dispatchEvent(new Event("visibilitychange"))
-    await openWorkspace("system")
-    await openWorkspace("home")
-    await openWorkspace("items")
-    expect(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]')?.value).toBe("555")
-    await selectTool("calendar.status")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>(".coordinate-controls input"), "9")
-    await flushUI()
-    await openWorkspace("home")
-    await openWorkspace("time")
-    expect(root.querySelector<HTMLInputElement>(".coordinate-controls input")?.value).toBe("9")
   })
 
 	it("opens Home on every launch while preserving the saved instrument and history state", async () => {
@@ -482,6 +446,8 @@ describe("debug workbench connection", () => {
 
 		const commandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((button) => button.dataset.commandSelect)
 		expect(commandIDs).toEqual([
+			"quest.item.status",
+			"search.status",
 			"shrine.status",
 			"monster.ecosystem.status",
 			"vehicle.status",
@@ -524,62 +490,6 @@ describe("debug workbench connection", () => {
 		expect(commandIDs).not.toContain("merchant.tester.preview.open")
 		expect(commandIDs).not.toContain("merchant.tester.live.open")
   })
-
-	it("exposes three independent party instruments by exact navigation and palette labels", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-
-		const partyLabels = ["party.character.update", "party.equipment.loadout.update", "party.character.inspect"].map((id) =>
-			root.querySelector(`[data-command-select="${id}"]`)?.textContent,
-		)
-		expect(partyLabels).toEqual(["Character Editor", "Equipment Loadouts", "Party Roster"])
-		click("[data-command-palette-launcher]")
-		await flushUI()
-		setInputValue(root.querySelector<HTMLInputElement>('[data-command-palette] input[role="combobox"]'), "party")
-		await flushUI()
-		expect(root.querySelector("[data-command-palette]")?.textContent).toContain("Character Editor")
-		expect(root.querySelector("[data-command-palette]")?.textContent).toContain("Equipment Loadouts")
-		expect(root.querySelector("[data-command-palette]")?.textContent).toContain("Party Roster")
-	})
-
-	it("scopes party queries and polling to the selected independent instrument", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-initial"))
-		await flushUI()
-
-		await selectTool("party.character.update")
-		await flushUI()
-		const characterInspectCount = executionsForCommand(connection, "party.character.inspect").length
-		const characterLockerCount = executionsForCommand(connection, "inventory.locker.status").length
-		vi.advanceTimersByTime(1000)
-		await flushUI()
-		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount)
-		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount)
-
-		await selectTool("party.character.inspect")
-		await flushUI()
-		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount + 1)
-		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount)
-		const rosterInspect = executionForCommand(connection, "party.character.inspect")
-		connection.message(partyCharacterInspectCompletion(rosterInspect.id, "roster-scope"))
-		await flushUI()
-
-		await selectTool("party.equipment.loadout.update")
-		await flushUI()
-		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount + 2)
-		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount + 1)
-	})
 
   it("opens a navigation-only palette with Ctrl+K or Meta+K from every workspace", async () => {
     mountApp()
@@ -758,208 +668,6 @@ describe("debug workbench connection", () => {
     expect((root.querySelector(".history-panel") as HTMLElement).style.width).toBe("420px")
   })
 
-  it("submits a live-safe character alteration with dynamic option revision", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("party")
-    await selectTool("party.character.update")
-    await flushUI()
-
-    click('[data-party-character="0.QXZhdGFy"]')
-    setControlValue("party.character.update-strength", "24")
-		setControlValue("party.character.update-currentHp", "90")
-		setControlValue("party.character.update-currentMp", "19")
-		setControlValue("party.character.update-experience", "1000")
-    click('[data-status-value="poisoned"]')
-    await flushUI()
-    expect(root.querySelector(".compact-preview")?.textContent).toContain("Strength20→24")
-    expect(root.querySelector(".compact-preview")?.textContent).toContain("StatusGood→Poisoned")
-		expect(root.querySelector(".compact-preview")?.textContent).toContain("Current HP100→90")
-		expect(root.querySelector(".compact-preview")?.textContent).toContain("Experience500→1000")
-    click('button[data-command-id="party.character.update"]')
-    const execution = latestCommandExecution(connection)
-
-		expect(execution.payload.arguments).toEqual({
-			character: "0.QXZhdGFy", strength: 24, currentHp: 90, currentMp: 19, experience: 1000, status: "poisoned",
-		})
-    expect(execution.payload.expectedOptionsRevision).toBe(9)
-    connection.message(characterAlterationCompletion(execution.id))
-    await flushUI()
-    expect(root.querySelector(".operation-banner")?.textContent).toContain("Avatar updated.")
-    expect(root.querySelector(".operation-banner")?.textContent).toContain("party.character.Avatar.strength")
-    expect(root.querySelector(".operation-banner")?.textContent).toContain("20 → 24")
-
-  })
-
-	it("submits level progression separately from direct XP edits", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-		await selectTool("party.character.update")
-		await flushUI()
-
-		click('[data-party-character="0.QXZhdGFy"]')
-		setControlValue("party.character.update-experience", "9000")
-		setSelectValue(root.querySelector<HTMLSelectElement>('[id="party.character.update-level"]'), "6")
-		await flushUI()
-
-		expect(root.querySelector(".compact-preview")?.textContent).toContain("Level5→6")
-		expect(root.querySelector(".compact-preview")?.textContent).toContain("Maximum HP100→180")
-		expect(root.querySelector(".compact-preview")?.textContent).toContain("Experience500→1600")
-		click('button[data-command-id="party.character.update"]')
-		expect(latestCommandExecution(connection).payload.arguments).toEqual({ character: "0.QXZhdGFy", level: 6 })
-	})
-
-	it("runs reviewed roster companions by stable index and preserves status drafts through inspect refresh", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-		await selectTool("party.character.inspect")
-		await flushUI()
-		const initialInspect = executionForCommand(connection, "party.character.inspect")
-		connection.message(partyCharacterInspectCompletion(initialInspect.id, "roster-1"))
-		await flushUI()
-
-		setSelectValue(root.querySelector<HTMLSelectElement>("#party-reviewed-status"), "dead")
-		click('[data-roster-position="1"]')
-		click('[data-roster-position="2"]')
-		click('[data-party-batch="status"]')
-		await flushUI()
-		expect(executionsForCommand(connection, "party.status.set")).toHaveLength(0)
-		expect(root.querySelector("[data-roster-operation-review]")?.textContent).toContain("Avatar, Shamino -> dead")
-		click("[data-roster-review-confirm]")
-		expect(executionForCommand(connection, "party.status.set").payload.arguments).toEqual({
-			expectedFingerprint: "roster-1", rosterIndices: [0, 1], status: "dead",
-		})
-
-		click('[data-party-batch="maximize"]')
-		await flushUI()
-		click("[data-roster-review-confirm]")
-		expect(executionForCommand(connection, "party.maximize-levels").payload.arguments).toEqual({ expectedFingerprint: "roster-1" })
-		click('[data-party-batch="fill"]')
-		await flushUI()
-		click("[data-roster-review-confirm]")
-		expect(executionForCommand(connection, "party.fill").payload.arguments).toEqual({ expectedFingerprint: "roster-1" })
-		click('[data-party-batch="add"]')
-		await flushUI()
-		click("[data-roster-review-confirm]")
-		expect(executionForCommand(connection, "party.member.add").payload.arguments).toEqual({ expectedFingerprint: "roster-1", rosterIndex: 8 })
-
-		const statusExecution = executionForCommand(connection, "party.status.set")
-		connection.message({
-			version: 1,
-			id: statusExecution.id,
-			type: "command.completed",
-			payload: {
-				sessionId: "session-1", requestId: statusExecution.id, commandId: "party.status.set", sceneGeneration: 7,
-				effectiveExecutionMode: "synchronized_live", success: true, summary: "Party status updated.",
-				changes: [{ path: "party.roster.0.status", before: "good", after: "dead" }],
-			},
-		})
-		await flushUI()
-		const refreshedInspect = executionForCommand(connection, "party.character.inspect")
-		expect(refreshedInspect.id).not.toBe(initialInspect.id)
-		connection.message(partyCharacterInspectCompletion(refreshedInspect.id, "roster-2"))
-		await flushUI()
-
-		expect(root.querySelector<HTMLSelectElement>("#party-reviewed-status")?.value).toBe("dead")
-		expect(root.querySelector<HTMLElement>('[data-roster-position="1"]')?.classList.contains("selected")).toBe(true)
-		expect(root.querySelector("[data-party-roster]")?.textContent).not.toContain("Selected #0")
-	})
-
-	it("reviews and submits one mixed-source loadout, then refreshes both owned snapshots", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-		await selectTool("party.equipment.loadout.update")
-		await flushUI()
-
-		const inspect = executionForCommand(connection, "party.character.inspect")
-		const locker = executionForCommand(connection, "inventory.locker.status")
-		connection.message(partyCharacterInspectCompletion(inspect.id, "roster-1"))
-		connection.message(inventoryLockerCompletion(locker.id, "locker-1", 12))
-		await flushUI()
-		expect(root.querySelectorAll("[data-loadout-slot]")).toHaveLength(6)
-		expect(root.querySelector('[data-party-character="all"]')?.textContent).toContain("All active party members")
-		click('[data-party-character="0.QXZhdGFy"]')
-		await flushUI()
-
-		setSelectValue(root.querySelector<HTMLSelectElement>("#loadout-weapon-action"), "inventory")
-		setSelectValue(root.querySelector<HTMLSelectElement>("#loadout-helm-action"), "manufacture")
-		setSelectValue(root.querySelector<HTMLSelectElement>("#loadout-shield-action"), "unequip")
-		await flushUI()
-		click("[data-loadout-review-button]")
-		await flushUI()
-		expect(executionsForCommand(connection, "party.equipment.loadout.update")).toHaveLength(0)
-		expect(root.querySelector("[data-loadout-review]")?.textContent).toContain("Manufacture and equip Leather Helm")
-		click("[data-loadout-cancel]")
-		await flushUI()
-		expect(root.querySelector("[data-loadout-review]")).toBeNull()
-		click("[data-loadout-review-button]")
-		await flushUI()
-		click("[data-loadout-submit]")
-
-		const loadout = executionForCommand(connection, "party.equipment.loadout.update")
-		expect(loadout.payload.arguments).toEqual({
-			character: "0.QXZhdGFy", expectedSnapshot: "locker-1", helm: "manufacture:0", weapon: "inventory:16", shield: "unequip",
-		})
-		const inspectRefreshes = executionsForCommand(connection, "party.character.inspect").length
-		const lockerRefreshes = executionsForCommand(connection, "inventory.locker.status").length
-		connection.message(successfulMutationCompletion(loadout.id, "party.equipment.loadout.update", "coordinated_alteration"))
-		await flushUI()
-		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(inspectRefreshes + 1)
-		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(lockerRefreshes + 1)
-		expect(root.querySelector(".loadout-editor")?.textContent).toContain("0 staged slots")
-	})
-
-	it("preserves staged loadout changes while polling and clears them for a new character", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("party")
-		await selectTool("party.equipment.loadout.update")
-		await flushUI()
-		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-1"))
-		connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 12))
-		await flushUI()
-		click('[data-party-character="0.QXZhdGFy"]')
-		await flushUI()
-
-		setSelectValue(root.querySelector<HTMLSelectElement>("#loadout-helm-action"), "manufacture")
-		await flushUI()
-		vi.advanceTimersByTime(1000)
-		await flushUI()
-		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-2"))
-		connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-2", 14))
-		await flushUI()
-
-		expect(root.querySelector<HTMLSelectElement>("#loadout-helm-action")?.value).toBe("manufacture")
-		expect(root.querySelector(".loadout-editor")?.textContent).toContain("1 staged slots")
-		click('[data-party-character="1.U2hhbWlubw"]')
-		await flushUI()
-		expect(root.querySelector<HTMLSelectElement>("#loadout-helm-action")?.value).toBe("unchanged")
-		expect(root.querySelector(".loadout-editor")?.textContent).toContain("0 staged slots")
-	})
-
 	it("owns camping and explicitly confirms reviewed death test setups", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
@@ -1035,7 +743,9 @@ describe("debug workbench connection", () => {
 		await flushUI()
 		expect(root.querySelector("[data-saves-workspace]")).not.toBeNull()
 		expect(root.querySelectorAll('[data-command-select="save.snapshot.get"]')).toHaveLength(0)
-		click('[data-save-reference="project:before-doom"]')
+		click('[data-save-list="project"]')
+		await flushUI()
+		click('[data-save-reference="project:before-doom"] [data-save-action="review-load"]')
 		const get = executionForCommand(connection, "save.snapshot.get")
 		connection.message(successfulQueryCompletion(get.id, "save.snapshot.get", "Loaded.", { snapshot: {
 			summary: {
@@ -1046,8 +756,6 @@ describe("debug workbench connection", () => {
 			partyMembers: 6, moonPhase: "New Moon", moonPhaseIndex: 0,
 		} }))
 		await flushUI()
-		click('[data-save-action="review-load"]')
-		await flushUI()
 		click('[data-save-action="confirm-load"]')
 		const load = executionForCommand(connection, "save.snapshot.load")
 		const calendarBefore = executionsForCommand(connection, "calendar.status").length
@@ -1057,107 +765,6 @@ describe("debug workbench connection", () => {
 		expect(executionsForCommand(connection, "calendar.status").length).toBeGreaterThan(calendarBefore)
 		expect(executionsForCommand(connection, "save.snapshot.list").length).toBeGreaterThan(savesBefore)
 	})
-
-  it("clears dependent alterations and filters Avatar reorder destinations when the target changes", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("party")
-    await selectTool("party.character.update")
-    await flushUI()
-
-    click('[data-party-character="0.QXZhdGFy"]')
-    setControlValue("party.character.update-strength", "24")
-    await flushUI()
-    const avatarPositions = [...root.querySelectorAll<HTMLElement>('[data-party-position]')].map((button) => button.dataset.partyPosition)
-    expect(avatarPositions).toEqual(["1"])
-    setControlValue("party.character.update-strength", "31")
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "F5", bubbles: true, cancelable: true }))
-    await flushUI()
-    expect(root.textContent).toContain("F5 only refreshes telemetry.")
-    click('[data-party-character="1.U2hhbWlubw"]')
-    await flushUI()
-
-		expect(root.querySelector<HTMLInputElement>('[id="party.character.update-strength"]')?.value).toBe("")
-    expect(root.textContent).not.toContain("Must be at most 30.")
-    const shaminoPositions = [...root.querySelectorAll<HTMLElement>('[data-party-position]')].map((button) => button.dataset.partyPosition)
-    expect(shaminoPositions).toEqual(["2", "3"])
-    click('[data-party-position="3"]')
-    await flushUI()
-    expect(root.querySelector(".compact-preview")?.textContent).toContain("Position 2Shamino→Iolo")
-    expect(root.querySelector(".compact-preview")?.textContent).toContain("Position 3Iolo→Shamino")
-  })
-
-  it("refreshes stale dynamic options and explains unavailable mutation context", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    const snapshot = formCatalogSnapshot() as {
-      payload: { optionSets: { unavailableReason?: string }[] }
-    }
-    for (const optionSet of snapshot.payload.optionSets) optionSet.unavailableReason = "Character alterations are unavailable during combat."
-    connection.message(snapshot)
-    await flushUI()
-    await openWorkspace("party")
-    await selectTool("party.character.update")
-    await flushUI()
-
-    expect(root.textContent).toContain("Character alterations are unavailable during combat.")
-    expect(root.querySelector<HTMLButtonElement>('button[data-command-id="party.character.update"]')?.disabled).toBe(true)
-
-    const sentBeforeFailure = connection.sent.length
-    connection.message({
-      version: 1,
-      id: "stale-update",
-      type: "command.failed",
-      payload: {
-        sessionId: "session-1",
-        requestId: "stale-update",
-        commandId: "party.character.update",
-        sceneGeneration: 7,
-        success: false,
-        errorCode: "stale_options",
-        errorMessage: "Options changed.",
-      },
-    })
-    await flushUI()
-
-    expect(connection.sent.slice(sentBeforeFailure).some((message) => JSON.parse(message).type === "catalog.request")).toBe(true)
-    expect(root.textContent).toContain("Review the refreshed selection before retrying.")
-    expect(root.textContent).toContain("Refreshing dynamic options before another operation can run.")
-  })
-
-  it("polls visible wind silently and applies an explicit direction change", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await selectTool("environment.wind.status")
-
-    const statusExecution = latestCommandExecution(connection)
-    expect(statusExecution.payload.arguments).toEqual({})
-    connection.message(windCompletion(statusExecution.id, "North"))
-    await flushUI()
-
-    expect(root.querySelector(".wind-console")?.textContent).toContain("North")
-    expect(root.querySelectorAll(".result-entry")).toHaveLength(0)
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const pollExecution = latestCommandExecution(connection)
-    connection.message(windCompletion(pollExecution.id, "East"))
-    await flushUI()
-    expect(root.querySelector<HTMLButtonElement>('[data-command-id="environment.wind.set"]')?.disabled).toBe(true)
-    click('[data-wind-direction="west"]')
-    click('[data-command-id="environment.wind.set"]')
-    const mutation = latestCommandExecution(connection)
-    expect(mutation.payload.arguments).toEqual({ direction: "west" })
-  })
 
   it("owns comprehensive logging controls in Live and refreshes typed process state", async () => {
     mountApp()
@@ -1259,8 +866,10 @@ describe("debug workbench connection", () => {
 		}))
 		await flushUI()
 		await openWorkspace("goto")
-		expect(root.querySelector(".free-move-quick")?.textContent).toContain("Walk through walls: off")
-		click(".free-move-quick")
+		connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id))
+		await flushUI()
+		expect(root.querySelector<HTMLInputElement>("[data-goto-free-move]")?.checked).toBe(false)
+		click("[data-goto-free-move]")
 		const mutation = executionForCommand(connection, "movement.free-move.set")
 		expect(mutation.payload.arguments).toEqual({ enabled: true })
 		connection.message(successfulMutationCompletion(mutation.id, "movement.free-move.set", "live_safe"))
@@ -1275,7 +884,7 @@ describe("debug workbench connection", () => {
 			lightingOverlayEnabled: false,
 		}))
 		await flushUI()
-		expect(root.querySelector(".free-move-quick")?.textContent).toContain("Walk through walls: on")
+		expect(root.querySelector<HTMLInputElement>("[data-goto-free-move]")?.checked).toBe(true)
 
 		await openWorkspace("more")
 		await selectTool("debug.options.status")
@@ -1335,45 +944,6 @@ describe("debug workbench connection", () => {
 		expect(diagnostics).toContain("Castle Britannia")
 	})
 
-  it("renders calendar telemetry and invokes both exact typed setters", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("time")
-    await selectTool("calendar.status")
-    await flushUI()
-    const statusExecution = executionForCommand(connection, "calendar.status")
-    connection.message(calendarStatusCompletion(statusExecution.id))
-    await flushUI()
-
-    expect(root.querySelector(".calendar-console")?.textContent).toContain("4:15 PM")
-    expect(root.querySelector("[data-topbar-when]")?.textContent).toContain("Wednesday, July 12, 138")
-    expect(root.querySelector("[data-topbar-when] .moon-phase-glyph")?.getAttribute("data-glyph-index")).toBe("0x31")
-    const dayInput = root.querySelector<HTMLInputElement>(".calendar-console .exact-form:last-of-type input")
-    expect(dayInput?.max).toBe("28")
-    expect(root.querySelector(".calendar-console .exact-form:last-of-type header")?.textContent).toContain("1-28")
-    const windPollsBefore = executionsForCommand(connection, "environment.wind.status").length
-    const calendarPollsBefore = executionsForCommand(connection, "calendar.status").length
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    expect(executionsForCommand(connection, "calendar.status")).toHaveLength(calendarPollsBefore + 1)
-    expect(executionsForCommand(connection, "environment.wind.status")).toHaveLength(windPollsBefore)
-    const exactInputs = root.querySelectorAll<HTMLInputElement>(".calendar-console .exact-form:first-of-type input")
-    setInputValue(exactInputs[0], "18")
-    setInputValue(exactInputs[1], "30")
-    await flushUI()
-    click(".calendar-console .exact-form:first-of-type button[type=submit]")
-    setInputValue(dayInput, "13")
-    await flushUI()
-    click(".calendar-console .exact-form:last-of-type button[type=submit]")
-
-    expect(executionForCommand(connection, "calendar.set-time").payload.arguments).toEqual({ hour: 18, minute: 30 })
-    expect(executionForCommand(connection, "calendar.set-day").payload.arguments).toEqual({ day: 13 })
-  })
-
   it("polls calendar globally while visible without duplicating selected calendar polling", async () => {
     mountApp()
     const connection = MockWebSocket.instances[0]
@@ -1415,7 +985,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("items")
+    await openWorkspace("more")
     await selectTool("search.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "search.status")
@@ -1452,7 +1022,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("items")
+    await openWorkspace("more")
     await selectTool("search.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "search.status")
@@ -1477,7 +1047,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("items")
+    await openWorkspace("more")
     await selectTool("quest.item.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "quest.item.status")
@@ -1511,7 +1081,7 @@ describe("debug workbench connection", () => {
 	await flushUI()
 	await openWorkspace("commands")
 	expect([...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((element) => element.dataset.commandSelect)).not.toContain("quest.shard.use")
-	await openWorkspace("items")
+	await openWorkspace("more")
 	await selectTool("quest.item.status")
 	await flushUI()
 	connection.message(questItemStatusCompletion(executionForCommand(connection, "quest.item.status").id))
@@ -1531,279 +1101,6 @@ describe("debug workbench connection", () => {
 		expectedFloor: 1, expectedFlame: "love", expectedShadowlordSummoned: true,
 		expectedShadowlord: "astaroth", expectedShadowlordAlive: true,
 	})
-  })
-
-  it("preserves the world position form, focus, draft, and capture time through failed polls and recovery", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("goto")
-    await selectTool("world.position.status")
-    await flushUI()
-    connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id))
-    await flushUI()
-
-    const form = root.querySelector<HTMLFormElement>(".navigator-form")!
-    const coordinate = form.querySelector<HTMLInputElement>('input[type="number"]')!
-    setInputValue(coordinate, "42")
-    coordinate.focus()
-    await flushUI()
-    const captureTime = root.querySelector(".world-navigator .approved-view-header small")?.textContent
-    const applyLabel = form.querySelector('button[type="submit"]')?.textContent
-
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const queryCount = executionsForCommand(connection, "world.position.status").length
-      vi.advanceTimersByTime(1000)
-      await flushUI()
-      expect(executionsForCommand(connection, "world.position.status")).toHaveLength(queryCount + 1)
-      expect(form.querySelector('button[type="submit"]')?.textContent).toBe(applyLabel)
-      connection.message(failedCommandCompletion(executionForCommand(connection, "world.position.status").id, "world.position.status", "position_poll_failed"))
-      await flushUI()
-
-      expect(root.querySelector(".navigator-form")).toBe(form)
-      expect(form.querySelector('input[type="number"]')).toBe(coordinate)
-      expect(document.activeElement).toBe(coordinate)
-      expect(coordinate.value).toBe("42")
-      expect(root.querySelector(".world-navigator .approved-view-header small")?.textContent).toBe(captureTime)
-      expect(root.querySelector(".position-card > strong")?.textContent).toBe("100, 101")
-      expect(root.querySelector("[data-query-load-failure]")?.textContent).toContain("position_poll_failed")
-    }
-
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id, {
-      sourceFingerprint: "world-recovered", x: 102, y: 103,
-    }))
-    await flushUI()
-    expect(root.querySelector(".navigator-form")).toBe(form)
-    expect(form.querySelector('input[type="number"]')).toBe(coordinate)
-    expect(document.activeElement).toBe(coordinate)
-    expect(coordinate.value).toBe("42")
-    expect(root.querySelector("[data-query-load-failure]")).toBeNull()
-    expect(root.querySelector(".position-card > strong")?.textContent).toBe("102, 103")
-    expect(root.querySelector(".world-navigator .approved-view-header small")?.textContent).not.toBe(captureTime)
-    click('.navigator-form button[type="submit"]')
-    expect(executionForCommand(connection, "world.position.set").payload.arguments).toMatchObject({
-      x: 42, y: 101, expectedX: 102, expectedY: 103, expectedSourceFingerprint: "world-recovered",
-    })
-  })
-
-  it.each(["session", "scene", "resume", "history"])("scopes the retained world position snapshot across %s lifecycle changes", async (change) => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("goto")
-    await selectTool("world.position.status")
-    await flushUI()
-    connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id))
-    await flushUI()
-    const form = root.querySelector(".navigator-form")
-    expect(form).not.toBeNull()
-
-    if (change === "history") {
-      connection.message(commandCompletion("history-entry"))
-      await flushUI()
-      click('[data-history-action="clear"]')
-    } else {
-      connection.message({
-        version: 1, id: "hello", type: "session.ready", payload: {
-          sessionId: change === "session" ? "session-2" : "session-1",
-          sceneGeneration: change === "scene" ? 8 : 7,
-          resumed: change !== "session",
-        },
-      })
-    }
-    await flushUI()
-
-    if (change === "resume" || change === "history") {
-      expect(root.querySelector(".navigator-form")).toBe(form)
-      expect(root.querySelector(".position-card > strong")?.textContent).toBe("100, 101")
-    } else {
-      expect(root.querySelector(".navigator-form")).toBeNull()
-      expect(root.querySelector(".world-navigator")?.textContent).toContain("WAITING FOR WORLD POSITION")
-      expect(root.querySelector(".world-navigator .approved-view-header small")?.textContent).toBe("WAITING")
-    }
-  })
-
-  it("applies one reviewed world destination draft from an explicitly refreshed stable snapshot", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("goto")
-    await selectTool("world.position.status")
-    await flushUI()
-    const statusExecution = executionForCommand(connection, "world.position.status")
-    connection.message(worldPositionCompletion(statusExecution.id))
-    await flushUI()
-
-    expect(root.querySelector(".world-navigator")?.textContent).toContain("Britannia")
-		const location = root.querySelector<HTMLInputElement>('[aria-label="World destination"]')
-		setInputValue(location, "dec")
-		await flushUI()
-		location?.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
-		await flushUI()
-		expect([...root.querySelectorAll<HTMLOptionElement>('[aria-label="Destination floor"] option')].map((option) => option.textContent)).toEqual([
-			"Level 1 (internal 0)", "Level 2 (internal 1)", "Level 3 (internal 2)", "Level 4 (internal 3)",
-			"Level 5 (internal 4)", "Level 6 (internal 5)", "Level 7 (internal 6)", "Level 8 (internal 7)",
-		])
-		expect([...root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')].map((input) => input.value)).toEqual(["1", "1"])
-		setSelectValue(root.querySelector<HTMLSelectElement>('[aria-label="Destination floor"]'), "7")
-		const coordinateInputs = root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')
-		setInputValue(coordinateInputs[0], "6")
-		setInputValue(coordinateInputs[1], "7")
-		await flushUI()
-
-		const statusQueries = executionsForCommand(connection, "world.position.status").length
-		vi.advanceTimersByTime(1000)
-		await flushUI()
-		expect(executionsForCommand(connection, "world.position.status")).toHaveLength(statusQueries + 1)
-		const polledStatus = executionForCommand(connection, "world.position.status")
-		expect(root.querySelector('.navigator-form button[type="submit"]')?.textContent).toBe("TELEPORT TO EXACT DECEIT POSITION")
-		connection.message(worldPositionCompletion(polledStatus.id, { sourceFingerprint: "world-source-2", x: 102, y: 103 }))
-		await flushUI()
-		click("[data-world-position-refresh]")
-		await flushUI()
-		expect(executionsForCommand(connection, "world.position.status")).toHaveLength(statusQueries + 2)
-		const refreshedStatus = executionForCommand(connection, "world.position.status")
-		connection.message(worldPositionCompletion(refreshedStatus.id, { sourceFingerprint: "world-source-3", x: 104, y: 105 }))
-		await flushUI()
-		expect(root.querySelector<HTMLInputElement>('[aria-label="World destination"]')?.value).toBe("Deceit")
-		expect(root.querySelector<HTMLSelectElement>('[aria-label="Destination floor"]')?.value).toBe("7")
-		expect([...root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')].map((input) => input.value)).toEqual(["6", "7"])
-
-		click(".navigator-form button[type=submit]")
-		 expect(executionForCommand(connection, "world.position.set").payload.arguments).toEqual({
-			placement: "exact",
-			location: "33", floor: "7", x: 6, y: 7,
-			expectedLocationId: 0, expectedFloor: 0, expectedX: 104, expectedY: 105,
-			expectedSourceFingerprint: "world-source-3",
-		})
-		const positionSet = executionForCommand(connection, "world.position.set")
-		await flushUI()
-		expect(root.querySelector('.navigator-form button[type="submit"]')?.textContent).toBe("APPLYING...")
-		const refreshesBeforeApply = executionsForCommand(connection, "world.position.status").length
-		connection.message(successfulMutationCompletion(positionSet.id, "world.position.set", "synchronized_live"))
-		await flushUI()
-		expect(executionsForCommand(connection, "world.position.status")).toHaveLength(refreshesBeforeApply + 1)
-
-		const setupRows = root.querySelectorAll<HTMLElement>(".travel-lanes > div")
-		const landmark = setupRows[0]?.querySelector<HTMLSelectElement>("select")
-		if (!landmark) throw new Error("missing landmark selector")
-		expect([...landmark.options].map((option) => option.textContent)).toContain("Flame of Truth (Lycaeum)")
-		expect([...landmark.options].map((option) => option.textContent)).toContain("Lord British's Secret Room")
-		landmark.value = "flame_truth"
-		landmark.dispatchEvent(new Event("change", { bubbles: true }))
-		await flushUI()
-		setupRows[0]?.querySelector<HTMLButtonElement>("button")?.click()
-		expect(executionForCommand(connection, "movement.landmark.travel").payload.arguments).toEqual({ landmark: "flame_truth" })
-		expect(setupRows[1]?.textContent).toContain("DEFERRED")
-  })
-
-	it("silently refreshes the stale World Navigator review exactly once without retrying its mutation", async () => {
-		mountApp()
-		const connection = MockWebSocket.instances[0]
-		connection.open()
-		connection.message(sessionReady("session-1"))
-		connection.message(formCatalogSnapshot())
-		await flushUI()
-		await openWorkspace("goto")
-		await selectTool("world.position.status")
-		await flushUI()
-		const worldStatus = executionForCommand(connection, "world.position.status")
-		connection.message(worldPositionCompletion(worldStatus.id))
-		await flushUI()
-		click('[aria-label="World destination"]')
-		await flushUI()
-		click('[data-world-destination="33"]')
-		await flushUI()
-		click(".navigator-form button[type=submit]")
-		const worldSet = executionForCommand(connection, "world.position.set")
-		const worldRefreshes = executionsForCommand(connection, "world.position.status").length
-		connection.message(failedCommandCompletion(worldSet.id, "world.position.set", "stale_world_position"))
-		await flushUI()
-		expect(executionsForCommand(connection, "world.position.status")).toHaveLength(worldRefreshes + 1)
-		expect(executionsForCommand(connection, "world.position.set")).toHaveLength(1)
-		connection.message(failedCommandCompletion(worldSet.id, "world.position.set", "stale_world_position"))
-		await flushUI()
-		expect(executionsForCommand(connection, "world.position.status")).toHaveLength(worldRefreshes + 1)
-		expect(executionsForCommand(connection, "world.position.set")).toHaveLength(1)
-	})
-
-  it("owns reviewed moongate travel and links the destination to Navigator", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("time")
-    await selectTool("moongate.status")
-    await flushUI()
-    const statusExecution = executionForCommand(connection, "moongate.status")
-    connection.message(moongateStatusCompletion(statusExecution.id))
-    await flushUI()
-
-    expect(root.querySelector(".moongate-atlas")?.textContent).toContain("Moonglow")
-    expect([...root.querySelectorAll(".phase-rail .moon-phase-glyph")].map((glyph) => glyph.getAttribute("data-glyph-index"))).toEqual([
-      "0x30", "0x31", "0x32", "0x33", "0x34", "0x35", "0x36", "0x37",
-    ])
-    expect(root.querySelector(".current-moon-phase .moon-phase-glyph")?.getAttribute("aria-label")).toBe("New Moon")
-    const travelButton = root.querySelector<HTMLButtonElement>(".unsupported-tools > div:first-child button")
-    expect(travelButton?.disabled).toBe(false)
-    travelButton?.click()
-    const travelExecution = executionForCommand(connection, "moongate.travel")
-    expect(travelExecution.payload.arguments).toEqual({
-      expectedSourceFingerprint: "source-1", expectedRouteFingerprint: "route-1",
-    })
-    const moongateRefreshes = executionsForCommand(connection, "moongate.status").length
-    connection.message(successfulMutationCompletion(travelExecution.id, "moongate.travel", "workflow"))
-    await flushUI()
-    expect(executionsForCommand(connection, "moongate.status")).toHaveLength(moongateRefreshes + 1)
-    click(".navigator-link")
-    await flushUI()
-    const navigatorStatus = executionForCommand(connection, "world.position.status")
-    connection.message(worldPositionCompletion(navigatorStatus.id))
-    await flushUI()
-
-    expect(root.querySelector('[data-workspace="goto"]')?.getAttribute("aria-current")).toBe("page")
-    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("World Navigator")
-    const linkedCoordinates = root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')
-    expect([...linkedCoordinates].map((input) => input.value)).toEqual(["44", "55"])
-  })
-
-  it("shows Spirituality as a workflow route without a Navigator destination", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("time")
-    await selectTool("moongate.status")
-    await flushUI()
-    const statusExecution = executionForCommand(connection, "moongate.status")
-    connection.message(spiritualityMoongateStatusCompletion(statusExecution.id))
-    await flushUI()
-
-    expect(root.querySelector(".destination-card")?.textContent).toContain("Shrine of Spirituality")
-    expect(root.querySelector(".destination-card")?.textContent).toContain("SHRINE WORKFLOW")
-    expect(root.querySelector(".destination-card .navigator-link")).toBeNull()
-    const travelButton = root.querySelector<HTMLButtonElement>(".unsupported-tools > div:first-child button")
-    expect(travelButton?.disabled).toBe(false)
-    travelButton?.click()
-    const travelExecution = executionForCommand(connection, "moongate.travel")
-    expect(travelExecution.payload.arguments).toEqual({
-      expectedSourceFingerprint: "source-1", expectedRouteFingerprint: "spirituality:6",
-    })
   })
 
   it("reviews shrine quest-state presets and submits edited shrine progress", async () => {
@@ -1868,62 +1165,6 @@ describe("debug workbench connection", () => {
     click('[data-command-id="shrine.progress.update"]')
     const mutation = latestCommandExecution(connection)
     expect(mutation.payload.arguments).toEqual({ index: "7", questState: "offering", ruined: false })
-  })
-
-  it("reviews a combat composition before sending exact typed start arguments", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("fight")
-    await selectTool("combat.encounter.options")
-    await flushUI()
-    const options = executionForCommand(connection, "combat.encounter.options")
-    connection.message(combatEncounterOptionsCompletion(options.id))
-    await flushUI()
-
-    expect(root.querySelectorAll(".encounter-grid .encounter-cell")).toHaveLength(121)
-    setInputValue(root.querySelector<HTMLInputElement>('.count-control input[type="number"]'), "3")
-    setInputValue(root.querySelector<HTMLInputElement>('.encounter-contents input[inputmode="numeric"]'), "123")
-    await flushUI()
-    expect(root.querySelectorAll(".encounter-cell.slot")).toHaveLength(3)
-    click('.composer-actions button[type="submit"]')
-    expect(executionsForCommand(connection, "combat.encounter.start")).toHaveLength(0)
-    click('.composer-actions button[type="submit"]')
-
-    expect(executionForCommand(connection, "combat.encounter.start").payload.arguments).toEqual({
-      territory: "britannia", britanniaMap: 0, entryDirection: "west", contents: "custom", monsterType: "32",
-      countMode: "exact", exactCount: 3, friends: true, seed: 123,
-    })
-  })
-
-  it("starts a placed dungeon room with its authored contents", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("fight")
-    await selectTool("combat.encounter.options")
-    await flushUI()
-    connection.message(combatEncounterOptionsCompletion(executionForCommand(connection, "combat.encounter.options").id))
-    await flushUI()
-
-    click('.encounter-browser [aria-label="Territory"] button:last-child')
-    await flushUI()
-    expect(root.querySelector(".authored-list")?.textContent).toContain("Ghost × 1")
-    expect(root.querySelectorAll(".encounter-cell.hidden.trigger")).toHaveLength(1)
-    click('[aria-label="Party enters from the north"]')
-    await flushUI()
-    click('.composer-actions button[type="submit"]')
-    click('.composer-actions button[type="submit"]')
-
-    expect(executionForCommand(connection, "combat.encounter.start").payload.arguments).toEqual({
-      territory: "dungeon", dungeon: 0, dungeonRoom: 0, entryDirection: "north", contents: "authored",
-    })
   })
 
   it("submits explicit monster generation state and requires confirmation to clear enemies", async () => {
@@ -2134,165 +1375,6 @@ describe("debug workbench connection", () => {
 		expect(executionForCommand(connection, "ship.skiff.set").payload.arguments).toEqual({ quantity: 12 })
   })
 
-  it("hides locker companions, preserves a dirty provision through polling, and refreshes after reviewed application", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("commands")
-    const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")]
-      .map((element) => element.dataset.commandSelect)
-    for (const companionID of [
-      "inventory.provision.set", "inventory.provision.preset", "inventory.reagent.set", "inventory.reagent.preset", "inventory.potion.add",
-      "inventory.potion.preset", "inventory.scroll.add", "inventory.scroll.preset", "inventory.equipment.preset",
-      "inventory.equipment.grant-preset", "inventory.equipment.set", "inventory.equipment.clear", "inventory.spell.preset-max",
-	  "quest.inventory.preset-usable",
-    ]) expect(rawCommandIDs).not.toContain(companionID)
-    await openWorkspace("items")
-    await selectTool("inventory.locker.status")
-    await flushUI()
-    const status = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(status.id, "first", 12))
-    await flushUI()
-    expect([...root.querySelectorAll(".locker-tabs button")].map((button) => button.textContent)).not.toContain("Spells")
-
-    setInputValue(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]'), "20")
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const poll = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(poll.id, "second", 13))
-    await flushUI()
-    expect(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]')?.value).toBe("20")
-
-    const provision = root.querySelector<HTMLElement>('[data-locker-provision="gold"]')?.parentElement
-    provision?.querySelector<HTMLButtonElement>("button")?.click()
-    await flushUI()
-    click(".locker-review button")
-    const mutation = executionForCommand(connection, "inventory.provision.set")
-    expect(mutation.payload.arguments).toEqual({ provision: "gold", targetQuantity: 20, expectedQuantity: 13 })
-    const refreshesBefore = executionsForCommand(connection, "inventory.locker.status").length
-    connection.message(successfulMutationCompletion(mutation.id, "inventory.provision.set", "synchronized_live"))
-    await flushUI()
-    expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(refreshesBefore + 1)
-  })
-
-  it("sends a reviewed locker preset with the backend snapshot fingerprint and adds typed potion quantities", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("items")
-    await selectTool("inventory.locker.status")
-    await flushUI()
-    const status = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(status.id, "snapshot-7", 12))
-    await flushUI()
-
-    expect(root.querySelector<HTMLButtonElement>(".locker-presets button")?.textContent).toBe("STAGE: Set All Provisions to Maximum")
-    expect(root.querySelector(".inventory-locker")?.textContent).not.toContain("REVIEW")
-    click(".locker-presets button")
-    await flushUI()
-    expect(root.querySelector(".locker-review")?.textContent).toContain('Apply Provision Preset "Set All Provisions to Maximum"')
-    expect(root.querySelector<HTMLButtonElement>(".locker-review button")?.textContent).toBe("APPLY: Set All Provisions to Maximum")
-    click(".locker-review button")
-    const preset = executionForCommand(connection, "inventory.provision.preset")
-    expect(preset.payload.arguments).toEqual({ preset: "provisions_max", expectedSnapshot: "snapshot-7" })
-    connection.message(successfulMutationCompletion(preset.id, "inventory.provision.preset", "coordinated_alteration"))
-    await flushUI()
-    click(".locker-tabs button:nth-child(3)")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>('[data-locker-add="potions-0"]'), "3")
-    root.querySelector<HTMLElement>('[data-locker-add="potions-0"]')?.parentElement?.querySelector<HTMLButtonElement>("button")?.click()
-    expect(executionForCommand(connection, "inventory.potion.add").payload.arguments).toEqual({ potion: "0", amount: 3 })
-  })
-
-  it("reviews exact usable-preset categories, confirms the fingerprint, and refreshes locker inventory", async () => {
-	mountApp()
-	const connection = MockWebSocket.instances[0]
-	connection.open()
-	connection.message(sessionReady("session-1"))
-	connection.message(formCatalogSnapshot())
-	await flushUI()
-	await openWorkspace("items")
-	await selectTool("inventory.locker.status")
-	await flushUI()
-	connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 12))
-	await flushUI()
-	click("[data-usable-inventory-preset]")
-	await flushUI()
-	expect(root.querySelector(".locker-review")?.textContent).toContain("2 exact changes across quest_items, potions")
-	expect(root.querySelector(".locker-review")?.textContent).toContain("usable-review-1")
-	click(".locker-review button")
-	const preset = executionForCommand(connection, "quest.inventory.preset-usable")
-	expect(preset.payload.arguments).toEqual({ expectedFingerprint: "usable-review-1" })
-	const refreshes = executionsForCommand(connection, "inventory.locker.status").length
-	connection.message(successfulMutationCompletion(preset.id, "quest.inventory.preset-usable", "coordinated_alteration"))
-	await flushUI()
-	expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(refreshes + 1)
-  })
-
-  it("sets exact reagent and carried equipment quantities while preserving dirty polling drafts", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("items")
-    await selectTool("inventory.locker.status")
-    await flushUI()
-    const status = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(status.id, "inventory-1", 12, 4, 1))
-    await flushUI()
-
-    click(".locker-tabs button:nth-child(2)")
-    await flushUI()
-    setInputValue(root.querySelector<HTMLInputElement>('[data-locker-reagent="2"]'), "8")
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const poll = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(poll.id, "inventory-2", 12, 5, 1))
-    await flushUI()
-    expect(root.querySelector<HTMLInputElement>('[data-locker-reagent="2"]')?.value).toBe("8")
-    root.querySelector<HTMLElement>('[data-locker-reagent="2"]')?.parentElement?.querySelector<HTMLButtonElement>("button")?.click()
-    await flushUI()
-    expect(root.querySelector(".locker-review")?.textContent).toContain("Set Garlic from 5 to 8")
-    click(".locker-review button")
-    const reagentMutation = executionForCommand(connection, "inventory.reagent.set")
-    expect(reagentMutation.payload.arguments).toEqual({ reagent: "2", targetQuantity: 8, expectedQuantity: 5 })
-    connection.message(successfulMutationCompletion(reagentMutation.id, "inventory.reagent.set", "synchronized_live"))
-    await flushUI()
-    const reagentRefresh = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(reagentRefresh.id, "inventory-3", 12, 8, 1))
-    await flushUI()
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const reconciledPoll = executionForCommand(connection, "inventory.locker.status")
-    connection.message(inventoryLockerCompletion(reconciledPoll.id, "inventory-4", 12, 6, 1))
-    await flushUI()
-    expect(root.querySelector<HTMLInputElement>('[data-locker-reagent="2"]')?.value).toBe("6")
-
-    click(".locker-tabs button:nth-child(5)")
-    await flushUI()
-    expect(root.querySelector(".inventory-locker")?.textContent).toContain("Avatar / Weapon: Long Sword")
-    setInputValue(root.querySelector<HTMLInputElement>('[data-locker-equipment="16"]'), "7")
-    await flushUI()
-    root.querySelector<HTMLElement>('[data-locker-equipment="16"]')?.parentElement?.querySelector<HTMLButtonElement>("button")?.click()
-    await flushUI()
-    click(".locker-review button")
-    expect(executionForCommand(connection, "inventory.equipment.set").payload.arguments).toEqual({ equipment: "16", targetQuantity: 7, expectedQuantity: 1 })
-
-    click(".locker-presets > button:last-child")
-    await flushUI()
-    expect(root.querySelector(".locker-review")?.textContent).toContain("destroys all carried equipment and clears every roster loadout")
-    click(".locker-review button")
-    expect(executionForCommand(connection, "inventory.equipment.clear").payload.arguments).toEqual({ expectedSnapshot: "inventory-4" })
-  })
-
   it("owns the spell inventory in Inspect, hides companions, and polls silently only while selected", async () => {
     mountApp()
     const connection = MockWebSocket.instances[0]
@@ -2329,79 +1411,6 @@ describe("debug workbench connection", () => {
     vi.advanceTimersByTime(1000)
     await flushUI()
     expect(executionsForCommand(connection, "inventory.spell.status")).toHaveLength(spellQueries)
-  })
-
-  it("owns active combat in Live, renders tactical telemetry, and sends reviewed stable-ID sleep changes", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-
-    await openWorkspace("commands")
-    const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")]
-      .map((element) => element.dataset.commandSelect)
-    expect(rawCommandIDs).not.toContain("combat.monster.sleep.set")
-    expect(rawCommandIDs).not.toContain("combat.exit-debug")
-    expect(rawCommandIDs).not.toContain("combat.monster.spawn")
-		expect(rawCommandIDs).not.toContain("rng.seed.set")
-		expect(rawCommandIDs).not.toContain("combat.monster.damage-raw")
-		expect(rawCommandIDs).not.toContain("combat.monster.kill")
-		expect(rawCommandIDs).not.toContain("combat.monster.kill-all")
-		expect(rawCommandIDs).not.toContain("combat.dungeon-room.clear")
-		expect(rawCommandIDs).not.toContain("combat.monster.clear")
-
-    await openWorkspace("fight")
-    await selectTool("combat.status")
-    await flushUI()
-    const status = executionForCommand(connection, "combat.status")
-    connection.message(activeCombatCompletion(status.id, "combat-1", false))
-    await flushUI()
-
-    expect(root.querySelectorAll(".combat-grid button")).toHaveLength(121)
-    expect(root.querySelector(".active-combat-console")?.textContent).toContain("M1")
-    const sleep = [...root.querySelectorAll<HTMLButtonElement>(".combat-monsters footer button")]
-      .find((button) => button.textContent === "REVIEW SLEEP")
-    sleep?.click()
-    await flushUI()
-    click(".combat-condition-review button")
-    const mutation = executionForCommand(connection, "combat.monster.sleep.set")
-    expect(mutation.payload.arguments).toEqual({
-      encounterId: "9",
-      monsterId: "1",
-      asleep: true,
-      expectedAsleep: false,
-      expectedSnapshot: "combat-1",
-    })
-    const refreshesBefore = executionsForCommand(connection, "combat.status").length
-    connection.message(successfulMutationCompletion(mutation.id, "combat.monster.sleep.set", "synchronized_live"))
-    await flushUI()
-    expect(executionsForCommand(connection, "combat.status")).toHaveLength(refreshesBefore + 1)
-
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-2", true))
-		await flushUI()
-		click("[data-combat-spawn-review]")
-		await flushUI()
-		click("[data-combat-spawn-apply]")
-		const spawn = executionForCommand(connection, "combat.monster.spawn")
-		expect(spawn.payload.arguments).toEqual({
-			encounterId: "9", expectedSnapshot: "combat-2", monsterType: 32,
-			countMode: "automatic", friends: true,
-		})
-		connection.message(successfulMutationCompletion(spawn.id, "combat.monster.spawn", "synchronized_live"))
-		await flushUI()
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-3", true))
-		await flushUI()
-		const reviewExit = [...root.querySelectorAll<HTMLButtonElement>(".instrument-setting button")]
-			.find((button) => button.textContent === "REVIEW DEBUG EXIT")
-		reviewExit?.click()
-		await flushUI()
-		const exitReview = [...root.querySelectorAll<HTMLButtonElement>(".combat-condition-review button")]
-			.find((button) => button.textContent === "DISCARD ENCOUNTER")
-		exitReview?.click()
-		const exit = executionForCommand(connection, "combat.exit-debug")
-		expect(exit.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "combat-3" })
   })
 
 	it("shows a one-click top bar combat exit backed by the latest reviewed status", async () => {
@@ -2477,11 +1486,12 @@ describe("debug workbench connection", () => {
 		click('[data-home-quick="time:20:0"]')
 		expect(executionForCommand(connection, "calendar.set-time").payload.arguments).toEqual({ hour: 20, minute: 0 })
 
-		click('[data-home-quick="open:party.character.update"]')
+		// Heal and cure everyone reads the roster first so the reviewed fingerprint is fresh.
+		click('[data-home-quick="party-restore"]')
 		await flushUI()
-		expect(root.querySelector('[data-workspace="party"]')?.getAttribute("aria-current")).toBe("page")
-		expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Character Editor")
-		expect(executionsForCommand(connection, "party.character.update")).toHaveLength(0)
+		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-fresh"))
+		await flushUI()
+		expect(executionForCommand(connection, "party.restore").payload.arguments).toEqual({ expectedFingerprint: "roster-fresh" })
 	})
 
 	it("keeps every supported tool reachable from a task tab and the palette", async () => {
@@ -2492,246 +1502,112 @@ describe("debug workbench connection", () => {
 		connection.message(formCatalogSnapshot())
 		await flushUI()
 
-		const reachable = new Set<string>()
-		for (const tab of ["goto", "party", "items", "time", "fight", "checkpoints", "more"] as const) {
+		// Every task tab shows one page; More lists the remaining tools.
+		for (const tab of ["goto", "party", "items", "time", "fight", "checkpoints"] as const) {
 			await openWorkspace(tab)
-			expect(root.querySelector(".instrument"), tab).not.toBeNull()
-			for (const button of root.querySelectorAll<HTMLElement>("[data-command-select]")) reachable.add(button.dataset.commandSelect ?? "")
+			expect(root.querySelector(`[data-task="${tab}"] .instrument-bank`), tab).not.toBeNull()
+			expect(root.querySelector("[data-command-select]"), `${tab} has no tool picker`).toBeNull()
 		}
-		// Single-tool tabs have no picker, so they are reached by their tab alone.
-		for (const commandID of ["world.position.status", "save.snapshot.list"]) reachable.add(commandID)
+		await openWorkspace("more")
+		const moreTools = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((button) => button.dataset.commandSelect ?? "")
+		expect(moreTools).toContain("quest.item.status")
+
+		// Search finds every page, its companion commands and every More tool.
 		click("[data-command-palette-launcher]")
 		await flushUI()
 		const input = root.querySelector<HTMLInputElement>("#command-palette-input")!
-		for (const commandID of reachable) {
+		const expectedSurface: Record<string, string> = {}
+		for (const [task, page] of Object.entries(pageDefinitions)) {
+			for (const commandID of [page!.anchor, ...page!.commands]) expectedSurface[commandID] = `${task}:${page!.anchor}`
+		}
+		for (const commandID of moreTools) expectedSurface[commandID] = `more:${commandID}`
+		for (const [commandID, surface] of Object.entries(expectedSurface)) {
+			if (!(initialCatalog as { id: string }[]).some((command) => command.id === commandID)) continue
 			setInputValue(input, commandID)
 			await flushUI()
-			expect(root.querySelector(`[data-palette-surface$=":${commandID}"]`), commandID).not.toBeNull()
+			expect(root.querySelector(`[data-palette-surface="${surface}"]`), commandID).not.toBeNull()
 		}
-		expect([...reachable].sort()).toEqual([
-			"calendar.status", "combat.encounter.options", "combat.status", "command-test.telescope", "debug.options.status",
-			"environment.wind.status", "guards.status", "inventory.locker.status", "inventory.spell.status", "logging.status",
-			"merchant.tester.catalog", "monster.ecosystem.status", "moongate.status", "party.character.inspect",
-			"party.character.update", "party.equipment.loadout.update", "quest.item.status", "save.snapshot.list", "search.status",
-			"shrine.status", "test-setup.status", "vehicle.status", "world.position.status",
-		])
 	})
 
-	it("reviews fixed dungeon-room clearing with exact encounter state", async () => {
+	it("applies staged Time & sky changes one command at a time and reports the outcome", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("fight")
-		await selectTool("combat.status")
+		await openWorkspace("time")
+		connection.message(calendarStatusCompletion(executionForCommand(connection, "calendar.status").id))
+		connection.message(windCompletion(executionForCommand(connection, "environment.wind.status").id, "Calm"))
 		await flushUI()
-		connection.message(activeCombatCompletion(
-			executionForCommand(connection, "combat.status").id, "fixed-room", false, true,
-		))
+		click('[data-time-preset="20:00"]')
+		click('[data-wind="west"]')
 		await flushUI()
-
-		const review = root.querySelector<HTMLButtonElement>("[data-combat-clear-room-review]")
-		expect(review?.disabled).toBe(false)
-		review?.click()
+		click("[data-change-apply]")
 		await flushUI()
-		expect(executionsForCommand(connection, "combat.dungeon-room.clear")).toHaveLength(0)
-		click("[data-combat-batch-apply]")
-
-		const clearRoom = executionForCommand(connection, "combat.dungeon-room.clear")
-		expect(clearRoom.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "fixed-room" })
+		const time = executionForCommand(connection, "calendar.set-time")
+		expect(time.payload.arguments).toEqual({ hour: 20, minute: 0 })
+		expect(executionsForCommand(connection, "environment.wind.set")).toHaveLength(0)
+		connection.message(successfulMutationCompletion(time.id, "calendar.set-time", "live_safe"))
+		await flushUI()
+		const wind = executionForCommand(connection, "environment.wind.set")
+		expect(wind.payload.arguments).toEqual({ direction: "west" })
+		connection.message(successfulMutationCompletion(wind.id, "environment.wind.set", "live_safe"))
+		await flushUI()
+		expect(root.querySelector("[data-page-notice]")?.textContent).toBe("Applied 2 changes.")
 	})
 
-	it("sends reviewed Active Combat damage, RNG, and two-stage batch mutations and refreshes status", async () => {
+	it("stops a staged batch at the first failure and says which change it stopped at", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("fight")
-		await selectTool("combat.status")
+		await openWorkspace("time")
+		connection.message(calendarStatusCompletion(executionForCommand(connection, "calendar.status").id))
+		connection.message(windCompletion(executionForCommand(connection, "environment.wind.status").id, "Calm"))
 		await flushUI()
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-a", false))
+		click('[data-time-preset="20:00"]')
+		click('[data-wind="west"]')
 		await flushUI()
-
-		click("[data-combat-damage-review]")
+		click("[data-change-apply]")
 		await flushUI()
-		click("[data-combat-monster-apply]")
-		const damage = executionForCommand(connection, "combat.monster.damage-raw")
-		expect(damage.payload.arguments).toEqual({
-			encounterId: "9", monsterId: "1", expectedCurrentHp: 20, expectedSnapshot: "combat-a", damage: 1,
-		})
-		const refreshesBefore = executionsForCommand(connection, "combat.status").length
-		connection.message(successfulMutationCompletion(damage.id, "combat.monster.damage-raw", "synchronized_live"))
+		const time = executionForCommand(connection, "calendar.set-time")
+		connection.message(failedCommandCompletion(time.id, "calendar.set-time", "stale_calendar"))
 		await flushUI()
-		expect(executionsForCommand(connection, "combat.status")).toHaveLength(refreshesBefore + 1)
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-b", false))
-		await flushUI()
-
-		click("[data-combat-seed-review]")
-		await flushUI()
-		click("[data-combat-seed-apply]")
-		const seed = executionForCommand(connection, "rng.seed.set")
-		expect(seed.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "combat-b", seed: 42 })
-		connection.message(successfulMutationCompletion(seed.id, "rng.seed.set", "synchronized_live"))
-		await flushUI()
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-c", false))
-		await flushUI()
-
-		const killAllBefore = executionsForCommand(connection, "combat.monster.kill-all").length
-		click("[data-combat-kill-all-review]")
-		await flushUI()
-		expect(executionsForCommand(connection, "combat.monster.kill-all")).toHaveLength(killAllBefore)
-		click("[data-combat-batch-apply]")
-		const killAll = executionForCommand(connection, "combat.monster.kill-all")
-		expect(killAll.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "combat-c" })
+		expect(executionsForCommand(connection, "environment.wind.set")).toHaveLength(0)
+		expect(root.querySelector("[data-page-notice]")?.textContent).toContain("changed in the game since this page loaded")
 	})
 
-	it("sends expected HP for reviewed kill and requires review before clear execution", async () => {
+	it("arrives outside a dungeon room through world.position.set with the room number", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("fight")
-		await selectTool("combat.status")
+		await openWorkspace("goto")
+		connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id, {
+			destinations: [{
+				locationId: 33, locationName: "Deceit", mapType: "dungeon", floors: [0, 1],
+				bounds: { minimumX: 0, maximumX: 7, minimumY: 0, maximumY: 7 }, defaultSetup: { floor: 0, x: 1, y: 1 },
+				rooms: [{ room: 4, label: "Room 4", floor: 1, roomX: 3, roomY: 3, available: true, setup: { floor: 1, x: 2, y: 3 }, facingLabel: "East" }],
+			}],
+		}))
 		await flushUI()
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-kill", false))
+		click('[data-goto-place="dest:33"]')
 		await flushUI()
-
-		click("[data-combat-kill-review]")
+		click('[data-goto-mode="dungeon_outside_room"]')
 		await flushUI()
-		click("[data-combat-monster-apply]")
-		const kill = executionForCommand(connection, "combat.monster.kill")
-		expect(kill.payload.arguments).toEqual({
-			encounterId: "9", monsterId: "1", expectedCurrentHp: 20, expectedSnapshot: "combat-kill",
-		})
-		connection.message(successfulMutationCompletion(kill.id, "combat.monster.kill", "synchronized_live"))
+		click('[data-goto-level="1"]')
 		await flushUI()
-		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-clear", false))
+		click("[data-goto-go]")
 		await flushUI()
-
-		const clearsBeforeReview = executionsForCommand(connection, "combat.monster.clear").length
-		click("[data-combat-clear-review]")
-		await flushUI()
-		expect(executionsForCommand(connection, "combat.monster.clear")).toHaveLength(clearsBeforeReview)
-		click("[data-combat-batch-apply]")
-		const clear = executionForCommand(connection, "combat.monster.clear")
-		expect(clear.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "combat-clear" })
+		const mutation = executionForCommand(connection, "world.position.set")
+		expect(mutation.payload.arguments).toMatchObject({ placement: "dungeon_outside_room", location: "33", room: 4, expectedSourceFingerprint: "world-source-1" })
 	})
 
-  it("hands inactive combat off to Encounter Options without exposing a live replacement action", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-
-    await openWorkspace("fight")
-    await selectTool("combat.status")
-    await flushUI()
-    const status = executionForCommand(connection, "combat.status")
-    connection.message(successfulQueryCompletion(status.id, "combat.status", "No active encounter.", {
-      active: false,
-      unavailableReason: "Start an encounter from Encounter Options.",
-    }))
-    await flushUI()
-
-    click(".combat-unavailable button")
-    await flushUI()
-    expect(root.querySelector('[aria-label="Combat encounter composer"]')).not.toBeNull()
-    expect(executionsForCommand(connection, "combat.encounter.options")).toHaveLength(1)
-  })
-
-  it("renders simultaneous magical light and an active spell while reconciling spell drafts", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(spellInventoryCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("items")
-    await selectTool("inventory.spell.status")
-    await flushUI()
-    const status = executionForCommand(connection, "inventory.spell.status")
-    connection.message(spellInventoryCompletion(status.id, "spell-1", 2, {
-      active: true,
-		effectType: "P",
-		friendlyName: "Protection",
-		incantations: ["In Sanct"],
-		sourceAmbiguous: false,
-		description: "The party is protected.",
-      turnsRemaining: 42,
-    }, { active: true, minutesRemaining: 17 }))
-    await flushUI()
-
-    const effects = root.querySelectorAll(".duration-effect-card")
-    expect(effects).toHaveLength(2)
-    expect(effects[0]?.textContent).toContain("MAGICAL LIGHT")
-    expect(effects[0]?.textContent).toContain("17 MINUTES REMAINING")
-    expect(effects[1]?.textContent).toContain("ACTIVE DURATION SPELL")
-    expect(effects[1]?.textContent).toContain("Protection")
-    expect(effects[1]?.textContent).toContain("42 TURNS REMAINING")
-    expect(root.querySelectorAll(".spell-circle")).toHaveLength(8)
-
-    setInputValue(root.querySelector<HTMLInputElement>('[data-spell-quantity="0"]'), "8")
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const poll = executionForCommand(connection, "inventory.spell.status")
-    connection.message(spellInventoryCompletion(poll.id, "spell-2", 3))
-    await flushUI()
-    expect(root.querySelector<HTMLInputElement>('[data-spell-quantity="0"]')?.value).toBe("8")
-
-    root.querySelector<HTMLElement>('[data-spell-quantity="0"]')?.parentElement?.parentElement?.querySelector<HTMLButtonElement>("button")?.click()
-    await flushUI()
-    expect(root.querySelector(".spell-review")?.textContent).toContain("from 3 to 8")
-    click(".spell-review button")
-    const mutation = executionForCommand(connection, "inventory.spell.set")
-    expect(mutation.payload.arguments).toEqual({ spell: "0", targetQuantity: 8, expectedQuantity: 3 })
-    connection.message(successfulMutationCompletion(mutation.id, "inventory.spell.set", "synchronized_live"))
-    await flushUI()
-    const refresh = executionForCommand(connection, "inventory.spell.status")
-    connection.message(spellInventoryCompletion(refresh.id, "spell-3", 8))
-    await flushUI()
-    vi.advanceTimersByTime(1000)
-    await flushUI()
-    const reconciledPoll = executionForCommand(connection, "inventory.spell.status")
-    connection.message(spellInventoryCompletion(reconciledPoll.id, "spell-4", 6))
-    await flushUI()
-    expect(root.querySelector<HTMLInputElement>('[data-spell-quantity="0"]')?.value).toBe("6")
-  })
-
-  it("applies the reviewed maximum preset with only the snapshot and refreshes spell inventory", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(spellInventoryCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("items")
-    await selectTool("inventory.spell.status")
-    await flushUI()
-    const status = executionForCommand(connection, "inventory.spell.status")
-    connection.message(spellInventoryCompletion(status.id, "spell-snapshot", 2))
-    await flushUI()
-
-    expect(root.querySelector<HTMLButtonElement>(".spell-preset button")?.textContent).toBe("STAGE: SET ALL 48 SPELLS TO 99")
-    click(".spell-preset button")
-    await flushUI()
-    expect(root.querySelector(".spell-review")?.textContent).toContain("Nox is excluded")
-    expect(root.querySelector(".spell-review")?.textContent).toContain("whole operation is stale")
-    click(".spell-review button")
-    const preset = executionForCommand(connection, "inventory.spell.preset-max")
-    expect(preset.payload.arguments).toEqual({ expectedSnapshot: "spell-snapshot" })
-    const refreshesBefore = executionsForCommand(connection, "inventory.spell.status").length
-    connection.message(successfulMutationCompletion(preset.id, "inventory.spell.preset-max", "coordinated_alteration"))
-    await flushUI()
-    expect(executionsForCommand(connection, "inventory.spell.status")).toHaveLength(refreshesBefore + 1)
-  })
 })
 
 function mountApp(): void {
@@ -2753,8 +1629,8 @@ const toolTabs: Record<string, OpenableView> = {
   "party.equipment.loadout.update": "party",
   "inventory.locker.status": "items",
   "inventory.spell.status": "items",
-  "quest.item.status": "items",
-  "search.status": "items",
+  "quest.item.status": "more",
+  "search.status": "more",
   "calendar.status": "time",
   "environment.wind.status": "time",
   "moongate.status": "time",

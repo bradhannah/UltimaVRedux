@@ -16,6 +16,8 @@ const (
 	CommandCombatStatus = "combat.status"
 	// CommandCombatMonsterSleepSet changes one live monster's sleep condition.
 	CommandCombatMonsterSleepSet = "combat.monster.sleep.set"
+	// CommandCombatMonsterSleepAll puts every live monster in one reviewed encounter to sleep.
+	CommandCombatMonsterSleepAll = "combat.monster.sleep-all"
 	// CommandCombatExitDebug discards one reviewed tactical encounter without resolving an outcome.
 	CommandCombatExitDebug = "combat.exit-debug"
 	// CommandCombatMonsterSpawn atomically adds one reviewed reinforcement batch.
@@ -69,6 +71,17 @@ func activeCombatCommands() []CommandDefinition {
 				{ID: "expectedAsleep", Name: "Expected Current State", Kind: ParameterBoolean, Required: true, ControlHint: controlHintSelect},
 				{ID: activeCombatExpectedSnapshotID, Name: activeCombatExpectedSnapshot, Kind: ParameterString, Required: true, ControlHint: activeCombatTextControlHint},
 			},
+			ExecutionModes: []ExecutionMode{ExecutionSynchronized},
+			Destructive:    false,
+		},
+		{
+			ID:       CommandCombatMonsterSleepAll,
+			Category: activeCombatCategory,
+			Name:     "Put All Monsters to Sleep",
+			Description: "Put every live monster in the exact reviewed snapshot to sleep at a quiescent " +
+				"player-turn boundary; monsters that already sleep are unchanged.",
+			Aliases:        []string{"combat sleep all"},
+			Parameters:     []ParameterDefinition{encounterParameter, snapshotParameter},
 			ExecutionModes: []ExecutionMode{ExecutionSynchronized},
 			Destructive:    false,
 		},

@@ -51,6 +51,8 @@ const (
 	CommandPartyCharacterUpdate = "party.character.update"
 	// CommandPartyMaximizeLevels raises every active character to level eight.
 	CommandPartyMaximizeLevels = "party.maximize-levels"
+	// CommandPartyRestore heals and cures every active character.
+	CommandPartyRestore = "party.restore"
 	// CommandPartyStatusSet applies one explicit status to reviewed active roster indices.
 	CommandPartyStatusSet = "party.status.set"
 	// CommandPartyFill fills open active-party positions in roster order.
@@ -450,6 +452,13 @@ func NewInitialCatalog() *Catalog {
 			ID: CommandPartyMaximizeLevels, Category: partyEquipmentCategory, Name: "Maximize Active Levels",
 			Description:    "Raise every reviewed active roster member to level eight and restore progression-derived resources.",
 			Aliases:        []string{"pc stats maxlevels"},
+			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}}},
+			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
+		},
+		{
+			ID: CommandPartyRestore, Category: partyEquipmentCategory, Name: "Heal and Cure Active Party",
+			Description:    "Restore every reviewed active roster member to full hit points and magic points with Good status.",
+			Aliases:        []string{"pc party heal", "heal cure everyone"},
 			Parameters:     []ParameterDefinition{{ID: expectedFingerprintID, Name: reviewedRosterFingerprintName, Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}}},
 			ExecutionModes: []ExecutionMode{ExecutionAlteration}, Destructive: true,
 		},

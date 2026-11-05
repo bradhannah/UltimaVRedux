@@ -13,6 +13,8 @@ import type {
 const props = defineProps<{
   options?: CombatEncounterOptionsData
   pending: boolean
+  /** A dungeon room to pick once (the token changes for each request), e.g. from the Go to page. */
+  preselect?: { dungeon: number; room: number; token: number }
 }>()
 
 const emit = defineEmits<{
@@ -164,6 +166,13 @@ watch(() => props.options, (options) => {
   entryDirection.value = options.entryDirections[0]?.name ?? "west"
   monsterType.value = String(options.monsters[0]?.id ?? "")
   countMode.value = (options.countModes[0]?.name as typeof countMode.value | undefined) ?? "automatic"
+}, { immediate: true })
+
+const appliedPreselect = ref(0)
+watch([() => props.preselect, () => props.options], ([request, options]) => {
+  if (!request || !options || appliedPreselect.value === request.token) return
+  appliedPreselect.value = request.token
+  selectRoom(request.dungeon, request.room)
 }, { immediate: true })
 
 function alter(action: () => void): void {

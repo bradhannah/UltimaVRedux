@@ -15,6 +15,7 @@ const (
 	parameterWorldRoute         = "route"
 	parameterWorldLocation      = "location"
 	parameterWorldFloor         = "floor"
+	parameterWorldRoom          = "room"
 	parameterExpectedLocationID = "expectedLocationId"
 	parameterExpectedFloor      = "expectedFloor"
 	parameterExpectedSource     = "expectedSourceFingerprint"
@@ -28,6 +29,8 @@ const (
 	WorldPlacementDungeonOutside = "dungeon_outside_entrance"
 	// WorldPlacementDungeonInsideStart resolves the selected route's fresh dungeon entry.
 	WorldPlacementDungeonInsideStart = "dungeon_inside_start"
+	// WorldPlacementDungeonOutsideRoom stands the party beside a fixed room, facing it, one step from entering.
+	WorldPlacementDungeonOutsideRoom = "dungeon_outside_room"
 	// WorldPlacementDungeonUnderworldExit resolves the floor-seven down-ladder endpoint.
 	WorldPlacementDungeonUnderworldExit = "dungeon_underworld_exit"
 	// WorldRouteBritannia selects the surface route.
@@ -48,12 +51,14 @@ func worldNavigatorCommands() []CommandDefinition {
 		{ID: parameterExpectedSource, Name: "Reviewed Source Fingerprint", Kind: ParameterString, Required: true, Availability: []string{contextGameplay, contextOutsideCombat}},
 	}
 
-	worldParameters := make([]ParameterDefinition, 0, 6+len(reviewedWorldParameters))
+	minimumWorldRoom, maximumWorldRoom := 0, references.MaxDungeonRooms-1
+	worldParameters := make([]ParameterDefinition, 0, 7+len(reviewedWorldParameters))
 	worldParameters = append(worldParameters, []ParameterDefinition{
 		{ID: parameterWorldPlacement, Name: "Placement", Description: "Choose exact coordinates or one authoritative dungeon route target.", Kind: ParameterEnum, Required: false, Default: json.RawMessage(`"exact"`), Choices: worldPlacementChoices(), ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
 		{ID: parameterWorldRoute, Name: "Dungeon Route", Description: "Select the Britannia or Underworld dungeon route when the placement uses one.", Kind: ParameterEnum, Required: false, Default: json.RawMessage(`"britannia"`), Choices: worldRouteChoices(), ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
 		{ID: parameterWorldLocation, Name: "Destination", Description: "Choose Britannia/Underworld, a small location, or a dungeon.", Kind: ParameterEnum, Required: true, Choices: worldLocationChoices(), ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
 		{ID: parameterWorldFloor, Name: floorName, Description: "Choose a floor valid for an exact destination.", Kind: ParameterEnum, Required: false, Default: json.RawMessage(`"0"`), Choices: worldFloorChoices(), ControlHint: controlHintSelect, Availability: []string{contextGameplay, contextOutsideCombat}},
+		{ID: parameterWorldRoom, Name: "Room", Description: "Fixed room to stand beside; required for the outside-a-room placement.", Kind: ParameterInteger, Required: false, Minimum: &minimumWorldRoom, Maximum: &maximumWorldRoom, ControlHint: controlHintNumber, Availability: []string{contextGameplay, contextOutsideCombat}},
 		{ID: "x", Name: "X", Kind: ParameterInteger, Required: false, Default: json.RawMessage(`0`), Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, ControlHint: controlHintNumber, Availability: []string{contextGameplay, contextOutsideCombat}},
 		{ID: "y", Name: "Y", Kind: ParameterInteger, Required: false, Default: json.RawMessage(`0`), Minimum: &minimumWorldCoordinate, Maximum: &maximumWorldCoordinate, ControlHint: controlHintNumber, Availability: []string{contextGameplay, contextOutsideCombat}},
 	}...)
@@ -74,6 +79,7 @@ func worldPlacementChoices() []Choice {
 		{Value: WorldPlacementExact, Label: "Arbitrary exact position"},
 		{Value: WorldPlacementDungeonOutside, Label: "Outside dungeon entrance"},
 		{Value: WorldPlacementDungeonInsideStart, Label: "Inside dungeon start"},
+		{Value: WorldPlacementDungeonOutsideRoom, Label: "Outside a room"},
 		{Value: WorldPlacementDungeonUnderworldExit, Label: "Dungeon Underworld-exit ladder"},
 	}
 }

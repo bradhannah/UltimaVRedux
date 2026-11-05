@@ -177,6 +177,30 @@ func (g *GameState) SetDebugCombatMonsterAsleep(
 	return DebugCombatSleepChange{CombatantID: combatantID, Before: before, After: asleep}, nil
 }
 
+// SleepAllDebugCombatMonsters puts every live monster to sleep after exact snapshot review. Monsters
+// that already sleep are left alone and omitted from the returned changes.
+func (g *GameState) SleepAllDebugCombatMonsters(request DebugCombatBatchRequest) ([]DebugCombatSleepChange, error) {
+	reviewed, err := g.reviewDebugCombatBatch(request)
+	if err != nil {
+		return nil, err
+	}
+	if len(reviewed) == 0 {
+		return nil, ErrDebugCombatTarget
+	}
+	changes := make([]DebugCombatSleepChange, 0, len(reviewed))
+	for _, target := range reviewed {
+		if target.monster.IsAsleep() {
+			continue
+		}
+		target.monster.SetAsleep(true)
+		changes = append(changes, DebugCombatSleepChange{
+			CombatantID: target.monster.CombatantID(), Before: false, After: true,
+		})
+	}
+
+	return changes, nil
+}
+
 // DebugActiveCombatSnapshot returns a quiescent snapshot suitable for reviewed mutation preconditions.
 func (g *GameState) DebugActiveCombatSnapshot(encounterID CombatEncounterID) (DebugCombatSnapshot, error) {
 	if err := g.validateDebugCombatBoundary(encounterID); err != nil {

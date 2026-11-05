@@ -129,6 +129,31 @@ func (g *GameState) MaximizeActiveParty(expectedFingerprint string) (PartyRoster
 	return g.finishPartyMutation(before), nil
 }
 
+// RestoreActiveParty heals and cures every active member: full hit points and
+// magic points by class, status Good, and the dead revived as Maximize does.
+func (g *GameState) RestoreActiveParty(expectedFingerprint string) (PartyRosterMutationResult, error) {
+	before, err := g.validatePartyMutation(expectedFingerprint)
+	if err != nil {
+		return PartyRosterMutationResult{}, err
+	}
+	activeCount, err := g.validateContiguousActiveParty()
+	if err != nil {
+		return PartyRosterMutationResult{}, err
+	}
+
+	for index := range activeCount {
+		character := g.PartyState.GetCharacter(index)
+		if character.GetMaxHp() == 0 {
+			continue
+		}
+		character.SetHp(character.GetMaxHp())
+		character.SetStatus(party_state.Good)
+		character.RestoreMpByClass()
+	}
+
+	return g.finishPartyMutation(before), nil
+}
+
 // SetPartyRosterStatuses atomically updates status and HP for reviewed active roster slots.
 func (g *GameState) SetPartyRosterStatuses(request PartyStatusMutationRequest) (PartyRosterMutationResult, error) {
 	before, err := g.validatePartyMutation(request.ExpectedFingerprint)

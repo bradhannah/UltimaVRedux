@@ -92,6 +92,10 @@ func (s debugWorkbenchStateStub) SetPartyRosterStatuses(request game_state.Party
 	return s.setStatuses(request)
 }
 
+func (debugWorkbenchStateStub) RestoreActiveParty(string) (game_state.PartyRosterMutationResult, error) {
+	panic("debug workbench stub: no test restores the active party")
+}
+
 func (debugWorkbenchStateStub) FillActiveParty(string) (game_state.PartyRosterMutationResult, error) {
 	panic("debug workbench stub: no test fills the active party")
 }

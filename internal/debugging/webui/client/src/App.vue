@@ -21,28 +21,22 @@ import {
   type FormErrors,
   type OptionSets,
 } from "./command_forms"
-import PartyCharacterEditor from "./PartyCharacterEditor.vue"
-import EquipmentLoadouts from "./EquipmentLoadouts.vue"
-import PartyRoster from "./PartyRoster.vue"
-import ActiveCombatConsole from "./ActiveCombatConsole.vue"
+import GoToPage from "./GoToPage.vue"
+import PartyPage from "./PartyPage.vue"
+import ItemsPage from "./ItemsPage.vue"
+import TimePage from "./TimePage.vue"
+import FightPage from "./FightPage.vue"
 import LoggingConsole from "./LoggingConsole.vue"
-import CombatEncounterComposer from "./CombatEncounterComposer.vue"
 import MerchantTester from "./MerchantTester.vue"
-import MoongateAtlas from "./MoongateAtlas.vue"
 import MonsterEcosystemConsole from "./MonsterEcosystemConsole.vue"
 import QuestInventoryInspector from "./QuestInventoryInspector.vue"
 import SearchItemStacksInspector from "./SearchItemStacksInspector.vue"
 import TestSetups from "./TestSetups.vue"
 import SaveLibrary from "./SaveLibrary.vue"
 import ShrineProgressInspector from "./ShrineProgressInspector.vue"
-import WorkbenchCalendar from "./WorkbenchCalendar.vue"
-import WorkbenchWind from "./WorkbenchWind.vue"
 import ShipsConsole from "./ShipsConsole.vue"
 import DebugOptionsConsole from "./DebugOptionsConsole.vue"
 import WorldDiagnostics from "./WorldDiagnostics.vue"
-import InventoryLocker from "./InventoryLocker.vue"
-import SpellInventory from "./SpellInventory.vue"
-import WorldNavigator from "./WorldNavigator.vue"
 import ObservationPane, { type ObservationCommandID } from "./ObservationPane.vue"
 import WorkbenchTopBar, { type TopBarClock, type TopBarParty } from "./WorkbenchTopBar.vue"
 import CommandPalette from "./CommandPalette.vue"
@@ -51,6 +45,7 @@ import { recentNavigationSurfaces, updateNavigationRecents, type NavigationSurfa
 import {
   compareToolOrder,
   homeTaskIDs,
+  pageDefinitions,
   partyHealthSummary,
   placeLabel,
   preferredLandmarks,
@@ -64,6 +59,7 @@ import {
   type TaskID,
   type ToolGroup,
 } from "./workbench_tasks"
+import type { PageNotice, PageStep, WorldPositionApply } from "./page_steps"
 import type {
   CalendarStatusData,
   CombatEncounterOptionsData,
@@ -149,7 +145,8 @@ const worldPositionSetCommandID = "world.position.set"
 const movementLandmarkTravelCommandID = "movement.landmark.travel"
 const partyKarmaSetCommandID = "party.karma.set"
 const partyCharacterInspectCommandID = "party.character.inspect"
-const partyRosterMutationCommandIDs = ["party.maximize-levels", "party.status.set", "party.fill", "party.member.add"]
+const partyRestoreCommandID = "party.restore"
+const partyRosterMutationCommandIDs = ["party.maximize-levels", "party.status.set", "party.fill", "party.member.add", partyRestoreCommandID]
 const testSetupStatusCommandID = "test-setup.status"
 const saveSnapshotListCommandID = "save.snapshot.list"
 const saveSnapshotGetCommandID = "save.snapshot.get"
@@ -210,9 +207,10 @@ const activeCombatKillCommandID = "combat.monster.kill"
 const activeCombatKillAllCommandID = "combat.monster.kill-all"
 const activeCombatDungeonRoomClearCommandID = "combat.dungeon-room.clear"
 const activeCombatClearCommandID = "combat.monster.clear"
+const activeCombatSleepAllCommandID = "combat.monster.sleep-all"
 const activeCombatMutationCommandIDs = [
 	activeCombatSleepCommandID, activeCombatExitCommandID, activeCombatSpawnCommandID, activeCombatRNGSeedSetCommandID,
-	activeCombatDamageCommandID, activeCombatKillCommandID, activeCombatKillAllCommandID,
+	activeCombatDamageCommandID, activeCombatKillCommandID, activeCombatKillAllCommandID, activeCombatSleepAllCommandID,
 	activeCombatDungeonRoomClearCommandID, activeCombatClearCommandID,
 	combatPresentationSpeedSetCommandID,
 ]
@@ -286,23 +284,7 @@ const integratedCommandIDs = new Set([
   activeCombatStatusCommandID,
   ...activeCombatMutationCommandIDs,
   ...observationCommandIDs,
-])
-const polledIntegratedQueryIDs = new Set([
-  loggingStatusCommandID,
-  windStatusCommandID,
-  shrineStatusCommandID,
-  calendarStatusCommandID,
-  searchStatusCommandID,
-  questItemStatusCommandID,
-  worldPositionStatusCommandID,
-  moongateStatusCommandID,
-  monsterEcosystemStatusCommandID,
-  vehicleStatusCommandID,
-  inventoryLockerStatusCommandID,
-  spellInventoryStatusCommandID,
-  activeCombatStatusCommandID,
-	debugOptionsStatusCommandID,
-	testSetupStatusCommandID,
+  ...Object.values(pageDefinitions).flatMap((page) => [page.anchor, ...page.queries, ...(page.loadOnce ?? []), ...page.commands, ...(page.uses ?? [])]),
 ])
 const connectionTimeoutMs = 5000
 const operationStallMs = 10000
@@ -344,9 +326,9 @@ const ownerErrors = ref<Record<string, string>>({})
 provideInstrumentSession(computed(() => `${sessionID.value}:${sceneGeneration.value}:${connectionState.value}:${activeWorkspace.value}:${selectedCommandID.value}:${pageHidden.value}`), (message) => {
   ownerErrors.value[selectedCommandID.value] = message
 })
-const livePollingPaused = ref(false)
 const selectedShrineIndex = ref(0)
-const linkedWorldCoordinates = ref<{ x: number; y: number }>()
+const fightRoomRequest = ref<{ locationName: string; room: number; token: number }>()
+let fightRoomSequence = 0
 const drafts = ref<Record<string, CommandDraft>>({})
 const dirtyFields = ref<Record<string, string[]>>({})
 const formErrors = ref<Record<string, FormErrors>>({})
@@ -505,6 +487,131 @@ const retryDetail = computed(() => {
   return "automatic retry stopped"
 })
 
+const activePage = computed(() => activeWorkspace.value === "home" ? undefined : pageDefinitions[activeWorkspace.value])
+const batch = ref<BatchState>()
+const batchNotice = ref<PageNotice>()
+const homeRestorePending = ref(false)
+const pageQueryIDs = new Set(Object.values(pageDefinitions).flatMap((page) => [...page.queries, ...(page.loadOnce ?? [])]))
+const pageMutationPending = computed(() => {
+  const page = activePage.value
+  if (!page) return false
+  const owned = new Set([...page.commands, ...(page.uses ?? [])])
+  return [...pending.value.values()].some((request) => owned.has(request.commandID) && !pageQueryIDs.has(request.commandID))
+})
+const pageBusy = computed(() => batch.value !== undefined || pageMutationPending.value)
+const rosterFingerprint = computed(() => {
+  const result = latestResults.value[partyCharacterInspectCommandID]
+  return result?.success && result.data ? (result.data as PartyCharacterInspectData).fingerprint : undefined
+})
+const fightPreselect = computed(() => {
+  const request = fightRoomRequest.value
+  const options = latestResults.value[combatEncounterOptionsCommandID]?.data as CombatEncounterOptionsData | undefined
+  const found = request && options?.dungeons.find((candidate) => candidate.name === request.locationName)
+  return request && found ? { dungeon: found.id, room: request.room, token: request.token } : undefined
+})
+
+interface BatchState {
+  steps: PageStep[]
+  index: number
+  total: number
+  owner: string
+  sentRequestID?: string
+  /** Commands (or "catalog") whose fresh answer the next step needs first. */
+  waiting: Set<string>
+}
+
+function connectionLost(): void {
+  if (batch.value) batchNotice.value = { success: false, text: `The connection was lost after ${batch.value.index} of ${batch.value.total} changes. Check the game before applying again.` }
+  batch.value = undefined
+}
+
+function stepArguments(step: PageStep): Record<string, string> {
+  const locker = latestResults.value[inventoryLockerStatusCommandID]?.data as InventoryLockerStatusData | undefined
+  return Object.fromEntries(Object.entries(step.argumentsByID).map(([key, value]) => [key, value === "$locker" ? locker?.snapshotFingerprint ?? "" : value]))
+}
+
+/** Sends a page's staged changes one command at a time, refreshing what the next command was reviewed against. */
+function runPageSteps(steps: PageStep[]): void {
+  const page = activePage.value
+  if (!page || steps.length === 0 || batch.value) return
+  batchNotice.value = undefined
+  batch.value = { steps, index: 0, total: steps.length, owner: page.anchor, waiting: new Set() }
+  sendBatchStep()
+}
+
+function failBatch(text: string): void {
+  const state = batch.value
+  batch.value = undefined
+  batchNotice.value = { success: false, text: state && state.total > 1 ? `Stopped after ${state.index} of ${state.total} changes. ${text}` : text }
+}
+
+function sendBatchStep(): void {
+  const state = batch.value
+  if (!state) return
+  const step = state.steps[state.index]
+  const sent = runSpecializedMutation(step.commandID, stepArguments(step), (requestID) => { state.sentRequestID = requestID })
+  if (!sent) failBatch(ownerErrors.value[state.owner] || `${commandName(step.commandID)} could not be sent.`)
+}
+
+function advanceBatchAfter(result: CommandResult): void {
+  const state = batch.value
+  if (!state || state.sentRequestID !== result.requestId) return
+  if (!result.success) {
+    const stale = result.errorCode?.startsWith("stale") ? " That changed in the game since this page loaded; the page was refreshed. Review it and apply again." : ""
+    failBatch(`${commandName(result.commandId)} failed: ${result.errorMessage ?? result.errorCode ?? "unknown error"}.${stale}`)
+    if (stale) runPageQueries(activePage.value)
+    return
+  }
+  state.index += 1
+  state.sentRequestID = undefined
+  if (state.index >= state.total) {
+    batch.value = undefined
+    batchNotice.value = { success: true, text: state.total === 1 ? result.summary || `${commandName(result.commandId)} completed.` : `Applied ${state.total} changes.` }
+    return
+  }
+  const next = state.steps[state.index]
+  const nextCommand = commands.value.find((candidate) => candidate.id === next.commandID)
+  if (Object.values(next.argumentsByID).includes("$locker")) {
+    state.waiting.add(inventoryLockerStatusCommandID)
+    runQueryByID(inventoryLockerStatusCommandID, true)
+  }
+  if (nextCommand && commandUsesDynamicOptions(nextCommand)) {
+    state.waiting.add("catalog")
+    requestCatalog()
+  }
+  if (state.waiting.size === 0) void nextTick(sendBatchStep)
+}
+
+function batchStopWaiting(what: string): void {
+  const state = batch.value
+  if (!state?.waiting.delete(what) || state.waiting.size > 0 || state.sentRequestID) return
+  void nextTick(sendBatchStep)
+}
+
+function runPageQueries(page: typeof activePage.value): void {
+  if (!page) return
+  for (const commandID of page.queries) runQueryByID(commandID, true)
+  for (const commandID of page.loadOnce ?? []) {
+    const latest = latestResults.value[commandID]
+    if (!latest || latest.sceneGeneration !== sceneGeneration.value || latest.sessionId !== sessionID.value) runQueryByID(commandID, true)
+  }
+}
+
+function pageOwnerFor(commandID: string): string | undefined {
+  const page = activePage.value
+  return page && (page.commands.includes(commandID) || page.uses?.includes(commandID)) ? page.anchor : undefined
+}
+
+function openFightForRoom(value: { locationName: string; room: number }): void {
+  fightRoomRequest.value = { ...value, token: ++fightRoomSequence }
+  activeWorkspace.value = "fight"
+  selectedCommandID.value = activeCombatStatusCommandID
+  void nextTick(autoExecuteSelectedQuery)
+}
+
+// More tools that refresh while they are on screen.
+const polledMoreQueryIDs = new Set([loggingStatusCommandID, shrineStatusCommandID, searchStatusCommandID, questItemStatusCommandID, monsterEcosystemStatusCommandID, vehicleStatusCommandID, debugOptionsStatusCommandID, testSetupStatusCommandID])
+
 function websocketURL(): string {
   const scheme = location.protocol === "https:" ? "wss:" : "ws:"
   return `${scheme}//${location.host}/ws?token=${encodeURIComponent(token)}`
@@ -650,6 +757,7 @@ function handleMessage(message: Envelope): void {
         if (!workspaceCommands.some((command) => command.id === selectedCommandID.value)) selectedCommandID.value = workspaceCommands[0]?.id ?? ""
       }
       sceneGeneration.value = catalog.sceneGeneration
+      batchStopWaiting("catalog")
 		void nextTick(() => {
 			if (!globalStatusCommandIDs.includes(selectedCommandID.value)) autoExecuteSelectedQuery()
       for (const globalID of globalStatusCommandIDs) {
@@ -790,17 +898,6 @@ function updateDraft(command: CommandDefinition, parameterID: string, value: str
   delete formMessages.value[command.id]
 }
 
-function updateSelectedPartyCharacterDraft(parameterID: string, value: string): void {
-  if (!selectedCommand.value) return
-
-  updateDraft(selectedCommand.value, parameterID, value)
-}
-
-function updateEquipmentLoadoutCharacter(value: string): void {
-	const command = commands.value.find((candidate) => candidate.id === partyEquipmentLoadoutCommandID)
-	if (command) updateDraft(command, "character", value)
-}
-
 function resetCommand(command: CommandDefinition): void {
   drafts.value[command.id] = command.id === partyCharacterCommandID
     ? hydratePartyCharacterDraft(command, draftFor(command).character ?? "", optionSets.value)
@@ -830,12 +927,6 @@ function selectWorkspace(workspace: WorkspaceID): void {
 
 function selectShrine(index: number): void {
   selectedShrineIndex.value = index
-}
-
-function openCombatEncounterComposer(): void {
-  activeWorkspace.value = "fight"
-selectedCommandID.value = combatEncounterOptionsCommandID
-  void nextTick(autoExecuteSelectedQuery)
 }
 
 function activateCommand(command: CommandDefinition): void {
@@ -880,6 +971,20 @@ function receiveResult(result: CommandResult): void {
     void nextTick(() => runQueryByID(worldPositionStatusCommandID, true))
   }
   if (result.errorCode === "stale_options" || result.effectiveExecutionMode && result.effectiveExecutionMode !== "query") requestCatalog()
+  advanceBatchAfter(result)
+  batchStopWaiting(result.commandId)
+  if (result.success && result.commandId === partyCharacterInspectCommandID && homeRestorePending.value && result.data) {
+    homeRestorePending.value = false
+    const fingerprint = (result.data as PartyCharacterInspectData).fingerprint
+    const sent = runSpecializedMutation(partyRestoreCommandID, { expectedFingerprint: fingerprint }, (requestID) => { homeQuickState.value = { requestID } })
+    if (!sent) homeQuickState.value = { error: ownerErrors.value[companionOwnerCommandID(partyRestoreCommandID)] || "The action could not be sent." }
+  }
+  const finishedCommand = commands.value.find((candidate) => candidate.id === result.commandId)
+  if (result.success && finishedCommand && isMutation(finishedCommand) && !pageQueryIDs.has(result.commandId)) {
+    for (const page of Object.values(pageDefinitions)) {
+      if (page.commands.includes(result.commandId) || page.uses?.includes(result.commandId)) void nextTick(() => { for (const commandID of page.queries) runQueryByID(commandID, true) })
+    }
+  }
   if (result.success && result.commandId === windSetCommandID) void nextTick(() => runQueryByID(windStatusCommandID, true))
   if (result.success && loggingMutationCommandIDs.includes(result.commandId)) void nextTick(() => runQueryByID(loggingStatusCommandID, true))
   if (result.success && (result.commandId === shrineProgressCommandID || result.commandId === codexQuestStateSetAllCommandID)) void nextTick(() => runQueryByID(shrineStatusCommandID, true))
@@ -951,6 +1056,7 @@ function toolDescription(command: CommandDefinition): string {
 }
 
 function companionOwnerCommandID(commandID: string): string {
+	for (const page of Object.values(pageDefinitions)) if (page.commands.includes(commandID)) return page.anchor
 	if (commandID === combatPresentationSpeedSetCommandID && selectedCommandID.value === activeCombatStatusCommandID) return activeCombatStatusCommandID
   if (loggingMutationCommandIDs.includes(commandID)) return loggingStatusCommandID
   if (commandID === windSetCommandID) return windStatusCommandID
@@ -1076,6 +1182,10 @@ function runQueryByID(commandID: string, silent: boolean): void {
 
 function autoExecuteSelectedQuery(): void {
   const command = selectedCommand.value
+  if (command && activePage.value?.anchor === command.id) {
+    runPageQueries(activePage.value)
+    return
+  }
 	if (!command) return
 	if (command.id === merchantTesterCatalogCommandID
 		&& (merchantCatalogExplicitRefreshRequired || instrumentRequestPending(merchantTesterCatalogCommandID))) return
@@ -1085,11 +1195,6 @@ function autoExecuteSelectedQuery(): void {
 		return
 	}
 	if (command.id === partyCharacterCommandID) return
-	if (command.id === partyEquipmentLoadoutCommandID) {
-		runQueryByID(partyCharacterInspectCommandID, true)
-		runQueryByID(inventoryLockerStatusCommandID, true)
-		return
-	}
 	if (isMutation(command)) return
 	if (command.id === guardStatusCommandID) {
 		for (const commandID of worldDiagnosticCommandIDs) runQueryByID(commandID, true)
@@ -1102,8 +1207,7 @@ if (command.id === combatEncounterOptionsCommandID && latestResults.value[comman
 
 function runSpecializedMutation(commandID: string, argumentsByID: Record<string, string>, onSent?: (requestID: string) => void): boolean {
   const command = supportedCommands.value.find((candidate) => candidate.id === commandID)
-  const owner = commandID === usableInventoryPresetCommandID && selectedCommandID.value === inventoryLockerStatusCommandID
-    ? inventoryLockerStatusCommandID : companionOwnerCommandID(commandID)
+  const owner = pageOwnerFor(commandID) ?? companionOwnerCommandID(commandID)
   delete ownerErrors.value[owner]
   const unavailable = !isReady.value ? "Reconnect to the game before running this operation."
     : !command ? "This operation is not available in the current catalog."
@@ -1113,6 +1217,7 @@ function runSpecializedMutation(commandID: string, argumentsByID: Record<string,
     return false
   }
   drafts.value[command.id] = argumentsByID
+  if (command.id === partyCharacterCommandID) dirtyFields.value[command.id] = Object.keys(argumentsByID).filter((key) => key !== "character")
   const sent = runCommand(command, false, (requestID) => {
     const request = pending.value.get(requestID)
     if (request) request.ownerCommandID = owner
@@ -1132,13 +1237,7 @@ function quickExitCombat(): void {
 	})
 }
 
-function openToolAction(commandID: string): HomeQuickAction[] {
-  const command = supportedCommands.value.find((candidate) => candidate.id === commandID)
-  if (!command) return []
-  return [{ id: `open:${commandID}`, label: toolName(command), description: `Open ${toolName(command)}`, effect: { kind: "open", commandId: commandID } }]
-}
-
-// Quick actions only call commands whose own tool runs them without a review step; everything else just opens its tool.
+// Quick actions only call commands whose own page runs them without a review step; everything else just opens its page.
 function homeQuickActions(task: TaskID): HomeQuickAction[] {
   const ready = isReady.value
   switch (task) {
@@ -1154,14 +1253,13 @@ function homeQuickActions(task: TaskID): HomeQuickAction[] {
       }))
     }
     case "fight": {
-      const actions = openToolAction(combatEncounterOptionsCommandID)
+      const actions: HomeQuickAction[] = []
       if (currentCombat.value?.active) actions.push({ id: "exit-combat", label: "Escape combat", description: "Discard the active debug encounter and return to its pre-combat location", effect: { kind: "exit-combat" }, disabled: quickCombatExitDisabled.value })
       return actions
     }
     case "party":
-      return [partyCharacterInspectCommandID, partyCharacterCommandID, partyEquipmentLoadoutCommandID].flatMap(openToolAction)
-    case "items":
-      return [inventoryLockerStatusCommandID, spellInventoryStatusCommandID, questItemStatusCommandID].flatMap(openToolAction)
+      if (!commands.value.some((command) => command.id === partyRestoreCommandID)) return []
+      return [{ id: "party-restore", label: "Heal and cure everyone", description: "Restore every active member to full HP and MP with a good condition", effect: { kind: "party-restore" }, disabled: !ready || commandPending(partyRestoreCommandID) || Boolean(currentCombat.value?.active) }]
     case "time":
       if (!commands.value.some((command) => command.id === calendarSetTimeCommandID)) return []
       return timePresets.map((preset) => ({
@@ -1171,8 +1269,8 @@ function homeQuickActions(task: TaskID): HomeQuickAction[] {
         effect: { kind: "time", hour: preset.hour, minute: preset.minute },
         disabled: !ready || commandPending(calendarSetTimeCommandID),
       }))
+    case "items":
     case "checkpoints":
-      return openToolAction(saveSnapshotListCommandID)
     case "more":
       return []
   }
@@ -1188,6 +1286,12 @@ function runHomeQuickAction(action: HomeQuickAction): void {
   homeQuickState.value = undefined
   if (effect.kind === "exit-combat") {
     quickExitCombat()
+    return
+  }
+  if (effect.kind === "party-restore") {
+    homeRestorePending.value = true
+    homeQuickState.value = { requestID: undefined }
+    runQueryByID(partyCharacterInspectCommandID, true)
     return
   }
   const commandID = effect.kind === "landmark" ? movementLandmarkTravelCommandID : calendarSetTimeCommandID
@@ -1234,19 +1338,7 @@ function resetSearchProgress(): void {
   runSpecializedMutation(searchProgressResetCommandID, { scope: "one_time_locations" })
 }
 
-function applyWorldPosition(value: {
-  placement: string
-  route?: string
-  locationId: number
-  floor?: number
-  x?: number
-  y?: number
-  expectedLocationId: number
-  expectedFloor: number
-  expectedX: number
-  expectedY: number
-  expectedSourceFingerprint: string
-}): void {
+function applyWorldPosition(value: WorldPositionApply): void {
   const argumentsByID: Record<string, string> = {
     placement: value.placement,
     location: String(value.locationId),
@@ -1260,14 +1352,8 @@ function applyWorldPosition(value: {
   if (value.floor !== undefined) argumentsByID.floor = String(value.floor)
   if (value.x !== undefined) argumentsByID.x = String(value.x)
   if (value.y !== undefined) argumentsByID.y = String(value.y)
-  runSpecializedMutation(worldPositionSetCommandID, argumentsByID)
-}
-
-function openWorldNavigator(value: { x: number; y: number }): void {
-  activeWorkspace.value = "goto"
-  linkedWorldCoordinates.value = value
-  selectedCommandID.value = worldPositionStatusCommandID
-  void nextTick(autoExecuteSelectedQuery)
+  if (value.room !== undefined) argumentsByID.room = String(value.room)
+  runPageSteps([{ commandID: worldPositionSetCommandID, argumentsByID }])
 }
 
 function commandUsesDynamicOptions(command: CommandDefinition): boolean {
@@ -1328,6 +1414,7 @@ function receiveProtocolError(message: Envelope): void {
 }
 
 function reportLostPendingRequests(): void {
+  connectionLost()
   for (const [requestID, request] of pending.value) {
     silentRequestIDs.delete(requestID)
     rememberProcessedRequest(requestID)
@@ -1397,19 +1484,15 @@ function checkPendingOperations(): void {
 	if (!isReady.value || document.hidden) return
   if (selectedCommand.value && commandUsesDynamicOptions(selectedCommand.value)) requestCatalog()
 		for (const globalID of globalStatusCommandIDs) runQueryByID(globalID, true)
+		if (activePage.value) {
+			if (batch.value || pageMutationPending.value) return
+			if (activeWorkspace.value === "party") requestCatalog()
+			runPageQueries(activePage.value)
+			return
+		}
 		if (!selectedCommand.value || globalStatusCommandIDs.includes(selectedCommand.value.id)) return
 	if (instrumentRequestPending(selectedCommand.value.id)) return
-	if (selectedCommand.value.id === partyEquipmentLoadoutCommandID) {
-		runQueryByID(partyCharacterInspectCommandID, true)
-		runQueryByID(inventoryLockerStatusCommandID, true)
-		return
-	}
-	if (selectedCommand.value.id === partyCharacterInspectCommandID) {
-		runQueryByID(partyCharacterInspectCommandID, true)
-		return
-	}
-	if (!polledIntegratedQueryIDs.has(selectedCommand.value.id)) return
-  if (selectedCommand.value.id === windStatusCommandID && livePollingPaused.value) return
+	if (!polledMoreQueryIDs.has(selectedCommand.value.id)) return
   runCommand(selectedCommand.value, true)
 }
 
@@ -1606,7 +1689,7 @@ function onKeyDown(event: KeyboardEvent): void {
   if (event.key !== "F5" || event.ctrlKey || event.altKey || event.metaKey || !selectedCommand.value) return
   event.preventDefault()
   if (selectedCommand.value.id === observationCommandID) return
-  if (selectedCommand.value.id === partyEquipmentLoadoutCommandID) { autoExecuteSelectedQuery(); return }
+  if (activePage.value) { autoExecuteSelectedQuery(); return }
   if (event.shiftKey) {
     formMessages.value[selectedCommand.value.id] = "Staging is not available for this instrument."
     return
@@ -1673,18 +1756,98 @@ onBeforeUnmount(() => {
         @open-surface="navigateToSurface"
         @quick="runHomeQuickAction"
       />
+      <div v-else-if="activePage" class="task-page" :data-task="activeWorkspace">
+        <section class="instrument-bank" :aria-label="taskDefinition(activeWorkspace).label">
+          <section v-if="ownerErrors[activePage.anchor]" class="operation-banner failure" role="alert" data-owner-error>{{ ownerErrors[activePage.anchor] }}</section>
+          <section v-else-if="latestOperationResult" class="operation-banner" :class="latestOperationResult.success ? 'success' : 'failure'" aria-live="polite" data-last-operation>
+            <header><strong>LAST OPERATION</strong><span>{{ commandName(latestOperationResult.commandId) }} · {{ formatTime(latestOperationResult.receivedAt) }}</span></header>
+            <p>{{ latestOperationResult.success ? latestOperationResult.summary : `${latestOperationResult.errorCode} :: ${latestOperationResult.errorMessage}` }}</p>
+          </section>
+          <p v-if="batchNotice" class="pg-status" :class="batchNotice.success ? 'success' : 'failure'" role="status" data-page-notice>{{ batchNotice.text }}</p>
+          <p v-if="!isReady" class="disabled-reason">EXECUTION DISABLED UNTIL CONNECTION IS READY</p>
+          <GoToPage
+            v-if="activeWorkspace === 'goto'"
+            :key="`${sessionID}:${sceneGeneration}`"
+            :data="lastSuccessfulWorldPositionResult?.data ? worldPositionStatusData(lastSuccessfulWorldPositionResult.data) : undefined"
+            :landmarks="worldLandmarkChoices"
+            :pending="commandPending(worldPositionSetCommandID) || batch !== undefined"
+            :pending-landmark="commandPending(movementLandmarkTravelCommandID)"
+            :refreshing="commandPending(worldPositionStatusCommandID)"
+            :stale="Boolean(lastSuccessfulWorldPositionResult && latestWorldPositionResult?.success === false)"
+            :free-move="freeMoveEnabled"
+            :free-move-pending="commandPending(movementFreeMoveSetCommandID)"
+            :can-free-move="commands.some((command) => command.id === movementFreeMoveSetCommandID)"
+            @refresh="runQueryByID(worldPositionStatusCommandID, false)"
+            @apply="applyWorldPosition"
+            @travel-landmark="(landmark) => runPageSteps([{ commandID: movementLandmarkTravelCommandID, argumentsByID: { landmark } }])"
+            @free-move="(enabled) => runPageSteps([{ commandID: movementFreeMoveSetCommandID, argumentsByID: { enabled: String(enabled) } }])"
+            @fight-room="openFightForRoom"
+          />
+          <PartyPage
+            v-else-if="activeWorkspace === 'party'"
+            :roster="latestPartyCharacterInspectResult?.data as PartyCharacterInspectData | undefined"
+            :locker="latestInventoryLockerResult?.data ? inventoryLockerStatusData(latestInventoryLockerResult.data) : undefined"
+            :option-sets="optionSets"
+            :commands="commands"
+            :busy="pageBusy"
+            @apply="runPageSteps"
+          />
+          <ItemsPage
+            v-else-if="activeWorkspace === 'items'"
+            :locker="latestInventoryLockerResult?.data ? inventoryLockerStatusData(latestInventoryLockerResult.data) : undefined"
+            :spells="latestSpellInventoryResult?.data ? spellInventoryStatusData(latestSpellInventoryResult.data) : undefined"
+            :quest="latestQuestItemResult?.data ? questItemStatusData(latestQuestItemResult.data) : undefined"
+            :commands="commands"
+            :busy="pageBusy"
+            @apply="runPageSteps"
+          />
+          <TimePage
+            v-else-if="activeWorkspace === 'time'"
+            :calendar="currentCalendar"
+            :wind-direction="windDirection(latestResults[windStatusCommandID])"
+            :moongate="latestMoongateResult?.data ? moongateStatusData(latestMoongateResult.data) : undefined"
+            :busy="pageBusy"
+            :travel-pending="commandPending(moongateTravelCommandID)"
+            :overlay-pending="commandPending(moongateOverlaySetCommandID)"
+            @apply="runPageSteps"
+            @travel="(step) => runPageSteps([step])"
+            @overlay="(enabled) => runPageSteps([{ commandID: moongateOverlaySetCommandID, argumentsByID: { enabled: String(enabled) } }])"
+          />
+          <FightPage
+            v-else-if="activeWorkspace === 'fight'"
+            :combat="currentCombat"
+            :options="latestCombatEncounterOptionsResult?.data ? combatEncounterOptionsData(latestCombatEncounterOptionsResult.data) : undefined"
+            :commands="commands"
+            :busy="pageBusy"
+            :start-pending="commandPending(combatEncounterStartCommandID)"
+            :preselect="fightPreselect"
+            @apply="runPageSteps"
+          />
+          <SaveLibrary
+            v-else-if="activeWorkspace === 'checkpoints'"
+            :data="saveList"
+            :detail="latestSaveDetailResult?.data ? saveSnapshotDetailData(latestSaveDetailResult.data) : undefined"
+            :pending-list="commandPending(saveSnapshotListCommandID)"
+            :pending-detail="commandPending(saveSnapshotGetCommandID)"
+            :pending-mutation="pageBusy"
+            :current-scene="latestTestSetupStatusResult?.data ? {
+              locationName: (latestTestSetupStatusResult.data as TestSetupStatusData).locationName,
+              floor: (latestTestSetupStatusResult.data as TestSetupStatusData).floor,
+              date: (latestTestSetupStatusResult.data as TestSetupStatusData).date,
+              time: (latestTestSetupStatusResult.data as TestSetupStatusData).time,
+              partyMembers: (latestTestSetupStatusResult.data as TestSetupStatusData).party.length,
+            } : undefined"
+            @refresh="runQueryByID(saveSnapshotListCommandID, false)"
+            @inspect="inspectSaveSnapshot"
+            @capture="(value) => runPageSteps([{ commandID: saveSnapshotCaptureCommandID, argumentsByID: value }])"
+            @load="(value) => runPageSteps([{ commandID: saveSnapshotLoadCommandID, argumentsByID: value }])"
+            @delete="(value) => runPageSteps([{ commandID: saveSnapshotDeleteCommandID, argumentsByID: value }])"
+          />
+        </section>
+      </div>
       <div v-else class="task-page" :data-task="activeWorkspace">
         <header class="task-header">
           <div><h1>{{ taskDefinition(activeWorkspace).label }}</h1><p>{{ taskDefinition(activeWorkspace).blurb }}</p></div>
-          <button
-            v-if="activeWorkspace === 'goto'"
-            type="button"
-            class="free-move-quick"
-            role="switch"
-            :aria-checked="freeMoveEnabled"
-            :disabled="!isReady || commandPending(movementFreeMoveSetCommandID)"
-            @click="runSpecializedMutation(movementFreeMoveSetCommandID, { enabled: String(!freeMoveEnabled) })"
-          >Walk through walls: {{ freeMoveEnabled ? 'on' : 'off' }}</button>
         </header>
         <nav v-if="availableCommands.length > 1" class="tool-picker" :aria-label="`${taskDefinition(activeWorkspace).label} tools`">
           <section v-for="group in toolGroups" :key="group.name ?? 'tools'" class="tool-group">
@@ -1750,63 +1913,8 @@ onBeforeUnmount(() => {
             <header><strong>REFERENCE LOAD FAILED</strong><span>{{ commandName(selectedQueryFailure.commandId) }} · {{ selectedQueryFailure.commandId }}</span></header>
             <p>{{ selectedQueryFailure.errorCode }} :: {{ selectedQueryFailure.errorMessage }}</p>
           </section>
-          <PartyCharacterEditor
-            v-if="selectedCommand.id === partyCharacterCommandID"
-            :command="selectedCommand"
-            :draft="draftFor(selectedCommand)"
-            :dirty-fields="dirtyFieldsFor(selectedCommand)"
-            :option-sets="optionSets"
-            :errors="formErrors[selectedCommand.id] ?? {}"
-            :message="formMessages[selectedCommand.id]"
-            :unavailable-reason="commandUnavailableReason(selectedCommand)"
-            :pending-label="commandPending(selectedCommand.id) ? commandPendingLabel(selectedCommand.id) : undefined"
-            :apply-disabled="commandApplyDisabled(selectedCommand)"
-            @update="updateSelectedPartyCharacterDraft"
-            @submit="runCommand(selectedCommand)"
-            @reset="resetCommand(selectedCommand)"
-          />
-          <EquipmentLoadouts
-            v-else-if="selectedCommand.id === partyEquipmentLoadoutCommandID"
-            :command="selectedCommand"
-            :draft="draftFor(selectedCommand)"
-            :option-sets="optionSets"
-            :roster="latestPartyCharacterInspectResult?.data as PartyCharacterInspectData | undefined"
-            :locker="latestInventoryLockerResult?.data ? inventoryLockerStatusData(latestInventoryLockerResult.data) : undefined"
-            :pending="commandPending(partyEquipmentLoadoutCommandID)"
-            :success-token="latestPartyEquipmentLoadoutResult?.success ? latestPartyEquipmentLoadoutResult.requestId : undefined"
-            :unavailable-reason="commandUnavailableReason(selectedCommand)"
-            @update-character="updateEquipmentLoadoutCharacter"
-            @submit="(argumentsByID) => runSpecializedMutation(partyEquipmentLoadoutCommandID, argumentsByID)"
-          />
-          <PartyRoster
-            v-else-if="selectedCommand.id === partyCharacterInspectCommandID"
-            :data="latestPartyCharacterInspectResult?.data as PartyCharacterInspectData | undefined"
-            :pending-commands="[...partyRosterMutationCommandIDs, partyKarmaSetCommandID].filter(commandPending)"
-            :karma-pending="commandPending(partyKarmaSetCommandID)"
-            @mutate="(commandID, argumentsByID) => runSpecializedMutation(commandID, argumentsByID)"
-          />
-          <SaveLibrary
-            v-else-if="selectedCommand.id === saveSnapshotListCommandID"
-            :data="saveList"
-            :detail="latestSaveDetailResult?.data ? saveSnapshotDetailData(latestSaveDetailResult.data) : undefined"
-            :pending-list="commandPending(saveSnapshotListCommandID)"
-            :pending-detail="commandPending(saveSnapshotGetCommandID)"
-            :pending-mutation="commandPending(saveSnapshotCaptureCommandID) || commandPending(saveSnapshotLoadCommandID) || commandPending(saveSnapshotDeleteCommandID)"
-            :current-scene="latestTestSetupStatusResult?.data ? {
-              locationName: (latestTestSetupStatusResult.data as TestSetupStatusData).locationName,
-              floor: (latestTestSetupStatusResult.data as TestSetupStatusData).floor,
-              date: (latestTestSetupStatusResult.data as TestSetupStatusData).date,
-              time: (latestTestSetupStatusResult.data as TestSetupStatusData).time,
-              partyMembers: (latestTestSetupStatusResult.data as TestSetupStatusData).party.length,
-            } : undefined"
-            @refresh="runQueryByID(saveSnapshotListCommandID, false)"
-            @inspect="inspectSaveSnapshot"
-            @capture="(value) => runSpecializedMutation(saveSnapshotCaptureCommandID, value)"
-            @load="(value) => runSpecializedMutation(saveSnapshotLoadCommandID, value)"
-            @delete="(value) => runSpecializedMutation(saveSnapshotDeleteCommandID, value)"
-          />
           <TestSetups
-            v-else-if="selectedCommand.id === testSetupStatusCommandID"
+            v-if="selectedCommand.id === testSetupStatusCommandID"
             :data="latestTestSetupStatusResult?.data as TestSetupStatusData | undefined"
             :updated-at="latestTestSetupStatusResult?.receivedAt"
             :pending-status="commandPending(testSetupStatusCommandID)"
@@ -1823,25 +1931,6 @@ onBeforeUnmount(() => {
             :pending="commandPending(loggingStatusCommandID) || loggingMutationCommandIDs.some(commandPending)"
             @mutate="(mutation) => runSpecializedMutation(mutation.commandID, mutation.argumentsByID)"
             @refresh="runQueryByID(loggingStatusCommandID, false)"
-          />
-          <WorkbenchWind
-            v-else-if="selectedCommand.id === windStatusCommandID"
-            :direction="windDirection(latestWindResult)"
-            :updated-at="latestWindResult?.receivedAt"
-            :now="now"
-            :paused="livePollingPaused"
-            :pending="commandPending(windSetCommandID)"
-            @toggle-pause="livePollingPaused = !livePollingPaused"
-            @apply="(direction) => runSpecializedMutation(windSetCommandID, { direction })"
-          />
-          <WorkbenchCalendar
-            v-else-if="selectedCommand.id === calendarStatusCommandID"
-            :data="latestCalendarResult?.data ? calendarStatusData(latestCalendarResult.data) : undefined"
-            :updated-at="latestCalendarResult?.receivedAt"
-            :pending-time="commandPending(calendarSetTimeCommandID)"
-            :pending-day="commandPending(calendarSetDayCommandID)"
-            @set-time="setCalendarTime"
-            @set-day="setCalendarDay"
           />
           <SearchItemStacksInspector
             v-else-if="selectedCommand.id === searchStatusCommandID"
@@ -1865,31 +1954,6 @@ onBeforeUnmount(() => {
             @remove="(item) => runSpecializedMutation(questItemRemoveCommandID, { item })"
 			@use-shard="(argumentsByID) => runSpecializedMutation(questShardUseCommandID, argumentsByID)"
           />
-          <WorldNavigator
-            v-else-if="selectedCommand.id === worldPositionStatusCommandID"
-            :key="`${sessionID}:${sceneGeneration}`"
-            :data="lastSuccessfulWorldPositionResult?.data ? worldPositionStatusData(lastSuccessfulWorldPositionResult.data) : undefined"
-            :updated-at="lastSuccessfulWorldPositionResult?.receivedAt"
-            :pending="commandPending(worldPositionSetCommandID)"
-            :refreshing="commandPending(worldPositionStatusCommandID)"
-            :stale="Boolean(lastSuccessfulWorldPositionResult && latestWorldPositionResult?.success === false)"
-            :landmarks="worldLandmarkChoices"
-            :pending-landmark="commandPending(movementLandmarkTravelCommandID)"
-            :initial-coordinates="linkedWorldCoordinates"
-            @refresh="runQueryByID(worldPositionStatusCommandID, false)"
-            @apply="applyWorldPosition"
-            @travel-landmark="(landmark) => runSpecializedMutation(movementLandmarkTravelCommandID, { landmark })"
-          />
-          <MoongateAtlas
-            v-else-if="selectedCommand.id === moongateStatusCommandID"
-            :data="latestMoongateResult?.data ? moongateStatusData(latestMoongateResult.data) : undefined"
-            :updated-at="latestMoongateResult?.receivedAt"
-            :overlay-pending="commandPending(moongateOverlaySetCommandID)"
-            :travel-pending="commandPending(moongateTravelCommandID)"
-            @navigate="openWorldNavigator"
-            @set-overlay="(enabled) => runSpecializedMutation(moongateOverlaySetCommandID, { enabled: String(enabled) })"
-            @travel="(value) => runSpecializedMutation(moongateTravelCommandID, value)"
-          />
           <ShrineProgressInspector
             v-else-if="selectedCommand.id === shrineStatusCommandID"
             :data="latestShrineStatusResult?.data ? shrineStatusData(latestShrineStatusResult.data) : undefined"
@@ -1900,12 +1964,6 @@ onBeforeUnmount(() => {
             @select="selectShrine"
             @apply="(argumentsByID) => runSpecializedMutation(shrineProgressCommandID, argumentsByID)"
             @preset="(argumentsByID) => runSpecializedMutation(codexQuestStateSetAllCommandID, argumentsByID)"
-          />
-          <CombatEncounterComposer
-            v-else-if="selectedCommand.id === combatEncounterOptionsCommandID"
-            :options="latestCombatEncounterOptionsResult?.data ? combatEncounterOptionsData(latestCombatEncounterOptionsResult.data) : undefined"
-            :pending="commandPending(combatEncounterStartCommandID)"
-            @start="(argumentsByID) => runSpecializedMutation(combatEncounterStartCommandID, argumentsByID)"
           />
           <MerchantTester
             v-else-if="selectedCommand.id === merchantTesterCatalogCommandID"
@@ -1963,30 +2021,6 @@ onBeforeUnmount(() => {
 			:pending="worldDiagnosticCommandIDs.some(commandPending)"
 			@refresh="worldDiagnosticCommandIDs.forEach((commandID) => runQueryByID(commandID, false))"
 		  />
-          <InventoryLocker
-            v-else-if="selectedCommand.id === inventoryLockerStatusCommandID"
-            :data="latestInventoryLockerResult?.data ? inventoryLockerStatusData(latestInventoryLockerResult.data) : undefined"
-            :updated-at="latestInventoryLockerResult?.receivedAt"
-            :commands="commands"
-            :pending="inventoryLockerMutationCommandIDs.some(commandPending)"
-            @mutate="(mutation) => runSpecializedMutation(mutation.commandID, mutation.argumentsByID)"
-          />
-          <SpellInventory
-            v-else-if="selectedCommand.id === spellInventoryStatusCommandID"
-            :data="latestSpellInventoryResult?.data ? spellInventoryStatusData(latestSpellInventoryResult.data) : undefined"
-            :updated-at="latestSpellInventoryResult?.receivedAt"
-            :pending="spellInventoryMutationCommandIDs.some(commandPending)"
-            @mutate="(mutation) => runSpecializedMutation(mutation.commandID, mutation.argumentsByID)"
-          />
-          <ActiveCombatConsole
-            v-else-if="selectedCommand.id === activeCombatStatusCommandID"
-			:commands="commands"
-            :data="latestActiveCombatResult?.data ? activeCombatStatusData(latestActiveCombatResult.data) : undefined"
-            :updated-at="latestActiveCombatResult?.receivedAt"
-            :pending="activeCombatMutationCommandIDs.some(commandPending)"
-            @mutate="(mutation) => runSpecializedMutation(mutation.commandID, mutation.argumentsByID)"
-            @open-encounter="openCombatEncounterComposer"
-          />
           <ObservationPane
             v-else-if="selectedCommand.id === observationCommandID"
             :data="latestObservationResult?.data ? observationResultData(latestObservationResult.data) : undefined"

@@ -43,20 +43,14 @@ export function taskDefinition(id: TaskID): TaskDefinition {
 
 /** Surface owners keyed by catalog command; key order is the order shown in the task page. */
 export const toolDefinitions: Record<string, ToolDefinition> = {
-  "world.position.status": { task: "goto", name: "World Navigator", description: "Move the party to a map, floor and position, or travel to a landmark, with a review of the destination first." },
-  "party.character.inspect": { task: "party", name: "Party Roster", description: "Review active positions 1-6 and inactive companions, then run fingerprint-checked roster and party-wide operations." },
-  "party.character.update": { task: "party", name: "Character Editor", description: "Edit one active character's attributes, resources, individual condition and party position with a pending-change preview." },
-  "party.equipment.loadout.update": { task: "party", name: "Equipment Loadouts", description: "Stage and review one partial six-slot plan for one or all active party members as an atomic operation." },
-  "inventory.locker.status": { task: "items", name: "Inventory Locker" },
-  "inventory.spell.status": { task: "items", name: "Spell Inventory" },
-  "quest.item.status": { task: "items", name: "Quest Items" },
-  "search.status": { task: "items", name: "Item Stacks and Search" },
-  "calendar.status": { task: "time", name: "Calendar" },
-  "environment.wind.status": { task: "time", name: "Wind" },
-  "moongate.status": { task: "time", name: "Moongates and Moon Phases" },
-  "combat.status": { task: "fight", name: "Active Combat" },
-  "combat.encounter.options": { task: "fight", name: "Encounter Composer" },
-  "save.snapshot.list": { task: "checkpoints", name: "Checkpoints", description: "Capture, inspect, load, and revision-safely remove immutable gameplay checkpoints." },
+  "world.position.status": { task: "goto", name: "Go to", description: "Move the party to a map, floor and position, to a room of a dungeon, or travel to a landmark." },
+  "party.character.inspect": { task: "party", name: "Party", description: "Party members, health, levels, equipment and whole-party actions." },
+  "inventory.locker.status": { task: "items", name: "Items & spells", description: "Supplies, reagents, potions, scrolls, equipment stock, quest items and prepared spells." },
+  "calendar.status": { task: "time", name: "Time & sky", description: "Time of day, the date, the moon and moongates, and the wind." },
+  "combat.status": { task: "fight", name: "Fight", description: "Start an encounter, or control the battle that is under way." },
+  "save.snapshot.list": { task: "checkpoints", name: "Checkpoints", description: "Save this moment and come back to it later." },
+  "quest.item.status": { task: "more", group: "World extras", name: "Quest Item Shards", description: "Use shards of the gem on a Shadowlord's flame, and add or remove quest items one at a time." },
+  "search.status": { task: "more", group: "World extras", name: "Item Stacks and Search" },
   "shrine.status": { task: "more", group: "World extras", name: "Shrine Progress", description: "Inspect and alter authoritative shrine quest and ruined-state progression." },
   "monster.ecosystem.status": { task: "more", group: "World extras", name: "Monster Ecosystem" },
   "vehicle.status": { task: "more", group: "World extras", name: "Ships" },
@@ -126,8 +120,66 @@ export function placeLabel(place: PlaceData): string {
   return place.locationName
 }
 
+/**
+ * One page per task: its anchor command stands for the page everywhere (palette, polling, results),
+ * `queries` are read on open and while the page is visible, `commands` belong to the page, and
+ * `uses` are other tools' commands the page also calls.
+ */
+export interface PageDefinition {
+  anchor: string
+  queries: string[]
+  loadOnce?: string[]
+  commands: string[]
+  uses?: string[]
+}
+
+export const pageDefinitions: Partial<Record<TaskID, PageDefinition>> = {
+  goto: {
+    anchor: "world.position.status",
+    queries: ["world.position.status"],
+    commands: ["world.position.set", "movement.landmark.travel", "movement.free-move.set"],
+  },
+  party: {
+    anchor: "party.character.inspect",
+    queries: ["party.character.inspect", "inventory.locker.status"],
+    commands: ["party.character.update", "party.equipment.loadout.update", "party.maximize-levels", "party.status.set", "party.fill", "party.member.add", "party.karma.set", "party.restore"],
+  },
+  items: {
+    anchor: "inventory.locker.status",
+    queries: ["inventory.locker.status", "inventory.spell.status", "quest.item.status"],
+    commands: [
+      "inventory.provision.set", "inventory.provision.preset", "inventory.reagent.set", "inventory.reagent.preset", "inventory.potion.add",
+      "inventory.potion.preset", "inventory.scroll.add", "inventory.scroll.preset", "inventory.equipment.preset", "inventory.equipment.grant-preset",
+      "inventory.equipment.set", "inventory.equipment.clear", "quest.inventory.preset-usable",
+      "inventory.spell.status", "inventory.spell.set", "inventory.spell.preset-max", "spell.effect.set-remaining", "spell.effect.activate",
+    ],
+    uses: ["quest.item.ensure", "quest.item.remove"],
+  },
+  time: {
+    anchor: "calendar.status",
+    queries: ["calendar.status", "environment.wind.status", "moongate.status"],
+    commands: ["calendar.set-time", "calendar.set-day", "environment.wind.status", "environment.wind.set", "moongate.status", "overlay.moongate.set", "moongate.travel"],
+  },
+  fight: {
+    anchor: "combat.status",
+    queries: ["combat.status", "party.character.inspect"],
+    loadOnce: ["combat.encounter.options"],
+    commands: [
+      "combat.encounter.options", "combat.encounter.start", "combat.monster.sleep.set", "combat.exit-debug", "combat.monster.spawn", "rng.seed.set",
+      "combat.monster.damage-raw", "combat.monster.kill", "combat.monster.kill-all", "combat.monster.sleep-all", "combat.dungeon-room.clear",
+      "combat.monster.clear", "combat.presentation.speed.set",
+    ],
+  },
+  checkpoints: {
+    anchor: "save.snapshot.list",
+    queries: ["save.snapshot.list", "test-setup.status"],
+    commands: ["save.snapshot.get", "save.snapshot.capture", "save.snapshot.load", "save.snapshot.delete"],
+  },
+}
+
 export type HomeQuickEffect =
   | { kind: "landmark"; landmark: string }
+  | { kind: "party-restore" }
   | { kind: "time"; hour: number; minute: number }
   | { kind: "open"; commandId: string }
   | { kind: "exit-combat" }

@@ -18,8 +18,7 @@ async function openWorkbench(page: Page) {
 
 async function openInventory(page: Page) {
   await page.locator('[data-workspace="items"]').click()
-  await page.locator('[data-command-select="inventory.locker.status"]').click()
-  await expect(page.getByRole("spinbutton", { name: "gold target quantity", exact: true })).toHaveValue("100")
+  await expect(page.getByRole("spinbutton", { name: "gold new amount", exact: true })).toHaveValue("100")
 }
 
 test("desktop startup displays status and usable navigation", async ({ page }) => {
@@ -28,8 +27,7 @@ test("desktop startup displays status and usable navigation", async ({ page }) =
   await expect(page.locator("[data-topbar-where]")).toContainText("Britain")
   await expect(page.locator("[data-topbar-party]")).toContainText("1 · all healthy")
   await page.locator('[data-workspace="time"]').click()
-  await page.locator('[data-command-select="calendar.status"]').click()
-  await expect(page.locator(".calendar-readout")).toContainText("4:15 PM")
+  await expect(page.locator("[data-time-now]")).toContainText("4:15 PM")
   await openInventory(page)
   await expect(page.locator('[data-workspace="more"]')).toBeInViewport()
   await page.locator('[data-workspace="more"]').click()
@@ -41,30 +39,29 @@ test("compact laptop layout keeps navigation and inventory controls reachable", 
   await page.setViewportSize({ width: 800, height: 900 })
   await openWorkbench(page)
   await openInventory(page)
-  const gold = page.getByRole("spinbutton", { name: "gold target quantity", exact: true })
+  const gold = page.getByRole("spinbutton", { name: "gold new amount", exact: true })
   await gold.fill("555")
   await gold.scrollIntoViewIfNeeded()
   await expect(gold).toBeInViewport({ ratio: 1 })
-  await page.getByRole("button", { name: "STAGE CHANGE", exact: true }).click({ trial: true })
+  await expect(page.locator("[data-change-bar]")).toBeInViewport()
+  await page.locator("[data-change-apply]").click({ trial: true })
   await expect(page.locator('[data-workspace="more"]')).toBeInViewport()
   const overflow = await page.locator(".instrument-bank, .task-tabs, .history-panel").evaluateAll((elements) =>
     elements.filter((element) => element.scrollWidth > element.clientWidth + 1).map((element) => element.className))
   expect(overflow).toEqual([])
 })
 
-test("inventory mutation requires confirmation and reports a rejected command", async ({ page }) => {
+test("inventory change waits in the pending bar until applied and reports a rejected command", async ({ page }) => {
   const wire = await openWorkbench(page)
   await openInventory(page)
-  await page.getByRole("spinbutton", { name: "gold target quantity", exact: true }).fill("555")
+  await page.getByRole("spinbutton", { name: "gold new amount", exact: true }).fill("555")
+  await expect(page.locator("[data-change-bar]")).toContainText("1 change")
   expect(wire.executions("inventory.provision.set")).toHaveLength(0)
-  await page.getByRole("button", { name: "STAGE CHANGE", exact: true }).click()
-  await expect(page.locator("[data-locker-review-apply]")).toBeVisible()
+  await page.locator("[data-change-discard]").click()
+  await expect(page.locator("[data-change-bar]")).toHaveCount(0)
   expect(wire.executions("inventory.provision.set")).toHaveLength(0)
-  await page.locator("[data-locker-review-cancel]").click()
-  await expect(page.locator("[data-locker-review-apply]")).toHaveCount(0)
-  expect(wire.executions("inventory.provision.set")).toHaveLength(0)
-  await page.getByRole("button", { name: "STAGE CHANGE", exact: true }).click()
-  await page.locator("[data-locker-review-apply]").click()
+  await page.getByRole("spinbutton", { name: "gold new amount", exact: true }).fill("555")
+  await page.locator("[data-change-apply]").click()
   await expect.poll(() => wire.executions("inventory.provision.set").length).toBe(1)
   const request = wire.executions("inventory.provision.set")[0]
   expect(request.payload.arguments).toEqual({ provision: "gold", targetQuantity: 555, expectedQuantity: 100 })
@@ -72,7 +69,7 @@ test("inventory mutation requires confirmation and reports a rejected command", 
     sessionId: "session-1", requestId: request.id, commandId: "inventory.provision.set", sceneGeneration: 7,
     success: false, errorCode: "test_rejection", errorMessage: "Inventory change rejected by test transport.",
   } })
-  await expect(page.locator(".operation-banner.failure")).toContainText("Inventory change rejected by test transport.")
+  await expect(page.locator(".operation-banner.failure, [data-page-notice]").first()).toContainText("Inventory change rejected by test transport.")
   expect(wire.executions("inventory.provision.set")).toHaveLength(1)
 })
 

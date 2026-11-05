@@ -369,6 +369,91 @@ func TestWorldPositionSetResolvesDungeonRouteIntentsAndRestartsAuthority(t *test
 	assert.Empty(t, unavailable.Changes)
 }
 
+func TestWorldPositionSetOutsideARoomLeavesOneStepFromThatRoom(t *testing.T) {
+	scene := newWorldNavigatorDebugTestScene(t)
+	state := scene.gameState
+	state.MapState.Lighting.RestoreTorchMinutes(17)
+	state.MagicLightMinutesRemaining = 23
+	state.MapState.Lighting.SetMagicLight(true)
+
+	var status debugging.WorldPositionStatusData
+	require.NoError(t, json.Unmarshal(scene.ExecuteDebugCommand(debugging.Request{
+		CommandID: debugging.CommandWorldPositionStatus,
+	}).Data, &status))
+	destination := status.Destinations[int(references.Covetous)]
+	require.Equal(t, int(references.Covetous), destination.LocationID)
+	require.NotEmpty(t, destination.Rooms)
+	var listed debugging.WorldPositionDungeonRoomData
+	for _, room := range destination.Rooms {
+		if room.Room == 12 {
+			listed = room
+		}
+	}
+	require.True(t, listed.Available, listed.UnavailableReason)
+	assert.Equal(t, debugging.WorldPositionDungeonRoomData{
+		Room: 12, Label: "Room 12", Floor: 5, RoomX: 3, RoomY: 4, Available: true,
+		Setup: listed.Setup, FacingLabel: listed.FacingLabel, Summary: listed.Summary,
+	}, listed)
+	require.NotNil(t, listed.Setup)
+	assert.NotEmpty(t, listed.FacingLabel)
+	assert.NotEmpty(t, listed.Summary, "the room preview names its fixed monsters")
+	assert.Empty(t, status.Destinations[int(references.Britain)].Rooms, "only dungeons list rooms")
+
+	request := worldRoutePositionSetDebugRequest(
+		state, references.Covetous, debugging.WorldPlacementDungeonOutsideRoom, debugging.WorldRouteBritannia,
+	)
+	request.Arguments["room"] = mustDebugJSON(12)
+	result := scene.ExecuteDebugCommand(request)
+
+	require.True(t, result.Success, result.ErrorMessage)
+	assert.Equal(t, references.PlayerLocation{
+		Location: references.Covetous,
+		Floor:    references.FloorNumber(listed.Setup.Floor),
+		Position: references.Position{X: references.Coordinate(listed.Setup.X), Y: references.Coordinate(listed.Setup.Y)},
+	}, state.MapState.PlayerLocation)
+	snapshot, active := state.DungeonStateSnapshot()
+	require.True(t, active)
+	assert.Equal(t, listed.FacingLabel, debugDungeonFacingLabel(snapshot.Facing))
+	assert.Equal(t, references.DungeonLastDirection(snapshot.Facing), snapshot.LastDirection)
+	assert.Equal(t, 17, state.MapState.Lighting.TorchMinutesRemaining())
+	assert.Equal(t, 23, state.MagicLightMinutesRemaining)
+	assert.False(t, state.HasPendingDungeonRoomEncounter(), "the party stands beside the room, not in it")
+
+	token, _ := state.BeginDungeonCommandCycle()
+	move := state.TryDungeonAdvance()
+	state.CompleteDungeonCommandCycle(token, move.Completion)
+
+	assert.Equal(t, game_state.DungeonMoveMoved, move.Outcome)
+	assert.Equal(t, references.Position{X: 3, Y: 4}, state.MapState.PlayerLocation.Position)
+	require.True(t, state.HasPendingDungeonRoomEncounter())
+	require.NoError(t, state.ResolvePendingDungeonRoomEncounter())
+	assert.Equal(t, 12, state.CombatScene.DungeonRoomOrigin.Room)
+}
+
+func TestWorldPositionSetOutsideARoomRejectsMissingAndRoomlessDungeons(t *testing.T) {
+	scene := newWorldNavigatorDebugTestScene(t)
+	state := scene.gameState
+	before := state.MapState.PlayerLocation
+	request := worldRoutePositionSetDebugRequest(
+		state, references.Covetous, debugging.WorldPlacementDungeonOutsideRoom, debugging.WorldRouteBritannia,
+	)
+
+	missing := scene.ExecuteDebugCommand(request)
+
+	assert.Equal(t, "invalid_world_setup", missing.ErrorCode)
+	assert.Contains(t, missing.ErrorMessage, "requires a room")
+
+	request.Arguments["location"] = mustDebugJSON(strconv.Itoa(int(references.Despise)))
+	request.Arguments["room"] = mustDebugJSON(0)
+	rejected := scene.ExecuteDebugCommand(request)
+
+	assert.Equal(t, "invalid_world_setup", rejected.ErrorCode)
+	assert.Contains(t, rejected.ErrorMessage, "room 0 is not placed in Despise")
+	assert.Equal(t, before, state.MapState.PlayerLocation)
+	_, active := state.DungeonStateSnapshot()
+	assert.False(t, active)
+}
+
 func TestWorldPositionSetRejectsStaleReviewsWithoutPartialMutation(t *testing.T) {
 	t.Run("world position", func(t *testing.T) {
 		scene := newWorldNavigatorDebugTestScene(t)

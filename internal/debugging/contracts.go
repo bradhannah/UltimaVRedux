@@ -183,6 +183,20 @@ type WorldPositionPlacementTargetData struct {
 	LastDirectionLabel string                  `json:"lastDirectionLabel,omitempty"`
 }
 
+// WorldPositionDungeonRoomData describes one fixed dungeon room and the cell the party stands on to enter it.
+type WorldPositionDungeonRoomData struct {
+	Room              int                     `json:"room"`
+	Label             string                  `json:"label"`
+	Floor             int                     `json:"floor"`
+	RoomX             int                     `json:"roomX"`
+	RoomY             int                     `json:"roomY"`
+	Available         bool                    `json:"available"`
+	UnavailableReason string                  `json:"unavailableReason,omitempty"`
+	Setup             *WorldPositionSetupData `json:"setup,omitempty"`
+	FacingLabel       string                  `json:"facingLabel,omitempty"`
+	Summary           string                  `json:"summary,omitempty"`
+}
+
 // WorldPositionDestinationData describes one complete World Navigator destination.
 type WorldPositionDestinationData struct {
 	LocationID       int                                `json:"locationId"`
@@ -193,6 +207,7 @@ type WorldPositionDestinationData struct {
 	DefaultSetup     WorldPositionSetupData             `json:"defaultSetup"`
 	WorldEntrance    *WorldPositionSetupData            `json:"worldEntrance,omitempty"`
 	PlacementTargets []WorldPositionPlacementTargetData `json:"placementTargets,omitempty"`
+	Rooms            []WorldPositionDungeonRoomData     `json:"rooms,omitempty"`
 }
 
 // WorldPositionStatusData is the typed World Navigator status payload.
