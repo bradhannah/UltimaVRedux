@@ -228,14 +228,17 @@ output in every batch and the whole-inventory duplicate pass.
 ## Starting The Debug Workbench
 
 ```sh
-make dev ARGS="-debug-workbench"
+make debug
 ```
 
-Open `http://127.0.0.1:8585`. For another loopback port:
+This builds and plays the game like `make dev`, with the Workbench on, and
+prints its address: `http://127.0.0.1:8585`. For another loopback port:
 
 ```sh
-make dev ARGS="-debug-workbench -debug-workbench-port 8686"
+make debug WORKBENCH_PORT=8686
 ```
+
+Other game options still go in `ARGS`, as with `make dev`.
 
 The server binds only to `127.0.0.1`; browser requests execute through the game
 update thread. Use the navigation-only Command Palette (`Ctrl+K` / `Command+K`)
@@ -252,6 +255,7 @@ for review, revision, and rollback contracts, and
 | `go build -o bin/ultimav ./cmd/ultimav` | Build local production source without Make. |
 | `go run ./cmd/save-convert --help` | Inspect the headless converter; follow the [save converter procedure](details/SAVE_CONVERTER.md) for explicit inputs and output modes. |
 | `make dev` | Build and run the game for development. |
+| `make debug` | Build and run the game with the Debug Workbench on. |
 | `make test` | Run the Go test suite. |
 | `make test-integration` | Run tests whose names match `Integration`, not the complete real-data suite. |
 | `make test-provisioned` / `make test-race-provisioned` | Run every package with explicit original data and zero skips. |
