@@ -414,68 +414,6 @@
     "destructive": true
   },
   {
-    "id": "party.status.set",
-    "category": "Party",
-    "name": "Set Party Status",
-    "description": "Atomically set an explicit status for one or a reviewed list of stable active roster indices.",
-    "aliases": [
-      "pc status"
-    ],
-    "parameters": [
-      {
-        "id": "expectedFingerprint",
-        "name": "Reviewed Roster Fingerprint",
-        "kind": "string",
-        "required": true,
-        "availability": [
-          "gameplay",
-          "outside_combat"
-        ]
-      },
-      {
-        "id": "rosterIndices",
-        "name": "Active Roster Indices",
-        "kind": "integer_list",
-        "required": true,
-        "minimum": 0,
-        "maximum": 15
-      },
-      {
-        "id": "status",
-        "name": "Status",
-        "kind": "enum",
-        "required": true,
-        "choices": [
-          {
-            "value": "good",
-            "label": "Good"
-          },
-          {
-            "value": "poisoned",
-            "label": "Poisoned"
-          },
-          {
-            "value": "sleep",
-            "label": "Sleep"
-          },
-          {
-            "value": "charmed",
-            "label": "Charmed"
-          },
-          {
-            "value": "dead",
-            "label": "Dead"
-          }
-        ],
-        "controlHint": "select"
-      }
-    ],
-    "executionModes": [
-      "synchronized_live"
-    ],
-    "destructive": true
-  },
-  {
     "id": "party.fill",
     "category": "Party",
     "name": "Fill Active Party",
@@ -4468,7 +4406,7 @@
     "id": "party.equipment.loadout.update",
     "category": "Party",
     "name": "Equipment Loadout",
-    "description": "Atomically change one or more equipment slots for one or all active party members using carried or explicitly manufactured items.",
+    "description": "Atomically change one or more equipment slots for one active party member using carried or explicitly manufactured items.",
     "aliases": [
       "ready equipment",
       "party loadout"
@@ -4477,10 +4415,10 @@
       {
         "id": "character",
         "name": "Character",
-        "description": "Select all active party members or one current member.",
+        "description": "Select a current active-party member.",
         "kind": "character",
         "required": true,
-        "optionsProvider": "party.equipment-loadout-targets",
+        "optionsProvider": "party.active-characters",
         "controlHint": "select",
         "availability": [
           "gameplay"

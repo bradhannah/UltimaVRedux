@@ -146,7 +146,7 @@ const movementLandmarkTravelCommandID = "movement.landmark.travel"
 const partyKarmaSetCommandID = "party.karma.set"
 const partyCharacterInspectCommandID = "party.character.inspect"
 const partyRestoreCommandID = "party.restore"
-const partyRosterMutationCommandIDs = ["party.maximize-levels", "party.status.set", "party.fill", "party.member.add", partyRestoreCommandID]
+const partyRosterMutationCommandIDs = ["party.maximize-levels", "party.fill", "party.member.add", partyRestoreCommandID]
 const testSetupStatusCommandID = "test-setup.status"
 const saveSnapshotListCommandID = "save.snapshot.list"
 const saveSnapshotGetCommandID = "save.snapshot.get"
@@ -442,7 +442,6 @@ const latestSaveListResult = computed(() => latestResults.value[saveSnapshotList
 const latestSaveDetailResult = computed(() => latestResults.value[saveSnapshotGetCommandID])
 const saveList = computed(() => latestSaveListResult.value?.data ? saveSnapshotListData(latestSaveListResult.value.data) : undefined)
 const latestPartyCharacterInspectResult = computed(() => latestResults.value[partyCharacterInspectCommandID])
-const latestPartyEquipmentLoadoutResult = computed(() => latestResults.value[partyEquipmentLoadoutCommandID])
 const latestObservationResult = computed(() => [...results.value].reverse().find((result) =>
   observationCommandIDs.includes(result.commandId as ObservationCommandID) && result.success && result.data !== undefined,
 ))

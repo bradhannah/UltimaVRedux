@@ -179,7 +179,7 @@ func TestPartyEquipmentLoadoutCatalogUsesSlotSpecificAtomicChoices(t *testing.T)
 	definition, ok := NewInitialCatalog().Get(CommandPartyEquipmentLoadoutUpdate)
 	require.True(t, ok)
 	require.Len(t, definition.Parameters, 8)
-	assert.Equal(t, OptionProviderEquipmentLoadoutTargets, definition.Parameters[0].OptionsProvider)
+	assert.Equal(t, OptionProviderActivePartyCharacters, definition.Parameters[0].OptionsProvider)
 	assert.Equal(t, "helm", definition.Parameters[1].ID)
 	assert.Equal(t, "amulet", definition.Parameters[6].ID)
 	assert.Equal(t, inventoryExpectedSnapshotID, definition.Parameters[7].ID)
@@ -329,23 +329,6 @@ func TestInitialCatalogValidatesFourthBatchReviewedParameters(t *testing.T) {
 	require.NoError(t, catalog.ValidateRequest(Request{SessionID: "test", ID: "preset", CommandID: CommandQuestInventoryPresetUsable, Arguments: map[string]json.RawMessage{
 		"expectedFingerprint": json.RawMessage(`"reviewed"`),
 	}}))
-}
-
-func TestInitialCatalogValidatesPartyRosterIndexLists(t *testing.T) {
-	catalog := NewInitialCatalog()
-	request := Request{SessionID: "test", ID: "status", CommandID: CommandPartyStatusSet, Arguments: map[string]json.RawMessage{
-		"expectedFingerprint": json.RawMessage(`"reviewed"`),
-		"rosterIndices":       json.RawMessage(`[0,5]`),
-		"status":              json.RawMessage(`"dead"`),
-	}}
-	require.NoError(t, catalog.ValidateRequest(request))
-
-	request.Arguments["rosterIndices"] = json.RawMessage(`[]`)
-	require.Error(t, catalog.ValidateRequest(request))
-	request.Arguments["rosterIndices"] = json.RawMessage(`[16]`)
-	require.Error(t, catalog.ValidateRequest(request))
-	request.Arguments["rosterIndices"] = json.RawMessage(`"0"`)
-	require.Error(t, catalog.ValidateRequest(request))
 }
 
 func TestInitialCatalogValidatesApprovedToolBoundaries(t *testing.T) {

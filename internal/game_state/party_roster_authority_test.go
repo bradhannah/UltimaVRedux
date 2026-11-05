@@ -149,46 +149,6 @@ func TestPartyMutationRejectsStaleAndCombatBeforeMutation(t *testing.T) {
 	assert.Equal(t, changed, state.CurrentPartyRosterSnapshot())
 }
 
-func TestSetPartyRosterStatusesIsAtomicAndMaintainsHPConsistency(t *testing.T) {
-	state, _ := newPartyRosterAuthorityTestState(t, 3)
-	state.PartyState.GetCharacter(0).SetHp(20)
-	state.PartyState.GetCharacter(1).SetHp(30)
-	snapshot := state.CurrentPartyRosterSnapshot()
-
-	deadResult, err := state.SetPartyRosterStatuses(PartyStatusMutationRequest{
-		ExpectedFingerprint: snapshot.Fingerprint,
-		RosterIndices:       []int{0, 1},
-		Status:              party_state.Dead,
-	})
-	require.NoError(t, err)
-	for _, index := range []int{0, 1} {
-		character := state.PartyState.GetCharacter(index)
-		assert.Equal(t, party_state.Dead, character.GetStatus())
-		assert.Zero(t, character.GetCurrentHp())
-	}
-
-	_, err = state.SetPartyRosterStatuses(PartyStatusMutationRequest{
-		ExpectedFingerprint: deadResult.After.Fingerprint,
-		RosterIndices:       []int{0, party_state.NRosterSlots},
-		Status:              party_state.Good,
-	})
-	require.ErrorIs(t, err, ErrInvalidPartyMutation)
-	assert.Zero(t, state.PartyState.GetCharacter(0).GetCurrentHp(), "validation must precede every write")
-
-	goodResult, err := state.SetPartyRosterStatuses(PartyStatusMutationRequest{
-		ExpectedFingerprint: deadResult.After.Fingerprint,
-		RosterIndices:       []int{0, 1},
-		Status:              party_state.Good,
-	})
-	require.NoError(t, err)
-	for _, index := range []int{0, 1} {
-		character := state.PartyState.GetCharacter(index)
-		assert.Equal(t, party_state.Good, character.GetStatus())
-		assert.Equal(t, uint16(1), character.GetCurrentHp())
-	}
-	assert.Equal(t, goodResult.After, state.CurrentPartyRosterSnapshot())
-}
-
 func TestFillActivePartyPreservesContiguousRosterOrder(t *testing.T) {
 	state, _ := newPartyRosterAuthorityTestState(t, 2)
 	before := state.CurrentPartyRosterSnapshot()

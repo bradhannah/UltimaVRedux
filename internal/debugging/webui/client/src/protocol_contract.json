@@ -3,7 +3,6 @@
   "parameterKinds": {
     "string": true,
     "integer": true,
-    "integer_list": true,
     "boolean": true,
     "enum": true,
     "character": true,

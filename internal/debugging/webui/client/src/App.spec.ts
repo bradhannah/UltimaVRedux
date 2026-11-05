@@ -465,7 +465,6 @@ describe("debug workbench connection", () => {
     expect(commandIDs).not.toContain("party.character.inspect")
 		expect(commandIDs).not.toContain("party.equipment.loadout.update")
 		expect(commandIDs).not.toContain("party.maximize-levels")
-		expect(commandIDs).not.toContain("party.status.set")
 		expect(commandIDs).not.toContain("party.fill")
 		expect(commandIDs).not.toContain("party.member.add")
     expect(commandIDs).not.toContain("calendar.set-time")
@@ -1718,26 +1717,6 @@ function formCatalogSnapshot(): object {
       optionSets: [{
         provider: "party.active-characters",
         choices: [
-          {
-            value: "0.QXZhdGFy",
-            label: "Position 1 · Avatar · Avatar",
-			metadata: { partyPosition: 1, name: "Avatar", class: "Avatar", status: "Good", strength: 20, dexterity: 20, intelligence: 20, currentHp: 100, maximumHp: 100, currentMp: 20, experience: 500, level: 5, karma: 50 },
-          },
-          {
-            value: "1.U2hhbWlubw",
-            label: "Position 2 · Shamino · Fighter",
-			metadata: { partyPosition: 2, name: "Shamino", class: "Fighter", status: "Good", strength: 18, dexterity: 21, intelligence: 17, currentHp: 82, maximumHp: 90, currentMp: 17, experience: 400, level: 4, karma: 50 },
-          },
-          {
-            value: "2.SW9sbw",
-            label: "Position 3 · Iolo · Bard",
-			metadata: { partyPosition: 3, name: "Iolo", class: "Bard", status: "Good", strength: 17, dexterity: 22, intelligence: 18, currentHp: 78, maximumHp: 85, currentMp: 9, experience: 350, level: 4, karma: 50 },
-          },
-        ],
-      }, {
-        provider: "party.equipment-loadout-targets",
-        choices: [
-          { value: "all", label: "All active party members" },
           {
             value: "0.QXZhdGFy",
             label: "Position 1 · Avatar · Avatar",

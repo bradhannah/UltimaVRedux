@@ -306,9 +306,9 @@ Authority and regression coverage are in
 
 ## Equipment Transaction
 
-`GameState.AlterEquipmentLoadouts` owns the atomic inventory/equipment
-orchestration of the reviewed `party.equipment.loadout.update` Workbench action,
-for one character or the whole party. The normal Ready dialog commits through
+`GameState.AlterEquipmentLoadout` owns the atomic inventory/equipment
+orchestration of the reviewed `party.equipment.loadout.update` Workbench action
+for one character. The normal Ready dialog commits through
 `GameState.ApplyReadyEquipment` instead. Its current command contract
 is defined in `internal/debugging/party_equipment_catalog.go`; authoritative
 transaction behavior remains in `GameState` and its tests.

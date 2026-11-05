@@ -4,7 +4,7 @@ export type CommandDraft = Record<string, string>
 export type FormErrors = Record<string, string>
 export type OptionSets = Record<string, Choice[]>
 
-const supportedParameterKinds = new Set(["string", "integer", "integer_list", "boolean", "enum", "character"])
+const supportedParameterKinds = new Set(["string", "integer", "boolean", "enum", "character"])
 
 export function hasUnsupportedParameters(command: CommandDefinition, optionSets: OptionSets = {}): boolean {
   return (command.parameters ?? []).some((parameter) =>
@@ -47,8 +47,8 @@ export function validateDraft(command: CommandDefinition, draft: CommandDraft, o
   return errors
 }
 
-export function serializeDraft(command: CommandDefinition, draft: CommandDraft): Record<string, string | number | boolean | number[]> {
-	const argumentsByID: Record<string, string | number | boolean | number[]> = {}
+export function serializeDraft(command: CommandDefinition, draft: CommandDraft): Record<string, string | number | boolean> {
+	const argumentsByID: Record<string, string | number | boolean> = {}
   for (const parameter of command.parameters ?? []) {
     const value = draft[parameter.id] ?? ""
     if (value === "") continue
@@ -56,9 +56,6 @@ export function serializeDraft(command: CommandDefinition, draft: CommandDraft):
       case "integer":
         argumentsByID[parameter.id] = Number(value)
         break
-		case "integer_list":
-			argumentsByID[parameter.id] = value.split(",").map(Number)
-			break
       case "boolean":
         argumentsByID[parameter.id] = value === "true"
         break
@@ -89,8 +86,6 @@ export function validateParameter(parameter: ParameterDefinition, value: string,
   switch (parameter.kind) {
     case "integer":
       return validateInteger(parameter, value)
-	case "integer_list":
-		return validateIntegerList(parameter, value)
     case "boolean":
       return value === "true" || value === "false" ? undefined : "Choose On or Off."
     case "enum":
@@ -101,18 +96,6 @@ export function validateParameter(parameter: ParameterDefinition, value: string,
     default:
       return `Unsupported parameter kind: ${parameter.kind}.`
   }
-}
-
-function validateIntegerList(parameter: ParameterDefinition, value: string): string | undefined {
-	if (value.split(",").some((entry) => !entry.trim())) return "Enter a whole-number index in every list position. Blank is not zero."
-	const values = value.split(",").map(Number)
-	if (values.length === 0 || values.some((candidate) => !Number.isInteger(candidate))) return "Enter one or more whole-number indices."
-	for (const candidate of values) {
-		const error = validateInteger(parameter, String(candidate))
-		if (error) return error
-	}
-
-	return undefined
 }
 
 function validateInteger(parameter: ParameterDefinition, value: string): string | undefined {

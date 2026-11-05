@@ -269,24 +269,6 @@ func (g *GameState) ProcessWindOnTurnAdvancement() {
 	g.windSystem.UpdateWindTick()
 }
 
-// AlterEquipmentLoadout validates and atomically applies a partial character loadout.
-func (g *GameState) AlterEquipmentLoadout(
-	input EquipmentLoadoutAlteration,
-) (EquipmentLoadoutAlterationResult, error) {
-	result := EquipmentLoadoutAlterationResult{
-		CharacterSlot: input.CharacterSlot,
-		CharacterName: "",
-		Changes:       nil,
-	}
-	batch, err := g.AlterEquipmentLoadouts(EquipmentLoadoutBatchAlteration{Targets: []EquipmentLoadoutAlteration{input}})
-	if err != nil {
-		return result, err
-	}
-	batch.Targets[0].Changes = batch.Changes
-
-	return batch.Targets[0], nil
-}
-
 // SetPartyMemberInvisible updates encounter-local party invisibility.
 func (combatState *CombatState) SetPartyMemberInvisible(memberIndex int, invisible bool) {
 	if memberIndex < 0 || memberIndex >= party_state.MaxActiveParty {

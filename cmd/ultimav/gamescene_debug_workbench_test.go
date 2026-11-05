@@ -26,7 +26,6 @@ type debugWorkbenchStateStub struct {
 	alter          func(game_state.ActiveCharacterAlteration) (game_state.ActiveCharacterAlterationResult, error)
 	roster         game_state.PartyRosterSnapshot
 	maximize       func(string) (game_state.PartyRosterMutationResult, error)
-	setStatuses    func(game_state.PartyStatusMutationRequest) (game_state.PartyRosterMutationResult, error)
 	setKarma       func(int) (game_state.PartyKarmaAlteration, error)
 }
 
@@ -88,10 +87,6 @@ func (s debugWorkbenchStateStub) MaximizeActiveParty(fingerprint string) (game_s
 	return s.maximize(fingerprint)
 }
 
-func (s debugWorkbenchStateStub) SetPartyRosterStatuses(request game_state.PartyStatusMutationRequest) (game_state.PartyRosterMutationResult, error) {
-	return s.setStatuses(request)
-}
-
 func (debugWorkbenchStateStub) RestoreActiveParty(string) (game_state.PartyRosterMutationResult, error) {
 	panic("debug workbench stub: no test restores the active party")
 }
@@ -139,10 +134,6 @@ func TestActiveCharacterOptionSetUsesOpaqueSlotAndOccupantToken(t *testing.T) {
 	positions := activePartyPositionOptionSet([]game_state.ActiveCharacterSnapshot{{Slot: 1, Name: "Shamino"}}, 50, "")
 	assert.Equal(t, debugging.OptionProviderActivePartyPositions, positions.Provider)
 	assert.Equal(t, "2", positions.Choices[0].Value)
-	loadoutTargets := equipmentLoadoutTargetOptionSet([]game_state.ActiveCharacterSnapshot{{Slot: 1, Name: "Shamino"}}, 50, "")
-	assert.Equal(t, debugging.OptionProviderEquipmentLoadoutTargets, loadoutTargets.Provider)
-	require.Len(t, loadoutTargets.Choices, 2)
-	assert.Equal(t, debugging.Choice{Value: "all", Label: "All active party members"}, loadoutTargets.Choices[0])
 }
 
 func mustUnmarshalDebugString(t *testing.T, raw json.RawMessage) string {
@@ -185,34 +176,6 @@ func TestExecuteDebugCommandPartyCharacterInspect(t *testing.T) {
 	assert.Equal(t, 50, data.Karma)
 	require.Len(t, data.Roster, 1)
 	assert.Equal(t, 0, data.Roster[0].RosterIndex)
-}
-
-func TestExecuteDebugCommandPartyRosterBatchMutationsUseReviewedStableIndices(t *testing.T) {
-	before := game_state.PartyRosterSnapshot{Fingerprint: "before", Characters: []game_state.PartyRosterCharacterSnapshot{{RosterIndex: 0, Name: "Avatar", PartyMap: party_state.PartyMapActive, Status: party_state.Good, CurrentHP: 20, MaximumHP: 90, Level: 4}}}
-	after := game_state.PartyRosterSnapshot{Fingerprint: "after", Characters: []game_state.PartyRosterCharacterSnapshot{{RosterIndex: 0, Name: "Avatar", PartyMap: party_state.PartyMapActive, Status: party_state.Dead, CurrentHP: 0, MaximumHP: 90, Level: 4}}}
-	state := debugWorkbenchStateStub{setStatuses: func(request game_state.PartyStatusMutationRequest) (game_state.PartyRosterMutationResult, error) {
-		assert.Equal(t, "before", request.ExpectedFingerprint)
-		assert.Equal(t, []int{0}, request.RosterIndices)
-		assert.Equal(t, party_state.Dead, request.Status)
-		return game_state.PartyRosterMutationResult{Before: before, After: after}, nil
-	}}
-	result := executeDebugCommand(state, debugging.Request{
-		SessionID: "test", ID: "status", CommandID: debugging.CommandPartyStatusSet,
-		Arguments: map[string]json.RawMessage{
-			"expectedFingerprint": json.RawMessage(`"before"`),
-			"rosterIndices":       json.RawMessage(`[0]`),
-			"status":              json.RawMessage(`"dead"`),
-		},
-	})
-
-	require.True(t, result.Success)
-	assert.Equal(t, debugging.ExecutionSynchronized, result.EffectiveExecutionMode)
-	assert.Contains(t, stateChangePaths(result.Changes), "party.roster.0.status")
-	assert.Contains(t, stateChangePaths(result.Changes), "party.roster.0.currentHp")
-	var data partyRosterMutationResult
-	require.NoError(t, json.Unmarshal(result.Data, &data))
-	assert.Equal(t, "before", data.Before.Fingerprint)
-	assert.Equal(t, "after", data.After.Fingerprint)
 }
 
 func TestExecuteDebugCommandPartyRosterMutationRejectsStaleReview(t *testing.T) {

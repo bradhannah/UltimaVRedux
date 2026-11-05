@@ -43,7 +43,7 @@ func partyEquipmentCommands() []CommandDefinition {
 		ID:             CommandPartyEquipmentLoadoutUpdate,
 		Category:       partyEquipmentCategory,
 		Name:           "Equipment Loadout",
-		Description:    "Atomically change one or more equipment slots for one or all active party members using carried or explicitly manufactured items.",
+		Description:    "Atomically change one or more equipment slots for one active party member using carried or explicitly manufactured items.",
 		Aliases:        []string{"ready equipment", "party loadout"},
 		SearchTerms:    []string{"weapon", "armour", "armor", "shield", "helm", "ring", partyEquipmentAmuletID},
 		Parameters:     parameters,
@@ -56,10 +56,10 @@ func partyEquipmentCharacterParameter() ParameterDefinition {
 	return ParameterDefinition{
 		ID:              "character",
 		Name:            "Character",
-		Description:     "Select all active party members or one current member.",
+		Description:     "Select a current active-party member.",
 		Kind:            ParameterCharacter,
 		Required:        true,
-		OptionsProvider: OptionProviderEquipmentLoadoutTargets,
+		OptionsProvider: OptionProviderActivePartyCharacters,
 		ControlHint:     controlHintSelect,
 		Availability:    []string{contextGameplay},
 	}

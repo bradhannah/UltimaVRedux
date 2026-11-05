@@ -142,7 +142,7 @@ export const pageDefinitions: Partial<Record<TaskID, PageDefinition>> = {
   party: {
     anchor: "party.character.inspect",
     queries: ["party.character.inspect", "inventory.locker.status"],
-    commands: ["party.character.update", "party.equipment.loadout.update", "party.maximize-levels", "party.status.set", "party.fill", "party.member.add", "party.karma.set", "party.restore"],
+    commands: ["party.character.update", "party.equipment.loadout.update", "party.maximize-levels", "party.fill", "party.member.add", "party.karma.set", "party.restore"],
   },
   items: {
     anchor: "inventory.locker.status",

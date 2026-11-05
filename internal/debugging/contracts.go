@@ -8,15 +8,14 @@ type ParameterKind string
 
 // Supported parameter kinds for generated workbench controls.
 const (
-	ParameterString      ParameterKind = "string"
-	ParameterInteger     ParameterKind = "integer"
-	ParameterIntegerList ParameterKind = "integer_list"
-	ParameterBoolean     ParameterKind = "boolean"
-	ParameterEnum        ParameterKind = "enum"
-	ParameterCharacter   ParameterKind = "character"
-	ParameterLocation    ParameterKind = "location"
-	ParameterMonster     ParameterKind = "monster"
-	ParameterEquipment   ParameterKind = "equipment"
+	ParameterString    ParameterKind = "string"
+	ParameterInteger   ParameterKind = "integer"
+	ParameterBoolean   ParameterKind = "boolean"
+	ParameterEnum      ParameterKind = "enum"
+	ParameterCharacter ParameterKind = "character"
+	ParameterLocation  ParameterKind = "location"
+	ParameterMonster   ParameterKind = "monster"
+	ParameterEquipment ParameterKind = "equipment"
 )
 
 // ExecutionMode describes how a command interacts with live game state.

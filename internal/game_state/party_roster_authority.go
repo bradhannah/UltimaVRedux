@@ -65,13 +65,6 @@ type PartyRosterMutationResult struct {
 	After  PartyRosterSnapshot
 }
 
-// PartyStatusMutationRequest describes one atomic status change for one or more reviewed roster slots.
-type PartyStatusMutationRequest struct {
-	ExpectedFingerprint string
-	RosterIndices       []int
-	Status              party_state.CharacterStatus
-}
-
 // AddInactiveRosterMemberRequest identifies one reviewed inactive roster slot to add.
 type AddInactiveRosterMemberRequest struct {
 	ExpectedFingerprint string
@@ -149,64 +142,6 @@ func (g *GameState) RestoreActiveParty(expectedFingerprint string) (PartyRosterM
 		character.SetHp(character.GetMaxHp())
 		character.SetStatus(party_state.Good)
 		character.RestoreMpByClass()
-	}
-
-	return g.finishPartyMutation(before), nil
-}
-
-// SetPartyRosterStatuses atomically updates status and HP for reviewed active roster slots.
-func (g *GameState) SetPartyRosterStatuses(request PartyStatusMutationRequest) (PartyRosterMutationResult, error) {
-	before, err := g.validatePartyMutation(request.ExpectedFingerprint)
-	if err != nil {
-		return PartyRosterMutationResult{}, err
-	}
-	if err = validateRosterStatus(request.Status); err != nil {
-		return PartyRosterMutationResult{}, err
-	}
-	if len(request.RosterIndices) == 0 {
-		return PartyRosterMutationResult{}, fmt.Errorf("%w: at least one roster index is required", ErrInvalidPartyMutation)
-	}
-
-	seen := make(map[int]struct{}, len(request.RosterIndices))
-	for _, index := range request.RosterIndices {
-		if index < 0 || index >= party_state.NRosterSlots {
-			return PartyRosterMutationResult{}, fmt.Errorf(
-				"%w: roster index %d is out of bounds", ErrInvalidPartyMutation, index,
-			)
-		}
-		if _, duplicate := seen[index]; duplicate {
-			return PartyRosterMutationResult{}, fmt.Errorf("%w: roster index %d is duplicated", ErrInvalidPartyMutation, index)
-		}
-		seen[index] = struct{}{}
-		if !g.PartyState.HasCharacter(index) {
-			return PartyRosterMutationResult{}, fmt.Errorf(
-				"%w: roster index %d is vacant", ErrInvalidPartyMutation, index,
-			)
-		}
-		character := g.PartyState.GetCharacter(index)
-		if !character.IsInParty() {
-			return PartyRosterMutationResult{}, fmt.Errorf("%w: roster index %d is not active", ErrInvalidPartyMutation, index)
-		}
-		if request.Status != party_state.Dead && character.GetCurrentHp() == 0 && character.GetMaxHp() == 0 {
-			return PartyRosterMutationResult{}, fmt.Errorf(
-				"%w: roster index %d cannot receive a living status with zero maximum HP",
-				ErrInvalidPartyMutation, index,
-			)
-		}
-	}
-
-	for _, index := range request.RosterIndices {
-		character := g.PartyState.GetCharacter(index)
-		if request.Status == party_state.Dead {
-			character.SetHp(0)
-			character.SetStatus(party_state.Dead)
-
-			continue
-		}
-		if character.GetCurrentHp() == 0 {
-			character.SetHp(1)
-		}
-		character.SetStatus(request.Status)
 	}
 
 	return g.finishPartyMutation(before), nil

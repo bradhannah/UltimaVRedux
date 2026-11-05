@@ -38,7 +38,7 @@ func registerCoreSceneDebugCommands(registry *debugCommandRegistry) {
 		registry.registerScene(commandID, "core gameplay", coreHandler, ritualStateMutationGuard)
 	}
 	for _, commandID := range []string{
-		debugging.CommandPartyMaximizeLevels, debugging.CommandPartyRestore, debugging.CommandPartyStatusSet,
+		debugging.CommandPartyMaximizeLevels, debugging.CommandPartyRestore,
 		debugging.CommandPartyFill, debugging.CommandPartyMemberAdd,
 	} {
 		registry.registerScene(commandID, "party roster", coreHandler, nil)
