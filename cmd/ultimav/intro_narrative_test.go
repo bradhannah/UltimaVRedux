@@ -77,19 +77,28 @@ func TestIntroNarrativeCharacterWidthHandlesMarkup(t *testing.T) {
 	assert.Equal(t, 7, introNarrativeCharacterWidth('A', widths, 5))
 }
 
-func TestIntroNarrativeLineWrapsAtSpaceAndJustifies(t *testing.T) {
+func TestIntroNarrativeLineBacksUpToNearestSpaceOrFittingSoftHyphen(t *testing.T) {
 	widths := make([]int, 91)
 	for index := range widths {
 		widths[index] = 4
 	}
-	text := "ONE TWO THREE"
 
-	line := introNarrativeLine(text, 0, 0, 42, widths, 5)
+	for _, test := range []struct {
+		text, line string
+		maxWidth   int
+		hyphen     bool
+	}{
+		{text: "ONE TWO THREE", line: "ONE TWO", maxWidth: 42, hyphen: false},
+		{text: "ONE TWO_THREE", line: "ONE TWO", maxWidth: 42, hyphen: true},
+		{text: "ONE TWO_THREE", line: "ONE", maxWidth: 40, hyphen: false},
+	} {
+		line := introNarrativeLine(test.text, 0, 0, test.maxWidth, widths, 5)
 
-	assert.Equal(t, "ONE TWO", text[:line.end])
-	assert.Equal(t, 8, line.next)
-	assert.True(t, line.justify)
-	assert.Equal(t, 1, line.spaces)
+		assert.Equal(t, test.line, test.text[:line.end], test.text)
+		assert.Equal(t, line.end+1, line.next, test.text)
+		assert.Equal(t, test.hyphen, line.drawHyphen, test.text)
+		assert.True(t, line.justify, test.text)
+	}
 }
 
 func TestIntroNarrativeMenuWorkflowAdvancesOnAnyFreshKey(t *testing.T) {

@@ -88,7 +88,7 @@ describe("debug workbench connection", () => {
     connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-initial", false))
     await openWorkspace("game")
     for (const selected of ["combat.status", "inventory.locker.status", "party.character.update"]) {
-      click(`[data-command-select="${selected}"]`)
+      await selectTool(selected)
       await flushUI()
       const last = executionForCommand(connection, "combat.status")
       connection.message(activeCombatCompletion(last.id, `combat-${selected}`, false))
@@ -112,8 +112,8 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
     connection.message(calendarStatusCompletion(executionForCommand(connection, "calendar.status").id))
-    await openWorkspace("game")
-    click('[data-command-select="inventory.locker.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.locker.status")
     await flushUI()
     connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 100))
     await flushUI()
@@ -130,14 +130,14 @@ describe("debug workbench connection", () => {
     document.dispatchEvent(new Event("visibilitychange"))
     await openWorkspace("system")
     await openWorkspace("home")
-    await openWorkspace("game")
+    await openWorkspace("items")
     expect(root.querySelector<HTMLInputElement>('[data-locker-provision="gold"]')?.value).toBe("555")
-    click('[data-command-select="calendar.status"]')
+    await selectTool("calendar.status")
     await flushUI()
     setInputValue(root.querySelector<HTMLInputElement>(".coordinate-controls input"), "9")
     await flushUI()
     await openWorkspace("home")
-    await openWorkspace("game")
+    await openWorkspace("time")
     expect(root.querySelector<HTMLInputElement>(".coordinate-controls input")?.value).toBe("9")
   })
 
@@ -155,7 +155,7 @@ describe("debug workbench connection", () => {
 		expect(root.querySelector('[data-workspace="home"]')?.getAttribute("aria-current")).toBe("page")
 		expect(root.querySelector("[data-home-workspace]")).not.toBeNull()
 		expect(root.querySelector(".instrument-title-row")).toBeNull()
-		await openWorkspace("game")
+		await openWorkspace("more")
 		expect(root.querySelector('[data-command-select="shrine.status"]')?.getAttribute("aria-current")).toBe("true")
 		expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Progress")
 		expect(root.querySelector(".instrument-title-row .execution-mode")?.textContent).toContain("LIVE STATE + EXPLICIT ALTERATION")
@@ -170,8 +170,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("game")
-		click('button[data-command-select="shrine.status"]')
+		await openWorkspace("more")
+		await selectTool("shrine.status")
 		click(".history-panel .stream-actions button")
 		await flushUI()
 
@@ -181,7 +181,7 @@ describe("debug workbench connection", () => {
 	})
 
 	it("opens a recent Home surface and automatically loads its read-only query", async () => {
-		localStorage.setItem("u5r-debug-workbench-navigation-recents", JSON.stringify(["game:shrine.status"]))
+		localStorage.setItem("u5r-debug-workbench-navigation-recents", JSON.stringify(["more:shrine.status"]))
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
@@ -189,12 +189,12 @@ describe("debug workbench connection", () => {
 		connection.message(formCatalogSnapshot())
 		await flushUI()
 
-		expect(root.querySelector('[data-home-recent="game:shrine.status"]')?.textContent).toContain("Shrine Progress")
+		expect(root.querySelector('[data-home-recent="more:shrine.status"]')?.textContent).toContain("Shrine Progress")
 		const sentBeforeNavigation = connection.sent.length
-		click('[data-home-recent="game:shrine.status"]')
+		click('[data-home-recent="more:shrine.status"]')
 		await flushUI()
 
-		expect(root.querySelector('[data-workspace="game"]')?.getAttribute("aria-current")).toBe("page")
+		expect(root.querySelector('[data-workspace="more"]')?.getAttribute("aria-current")).toBe("page")
 		expect(root.querySelector('[data-command-select="shrine.status"]')?.getAttribute("aria-current")).toBe("true")
 		expect(connection.sent).toHaveLength(sentBeforeNavigation + 1)
 		expect(executionForCommand(connection, "shrine.status").payload.arguments).toEqual({})
@@ -207,8 +207,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("game")
-		click('button[data-command-select="shrine.status"]')
+		await openWorkspace("more")
+		await selectTool("shrine.status")
 		await flushUI()
 		const query = executionForCommand(connection, "shrine.status")
 		connection.message({
@@ -229,14 +229,14 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("commands")
+		await openWorkspace("more")
 
 		const visibleCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((element) => element.dataset.commandSelect)
 		expect(visibleCommandIDs.filter((commandID) => commandID === "command-test.telescope")).toHaveLength(1)
 		expect(visibleCommandIDs).not.toContain("command-test.spyglass")
 		expect(visibleCommandIDs).not.toContain("command-test.crystal-ball")
 
-		click('button[data-command-select="command-test.telescope"]')
+		await selectTool("command-test.telescope")
 		await flushUI()
 		expect(root.querySelector('[data-command-select="command-test.telescope"]')?.textContent).toContain("Observation")
 		expect(root.querySelectorAll("[data-observation-command]")).toHaveLength(3)
@@ -271,16 +271,16 @@ describe("debug workbench connection", () => {
     first.close(1006, "connection lost")
     await flushUI()
 
-    click(".telemetry button")
+    click("[data-retry]")
     await flushUI()
     const second = MockWebSocket.instances[1]
     first.message(sessionReady("stale-session"))
-    expect(root.textContent).not.toContain("SCENE 7")
+    expect(root.textContent).not.toContain("Scene 7")
 
     second.open()
     second.message(sessionReady("active-session"))
     await flushUI()
-    expect(root.textContent).toContain("SCENE 7")
+    expect(root.textContent).toContain("Scene 7")
   })
 
   it("deduplicates accepted and completion replays while acknowledging every replayed delivery", async () => {
@@ -321,7 +321,7 @@ describe("debug workbench connection", () => {
 
     first.close(1006, "connection lost")
     await flushUI()
-    click(".telemetry button")
+    click("[data-retry]")
     await flushUI()
     const second = MockWebSocket.instances[1]
     second.open()
@@ -345,7 +345,7 @@ describe("debug workbench connection", () => {
 
 		first.close(1006, "connection lost")
 		await flushUI()
-		click(".telemetry button")
+		click("[data-retry]")
 		const second = MockWebSocket.instances[1]
 		second.open()
 		second.message(sessionReady("session-1", true))
@@ -384,10 +384,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(catalogSnapshot())
     await flushUI()
-    await openWorkspace("system")
-    const search = root.querySelector<HTMLInputElement>("#command-search")
-    if (!search) throw new Error("missing command search")
-    search.focus()
+    await openWorkspace("more")
+    root.querySelector<HTMLButtonElement>("[data-command-palette-launcher]")?.focus()
     const event = new KeyboardEvent("keydown", { key: "F5", bubbles: true, cancelable: true })
 
     window.dispatchEvent(event)
@@ -404,8 +402,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("commands")
-    click('button[data-command-select="command-test.telescope"]')
+    await openWorkspace("more")
+    await selectTool("command-test.telescope")
     await flushUI()
     root.querySelector<HTMLButtonElement>('[data-observation-command="command-test.spyglass"]')?.focus()
     const sentCount = connection.sent.length
@@ -442,7 +440,7 @@ describe("debug workbench connection", () => {
 		await flushUI()
 
 		expect(connection.readyState).toBe(MockWebSocket.CLOSED)
-    expect(root.textContent).toContain("RETRY NOW")
+    expect(root.textContent).toContain("Retry now")
   })
 
   it("refreshes the recovery deadline when operation status is confirmed", async () => {
@@ -473,22 +471,28 @@ describe("debug workbench connection", () => {
     expect(connection.readyState).toBe(MockWebSocket.OPEN)
   })
 
-  it("hides integrated operations from the raw command workspace", async () => {
+  it("lists only owner tools on More and hides companion operations", async () => {
     mountApp()
     const connection = MockWebSocket.instances[0]
     connection.open()
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("commands")
+    await openWorkspace("more")
 
 		const commandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((button) => button.dataset.commandSelect)
 		expect(commandIDs).toEqual([
+			"shrine.status",
+			"monster.ecosystem.status",
+			"vehicle.status",
+			"merchant.tester.catalog",
 			"command-test.telescope",
 			"test-setup.status",
-			"combat.encounter.options",
-			"merchant.tester.catalog",
+			"guards.status",
+			"logging.status",
+			"debug.options.status",
 		])
+		expect([...root.querySelectorAll(".tool-group h2")].map((heading) => heading.textContent)).toEqual(["World extras", "For developers"])
 		expect(commandIDs).not.toContain("command-test.spyglass")
 		expect(commandIDs).not.toContain("command-test.crystal-ball")
     expect(commandIDs).not.toContain("environment.wind.set")
@@ -510,7 +514,6 @@ describe("debug workbench connection", () => {
     expect(commandIDs).not.toContain("ship.damage-raw")
 		expect(commandIDs).not.toContain("ship.skiff.set")
 		expect(commandIDs).not.toContain("movement.free-move.set")
-		expect(commandIDs).not.toContain("guards.status")
 		expect(commandIDs).not.toContain("shadowlord.status")
     expect(commandIDs).not.toContain("death.status")
 		expect(commandIDs).not.toContain("movement.landmark.travel")
@@ -529,10 +532,10 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("game")
+		await openWorkspace("party")
 
 		const partyLabels = ["party.character.update", "party.equipment.loadout.update", "party.character.inspect"].map((id) =>
-			root.querySelector(`[data-command-select="${id}"] strong`)?.textContent,
+			root.querySelector(`[data-command-select="${id}"]`)?.textContent,
 		)
 		expect(partyLabels).toEqual(["Character Editor", "Equipment Loadouts", "Party Roster"])
 		click("[data-command-palette-launcher]")
@@ -551,9 +554,11 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("game")
+		await openWorkspace("party")
+		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-initial"))
+		await flushUI()
 
-		click('button[data-command-select="party.character.update"]')
+		await selectTool("party.character.update")
 		await flushUI()
 		const characterInspectCount = executionsForCommand(connection, "party.character.inspect").length
 		const characterLockerCount = executionsForCommand(connection, "inventory.locker.status").length
@@ -562,7 +567,7 @@ describe("debug workbench connection", () => {
 		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount)
 		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount)
 
-		click('button[data-command-select="party.character.inspect"]')
+		await selectTool("party.character.inspect")
 		await flushUI()
 		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount + 1)
 		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount)
@@ -570,37 +575,11 @@ describe("debug workbench connection", () => {
 		connection.message(partyCharacterInspectCompletion(rosterInspect.id, "roster-scope"))
 		await flushUI()
 
-		click('button[data-command-select="party.equipment.loadout.update"]')
+		await selectTool("party.equipment.loadout.update")
 		await flushUI()
 		expect(executionsForCommand(connection, "party.character.inspect")).toHaveLength(characterInspectCount + 2)
 		expect(executionsForCommand(connection, "inventory.locker.status")).toHaveLength(characterLockerCount + 1)
 	})
-
-  it("keeps rail search as a local control that can open the owning workspace", async () => {
-    mountApp()
-    const connection = MockWebSocket.instances[0]
-    connection.open()
-    connection.message(sessionReady("session-1"))
-    connection.message(formCatalogSnapshot())
-    await flushUI()
-    await openWorkspace("game")
-
-    const search = root.querySelector<HTMLInputElement>("#command-search")
-    if (!search) throw new Error("missing command search")
-    search.focus()
-    expect(document.activeElement).toBe(search)
-    search.value = "stdout"
-    search.dispatchEvent(new Event("input", { bubbles: true }))
-    await flushUI()
-
-    expect(root.querySelectorAll("button[data-command-select]")).toHaveLength(1)
-    const result = root.querySelector<HTMLElement>('[data-command-select="logging.status"]')
-    expect(result?.textContent).toContain("SYSTEM · logging.status")
-    result?.click()
-    await flushUI()
-    expect(root.querySelector('[data-workspace="system"]')?.getAttribute("aria-current")).toBe("page")
-    expect((root.querySelector<HTMLInputElement>("#command-search"))?.value).toBe("")
-  })
 
   it("opens a navigation-only palette with Ctrl+K or Meta+K from every workspace", async () => {
     mountApp()
@@ -620,18 +599,18 @@ describe("debug workbench connection", () => {
     await flushUI()
     const input = root.querySelector<HTMLInputElement>("#command-palette-input")!
     expect(document.activeElement).toBe(input)
-    expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(true)
-    setInputValue(input, "Shrine Progress")
+    expect(root.querySelector<HTMLElement>(".topbar")?.inert).toBe(true)
+    setInputValue(input, "Logging")
     await flushUI()
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
     await flushUI()
 
-    expect(root.querySelector('[data-workspace="game"]')?.getAttribute("aria-current")).toBe("page")
-    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Shrine Progress")
+    expect(root.querySelector('[data-workspace="more"]')?.getAttribute("aria-current")).toBe("page")
+    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Logging")
     expect(connection.sent).toHaveLength(sentBeforePalette + 1)
-    expect(executionForCommand(connection, "shrine.status").payload.arguments).toEqual({})
+    expect(executionForCommand(connection, "logging.status").payload.arguments).toEqual({})
     expect(root.querySelector("[data-command-palette]")).toBeNull()
-    expect(root.querySelector<HTMLElement>(".masthead")?.inert).toBe(false)
+    expect(root.querySelector<HTMLElement>(".topbar")?.inert).toBe(false)
 
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true }))
     await flushUI()
@@ -645,7 +624,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("system")
+    await openWorkspace("more")
     const loggingCommand = root.querySelector<HTMLButtonElement>('button[data-command-select="logging.status"]')
     if (!loggingCommand) throw new Error("missing logging command")
     loggingCommand.focus()
@@ -653,7 +632,7 @@ describe("debug workbench connection", () => {
     loggingCommand.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
     await flushUI()
 
-    expect(root.textContent).toContain("Logging Status")
+    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Logging")
     expect(root.querySelector('[aria-label="Logging console"]')).not.toBeNull()
   })
 
@@ -689,7 +668,7 @@ describe("debug workbench connection", () => {
     connection.message(shrineCompletion("shrine-result"))
     connection.message(commandCompletion("logging-result"))
     await flushUI()
-    await openWorkspace("system")
+    await selectTool("logging.status")
     expect(root.querySelector(".operation-banner")?.textContent).toContain("Logging status loaded.")
     expect(root.querySelector(".operation-banner")?.textContent).not.toContain("Humility")
     expect(root.querySelectorAll(".result-entry")).toHaveLength(2)
@@ -786,8 +765,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="party.character.update"]')
+    await openWorkspace("party")
+    await selectTool("party.character.update")
     await flushUI()
 
     click('[data-party-character="0.QXZhdGFy"]')
@@ -823,8 +802,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("inspect")
-		click('button[data-command-select="party.character.update"]')
+		await openWorkspace("party")
+		await selectTool("party.character.update")
 		await flushUI()
 
 		click('[data-party-character="0.QXZhdGFy"]')
@@ -846,8 +825,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("inspect")
-		click('button[data-command-select="party.character.inspect"]')
+		await openWorkspace("party")
+		await selectTool("party.character.inspect")
 		await flushUI()
 		const initialInspect = executionForCommand(connection, "party.character.inspect")
 		connection.message(partyCharacterInspectCompletion(initialInspect.id, "roster-1"))
@@ -907,8 +886,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("inspect")
-		click('button[data-command-select="party.equipment.loadout.update"]')
+		await openWorkspace("party")
+		await selectTool("party.equipment.loadout.update")
 		await flushUI()
 
 		const inspect = executionForCommand(connection, "party.character.inspect")
@@ -956,8 +935,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("inspect")
-		click('button[data-command-select="party.equipment.loadout.update"]')
+		await openWorkspace("party")
+		await selectTool("party.equipment.loadout.update")
 		await flushUI()
 		connection.message(partyCharacterInspectCompletion(executionForCommand(connection, "party.character.inspect").id, "roster-1"))
 		connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 12))
@@ -988,8 +967,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("tools")
-		click('[data-command-select="test-setup.status"]')
+		await openWorkspace("more")
+		await selectTool("test-setup.status")
 		await flushUI()
 		const status = executionForCommand(connection, "test-setup.status")
 		connection.message(testSetupStatusCompletion(status.id))
@@ -1043,7 +1022,7 @@ describe("debug workbench connection", () => {
 		const initialCalendar = executionForCommand(connection, "calendar.status")
 		connection.message(successfulQueryCompletion(initialCalendar.id, "calendar.status", "Calendar.", {}))
 		await flushUI()
-		await openWorkspace("saves")
+		await openWorkspace("checkpoints")
 		const list = executionForCommand(connection, "save.snapshot.list")
 		connection.message(successfulQueryCompletion(list.id, "save.snapshot.list", "Listed.", {
 			captureEligibility: { canCapture: true, canLoad: true, canDelete: false },
@@ -1086,8 +1065,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="party.character.update"]')
+    await openWorkspace("party")
+    await selectTool("party.character.update")
     await flushUI()
 
     click('[data-party-character="0.QXZhdGFy"]')
@@ -1123,8 +1102,8 @@ describe("debug workbench connection", () => {
     for (const optionSet of snapshot.payload.optionSets) optionSet.unavailableReason = "Character alterations are unavailable during combat."
     connection.message(snapshot)
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="party.character.update"]')
+    await openWorkspace("party")
+    await selectTool("party.character.update")
     await flushUI()
 
     expect(root.textContent).toContain("Character alterations are unavailable during combat.")
@@ -1159,7 +1138,7 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
+    await selectTool("environment.wind.status")
 
     const statusExecution = latestCommandExecution(connection)
     expect(statusExecution.payload.arguments).toEqual({})
@@ -1188,8 +1167,8 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
 
-    await openWorkspace("system")
-    click('button[data-command-select="logging.status"]')
+    await openWorkspace("more")
+    await selectTool("logging.status")
     await flushUI()
     const status = executionForCommand(connection, "logging.status")
     connection.message(commandCompletion(status.id))
@@ -1214,8 +1193,8 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
 
-    await openWorkspace("system")
-    click('button[data-command-select="logging.status"]')
+    await openWorkspace("more")
+    await selectTool("logging.status")
     await flushUI()
     const status = executionForCommand(connection, "logging.status")
     connection.message(commandCompletion(status.id))
@@ -1236,8 +1215,8 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
 
-    await openWorkspace("system")
-    click('button[data-command-select="logging.status"]')
+    await openWorkspace("more")
+    await selectTool("logging.status")
     await flushUI()
     let status = executionForCommand(connection, "logging.status")
     connection.message(commandCompletion(status.id, { movement: false, combat: true }))
@@ -1261,7 +1240,7 @@ describe("debug workbench connection", () => {
     expect(bulk.payload.arguments).toEqual({ enabled: false })
   })
 
-	 it("keeps explicit Free Move control in the top bar and Debug Options instrument", async () => {
+	 it("keeps explicit Free Move control on Go to and in the Debug Options instrument", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
@@ -1279,7 +1258,8 @@ describe("debug workbench connection", () => {
 			lightingOverlayEnabled: false,
 		}))
 		await flushUI()
-		expect(root.querySelector(".free-move-quick")?.textContent).toContain("FREE MOVE OFF")
+		await openWorkspace("goto")
+		expect(root.querySelector(".free-move-quick")?.textContent).toContain("Walk through walls: off")
 		click(".free-move-quick")
 		const mutation = executionForCommand(connection, "movement.free-move.set")
 		expect(mutation.payload.arguments).toEqual({ enabled: true })
@@ -1295,10 +1275,10 @@ describe("debug workbench connection", () => {
 			lightingOverlayEnabled: false,
 		}))
 		await flushUI()
-		expect(root.querySelector(".free-move-quick")?.textContent).toContain("FREE MOVE ON")
+		expect(root.querySelector(".free-move-quick")?.textContent).toContain("Walk through walls: on")
 
-		await openWorkspace("system")
-		click('button[data-command-select="debug.options.status"]')
+		await openWorkspace("more")
+		await selectTool("debug.options.status")
 		await flushUI()
 		expect(root.querySelector('[aria-label="Debug options"]')?.textContent).toContain("Text Placeholders")
 		expect(root.querySelector('[aria-label="Debug options"]')?.textContent).toContain("Unlimited Casting Resources")
@@ -1317,7 +1297,7 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("inspect")
+		await openWorkspace("more")
 		const selector = root.querySelector<HTMLButtonElement>('button[data-command-select="guards.status"]')
 		expect(selector?.textContent).toContain("World Diagnostics")
 		selector?.click()
@@ -1362,16 +1342,16 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="calendar.status"]')
+    await openWorkspace("time")
+    await selectTool("calendar.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "calendar.status")
     connection.message(calendarStatusCompletion(statusExecution.id))
     await flushUI()
 
     expect(root.querySelector(".calendar-console")?.textContent).toContain("4:15 PM")
-    expect(root.querySelector(".masthead-calendar")?.textContent).toContain("Wednesday, July 12, 138")
-    expect(root.querySelector(".masthead-calendar .moon-phase-glyph")?.getAttribute("data-glyph-index")).toBe("0x31")
+    expect(root.querySelector("[data-topbar-when]")?.textContent).toContain("Wednesday, July 12, 138")
+    expect(root.querySelector("[data-topbar-when] .moon-phase-glyph")?.getAttribute("data-glyph-index")).toBe("0x31")
     const dayInput = root.querySelector<HTMLInputElement>(".calendar-console .exact-form:last-of-type input")
     expect(dayInput?.max).toBe("28")
     expect(root.querySelector(".calendar-console .exact-form:last-of-type header")?.textContent).toContain("1-28")
@@ -1401,14 +1381,14 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
+    await openWorkspace("time")
 
     const initial = executionForCommand(connection, "calendar.status")
     expect(executionsForCommand(connection, "calendar.status")).toHaveLength(1)
     connection.message(calendarStatusCompletion(initial.id))
     await flushUI()
 
-    click('button[data-command-select="calendar.status"]')
+    await selectTool("calendar.status")
     await flushUI()
     const selected = executionForCommand(connection, "calendar.status")
     connection.message(calendarStatusCompletion(selected.id))
@@ -1435,8 +1415,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="search.status"]')
+    await openWorkspace("items")
+    await selectTool("search.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "search.status")
     connection.message(searchStatusCompletion(statusExecution.id))
@@ -1472,8 +1452,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="search.status"]')
+    await openWorkspace("items")
+    await selectTool("search.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "search.status")
     connection.message(searchStatusCompletion(statusExecution.id, true))
@@ -1497,8 +1477,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="quest.item.status"]')
+    await openWorkspace("items")
+    await selectTool("quest.item.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "quest.item.status")
     connection.message(questItemStatusCompletion(statusExecution.id))
@@ -1531,8 +1511,8 @@ describe("debug workbench connection", () => {
 	await flushUI()
 	await openWorkspace("commands")
 	expect([...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((element) => element.dataset.commandSelect)).not.toContain("quest.shard.use")
-	await openWorkspace("inspect")
-	click('button[data-command-select="quest.item.status"]')
+	await openWorkspace("items")
+	await selectTool("quest.item.status")
 	await flushUI()
 	connection.message(questItemStatusCompletion(executionForCommand(connection, "quest.item.status").id))
 	await flushUI()
@@ -1560,8 +1540,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="world.position.status"]')
+    await openWorkspace("goto")
+    await selectTool("world.position.status")
     await flushUI()
     connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id))
     await flushUI()
@@ -1618,8 +1598,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="world.position.status"]')
+    await openWorkspace("goto")
+    await selectTool("world.position.status")
     await flushUI()
     connection.message(worldPositionCompletion(executionForCommand(connection, "world.position.status").id))
     await flushUI()
@@ -1658,8 +1638,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="world.position.status"]')
+    await openWorkspace("goto")
+    await selectTool("world.position.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "world.position.status")
     connection.message(worldPositionCompletion(statusExecution.id))
@@ -1735,8 +1715,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("game")
-		click('button[data-command-select="world.position.status"]')
+		await openWorkspace("goto")
+		await selectTool("world.position.status")
 		await flushUI()
 		const worldStatus = executionForCommand(connection, "world.position.status")
 		connection.message(worldPositionCompletion(worldStatus.id))
@@ -1765,8 +1745,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="moongate.status"]')
+    await openWorkspace("time")
+    await selectTool("moongate.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "moongate.status")
     connection.message(moongateStatusCompletion(statusExecution.id))
@@ -1794,8 +1774,8 @@ describe("debug workbench connection", () => {
     connection.message(worldPositionCompletion(navigatorStatus.id))
     await flushUI()
 
-    expect(root.querySelector('[data-workspace="game"]')?.getAttribute("aria-current")).toBe("page")
-    expect(root.querySelector('[data-command-select="world.position.status"]')?.getAttribute("aria-current")).toBe("true")
+    expect(root.querySelector('[data-workspace="goto"]')?.getAttribute("aria-current")).toBe("page")
+    expect(root.querySelector(".instrument-title-row")?.textContent).toContain("World Navigator")
     const linkedCoordinates = root.querySelectorAll<HTMLInputElement>('.navigator-form input[type="number"]')
     expect([...linkedCoordinates].map((input) => input.value)).toEqual(["44", "55"])
   })
@@ -1807,8 +1787,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="moongate.status"]')
+    await openWorkspace("time")
+    await selectTool("moongate.status")
     await flushUI()
     const statusExecution = executionForCommand(connection, "moongate.status")
     connection.message(spiritualityMoongateStatusCompletion(statusExecution.id))
@@ -1837,8 +1817,8 @@ describe("debug workbench connection", () => {
     const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")]
       .map((element) => element.dataset.commandSelect)
     expect(rawCommandIDs).not.toContain("codex.quest-state.set-all")
-    await openWorkspace("game")
-    click('button[data-command-select="shrine.status"]')
+    await openWorkspace("more")
+    await selectTool("shrine.status")
     await flushUI()
 
     for (const statusExecution of executionsForCommand(connection, "shrine.status")) {
@@ -1897,8 +1877,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("commands")
-    click('button[data-command-select="combat.encounter.options"]')
+    await openWorkspace("fight")
+    await selectTool("combat.encounter.options")
     await flushUI()
     const options = executionForCommand(connection, "combat.encounter.options")
     connection.message(combatEncounterOptionsCompletion(options.id))
@@ -1926,8 +1906,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("commands")
-    click('button[data-command-select="combat.encounter.options"]')
+    await openWorkspace("fight")
+    await selectTool("combat.encounter.options")
     await flushUI()
     connection.message(combatEncounterOptionsCompletion(executionForCommand(connection, "combat.encounter.options").id))
     await flushUI()
@@ -1953,8 +1933,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("game")
-    click('button[data-command-select="monster.ecosystem.status"]')
+    await openWorkspace("more")
+    await selectTool("monster.ecosystem.status")
     await flushUI()
     const status = executionForCommand(connection, "monster.ecosystem.status")
     connection.message(monsterEcosystemCompletion(status.id))
@@ -1983,14 +1963,14 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("tools")
+    await openWorkspace("more")
 
     const toolIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((element) => element.dataset.commandSelect)
     expect(toolIDs.filter((commandID) => commandID === "merchant.tester.catalog")).toHaveLength(1)
     expect(toolIDs).not.toContain("merchant.tester.preview.open")
     expect(toolIDs).not.toContain("merchant.tester.live.open")
 
-    click('[data-command-select="merchant.tester.catalog"]')
+    await selectTool("merchant.tester.catalog")
     await flushUI()
     const initialCatalogQuery = executionForCommand(connection, "merchant.tester.catalog")
     expect(initialCatalogQuery.payload.arguments).toEqual({})
@@ -2064,8 +2044,8 @@ describe("debug workbench connection", () => {
     first.message(sessionReady("session-1"))
     first.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("tools")
-    click('[data-command-select="merchant.tester.catalog"]')
+    await openWorkspace("more")
+    await selectTool("merchant.tester.catalog")
     await flushUI()
     first.message(merchantTesterCatalogCompletion(executionForCommand(first, "merchant.tester.catalog").id))
     await flushUI()
@@ -2076,7 +2056,7 @@ describe("debug workbench connection", () => {
 
     first.close(1006, "connection lost")
     await flushUI()
-    click(".telemetry button")
+    click("[data-retry]")
     const second = MockWebSocket.instances[1]
     second.open()
     second.message(sessionReady("session-1", true))
@@ -2106,8 +2086,8 @@ describe("debug workbench connection", () => {
 		const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")].map((element) => element.dataset.commandSelect)
 		expect(rawCommandIDs).not.toContain("vehicle.spawn")
 		expect(rawCommandIDs).not.toContain("vehicle.force-board")
-    await openWorkspace("inspect")
-    click('button[data-command-select="vehicle.status"]')
+    await openWorkspace("more")
+    await selectTool("vehicle.status")
     await flushUI()
     const status = executionForCommand(connection, "vehicle.status")
     connection.message(vehicleStatusCompletion(status.id, 50))
@@ -2170,8 +2150,8 @@ describe("debug workbench connection", () => {
       "inventory.equipment.grant-preset", "inventory.equipment.set", "inventory.equipment.clear", "inventory.spell.preset-max",
 	  "quest.inventory.preset-usable",
     ]) expect(rawCommandIDs).not.toContain(companionID)
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.locker.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.locker.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.locker.status")
     connection.message(inventoryLockerCompletion(status.id, "first", 12))
@@ -2205,8 +2185,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.locker.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.locker.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.locker.status")
     connection.message(inventoryLockerCompletion(status.id, "snapshot-7", 12))
@@ -2237,8 +2217,8 @@ describe("debug workbench connection", () => {
 	connection.message(sessionReady("session-1"))
 	connection.message(formCatalogSnapshot())
 	await flushUI()
-	await openWorkspace("inspect")
-	click('button[data-command-select="inventory.locker.status"]')
+	await openWorkspace("items")
+	await selectTool("inventory.locker.status")
 	await flushUI()
 	connection.message(inventoryLockerCompletion(executionForCommand(connection, "inventory.locker.status").id, "locker-1", 12))
 	await flushUI()
@@ -2262,8 +2242,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(formCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.locker.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.locker.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.locker.status")
     connection.message(inventoryLockerCompletion(status.id, "inventory-1", 12, 4, 1))
@@ -2321,17 +2301,15 @@ describe("debug workbench connection", () => {
     connection.message(spellInventoryCatalogSnapshot())
     await flushUI()
 
-    await openWorkspace("system")
-    expect(root.querySelector('[data-command-select="inventory.spell.status"]')).toBeNull()
-    await openWorkspace("commands")
-    const rawCommandIDs = [...root.querySelectorAll<HTMLElement>("[data-command-select]")]
-      .map((element) => element.dataset.commandSelect)
-    for (const commandID of ["inventory.spell.status", "inventory.spell.set", "inventory.spell.preset-max"]) {
-      expect(rawCommandIDs).not.toContain(commandID)
+    for (const tab of ["items", "more"] as const) {
+      await openWorkspace(tab)
+      for (const commandID of ["inventory.spell.set", "inventory.spell.preset-max"]) {
+        expect(root.querySelector(`[data-command-select="${commandID}"]`)).toBeNull()
+      }
     }
 
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.spell.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.spell.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.spell.status")
     connection.message(spellInventoryCompletion(status.id, "spell-1", 2))
@@ -2344,8 +2322,8 @@ describe("debug workbench connection", () => {
     await flushUI()
     expect(root.querySelectorAll(".result-entry")).toHaveLength(historyBeforePoll)
 
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.locker.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.locker.status")
     await flushUI()
     const spellQueries = executionsForCommand(connection, "inventory.spell.status").length
     vi.advanceTimersByTime(1000)
@@ -2374,8 +2352,8 @@ describe("debug workbench connection", () => {
 		expect(rawCommandIDs).not.toContain("combat.dungeon-room.clear")
 		expect(rawCommandIDs).not.toContain("combat.monster.clear")
 
-    await openWorkspace("live")
-    click('button[data-command-select="combat.status"]')
+    await openWorkspace("fight")
+    await selectTool("combat.status")
     await flushUI()
     const status = executionForCommand(connection, "combat.status")
     connection.message(activeCombatCompletion(status.id, "combat-1", false))
@@ -2426,7 +2404,7 @@ describe("debug workbench connection", () => {
 		expect(exit.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "combat-3" })
   })
 
-	it("shows a one-click masthead combat exit backed by the latest reviewed status", async () => {
+	it("shows a one-click top bar combat exit backed by the latest reviewed status", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
 		connection.open()
@@ -2447,6 +2425,98 @@ describe("debug workbench connection", () => {
 		expect(exit.payload.arguments).toEqual({ encounterId: "9", expectedSnapshot: "quick-exit-snapshot" })
 	})
 
+	it("shows where, when, party and mode in the top bar on every view and marks Fight during combat", async () => {
+		mountApp()
+		const connection = MockWebSocket.instances[0]
+		connection.open()
+		connection.message(sessionReady("session-1"))
+		connection.message(formCatalogSnapshot())
+		await flushUI()
+		connection.message(calendarStatusCompletion(executionForCommand(connection, "calendar.status").id))
+		connection.message(testSetupStatusCompletion(executionForCommand(connection, "test-setup.status").id))
+		connection.message(successfulQueryCompletion(executionForCommand(connection, "combat.status").id, "combat.status", "Combat.", { active: false }))
+		await flushUI()
+
+		for (const view of ["home", "party", "more"] as const) {
+			await openWorkspace(view)
+			expect(root.querySelector("[data-topbar-where]")?.textContent).toContain("Britain")
+			expect(root.querySelector("[data-topbar-when]")?.textContent).toContain("Wednesday, July 12, 138 · 4:15 PM")
+			expect(root.querySelector("[data-topbar-party]")?.textContent).toContain("1 · all healthy")
+			expect(root.querySelector("[data-topbar-mode]")?.textContent).toBe("Exploring")
+		}
+		expect(root.querySelector('[data-workspace="fight"] .combat-marker')).toBeNull()
+		expect([...root.querySelectorAll(".task-tabs button")].map((tab) => tab.textContent?.trim())).toEqual([
+			"Home", "Go to", "Party", "Items & spells", "Time & sky", "Fight", "Checkpoints", "More",
+		])
+
+		vi.advanceTimersByTime(1000)
+		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-bar", false))
+		await flushUI()
+		expect(root.querySelector("[data-topbar-mode]")?.textContent).toBe("In combat")
+		expect(root.querySelector('[data-workspace="fight"] .combat-marker')).not.toBeNull()
+	})
+
+	it("runs Home quick actions only through existing commands and reports the outcome", async () => {
+		mountApp()
+		const connection = MockWebSocket.instances[0]
+		connection.open()
+		connection.message(sessionReady("session-1"))
+		connection.message(formCatalogSnapshot())
+		await flushUI()
+
+		expect([...root.querySelectorAll("[data-home-task]")].map((card) => (card as HTMLElement).dataset.homeTask)).toEqual([
+			"goto", "fight", "party", "items", "time", "checkpoints",
+		])
+		click('[data-home-quick="landmark:codex"]')
+		const travel = executionForCommand(connection, "movement.landmark.travel")
+		expect(travel.payload.arguments).toEqual({ landmark: "codex" })
+		connection.message(successfulMutationCompletion(travel.id, "movement.landmark.travel", "synchronized_live"))
+		await flushUI()
+		expect(root.querySelector("[data-home-feedback]")?.classList.contains("success")).toBe(true)
+
+		click('[data-home-quick="time:20:0"]')
+		expect(executionForCommand(connection, "calendar.set-time").payload.arguments).toEqual({ hour: 20, minute: 0 })
+
+		click('[data-home-quick="open:party.character.update"]')
+		await flushUI()
+		expect(root.querySelector('[data-workspace="party"]')?.getAttribute("aria-current")).toBe("page")
+		expect(root.querySelector(".instrument-title-row")?.textContent).toContain("Character Editor")
+		expect(executionsForCommand(connection, "party.character.update")).toHaveLength(0)
+	})
+
+	it("keeps every supported tool reachable from a task tab and the palette", async () => {
+		mountApp()
+		const connection = MockWebSocket.instances[0]
+		connection.open()
+		connection.message(sessionReady("session-1"))
+		connection.message(formCatalogSnapshot())
+		await flushUI()
+
+		const reachable = new Set<string>()
+		for (const tab of ["goto", "party", "items", "time", "fight", "checkpoints", "more"] as const) {
+			await openWorkspace(tab)
+			expect(root.querySelector(".instrument"), tab).not.toBeNull()
+			for (const button of root.querySelectorAll<HTMLElement>("[data-command-select]")) reachable.add(button.dataset.commandSelect ?? "")
+		}
+		// Single-tool tabs have no picker, so they are reached by their tab alone.
+		for (const commandID of ["world.position.status", "save.snapshot.list"]) reachable.add(commandID)
+		click("[data-command-palette-launcher]")
+		await flushUI()
+		const input = root.querySelector<HTMLInputElement>("#command-palette-input")!
+		for (const commandID of reachable) {
+			setInputValue(input, commandID)
+			await flushUI()
+			expect(root.querySelector(`[data-palette-surface$=":${commandID}"]`), commandID).not.toBeNull()
+		}
+		expect([...reachable].sort()).toEqual([
+			"calendar.status", "combat.encounter.options", "combat.status", "command-test.telescope", "debug.options.status",
+			"environment.wind.status", "guards.status", "inventory.locker.status", "inventory.spell.status", "logging.status",
+			"merchant.tester.catalog", "monster.ecosystem.status", "moongate.status", "party.character.inspect",
+			"party.character.update", "party.equipment.loadout.update", "quest.item.status", "save.snapshot.list", "search.status",
+			"shrine.status", "test-setup.status", "vehicle.status", "world.position.status",
+		])
+	})
+
 	it("reviews fixed dungeon-room clearing with exact encounter state", async () => {
 		mountApp()
 		const connection = MockWebSocket.instances[0]
@@ -2454,8 +2524,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("live")
-		click('button[data-command-select="combat.status"]')
+		await openWorkspace("fight")
+		await selectTool("combat.status")
 		await flushUI()
 		connection.message(activeCombatCompletion(
 			executionForCommand(connection, "combat.status").id, "fixed-room", false, true,
@@ -2480,8 +2550,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("live")
-		click('button[data-command-select="combat.status"]')
+		await openWorkspace("fight")
+		await selectTool("combat.status")
 		await flushUI()
 		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-a", false))
 		await flushUI()
@@ -2526,8 +2596,8 @@ describe("debug workbench connection", () => {
 		connection.message(sessionReady("session-1"))
 		connection.message(formCatalogSnapshot())
 		await flushUI()
-		await openWorkspace("live")
-		click('button[data-command-select="combat.status"]')
+		await openWorkspace("fight")
+		await selectTool("combat.status")
 		await flushUI()
 		connection.message(activeCombatCompletion(executionForCommand(connection, "combat.status").id, "combat-kill", false))
 		await flushUI()
@@ -2561,8 +2631,8 @@ describe("debug workbench connection", () => {
     connection.message(formCatalogSnapshot())
     await flushUI()
 
-    await openWorkspace("live")
-    click('button[data-command-select="combat.status"]')
+    await openWorkspace("fight")
+    await selectTool("combat.status")
     await flushUI()
     const status = executionForCommand(connection, "combat.status")
     connection.message(successfulQueryCompletion(status.id, "combat.status", "No active encounter.", {
@@ -2584,8 +2654,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(spellInventoryCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.spell.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.spell.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.spell.status")
     connection.message(spellInventoryCompletion(status.id, "spell-1", 2, {
@@ -2642,8 +2712,8 @@ describe("debug workbench connection", () => {
     connection.message(sessionReady("session-1"))
     connection.message(spellInventoryCatalogSnapshot())
     await flushUI()
-    await openWorkspace("inspect")
-    click('button[data-command-select="inventory.spell.status"]')
+    await openWorkspace("items")
+    await selectTool("inventory.spell.status")
     await flushUI()
     const status = executionForCommand(connection, "inventory.spell.status")
     connection.message(spellInventoryCompletion(status.id, "spell-snapshot", 2))
@@ -2675,10 +2745,45 @@ function click(selector: string): void {
   element.dispatchEvent(new MouseEvent("click", { bubbles: true }))
 }
 
-async function openWorkspace(workspace: "home" | "game" | "system" | "saves" | "tools" | "live" | "inspect" | "commands"): Promise<void> {
-	const migrated = workspace === "live" || workspace === "inspect" ? "game" : workspace === "commands" ? "tools" : workspace
-	click(`[data-workspace="${migrated}"]`)
+type OpenableView = "home" | "goto" | "party" | "items" | "time" | "fight" | "checkpoints" | "more"
+const toolTabs: Record<string, OpenableView> = {
+  "world.position.status": "goto",
+  "party.character.inspect": "party",
+  "party.character.update": "party",
+  "party.equipment.loadout.update": "party",
+  "inventory.locker.status": "items",
+  "inventory.spell.status": "items",
+  "quest.item.status": "items",
+  "search.status": "items",
+  "calendar.status": "time",
+  "environment.wind.status": "time",
+  "moongate.status": "time",
+  "combat.status": "fight",
+  "combat.encounter.options": "fight",
+  "save.snapshot.list": "checkpoints",
+  "shrine.status": "more",
+  "monster.ecosystem.status": "more",
+  "vehicle.status": "more",
+  "merchant.tester.catalog": "more",
+  "command-test.telescope": "more",
+  "test-setup.status": "more",
+  "guards.status": "more",
+  "logging.status": "more",
+  "debug.options.status": "more"
+}
+
+// Older tests name the workspace a tool used to live in; the tool helpers below open the tab that now holds it.
+async function openWorkspace(workspace: OpenableView | "game" | "system" | "saves" | "tools" | "live" | "inspect" | "commands"): Promise<void> {
+  const legacy: Record<string, OpenableView> = { game: "items", live: "items", inspect: "items", system: "more", tools: "more", commands: "more", saves: "checkpoints" }
+  click(`[data-workspace="${legacy[workspace] ?? workspace}"]`)
   await flushUI()
+}
+
+async function selectTool(commandID: string): Promise<void> {
+  const selector = `[data-command-select="${commandID}"]`
+  if (!root.querySelector(selector)) await openWorkspace(toolTabs[commandID] ?? "more")
+  // Tabs with a single tool select it on arrival and show no tool picker.
+  if (root.querySelector(selector)) click(selector)
 }
 
 function setControlValue(id: string, value: string): void {

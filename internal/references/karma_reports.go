@@ -80,7 +80,7 @@ func (r *KarmaReports) Select(karma int, context KarmaReportContext) (string, er
 }
 
 func parseKarmaReports(data []byte) (*KarmaReports, error) {
-	// Reports use DATA.OVL offsets, without embedding the prose; ref:KARMA-0017.
+	// Reports use KARMA.DAT offsets, without embedding the prose; ref:KARMA-0017.
 	offsets := [...]int{
 		0,
 		karmaSecondReportOffset,

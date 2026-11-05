@@ -114,6 +114,12 @@ mean STORYn.16; shape indexes are zero-based; offsets are STORY.DAT bytes.
 | 20 | 6/6 at 176,55 | Shape 7 at 176,110 | 10112 |
 | 21 | 6/4 at 0,87 | Shape 3 at 0,142 | 10903 |
 
+Story text, character creation and the ending share one proportional wrapper. A
+glyph advances its width plus one pixel and a space five pixels unless the caller
+narrows it. `{` advances 15 pixels and `_` draws nothing. When a line fills, the
+wrapper backs up to the nearest space, or nearest `_` whose `-` still fits, and a
+`_` break draws `-`. Lines broken this way spread their spare width across spaces.
+
 First frame has no initial wait; every later frame clears pending input and waits
 before display. One final clear/wait follows frame 21. No whole-sequence skip or
 explicit audio call appears in the inspected routine. Redux retains sequence/data

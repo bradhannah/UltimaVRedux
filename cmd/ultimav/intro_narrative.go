@@ -277,61 +277,55 @@ func introNarrativeLine(
 	widths []int,
 	spaceWidth int,
 ) introNarrativeLineLayout {
-	width, spaces := initialWidth, 0
-	lastSpace, lastSpaceWidth := -1, 0
-	lastUnderscore, lastUnderscoreWidth := -1, 0
-	for index := start; index < len(text); index++ {
-		char := text[index]
-		if char == '\n' {
-			return introNarrativeLineLayout{
-				end: index, next: index + 1, width: width, maxWidth: maxWidth, spaces: spaces,
-				justify: false, drawHyphen: false,
-			}
-		}
-		charWidth := introNarrativeCharacterWidth(char, widths, spaceWidth)
-		switch char {
-		case ' ':
-			lastSpace, lastSpaceWidth = index, width
+	// Like the original wrapper, measure forward until the line is full, then back
+	// up to the nearest space or '_' soft hyphen whose '-' still fits. A '_' inside
+	// the last word therefore wins over the space before that word.
+	width, spaces, index := initialWidth, 0, start
+	for ; index < len(text) && width < maxWidth && text[index] != '\n'; index++ {
+		if text[index] <= ' ' {
 			spaces++
-		case '_':
-			lastUnderscore, lastUnderscoreWidth = index, width
 		}
-		width += charWidth
-		if width < maxWidth {
-			continue
-		}
-		if lastSpace >= start {
-			lineSpaces := 0
-			for _, value := range []byte(text[start:lastSpace]) {
-				if value == ' ' {
-					lineSpaces++
-				}
-			}
-
-			return introNarrativeLineLayout{
-				end: lastSpace, next: lastSpace + 1, width: lastSpaceWidth, maxWidth: maxWidth,
-				spaces: lineSpaces, justify: true, drawHyphen: false,
-			}
-		}
-		hyphenWidth := introNarrativeCharacterWidth('-', widths, spaceWidth)
-		if lastUnderscore >= start && lastUnderscoreWidth+hyphenWidth < maxWidth {
-			return introNarrativeLineLayout{
-				end: lastUnderscore, next: lastUnderscore + 1, width: lastUnderscoreWidth + hyphenWidth, maxWidth: maxWidth,
-				spaces: spaces, justify: true, drawHyphen: true,
-			}
-		}
-		end := max(index, start+1)
-
-		return introNarrativeLineLayout{
-			end: end, next: end, width: width - charWidth, maxWidth: maxWidth, spaces: spaces,
-			justify: true, drawHyphen: false,
-		}
+		width += introNarrativeCharacterWidth(text[index], widths, spaceWidth)
 	}
-
-	return introNarrativeLineLayout{
-		end: len(text), next: len(text), width: width, maxWidth: maxWidth, spaces: spaces,
+	line := introNarrativeLineLayout{
+		end: index, next: index, width: width, maxWidth: maxWidth, spaces: spaces,
 		justify: false, drawHyphen: false,
 	}
+	if index < len(text) && text[index] == '\n' {
+		line.next++
+
+		return line
+	}
+	if width < maxWidth {
+		return line
+	}
+	overflow := index - 1
+	hyphenWidth := introNarrativeCharacterWidth('-', widths, spaceWidth)
+	line.justify = true
+	for index = overflow; index > start; index-- {
+		char := text[index]
+		switch {
+		case char == ' ':
+			line.end, line.next, line.width, line.spaces = index, index+1, width-spaceWidth, spaces-1
+
+			return line
+		case char == '_' && width+hyphenWidth < maxWidth:
+			line.end, line.next, line.width, line.drawHyphen = index, index+1, width+hyphenWidth, true
+
+			return line
+		case char != '_' && char != '{':
+			width -= introNarrativeCharacterWidth(char, widths, spaceWidth)
+		}
+	}
+	// No break point fits. Shipped text never gets here, and the original would
+	// drop a character, so split the word before the overflowing glyph instead.
+	line.end = max(overflow, start+1)
+	line.next = line.end
+	if line.end == overflow {
+		line.width -= introNarrativeCharacterWidth(text[overflow], widths, spaceWidth)
+	}
+
+	return line
 }
 
 func drawIntroNarrativeLine(

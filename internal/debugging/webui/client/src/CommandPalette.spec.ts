@@ -7,8 +7,8 @@ import type { NavigationSurface } from "./command_navigation"
 let app: VueApp<Element> | undefined
 let root: HTMLElement
 const surfaces: NavigationSurface[] = [
-  { id: "game:ships", workspace: "game", workspaceLabel: "Game", label: "Ships", description: "Vehicle controls", commandId: "vehicle.status", commands: [] },
-  { id: "system:logging", workspace: "system", workspaceLabel: "System", label: "Logging", description: "Log channels", commandId: "logging.status", commands: [] },
+  { id: "more:ships", workspace: "more", workspaceLabel: "More", label: "Ships", description: "Vehicle controls", commandId: "vehicle.status", commands: [] },
+  { id: "more:logging", workspace: "more", workspaceLabel: "More", label: "Logging", description: "Log channels", commandId: "logging.status", commands: [] },
 ]
 
 afterEach(() => { app?.unmount(); root?.remove(); app = undefined })
@@ -22,23 +22,23 @@ describe("CommandPalette", () => {
     input.value = "logging"
     input.dispatchEvent(new Event("input", { bubbles: true }))
     await nextTick()
-    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-system:logging")
+    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-more:logging")
     expect(root.querySelector('[role="listbox"] [role="option"]')?.getAttribute("aria-selected")).toBe("true")
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }))
-    expect(activate).toHaveBeenCalledWith(expect.objectContaining({ id: "system:logging" }))
+    expect(activate).toHaveBeenCalledWith(expect.objectContaining({ id: "more:logging" }))
   })
 
   it("supports Home, End, arrows, Escape, and wraps Tab focus inside the modal", async () => {
     const close = vi.fn()
-    mount({ close }, ["game:ships", "system:logging"])
+    mount({ close }, ["more:ships", "more:logging"])
     await nextTick()
     const input = root.querySelector<HTMLInputElement>("[role=combobox]")!
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "End", bubbles: true, cancelable: true }))
     await nextTick()
-    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-system:logging")
+    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-more:logging")
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true, cancelable: true }))
     await nextTick()
-    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-game:ships")
+    expect(input.getAttribute("aria-activedescendant")).toBe("command-palette-more:ships")
     input.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }))
     expect(close).toHaveBeenCalledOnce()
     const closeButton = root.querySelector<HTMLButtonElement>('button[aria-label="Close command palette"]')!

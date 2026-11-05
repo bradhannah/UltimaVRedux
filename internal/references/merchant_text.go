@@ -193,10 +193,10 @@ type merchantTextRecord struct {
 	offset int
 }
 
-// Merchant text records are addressed by exact DATA.OVL byte offsets. Keeping only
+// Merchant text records are addressed by exact SHOPPE.DAT byte offsets. Keeping only
 // labels and offsets permits strict parsing without embedding copyrighted prose.
 //
-//nolint:gochecknoglobals // Semantic DATA.OVL merchant-text offsets are immutable after initialization; ref:MERCH-0001.
+//nolint:gochecknoglobals // Semantic SHOPPE.DAT merchant-text offsets are immutable after initialization; ref:MERCH-0001.
 var merchantTextRecords = [...]merchantTextRecord{
 	{"RUDE_ARMS_0", 0},
 	{"RUDE_ARMS_1", 17},
