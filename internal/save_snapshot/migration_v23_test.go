@@ -55,7 +55,7 @@ func v23DoorSnapshot() SaveSnapshot {
 }
 
 func TestV23OpenDoorRoundTripAndSchema(t *testing.T) {
-	require.Equal(t, 25, CurrentVersion)
+	require.Equal(t, 26, CurrentVersion)
 	require.Equal(t, 2, CurrentEnvelopeVersion)
 	schema, _ := compileCurrentNativeSaveSchema(t)
 	requireV23RoundTrip(t, schema, validSnapshot()) // Required openDoor: null.

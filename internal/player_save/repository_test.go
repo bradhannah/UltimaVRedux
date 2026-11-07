@@ -813,6 +813,7 @@ func minimumVersionPlayerSaveData(t *testing.T, envelope save_snapshot.Envelope)
 	snapshot := document["snapshot"].(map[string]any)
 	snapshot["version"] = float64(save_snapshot.MinimumVersion)
 	delete(snapshot, "excerpts")
+	delete(snapshot, "notes")
 	data, err = json.Marshal(document)
 	if err != nil {
 		t.Fatal(err)

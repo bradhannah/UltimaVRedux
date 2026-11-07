@@ -109,6 +109,8 @@ Player-authored atlas notes likewise follow their checkpoint: their recorded
 position, creation date, text, stable ID and allocation watermark rewind together.
 They are distinct from learned landmark surveys and captured conversation excerpts. A
 captured note draft belongs to one authoritative state and cannot survive restore.
+Player notes in My Notes follow their checkpoint in the same way: a reload rewinds
+them with the rest of the save, and older saves start with a fresh notebook.
 Fleet identity likewise follows each actual vehicle across parked/boarded forms,
 with one checkpoint allocation watermark and no duplicate position/history store.
 Registration requires a real eligible boat-use boundary; acquiring a sextant or
