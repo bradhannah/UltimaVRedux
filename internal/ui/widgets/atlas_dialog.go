@@ -38,6 +38,10 @@ type AtlasDialog struct {
 	panelHeader, position, zoom                *text.Output
 	tabs                                       [journal.AtlasPlaceFilterCount]image.Rectangle
 	tabText                                    *text.Output
+	lighting                                   AtlasLighting
+	lightPool                                  *ebiten.Image
+	lightPoolCore                              float32
+	lightFrames                                int64
 }
 
 var _ Widget = (*AtlasDialog)(nil)
@@ -53,7 +57,7 @@ func NewAtlasDialog(dossier journal.AtlasDossier, texture *ebiten.Image, keyboar
 	}
 	//nolint:exhaustruct_v5 // Refresh and ensureLayout initialize detached data and measured panels.
 	d := &AtlasDialog{navigation: newNavigation(keyboard.IsKeyHeld), keyboard: keyboard,
-		view: view, texture: texture, onDismiss: onDismiss, focused: true}
+		view: view, texture: texture, onDismiss: onDismiss, focused: true, lighting: AtlasDaylight()}
 	d.Refresh(dossier)
 	d.ensureLayout()
 
@@ -110,6 +114,7 @@ func IsAtlasChord(keyboard *input.Keyboard) bool {
 
 // Update handles reader input without acquiring or modifying gameplay knowledge.
 func (d *AtlasDialog) Update() {
+	d.lightFrames++
 	if d.closed || !d.focused {
 		return
 	}

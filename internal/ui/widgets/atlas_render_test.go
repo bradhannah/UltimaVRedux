@@ -235,3 +235,15 @@ func TestAtlasRenderingRegionsIndependentUnboxedAndYieldToCallout(t *testing.T) 
 	blank := image.NewRGBA(screen.Bounds())
 	require.Equal(t, blank.Pix, atlasMarkerPixels(screen).Pix, "overlapping region text is skipped, not moved or boxed")
 }
+
+func TestAtlasTorchFlickerMovesOnTheDialogsOwnFrames(t *testing.T) {
+	dialog := atlasRenderingDialog()
+	require.InDelta(t, 1, dialog.lightFlicker(), 1e-9, "daylight is steady")
+	lighting := AtlasDaylight()
+	lighting.Flicker = 0.06
+	dialog.SetLighting(lighting)
+	first := dialog.lightFlicker()
+	dialog.lightFrames += 20
+	require.NotEqual(t, first, dialog.lightFlicker(), "torchlight flickers")
+	require.InDelta(t, 1, dialog.lightFlicker(), 0.06, "within the flicker amplitude")
+}

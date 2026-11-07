@@ -456,7 +456,7 @@ func (g *GameScene) applyLightTinting(pos references.Position, opts *ebiten.Draw
 
 	// Fade the ambient tint independently of visibility so dusk never creates
 	// additional black tiles.
-	darkeningFactor := 1 + (map_state.UnlitDarkeningFactor-1)*ambientDarkness
+	darkeningFactor := map_state.UnlitAmbientBrightness(ambientDarkness)
 	if hasDaylight {
 		darkeningFactor = daylightTarget + (map_state.UnlitDarkeningFactor-daylightTarget)*ambientDarkness
 	}

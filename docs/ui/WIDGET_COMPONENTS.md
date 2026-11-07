@@ -138,6 +138,21 @@ their content overflows. `L` shows/hides the single selected-place callout; ther
 automatic label-culling mode. In a category overview, `L` instead shows/hides all
 authorised in-view labels. `G` toggles the chart grid.
 
+**Map lighting.** The terrain is drawn under the light of the moment the map
+opens; time is frozen while it is open, so the light holds for that opening.
+Places, labels, callouts, the grid and every side panel stay at full brightness.
+By day the chart is unchanged. Darkness follows the game view's cosmetic curve
+(`GameState.AmbientTintDarkness`, fading over 05:00-05:30 and 19:30-20:00); the
+Underworld and dungeons count as full night at every hour. With no carried light,
+the terrain uses the game view's unlit multiplier
+(`map_state.UnlitAmbientBrightness`, 0.40 at night). A lit torch gives a softened
+warm tint, a radial pool centred on the map pane whose border darkens by a fixed
+0.55 (so the edges stay readable), and a ±6% flicker. In Lor / Vas Lor give a
+steady near-white light. Each night look blends from the daytime chart by the same
+darkness. The flicker runs on the dialog's own frame count, never the game clock
+or RNG. Values: `cmd/ultimav/atlas_lighting.go`; drawing:
+`internal/ui/widgets/atlas_lighting.go`.
+
 First opening per scene is whole-world, All selected, selected-place callout on,
 grid off. Manually chosen camera, zoom, category and selection survive reopening
 within the scene. Selection/category changes do not move the camera. Current

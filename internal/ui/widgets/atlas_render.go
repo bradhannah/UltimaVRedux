@@ -17,13 +17,16 @@ import (
 func (d *AtlasDialog) drawGeography(screen *ebiten.Image) {
 	screen = atlasSubImage(screen, d.mapRect)
 	if d.texture != nil {
+		flicker := d.lightFlicker()
 		for _, part := range d.view.textureRects(d.mapRect) {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Scale(part.scale, part.scale)
 			op.GeoM.Translate(part.x, part.y)
 			op.Filter = ebiten.FilterLinear
+			d.applyTerrainLight(op, flicker)
 			screen.DrawImage(atlasSubImage(d.texture, part.source), op)
 		}
+		d.drawLightPool(screen, flicker)
 	} else {
 		d.label.Reset()
 		d.label.SetMaxCharsPerLine(len("Geography unavailable"))

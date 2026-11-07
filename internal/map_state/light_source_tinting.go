@@ -91,6 +91,12 @@ const (
 	UnlitDarkeningFactor float32 = 0.40
 )
 
+// UnlitAmbientBrightness is the colour multiplier for unlit outdoor terrain at a
+// cosmetic darkness from 0 (day) to 1 (night): 1 by day, UnlitDarkeningFactor at night.
+func UnlitAmbientBrightness(darkness float32) float32 {
+	return 1 + (UnlitDarkeningFactor-1)*darkness
+}
+
 // ============================================================================
 // Ambient Light Configuration
 // ============================================================================
