@@ -63,6 +63,60 @@
       "rules": ["CAMP-0005"],
       "link": "/original/how/levelling/",
       "link_label": "Levelling and the Wanderer"
+    },
+    {
+      "id": "strength-damage",
+      "claim": "Strength makes your sword hit harder.",
+      "verdict": "busted",
+      "answer": "Damage is a roll from 1 to the weapon's rating, minus the target's armour roll. Strength is not part of it.",
+      "rules": ["EQUIP-0013"],
+      "link": "/original/how/combat/#damage",
+      "link_label": "Combat, by the numbers"
+    },
+    {
+      "id": "silver-sword",
+      "claim": "The Silver Sword slays the undead.",
+      "verdict": "busted",
+      "answer": "It counts as magical, so the undead take its full damage instead of half. The damage rules give it no extra power against them.",
+      "rules": ["EQUIP-0013"],
+      "link": "/original/how/combat/#damage",
+      "link_label": "Combat, by the numbers"
+    },
+    {
+      "id": "rich-chests",
+      "claim": "The more treasure a monster carries, the safer its chest.",
+      "verdict": "busted",
+      "answer": "The opposite. The Treasure rating that makes a chest likely also makes a trap likely: a Dragon's chest is trapped 98% of the time.",
+      "rules": ["COMBAT-0009", "RNG-0001"],
+      "link": "/original/how/combat/#loot",
+      "link_label": "Combat, by the numbers"
+    },
+    {
+      "id": "british-chests",
+      "claim": "Lord British doesn't mind you opening his chests.",
+      "verdict": "busted",
+      "answer": "Every chest opened in a town, castle, keep or dwelling costs 2 karma, whoever owns it, even one that turns out empty or trapped.",
+      "rules": ["KARMA-0005"],
+      "link": "/original/karma/#lower",
+      "link_label": "Karma"
+    },
+    {
+      "id": "big-donations",
+      "claim": "The more you give a beggar, the more karma you get.",
+      "verdict": "busted",
+      "answer": "The reward is +1 whatever the amount, and only once the beggar counter has reached 100. The one bonus is +2 more for giving away your last coin.",
+      "rules": ["KARMA-0011", "KARMA-0012"],
+      "link": "/original/karma/#raise",
+      "link_label": "Karma"
+    },
+    {
+      "id": "resurrection-xp",
+      "claim": "Resurrection brings a character back just as they were.",
+      "verdict": "depends",
+      "answer": "Only at karma 98 or 99. Below that, their XP is multiplied by your karma as a percentage, and their level and maximum HP can fall with it.",
+      "rules": ["KARMA-0015"],
+      "link": "/original/karma/#decides",
+      "link_label": "Karma"
     }
   ]
 }

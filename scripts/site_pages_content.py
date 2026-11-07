@@ -6,7 +6,9 @@ against the Game Facts so stale content fails the build instead of shipping.
 
 import re
 from collections.abc import Callable
+from typing import cast
 
+import site_combat
 from gamefacts_public import JSONValue, require
 from site_context import (
     REPO_URL,
@@ -111,6 +113,31 @@ def myth_card(ctx: Context, myth: Obj, compact: bool = False) -> str:
     )
 
 
+def rows_of(value: JSONValue) -> list[list[str]]:
+    """Narrow a JSON value to a list of string rows."""
+    require(isinstance(value, list), "table rows must be a list")
+    return [strings(row) for row in cast(list[JSONValue], value)]
+
+
+def table(head: list[str], rows: list[list[str]]) -> str:
+    """Render a plain table whose cells may hold inline Markdown."""
+    header = "".join(f'<th scope="col">{esc(cell)}</th>' for cell in head)
+    body = "".join(
+        "<tr>" + "".join(f"<td>{plain(cell)}</td>" for cell in row) + "</tr>"
+        for row in rows
+    )
+    return (
+        f'<div class="table-wrap"><table><thead><tr>{header}</tr></thead>'
+        f"<tbody>{body}</tbody></table></div>"
+    )
+
+
+def block_h2(block: Obj) -> str:
+    """Render a heading, with an anchor when the block names one."""
+    anchor = f' id="{esc(block["id"])}"' if "id" in block else ""
+    return f"<h2{anchor}>{esc(block['text'])}</h2>"
+
+
 def block_steps(block: Obj) -> str:
     """Render numbered steps."""
     items = "".join(
@@ -152,27 +179,33 @@ def render_block(ctx: Context, block: Obj) -> str:
     """Render one curated content block."""
     simple: dict[str, Callable[[Obj], str]] = {
         "p": lambda b: f"<p>{plain(str(b['text']))}</p>",
-        "h2": lambda b: f"<h2>{esc(b['text'])}</h2>",
+        "h2": block_h2,
         "ul": lambda b: "<ul>"
         + "".join(f"<li>{plain(t)}</li>" for t in strings(b["items"]))
         + "</ul>",
         "steps": block_steps,
         "stats": block_stats,
+        "table": lambda b: table(strings(b["head"]), rows_of(b["rows"])),
         "callout": block_callout,
         "myths": lambda b: block_myths(ctx, b),
-        "computed": lambda b: computed_block(ctx, str(b["name"])),
+        "computed": lambda b: computed_block(ctx, b),
     }
     kind = str(block["type"])
     require(kind in simple, f"unknown block type: {kind}")
     return simple[kind](block)
 
 
-def computed_block(ctx: Context, name: str) -> str:
+def computed_block(ctx: Context, block: Obj) -> str:
     """Render a table computed from Game Facts at build time."""
     computed: dict[str, Callable[[], str]] = {
         "level_table": level_table,
         "ambush_table": lambda: ambush_table(ctx),
+        "hit_table": lambda: site_combat.hit_table(ctx),
+        "fight_example": lambda: site_combat.fight_example(ctx, block),
+        "chest_contents": lambda: site_combat.chest_contents(ctx),
+        "chest_arms": lambda: site_combat.chest_arms(ctx),
     }
+    name = str(block["name"])
     require(name in computed, f"unknown computed block: {name}")
     return computed[name]()
 

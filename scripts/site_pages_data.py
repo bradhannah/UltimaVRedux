@@ -140,7 +140,11 @@ def creature_row(row: Row) -> str:
         row[k]
         for k in ("armour", "damage", "str", "dex", "int", "group_max", "treasure")
     ]
+    odds = [extra["chest_percent"], extra["trapped_percent"]]
     cells = "".join(f'<td class="num">{cell(v)}</td>' for v in numbers + stats)
+    cells += "".join(
+        f'<td class="num">{cell(v)}{"" if v is None else "%"}</td>' for v in odds
+    )
     ability_text = ", ".join(label(a) for a in abilities) or "—"
     return (
         f'<tr data-key="{row["index"]}" data-group="{esc(extra["group"])}">'
@@ -169,6 +173,8 @@ def build_bestiary(ctx: Context) -> None:
         ("INT", "int", "num"),
         ("Group", "group_max", "num"),
         ("Treasure", "treasure", "num"),
+        ("Chest", "derived.chest_percent", "num"),
+        ("Trapped", "derived.trapped_percent", "num"),
         ("Attack", "range", ""),
         ("Abilities", "abilities", ""),
         ("Joined by", "friend", ""),
@@ -191,7 +197,10 @@ def build_bestiary(ctx: Context) -> None:
         + "</tbody></table></div></div>"
         "<p class='muted'>*XP is worked out from the combat rules, not stored in the "
         "table: HP ÷ 4 + 1, rounded down, to whoever lands the killing blow "
-        "(see <a href='/original/levels/'>Levels and experience</a>). Attack shows the "
+        "(see <a href='/original/levels/'>Levels and experience</a>). Chest is the "
+        "chance a kill leaves a chest; Trapped is the share of those chests that are "
+        "trapped (see <a href='/original/how/combat/#loot'>Combat, by the numbers"
+        "</a>). Attack shows the "
         "missile and range for creatures that shoot; Melee means they must stand next "
         "to you. Group is the most that appear in one encounter, not how many exist. "
         "A creature in this table is not guaranteed to appear in play. Groups "
@@ -218,7 +227,7 @@ def build_bestiary(ctx: Context) -> None:
             "Bestiary",
             "Every creature: stats, abilities, XP",
             "/original/bestiary/",
-            ["ENEMY-0001", "ENEMY-0002", "PROGRESS-0002"],
+            ["ENEMY-0001", "ENEMY-0002", "PROGRESS-0002", "COMBAT-0009"],
         )
     )
 
