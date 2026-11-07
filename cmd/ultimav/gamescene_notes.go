@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
@@ -16,11 +17,27 @@ func (g *GameScene) handleNotesIntent(intent widgets.NotesIntent) {
 	if session == nil || session.child != nil || session.closing {
 		return
 	}
+	switch {
+	case intent.Action == widgets.NotesShowOnMap:
+		request := intent
+		session.mapRequest = &request
+	case intent.MapNote && intent.Action == widgets.NotesEdit:
+		g.openMapNoteEditor(session, intent.NoteID)
+	case intent.MapNote && intent.Action == widgets.NotesDelete:
+		g.deleteMapNote(session, intent.NoteID)
+	default:
+		g.applyNotesIntent(session, intent)
+	}
+}
+
+func (g *GameScene) applyNotesIntent(session *journalSession, intent widgets.NotesIntent) {
 	switch intent.Action {
 	case widgets.NotesNew, widgets.NotesEdit:
 		g.openNoteEditor(session, intent)
 	case widgets.NotesNewSection, widgets.NotesRenameSection:
 		g.openNoteSectionPrompt(session, intent)
+	case widgets.NotesShowOnMap:
+		// handleNotesIntent queues the Map before reaching here.
 	case widgets.NotesDelete:
 		state, err := g.gameState.DeletePlayerNote(intent.NoteID)
 		g.notesResult(session, state, err, 0, intent.SectionID, "Note deleted.")
@@ -83,6 +100,7 @@ func (g *GameScene) noteNow() string {
 func (g *GameScene) openNoteEditor(session *journalSession, intent widgets.NotesIntent) {
 	notes := g.gameState.PlayerNotes()
 	heading, sectionID, place, recorded := "NEW NOTE", intent.SectionID, g.notePlace(), g.noteNow()
+	site := g.gameState.PlayerNoteSite(g.skyOrigin())
 	initial := [2]string{"", ""}
 	if intent.Action == widgets.NotesEdit {
 		index := notes.NoteIndex(intent.NoteID)
@@ -125,7 +143,7 @@ func (g *GameScene) openNoteEditor(session *journalSession, intent widgets.Notes
 			if intent.Action == widgets.NotesEdit {
 				state, err = g.gameState.EditPlayerNote(id, title, text)
 			} else {
-				state, id, err = g.gameState.AddPlayerNote(sectionID, title, text, place)
+				state, id, err = g.gameState.AddPlayerNote(sectionID, title, text, place, site)
 			}
 			if err != nil {
 				return noteSentenceError(notesMessage(err))
@@ -194,11 +212,117 @@ func noteSectionNameProblem(notes journal.NotesState, renaming uint64, value str
 	return ""
 }
 
-// closeNotesChild removes the editor or name box and returns focus to the Journal.
+// openMapNoteEditor edits a Map note from Places with the Map's own editor and limits.
+func (g *GameScene) openMapNoteEditor(session *journalSession, id uint64) {
+	draft, err := g.gameState.BeginAtlasNoteDraft(id)
+	if err != nil {
+		session.dialog.MapNotesChanged(g.gameState.CaptureAtlasNotes().Records, 0, "That Map note no longer exists.")
+
+		return
+	}
+	g.keyboard.PrepareForTransition(0)
+	session.noteDraft = draft
+	session.child = widgets.NewAtlasNoteEditor(widgets.AtlasNoteEditorConfig{
+		Record: draft.Record(), Context: draft.ContextLabel(), Deleting: false, Keyboard: g.keyboard,
+		Cancel: g.closeNotesChild, AppendInputChars: g.appendInputChars, Text: nil,
+		Submit: func(label, description string) error {
+			record, err := g.gameState.CommitAtlasNote(draft, label, description)
+			if err != nil {
+				return fmt.Errorf("save atlas note: %w", err)
+			}
+			session.dialog.MapNotesChanged(g.gameState.CaptureAtlasNotes().Records, record.ID, "Map note saved.")
+			g.closeNotesChild()
+
+			return nil
+		},
+	})
+	g.dialogStack.PushModalDialog(session.child)
+}
+
+// deleteMapNote deletes a Map note after the Journal's own confirmation.
+func (g *GameScene) deleteMapNote(session *journalSession, id uint64) {
+	draft, err := g.gameState.BeginAtlasNoteDraft(id)
+	if err == nil {
+		err = g.gameState.DeleteAtlasNote(draft)
+	}
+	status := "Map note deleted."
+	if err != nil {
+		status = "That Map note could not be deleted."
+	}
+	session.dialog.MapNotesChanged(g.gameState.CaptureAtlasNotes().Records, 0, status)
+}
+
+// openNoteMap shows the Traveller's Map over the Journal on the chosen note. It
+// only reads: Esc returns to the same row, and the Journal's pause continues.
+func (g *GameScene) openNoteMap(game *Game, session *journalSession) {
+	intent := *session.mapRequest
+	session.mapRequest = nil
+	if session.child != nil || session.closing {
+		return
+	}
+	dossier := g.gameState.CurrentAtlasDossier()
+	key, places, problem := g.noteMapEntry(&dossier, intent)
+	if problem != "" {
+		session.dialog.SetNotesStatus(problem)
+
+		return
+	}
+	g.keyboard.PrepareForTransition(0)
+	dialog := widgets.NewAtlasDialog(dossier, g.atlasGeography(game), g.keyboard, &g.atlasView, g.closeNotesChild)
+	dialog.SetLighting(g.atlasLighting())
+	dialog.Focus(key, places)
+	session.child = dialog
+	g.dialogStack.PushModalDialog(dialog)
+}
+
+// noteMapEntry finds the Map entry for a note, or explains why the Map can't show
+// it. A Journal note's measured spot joins the dossier for this one view only.
+func (g *GameScene) noteMapEntry(
+	dossier *journal.AtlasDossier, intent widgets.NotesIntent,
+) (string, journal.AtlasPlaceFilter, string) {
+	if intent.MapNote {
+		key := journal.AtlasNoteKey(intent.NoteID)
+		if !slices.ContainsFunc(dossier.Entries, func(entry journal.AtlasEntry) bool { return entry.Key == key }) {
+			return "", journal.AtlasAllPlaces, "That Map note no longer exists."
+		}
+
+		return key, journal.AtlasNotePlaces, ""
+	}
+	notes := g.gameState.PlayerNotes()
+	index := notes.NoteIndex(intent.NoteID)
+	if index < 0 || notes.Notes[index].Site == nil {
+		return "", journal.AtlasAllPlaces, "This note has no place on the Map."
+	}
+	note := notes.Notes[index]
+	if note.SurfaceSpot() {
+		key := fmt.Sprintf("journal-note-%d", note.ID)
+		dossier.Entries = append(dossier.Entries, journal.AtlasEntry{
+			Key: key, Name: note.ListTitle(), Kind: widgets.AtlasJournalNoteKind, Category: journal.AtlasNotes,
+			Phase: -1, NameKnown: true, Note: journal.AtlasNoteRecord{ID: note.ID, Position: *note.Site,
+				Label: note.ListTitle(), Description: note.Text, RecordedAt: note.RecordedAt},
+		})
+
+		return key, journal.AtlasNotePlaces, ""
+	}
+	key := g.gameState.AtlasPlaceKey(note.Site.Map)
+	for _, entry := range dossier.Entries {
+		if entry.Key == key {
+			return key, journal.AtlasPlaceFilter(entry.Category) + 1, ""
+		}
+	}
+
+	return "", journal.AtlasAllPlaces, "That place is not on your Map yet."
+}
+
+// closeNotesChild removes the editor, name box or Map and returns focus to the Journal.
 func (g *GameScene) closeNotesChild() {
 	session := g.journalSession
 	if session == nil || session.child == nil {
 		return
+	}
+	if session.noteDraft != nil {
+		session.noteDraft.Discard()
+		session.noteDraft = nil
 	}
 	g.dialogStack.MustRemoveWidgetInstance(session.child)
 	session.child = nil

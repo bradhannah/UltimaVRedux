@@ -78,7 +78,9 @@ type QuestJournalDialogConfig struct {
 	ArchiveExcerpt func(string, bool) ([]journal.Exchange, error)
 	ExcerptError   string
 	// Notes is a detached notebook; OnNotesIntent asks the scene to change it.
-	Notes         journal.NotesState
+	Notes journal.NotesState
+	// MapNotes are the Traveller's Map notes, listed in Places beside Journal notes.
+	MapNotes      []journal.AtlasNoteRecord
 	OnNotesIntent func(NotesIntent)
 	// NotesOnly is Simple Notes Mode: My Notes is the only tab. Nothing else is lost.
 	NotesOnly bool
@@ -196,7 +198,7 @@ func NewQuestJournalDialog(
 	for tab := range dialog.newEntries {
 		dialog.newEntries[tab] = append([]bool(nil), config.NewEntries[tab]...)
 	}
-	dialog.notesView.notes, dialog.notesView.onIntent = config.Notes.Normalized(), config.OnNotesIntent
+	dialog.initNotes(config.Notes, config.MapNotes, config.OnNotesIntent)
 	for tab := QuestJournalChronicleTab; tab < questJournalTabCount; tab++ {
 		dialog.tabs = append(dialog.tabs, tab)
 	}
@@ -205,7 +207,6 @@ func NewQuestJournalDialog(
 		dialog.tabs = []QuestJournalTab{QuestJournalNotesTab}
 		dialog.activeTab, dialog.visitedTabs = QuestJournalNotesTab, [3]bool{}
 	}
-	dialog.rebuildNoteRows()
 	dialog.refreshVisibleExcerpts("")
 	dialog.clampAllSelections()
 	dialog.ensureLayout()

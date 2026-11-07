@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
 const (
@@ -44,7 +46,7 @@ type NoteSection struct {
 	Folded bool   `json:"folded"`
 }
 
-// NoteRecord is one player-written note. Place and RecordedAt are stamped once.
+// NoteRecord is one player-written note. Place, Site and RecordedAt are stamped once.
 type NoteRecord struct {
 	ID         uint64   `json:"id"`
 	SectionID  uint64   `json:"sectionId"`
@@ -53,6 +55,10 @@ type NoteRecord struct {
 	Place      string   `json:"place"`
 	RecordedAt GameTime `json:"recordedAt"`
 	Done       bool     `json:"done"`
+	// Site links the note to the Traveller's Map: a sextant-measured spot on
+	// Britannia's surface, or the settlement or dungeon it was written in (map
+	// only). Nil links nowhere.
+	Site *SiteLocation `json:"site"`
 }
 
 // NotesState is checkpointed player authorship. The zero value is a fresh
@@ -86,6 +92,12 @@ func (s NotesState) Fresh() bool {
 func (s NotesState) Clone() NotesState {
 	s.Sections = slices.Clone(s.Sections)
 	s.Notes = slices.Clone(s.Notes)
+	for index := range s.Notes {
+		if site := s.Notes[index].Site; site != nil {
+			copied := *site
+			s.Notes[index].Site = &copied
+		}
+	}
 
 	return s
 }
@@ -107,6 +119,11 @@ func (s NotesState) SectionIndex(id uint64) int {
 // NoteIndex returns the stored position of a note, or -1.
 func (s NotesState) NoteIndex(id uint64) int {
 	return slices.IndexFunc(s.Notes, func(note NoteRecord) bool { return note.ID == id })
+}
+
+// SurfaceSpot reports a note linked to an exact spot on Britannia's surface.
+func (n NoteRecord) SurfaceSpot() bool {
+	return n.Site != nil && n.Site.Map == references.BritanniaUnderworld
 }
 
 // ListTitle is the title, or the first line of an untitled note.
@@ -172,12 +189,24 @@ func validateNoteRecords(state NotesState) error {
 			!printableNoteText(note.Place, false) {
 			return fmt.Errorf("%w: note date or place", ErrInvalidNotes)
 		}
+		if note.Site != nil && !validNoteSite(*note.Site) {
+			return fmt.Errorf("%w: note map link", ErrInvalidNotes)
+		}
 		if err := ValidateNoteText(note.Title, note.Text); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// validNoteSite accepts a surface spot, or a settlement or dungeon named by its map alone.
+func validNoteSite(site SiteLocation) bool {
+	if site.Map == references.BritanniaUnderworld {
+		return ValidAtlasSurfacePosition(site)
+	}
+
+	return site.Map >= references.Moonglow && site.Map <= references.Doom && site.Floor == 0 && site.X == 0 && site.Y == 0
 }
 
 // ValidateNoteSectionName accepts 1-14 printable characters without edge spaces.

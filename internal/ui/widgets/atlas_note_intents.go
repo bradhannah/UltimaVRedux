@@ -72,5 +72,26 @@ func (d *AtlasDialog) NoteCommitted(dossier journal.AtlasDossier, noteID uint64)
 	d.status = "Note saved."
 }
 
+// AtlasJournalNoteKind marks a Journal note shown on the Map for one visit from the Journal.
+const AtlasJournalNoteKind = "journal note"
+
+// Focus opens one entry from outside the Map, such as a Journal note: it shows
+// the entry's category, selects it and centres on it when its position is known
+// (the Map says so otherwise). Zoom stays the player's choice. It reports false
+// when the category has no such entry.
+func (d *AtlasDialog) Focus(key string, places journal.AtlasPlaceFilter) bool {
+	d.view.Filters.Places = places
+	d.view.Overview = false
+	d.view.SelectedKey = key
+	d.refilter()
+	d.detailPage = 0
+	if d.view.Overview || len(d.entries) == 0 || d.entries[d.selection].Key != key {
+		return false
+	}
+	d.centerOnSelection()
+
+	return true
+}
+
 // SetStatus displays concise authoring feedback in the atlas's existing status area.
 func (d *AtlasDialog) SetStatus(status string) { d.status = status }

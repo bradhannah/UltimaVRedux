@@ -74,14 +74,15 @@
     },
     "note": {
       "type": "object", "additionalProperties": false,
-      "required": ["id", "sectionId", "title", "text", "place", "recordedAt", "done"],
+      "required": ["id", "sectionId", "title", "text", "place", "recordedAt", "done", "site"],
       "properties": {
         "id": {"$ref": "#/$defs/identity"}, "sectionId": {"$ref": "#/$defs/identity"},
         "title": {"type": "string", "maxLength": 32, "pattern": "^[ -~]*$"},
         "text": {"type": "string", "maxLength": 2000, "pattern": "^[\\x20-\\x7e\\n]*$"},
         "place": {"type": "string", "maxLength": 64, "pattern": "^[ -~]*$"},
         "recordedAt": {"$ref": "native-save-e2-s24.schema.json#/$defs/note/properties/recordedAt"},
-        "done": {"type": "boolean"}
+        "done": {"type": "boolean"},
+        "site": {"anyOf": [{"type": "null"}, {"$ref": "native-save-e2-s20.schema.json#/$defs/site"}]}
       }
     }
   }

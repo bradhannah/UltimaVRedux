@@ -58,6 +58,9 @@ must satisfy these rules:
   characters (printable ASCII plus LF), and at least one of the two nonblank.
   `place` is a trimmed label of at most 64 printable characters, `recordedAt` is a
   valid `GameTime` stamped once, and `done` is a boolean.
+- The required `site` is null or the note's Traveller's Map link, stamped once: a
+  surface spot (`map` 0, `floor` 0, coordinates 0–255) measured by sextant, or a
+  settlement or dungeon named by `map` 1–40 alone (`floor`, `x` and `y` zero).
 
 Drafts and open editors are never serialized. `internal/journal/notes.go` owns
 validation; the s26 schema asserts the same bounds through the version-aware

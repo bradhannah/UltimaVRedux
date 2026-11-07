@@ -688,18 +688,44 @@ it from Chronicle. Game state owns the notebook and saves it with each checkpoin
 (see [Snapshot 26](../details/SAVE_SNAPSHOT_SCHEMA.md#snapshot-26-player-notes));
 the dialog shows a detached copy and sends every change to the scene as a
 `NotesIntent`. The scene applies it through `GameState` and answers with
-`NotesChanged`, which rebuilds the rows, selection, status line and search entries.
+`NotesChanged` (or `MapNotesChanged` for a Map note), which rebuilds the rows,
+selection, status line and search entries.
 
 - **Sections.** Every notebook starts with To Do and Places; players add up to 16
   sections in all, named in 1–14 printable characters, unique ignoring case. To Do
   can be renamed but not deleted; Places can be neither. Headings show a fold mark
   and a note count; whether a section is folded is saved.
-- **Rows.** Notes are indented under their section, newest first. Ticked notes say
-  `[Done]` before the title, as archived excerpts say `[Archived]`, and sink below
-  the rest of their section. An untitled note lists its first line.
-- **Keys on a note.** N writes a new note in the same section, E or Enter edits, X
-  ticks or unticks, S moves it with an inline section chooser, and D or Delete
-  deletes after the footer asks. Left folds its section.
+- **Rows.** Notes are indented under their section, newest first by recorded game
+  time. Ticked notes say `[Done]` before the title, as archived excerpts say
+  `[Archived]`, and sink below the rest of their section. An untitled note lists
+  its first line.
+- **Show Done.** Notes already done when the Journal opens are hidden; a note
+  ticked during the visit stays in view so a mistaken tick is easy to undo. H
+  toggles them from any row, and the footer says `[H] Show Done: Off (N hidden)`
+  or `On` while any exist. The setting is not saved: each visit starts hidden.
+  Search still finds hidden notes, and opening one shows it.
+- **Map notes in Places.** Places also lists the Traveller's Map notes, marked
+  `[Map]`, in the same newest-first order; the heading count includes them. They
+  stay stored once, as Map notes. E or Enter edits one in the Map's own editor and
+  limits, D or Delete deletes it after the footer asks, and M shows it on the Map.
+  They stay in Places and are never done, so S and X explain that in words.
+- **Map links.** A new note records where it can open the Map: the settlement or
+  dungeon it was written in, or outdoors the exact spot a sextant could measure at
+  that moment (night, sextant carried, the party's own square). The Map never learns
+  an unmeasured position, so a note written outdoors without a reading,
+  underground or in a battle away from a settlement has no link, and its footer
+  offers no M. A linked spot's coordinates appear in the details.
+- **The Map from a note.** M opens the Traveller's Map as a read-only child modal
+  over the Journal, so the Journal's pause continues. `AtlasDialog.Focus` shows the
+  entry's category, selects it and centres on it; zoom stays the player's choice.
+  A Journal note's spot joins the dossier for that one view, labelled
+  `Journal note`; a settlement or dungeon selects the place's own entry, which the
+  Map locates only once it is measured; a place the Map does not know yet stays in
+  the Journal with a status line. Esc, F6 or Shift+M returns to the same row.
+- **Keys on a note.** N writes a new note in the same section, E or Enter edits, M
+  opens the Map when the note is linked, X ticks or unticks, S moves it with an
+  inline section chooser, and D or Delete deletes after the footer asks. Left
+  folds its section.
 - **Keys on a heading.** Left/Right fold, N writes in that section, R renames, and D
   deletes a player-made section after asking; its notes move to To Do. Shift+N adds
   a section from any row. Refusals (renaming Places, deleting a built-in section, a
@@ -711,8 +737,9 @@ the dialog shows a detached copy and sends every change to the scene as a
   the place they were entered from. The editor caches wrapped lines, because
   re-wrapping 2,000 characters every frame is too slow. Section names use the
   mixed-case one-line entry box with a Name prompt.
-- **Search.** `/` indexes every note, including those in folded sections, by title,
-  text, section and place. Opening a result unfolds its section and selects it.
+- **Search.** `/` indexes every note, including those in folded sections and hidden
+  done notes, by title, text, section and place, plus Map notes by label and
+  description. Opening a result unfolds its section and selects it.
 
 ### Simple Notes Mode
 

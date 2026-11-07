@@ -405,7 +405,12 @@ func (d *AtlasDialog) detailFields() [][2]string {
 	e := d.entries[d.selection]
 	var fields [][2]string
 	if e.Note.ID != 0 {
-		return [][2]string{{"Map label", e.Name}, {atlasNoteDescriptionLabel, e.Note.Description},
+		label := "Map label"
+		if e.Kind == AtlasJournalNoteKind {
+			label = "Journal note"
+		}
+
+		return [][2]string{{label, e.Name}, {atlasNoteDescriptionLabel, e.Note.Description},
 			{atlasCoordinatesLabel, atlasCoordinates(e.Note.Position)},
 			{"Recorded", moonstoneDate(journal.OptionalGameTime{Known: true, Time: e.Note.RecordedAt})}}
 	}

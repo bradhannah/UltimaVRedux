@@ -30,14 +30,17 @@ const (
 	NotesRenameSection
 	NotesDeleteSection
 	NotesFold
+	NotesShowOnMap
 )
 
-// NotesIntent is one My Notes request for the scene to carry out.
+// NotesIntent is one My Notes request for the scene to carry out. MapNote means
+// NoteID names a Traveller's Map note, which Places lists beside Journal notes.
 type NotesIntent struct {
 	Action    NotesAction
 	NoteID    uint64
 	SectionID uint64
 	Folded    bool
+	MapNote   bool
 }
 
 // notesDoneLabel names a ticked note in rows, details and the footer.
@@ -48,35 +51,93 @@ type notesConfirm uint8
 const (
 	notesConfirmNone notesConfirm = iota
 	notesConfirmNote
+	notesConfirmMapNote
 	notesConfirmSection
 )
 
-// notesRow is one list row: a section heading (note < 0) or a note under it.
-type notesRow struct{ section, note int }
+// notesRow is one list row: a section heading, a Journal note under it, or a
+// Map note under Places. note and mapNote index their lists, or are -1.
+type notesRow struct{ section, note, mapNote int }
 
-// notesState is the My Notes part of the Journal; the scene owns the notebook.
+func (r notesRow) heading() bool { return r.note < 0 && r.mapNote < 0 }
+
+// notesState is the My Notes part of the Journal; the scene owns the notebook
+// and the Map notes.
 type notesState struct {
-	notes      journal.NotesState
-	rows       []notesRow
-	onIntent   func(NotesIntent)
-	status     string
-	confirm    notesConfirm
-	moving     bool
+	notes    journal.NotesState
+	mapNotes []journal.AtlasNoteRecord
+	rows     []notesRow
+	onIntent func(NotesIntent)
+	status   string
+	confirm  notesConfirm
+	moving   bool
+	// hiddenDone holds the notes already done when the Journal opened. They stay
+	// out of the list unless showDone; a note ticked during this visit stays in
+	// view, so a mistaken tick is easy to undo.
+	hiddenDone map[uint64]bool
+	showDone   bool
 	moveChoice int
 }
 
 func (d *QuestJournalDialog) notesOnly() bool { return len(d.tabs) == 1 }
 
+func (d *QuestJournalDialog) initNotes(notes journal.NotesState, mapNotes []journal.AtlasNoteRecord,
+	onIntent func(NotesIntent)) {
+	view := &d.notesView
+	view.notes, view.mapNotes, view.onIntent = notes.Normalized(), slices.Clone(mapNotes), onIntent
+	view.hiddenDone = make(map[uint64]bool)
+	for _, note := range view.notes.Notes {
+		if note.Done {
+			view.hiddenDone[note.ID] = true
+		}
+	}
+	d.rebuildNoteRows()
+}
+
 // NotesChanged replaces the detached notebook after the scene applied a request.
 // A nonzero note or section identity is selected; status explains the result.
 func (d *QuestJournalDialog) NotesChanged(notes journal.NotesState, noteID, sectionID uint64, status string) {
-	d.notesView.notes = notes.Normalized()
-	d.notesView.status = status
-	d.notesView.confirm, d.notesView.moving = notesConfirmNone, false
+	view := &d.notesView
+	view.notes = notes.Normalized()
+	for id := range view.hiddenDone {
+		if index := view.notes.NoteIndex(id); index < 0 || !view.notes.Notes[index].Done {
+			delete(view.hiddenDone, id)
+		}
+	}
+	view.status = status
+	view.confirm, view.moving = notesConfirmNone, false
 	d.rebuildNoteRows()
 	if row := d.noteRowFor(noteID, sectionID); row >= 0 {
 		d.selections[QuestJournalNotesTab] = row
 	}
+	d.notesListChanged()
+}
+
+// MapNotesChanged replaces the Map notes listed in Places after the scene edited
+// one. A nonzero mapNoteID is selected, otherwise the Places heading.
+func (d *QuestJournalDialog) MapNotesChanged(records []journal.AtlasNoteRecord, mapNoteID uint64, status string) {
+	view := &d.notesView
+	view.mapNotes = slices.Clone(records)
+	view.status, view.confirm = status, notesConfirmNone
+	d.rebuildNoteRows()
+	row := d.mapNoteRowFor(mapNoteID)
+	if row < 0 {
+		row = d.noteRowFor(0, journal.NoteSectionPlaces)
+	}
+	if row >= 0 {
+		d.selections[QuestJournalNotesTab] = row
+	}
+	d.notesListChanged()
+}
+
+// SetNotesStatus shows a sentence in the detail pane, such as why the Map cannot
+// show a note.
+func (d *QuestJournalDialog) SetNotesStatus(status string) {
+	d.notesView.status = status
+	d.cachedDetailPages = nil
+}
+
+func (d *QuestJournalDialog) notesListChanged() {
 	d.clampCurrentSelection()
 	d.cachedDetailPages = nil
 	d.detailPage = 0
@@ -87,30 +148,62 @@ func (d *QuestJournalDialog) rebuildNoteRows() {
 	view := &d.notesView
 	view.rows = view.rows[:0]
 	for sectionIndex, section := range view.notes.Sections {
-		view.rows = append(view.rows, notesRow{section: sectionIndex, note: -1})
+		view.rows = append(view.rows, notesRow{section: sectionIndex, note: -1, mapNote: -1})
 		if section.Folded {
 			continue
 		}
 		start := len(view.rows)
 		for noteIndex, note := range view.notes.Notes {
-			if note.SectionID == section.ID {
-				view.rows = append(view.rows, notesRow{section: sectionIndex, note: noteIndex})
+			if note.SectionID == section.ID && (view.showDone || !view.hiddenDone[note.ID]) {
+				view.rows = append(view.rows, notesRow{section: sectionIndex, note: noteIndex, mapNote: -1})
 			}
 		}
-		// Newest first; ticked notes sink below the rest of their section.
-		slices.SortFunc(view.rows[start:], func(a, b notesRow) int {
-			left, right := view.notes.Notes[a.note], view.notes.Notes[b.note]
-			if left.Done != right.Done {
-				if left.Done {
-					return 1
-				}
-
-				return -1
+		if section.ID == journal.NoteSectionPlaces {
+			for mapIndex := range view.mapNotes {
+				view.rows = append(view.rows, notesRow{section: sectionIndex, note: -1, mapNote: mapIndex})
 			}
-
-			return cmp.Compare(right.ID, left.ID)
-		})
+		}
+		slices.SortStableFunc(view.rows[start:], view.compareNoteRows)
 	}
+}
+
+// compareNoteRows lists newest first; ticked notes sink below the rest of their section.
+func (view *notesState) compareNoteRows(left, right notesRow) int {
+	leftDone, rightDone := view.rowDone(left), view.rowDone(right)
+	if leftDone != rightDone {
+		if leftDone {
+			return 1
+		}
+
+		return -1
+	}
+	leftAt, leftID := view.rowStamp(left)
+	rightAt, rightID := view.rowStamp(right)
+	if order := compareNoteTimes(rightAt, leftAt); order != 0 {
+		return order
+	}
+
+	return cmp.Compare(rightID, leftID)
+}
+
+func (view *notesState) rowDone(row notesRow) bool {
+	return row.note >= 0 && view.notes.Notes[row.note].Done
+}
+
+func (view *notesState) rowStamp(row notesRow) (journal.GameTime, uint64) {
+	if row.mapNote >= 0 {
+		note := view.mapNotes[row.mapNote]
+
+		return note.RecordedAt, note.ID
+	}
+	note := view.notes.Notes[row.note]
+
+	return note.RecordedAt, note.ID
+}
+
+func compareNoteTimes(left, right journal.GameTime) int {
+	return cmp.Or(cmp.Compare(left.Year, right.Year), cmp.Compare(left.Month, right.Month),
+		cmp.Compare(left.Day, right.Day), cmp.Compare(left.Hour, right.Hour), cmp.Compare(left.Minute, right.Minute))
 }
 
 func (d *QuestJournalDialog) noteRowFor(noteID, sectionID uint64) int {
@@ -118,7 +211,7 @@ func (d *QuestJournalDialog) noteRowFor(noteID, sectionID uint64) int {
 		if noteID != 0 && row.note >= 0 && d.notesView.notes.Notes[row.note].ID == noteID {
 			return index
 		}
-		if noteID == 0 && sectionID != 0 && row.note < 0 && d.notesView.notes.Sections[row.section].ID == sectionID {
+		if noteID == 0 && sectionID != 0 && row.heading() && d.notesView.notes.Sections[row.section].ID == sectionID {
 			return index
 		}
 	}
@@ -126,11 +219,43 @@ func (d *QuestJournalDialog) noteRowFor(noteID, sectionID uint64) int {
 	return -1
 }
 
+func (d *QuestJournalDialog) mapNoteRowFor(mapNoteID uint64) int {
+	if mapNoteID == 0 {
+		return -1
+	}
+
+	return slices.IndexFunc(d.notesView.rows, func(row notesRow) bool {
+		return row.mapNote >= 0 && d.notesView.mapNotes[row.mapNote].ID == mapNoteID
+	})
+}
+
+// keepNotesSelection rebuilds the rows and keeps the selected note, or its section.
+func (d *QuestJournalDialog) keepNotesSelection() {
+	view, row := &d.notesView, d.selectedNotesRow()
+	sectionID := view.notes.Sections[row.section].ID
+	var noteID, mapNoteID uint64
+	if row.note >= 0 {
+		noteID = view.notes.Notes[row.note].ID
+	}
+	if row.mapNote >= 0 {
+		mapNoteID = view.mapNotes[row.mapNote].ID
+	}
+	d.rebuildNoteRows()
+	index := max(d.mapNoteRowFor(mapNoteID), d.noteRowFor(noteID, 0))
+	if index < 0 {
+		index = d.noteRowFor(0, sectionID)
+	}
+	if index >= 0 {
+		d.selections[QuestJournalNotesTab] = index
+	}
+	d.cachedDetailPages = nil
+}
+
 // selectedNotesRow returns the selected row; the list always has two headings.
 func (d *QuestJournalDialog) selectedNotesRow() notesRow {
 	rows := d.notesView.rows
 	if len(rows) == 0 {
-		return notesRow{section: 0, note: -1}
+		return notesRow{section: 0, note: -1, mapNote: -1}
 	}
 
 	return rows[max(0, min(d.selections[QuestJournalNotesTab], len(rows)-1))]
@@ -150,13 +275,29 @@ func (d *QuestJournalDialog) sectionNoteCounts(sectionID uint64) (int, int) {
 			}
 		}
 	}
+	if sectionID == journal.NoteSectionPlaces {
+		total += len(d.notesView.mapNotes)
+	}
 
 	return total, done
 }
 
+// mapNoteTitle is the Map label, or the first line of an unlabelled description.
+func mapNoteTitle(note journal.AtlasNoteRecord) string {
+	if note.Label != "" {
+		return note.Label
+	}
+	first, _, _ := strings.Cut(strings.TrimSpace(note.Description), "\n")
+
+	return strings.TrimSpace(first)
+}
+
 func (d *QuestJournalDialog) notesRowText(index int) string {
 	row := d.notesView.rows[index]
-	if row.note >= 0 {
+	switch {
+	case row.mapNote >= 0:
+		return "  [Map] " + mapNoteTitle(d.notesView.mapNotes[row.mapNote])
+	case row.note >= 0:
 		note := d.notesView.notes.Notes[row.note]
 		// Prefix the state, as Excerpts does, so a clipped title still says it.
 		if note.Done {
@@ -178,9 +319,9 @@ func (d *QuestJournalDialog) notesRowText(index int) string {
 func (d *QuestJournalDialog) notesRowColor(index int) stdcolor.Color {
 	row := d.notesView.rows[index]
 	switch {
-	case row.note < 0:
+	case row.heading():
 		return DialogLabelColor
-	case d.notesView.notes.Notes[row.note].Done:
+	case d.notesView.rowDone(row):
 		return DialogEmptyColor
 	default:
 		return DialogItemNameColor
@@ -195,7 +336,10 @@ func (d *QuestJournalDialog) notesDetailLines() []detailLine {
 	}
 	row := d.selectedNotesRow()
 	section := d.notesView.notes.Sections[row.section]
-	if row.note < 0 {
+	switch {
+	case row.mapNote >= 0:
+		return append(lines, mapNoteDetailLines(d.notesView.mapNotes[row.mapNote])...)
+	case row.heading():
 		return append(lines, d.sectionDetailLines(section)...)
 	}
 	note := d.notesView.notes.Notes[row.note]
@@ -205,17 +349,40 @@ func (d *QuestJournalDialog) notesDetailLines() []detailLine {
 	for paragraph := range strings.SplitSeq(note.Text, "\n") {
 		lines = append(lines, detailLine{label: "", value: paragraph, color: DialogValueColor, header: false})
 	}
-	lines = append(lines, blankDetailLine(),
-		detailLine{label: "Section", value: section.Name, color: DialogValueColor, header: false},
-		detailLine{label: "Recorded", value: noteDate(note.RecordedAt), color: DialogValueColor, header: false})
+	lines = append(lines, noteStampLines(section.Name, note.RecordedAt)...)
 	if note.Place != "" {
 		lines = append(lines, detailLine{label: "Place", value: note.Place, color: DialogValueColor, header: false})
+	}
+	if note.SurfaceSpot() {
+		lines = append(lines, detailLine{label: atlasCoordinatesLabel, value: atlasCoordinates(*note.Site),
+			color: DialogValueColor, header: false})
 	}
 	if note.Done {
 		lines = append(lines, detailLine{label: "State", value: notesDoneLabel, color: DialogEmptyColor, header: false})
 	}
 
 	return lines
+}
+
+func mapNoteDetailLines(note journal.AtlasNoteRecord) []detailLine {
+	var lines []detailLine
+	if note.Label != "" {
+		lines = append(lines, detailLine{label: "", value: note.Label, color: DialogHeaderColor, header: true})
+	}
+	if note.Description != "" {
+		for paragraph := range strings.SplitSeq(note.Description, "\n") {
+			lines = append(lines, detailLine{label: "", value: paragraph, color: DialogValueColor, header: false})
+		}
+	}
+
+	lines = append(lines, noteStampLines(journal.NoteSectionPlacesName, note.RecordedAt)...)
+
+	return append(lines,
+		detailLine{label: atlasCoordinatesLabel, value: atlasCoordinates(note.Position), color: DialogValueColor,
+			header: false},
+		blankDetailLine(),
+		detailLine{label: "", value: "A note on the Traveller's Map. It stays in Places.",
+			color: DialogControlHintColor, header: false})
 }
 
 func (d *QuestJournalDialog) sectionDetailLines(section journal.NoteSection) []detailLine {
@@ -225,7 +392,7 @@ func (d *QuestJournalDialog) sectionDetailLines(section journal.NoteSection) []d
 	case journal.NoteSectionToDo:
 		about = "Built in. You can rename it."
 	case journal.NoteSectionPlaces:
-		about = "Built in."
+		about = "Built in. Your Map notes are listed here too."
 	}
 	lines := []detailLine{
 		{label: "", value: section.Name, color: DialogHeaderColor, header: true},
@@ -234,7 +401,7 @@ func (d *QuestJournalDialog) sectionDetailLines(section journal.NoteSection) []d
 		blankDetailLine(),
 		{label: "", value: about, color: DialogControlHintColor, header: false},
 	}
-	if len(d.notesView.notes.Notes) == 0 {
+	if len(d.notesView.notes.Notes) == 0 && len(d.notesView.mapNotes) == 0 {
 		lines = append(lines, blankDetailLine(),
 			detailLine{label: "", value: "Your notebook is empty.", color: DialogValueColor, header: false},
 			detailLine{label: "N", value: "write a note in the selected section.", color: DialogValueColor, header: false},
@@ -242,6 +409,13 @@ func (d *QuestJournalDialog) sectionDetailLines(section journal.NoteSection) []d
 	}
 
 	return lines
+}
+
+// noteStampLines are the Section and Recorded rows every note shows after its words.
+func noteStampLines(section string, recorded journal.GameTime) []detailLine {
+	return []detailLine{blankDetailLine(),
+		{label: "Section", value: section, color: DialogValueColor, header: false},
+		{label: "Recorded", value: noteDate(recorded), color: DialogValueColor, header: false}}
 }
 
 func blankDetailLine() detailLine {
@@ -254,7 +428,7 @@ func noteDate(at journal.GameTime) string {
 
 func (d *QuestJournalDialog) requestNotes(intent NotesIntent) {
 	if d.notesView.onIntent == nil {
-		d.notesView.status = "Notes are unavailable."
+		d.SetNotesStatus("Notes are unavailable.")
 
 		return
 	}
@@ -281,8 +455,13 @@ func (d *QuestJournalDialog) handleNotesInput() bool {
 	switch {
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyN):
 		d.handleNotesNew(shift)
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyH):
+		d.notesView.showDone = !d.notesView.showDone
+		d.keepNotesSelection()
 	case row.note >= 0:
 		return d.handleNoteKeys(d.notesView.notes.Notes[row.note])
+	case row.mapNote >= 0:
+		return d.handleMapNoteKeys(d.notesView.mapNotes[row.mapNote])
 	default:
 		return d.handleSectionKeys(d.selectedSection())
 	}
@@ -292,25 +471,33 @@ func (d *QuestJournalDialog) handleNotesInput() bool {
 
 func (d *QuestJournalDialog) handleNotesNew(shift bool) {
 	if shift {
-		d.requestNotes(NotesIntent{Action: NotesNewSection, NoteID: 0, SectionID: 0, Folded: false})
+		d.requestNotes(NotesIntent{Action: NotesNewSection, NoteID: 0, SectionID: 0, Folded: false, MapNote: false})
 
 		return
 	}
 	if len(d.notesView.notes.Notes) >= journal.MaxNotes {
-		d.notesView.status = fmt.Sprintf("Notebook full: %d notes. Delete one to write another.", journal.MaxNotes)
-		d.cachedDetailPages = nil
+		d.SetNotesStatus(fmt.Sprintf("Notebook full: %d notes. Delete one to write another.", journal.MaxNotes))
 
 		return
 	}
-	d.requestNotes(NotesIntent{Action: NotesNew, NoteID: 0, SectionID: d.selectedSection().ID, Folded: false})
+	d.requestNotes(NotesIntent{Action: NotesNew, NoteID: 0, SectionID: d.selectedSection().ID, Folded: false,
+		MapNote: false})
 }
 
 func (d *QuestJournalDialog) handleNoteKeys(note journal.NoteRecord) bool {
 	keyboard := d.keyboard
-	intent := NotesIntent{Action: NotesEdit, NoteID: note.ID, SectionID: note.SectionID, Folded: false}
+	intent := NotesIntent{Action: NotesEdit, NoteID: note.ID, SectionID: note.SectionID, Folded: false, MapNote: false}
 	switch {
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyE), keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter),
 		keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter):
+		d.requestNotes(intent)
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyM):
+		if note.Site == nil {
+			d.SetNotesStatus("This note has no place on the Map.")
+
+			return true
+		}
+		intent.Action = NotesShowOnMap
 		d.requestNotes(intent)
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyX):
 		intent.Action = NotesToggleDone
@@ -330,17 +517,44 @@ func (d *QuestJournalDialog) handleNoteKeys(note journal.NoteRecord) bool {
 	return true
 }
 
+// handleMapNoteKeys offers the Map note's own actions; it stays in Places and is never done.
+func (d *QuestJournalDialog) handleMapNoteKeys(note journal.AtlasNoteRecord) bool {
+	keyboard := d.keyboard
+	intent := NotesIntent{Action: NotesEdit, NoteID: note.ID, SectionID: journal.NoteSectionPlaces, Folded: false,
+		MapNote: true}
+	switch {
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyE), keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter),
+		keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter):
+		d.requestNotes(intent)
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyM):
+		intent.Action = NotesShowOnMap
+		d.requestNotes(intent)
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyD), keyboard.IsKeyPressedAndRegister(ebiten.KeyDelete):
+		d.notesView.confirm = notesConfirmMapNote
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyX):
+		d.SetNotesStatus("Map notes can't be marked done.")
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyS):
+		d.SetNotesStatus("Map notes stay in Places.")
+	case keyboard.IsKeyPressedAndRegister(ebiten.KeyLeft):
+		intent.Action, intent.NoteID, intent.Folded, intent.MapNote = NotesFold, 0, true, false
+		d.requestNotes(intent)
+	default:
+		return false
+	}
+
+	return true
+}
+
 func (d *QuestJournalDialog) handleSectionKeys(section journal.NoteSection) bool {
 	keyboard := d.keyboard
-	intent := NotesIntent{Action: NotesFold, NoteID: 0, SectionID: section.ID, Folded: false}
+	intent := NotesIntent{Action: NotesFold, NoteID: 0, SectionID: section.ID, Folded: false, MapNote: false}
 	switch {
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyLeft), keyboard.IsKeyPressedAndRegister(ebiten.KeyRight):
 		intent.Folded = !section.Folded
 		d.requestNotes(intent)
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyR):
 		if section.ID == journal.NoteSectionPlaces {
-			d.notesView.status = "Places keeps its name."
-			d.cachedDetailPages = nil
+			d.SetNotesStatus("Places keeps its name.")
 
 			return true
 		}
@@ -348,8 +562,7 @@ func (d *QuestJournalDialog) handleSectionKeys(section journal.NoteSection) bool
 		d.requestNotes(intent)
 	case keyboard.IsKeyPressedAndRegister(ebiten.KeyD), keyboard.IsKeyPressedAndRegister(ebiten.KeyDelete):
 		if section.ID == journal.NoteSectionToDo || section.ID == journal.NoteSectionPlaces {
-			d.notesView.status = "To Do and Places can't be deleted."
-			d.cachedDetailPages = nil
+			d.SetNotesStatus("To Do and Places can't be deleted.")
 
 			return true
 		}
@@ -362,16 +575,25 @@ func (d *QuestJournalDialog) handleSectionKeys(section journal.NoteSection) bool
 }
 
 func (d *QuestJournalDialog) handleNotesConfirm() {
+	view := &d.notesView
 	switch {
 	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape):
-		d.notesView.confirm = notesConfirmNone
+		view.confirm = notesConfirmNone
 	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter), d.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter):
 		row := d.selectedNotesRow()
-		intent := NotesIntent{Action: NotesDeleteSection, NoteID: 0, SectionID: d.selectedSection().ID, Folded: false}
-		if d.notesView.confirm == notesConfirmNote && row.note >= 0 {
-			intent.Action, intent.NoteID = NotesDelete, d.notesView.notes.Notes[row.note].ID
+		intent := NotesIntent{Action: NotesDeleteSection, NoteID: 0, SectionID: d.selectedSection().ID, Folded: false,
+			MapNote: false}
+		switch {
+		case view.confirm == notesConfirmNote && row.note >= 0:
+			intent.Action, intent.NoteID = NotesDelete, view.notes.Notes[row.note].ID
+		case view.confirm == notesConfirmMapNote && row.mapNote >= 0:
+			intent.Action, intent.NoteID, intent.MapNote = NotesDelete, view.mapNotes[row.mapNote].ID, true
+		case view.confirm != notesConfirmSection:
+			view.confirm = notesConfirmNone
+
+			return
 		}
-		d.notesView.confirm = notesConfirmNone
+		view.confirm = notesConfirmNone
 		d.requestNotes(intent)
 	}
 }
@@ -391,7 +613,7 @@ func (d *QuestJournalDialog) handleNotesMove() {
 		if row.note >= 0 {
 			note := d.notesView.notes.Notes[row.note]
 			d.requestNotes(NotesIntent{Action: NotesMove, NoteID: note.ID,
-				SectionID: sections[d.notesView.moveChoice].ID, Folded: false})
+				SectionID: sections[d.notesView.moveChoice].ID, Folded: false, MapNote: false})
 		}
 	}
 }
@@ -401,6 +623,8 @@ func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 	switch {
 	case view.confirm == notesConfirmNote:
 		return "Permanently delete this note?  [Enter] Delete  [Esc] Cancel"
+	case view.confirm == notesConfirmMapNote:
+		return "Permanently delete this Map note?  [Enter] Delete  [Esc] Cancel"
 	case view.confirm == notesConfirmSection:
 		section := d.selectedSection()
 		total, _ := d.sectionNoteCounts(section.ID)
@@ -413,15 +637,23 @@ func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 	if pages := d.GetDetailPageCount(); pages > 1 {
 		paging = fmt.Sprintf("[Space] Detail %d/%d  ", d.detailPage+1, pages)
 	}
+	common := d.showDoneHint() + "[Shift+N] New section  [/] Search  " + tabs + paging + "[Esc/Shift+J] Close"
 	row := d.selectedNotesRow()
-	if row.note >= 0 {
+	switch {
+	case row.mapNote >= 0:
+		return "[Up/Down] Select  [N] New  [E] Edit  [M] Map  [D] Delete  " + common
+	case row.note >= 0:
+		note := view.notes.Notes[row.note]
+		keys := "[Up/Down] Select  [N] New  [E] Edit  "
+		if note.Site != nil {
+			keys += "[M] Map  "
+		}
 		done := notesDoneLabel
-		if view.notes.Notes[row.note].Done {
+		if note.Done {
 			done = "Not done"
 		}
 
-		return "[Up/Down] Select  [N] New  [E] Edit  [X] " + done + "  [S] Section  [D] Delete  " +
-			"[Shift+N] New section  [/] Search  " + tabs + paging + "[Esc/Shift+J] Close"
+		return keys + "[X] " + done + "  [S] Section  [D] Delete  " + common
 	}
 	section := d.selectedSection()
 	keys := "[Up/Down] Select  [Left/Right] Fold  [N] New  "
@@ -432,7 +664,20 @@ func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 		keys += "[D] Delete  "
 	}
 
-	return keys + "[Shift+N] New section  [/] Search  " + tabs + paging + "[Esc/Shift+J] Close"
+	return keys + common
+}
+
+// showDoneHint offers H only while some notes done before this visit exist.
+func (d *QuestJournalDialog) showDoneHint() string {
+	hidden := len(d.notesView.hiddenDone)
+	switch {
+	case hidden == 0:
+		return ""
+	case d.notesView.showDone:
+		return "[H] Show Done: On  "
+	default:
+		return fmt.Sprintf("[H] Show Done: Off (%d hidden)  ", hidden)
+	}
 }
 
 // drawNotesChooser replaces the list while a note is being moved.
@@ -464,7 +709,8 @@ func (d *QuestJournalDialog) drawNotesChooser(screen *ebiten.Image) {
 	}
 }
 
-// appendNoteSearchEntries indexes every note, including those in folded sections.
+// appendNoteSearchEntries indexes every note, including folded and hidden done
+// ones, and the Map notes listed in Places.
 func (d *QuestJournalDialog) appendNoteSearchEntries() {
 	for _, note := range d.notesView.notes.Notes {
 		section := d.notesView.notes.Sections[max(0, d.notesView.notes.SectionIndex(note.SectionID))]
@@ -479,25 +725,45 @@ func (d *QuestJournalDialog) appendNoteSearchEntries() {
 			source += " - " + note.Place
 		}
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
-			tab: QuestJournalNotesTab, row: -1, noteID: note.ID, title: note.ListTitle(),
+			tab: QuestJournalNotesTab, row: -1, noteID: note.ID, mapNote: false, title: note.ListTitle(),
 			text: strings.ToLower(searchable), source: source, body: body, snippet: "",
+		})
+	}
+	for _, note := range d.notesView.mapNotes {
+		body := strings.TrimSpace(note.Label + " " + note.Description)
+		source := fmt.Sprintf("%s - Map note - %d-%d-%d", journal.NoteSectionPlacesName, note.RecordedAt.Month,
+			note.RecordedAt.Day, note.RecordedAt.Year)
+		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
+			tab: QuestJournalNotesTab, row: -1, noteID: note.ID, mapNote: true, title: mapNoteTitle(note),
+			text: strings.ToLower(body + " " + journal.NoteSectionPlacesName + " Map"), source: source, body: body,
+			snippet: "",
 		})
 	}
 }
 
-// openNoteSearchResult unfolds the note's section if needed and selects it.
-func (d *QuestJournalDialog) openNoteSearchResult(noteID uint64) {
-	index := d.notesView.notes.NoteIndex(noteID)
-	if index < 0 {
-		return
+// openNoteSearchResult shows the note even when its section is folded or done
+// notes are hidden, and selects it.
+func (d *QuestJournalDialog) openNoteSearchResult(noteID uint64, mapNote bool) {
+	sectionID, journalNoteID := journal.NoteSectionPlaces, uint64(0)
+	if !mapNote {
+		index := d.notesView.notes.NoteIndex(noteID)
+		if index < 0 {
+			return
+		}
+		sectionID, journalNoteID = d.notesView.notes.Notes[index].SectionID, noteID
+		delete(d.notesView.hiddenDone, noteID)
 	}
-	sectionID := d.notesView.notes.Notes[index].SectionID
 	if sectionIndex := d.notesView.notes.SectionIndex(sectionID); d.notesView.notes.Sections[sectionIndex].Folded {
 		d.notesView.notes.Sections[sectionIndex].Folded = false
-		d.rebuildNoteRows()
-		d.requestNotes(NotesIntent{Action: NotesFold, NoteID: noteID, SectionID: sectionID, Folded: false})
+		d.requestNotes(NotesIntent{Action: NotesFold, NoteID: journalNoteID, SectionID: sectionID, Folded: false,
+			MapNote: false})
 	}
-	if row := d.noteRowFor(noteID, 0); row >= 0 {
+	d.rebuildNoteRows()
+	row := d.mapNoteRowFor(noteID)
+	if !mapNote {
+		row = d.noteRowFor(noteID, 0)
+	}
+	if row >= 0 {
 		d.selections[QuestJournalNotesTab] = row
 	}
 }

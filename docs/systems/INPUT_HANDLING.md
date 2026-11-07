@@ -568,11 +568,13 @@ The top modal isolates Tab/Shift+Tab, repeatable Up/Down and Page Up/Page Down,
 Home/End, Space detail paging, `/` Journal search, Escape, and Shift+J.
 Curated page keys move selection a full viewport. The eight-section Journal no
 longer exposes main-output History through tabs, navigation or search. On My
-Notes, N, Shift+N, E, Enter, X, S, R, D, Delete and Left/Right act on the selected
-note or section heading before Tab, search or dismissal; delete confirmations and
-the move chooser own Enter, Escape and Up/Down until they finish. Note editors and
-section-name boxes open as a child modal over the Journal, and a held Escape from
-a child cannot also close the Journal.
+Notes, N, Shift+N, E, Enter, M, X, S, R, D, Delete, H and Left/Right act on the
+selected note, Map note or section heading before Tab, search or dismissal; delete
+confirmations and the move chooser own Enter, Escape and Up/Down until they finish.
+Note editors, section-name boxes and the read-only Map opened by M are child
+modals over the Journal, and a held Escape from a child cannot also close the
+Journal. The scene opens that Map on the frame after M, where it can load the
+shared Map texture.
 Search owns text input, Enter opens a matching Journal destination, and Escape
 returns to the previous tab without closing Journal. Shift+J closes from either
 mode. `PrepareForTransition` prevents the opening or closing chord from bleeding

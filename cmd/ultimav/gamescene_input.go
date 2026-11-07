@@ -179,6 +179,9 @@ func (g *GameScene) Update(game *Game) error {
 			return nil
 		}
 		g.updateDialogs()
+		if session := g.journalSession; session != nil && session.mapRequest != nil {
+			g.openNoteMap(game, session)
+		}
 		// The closing key must not advance gameplay in its dismissal frame.
 		return nil
 	}

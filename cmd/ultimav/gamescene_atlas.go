@@ -53,16 +53,22 @@ func (g *GameScene) pollAtlasRequest() bool {
 	return g.keyboard.IsKeyPressedAndRegister(ebiten.KeyM)
 }
 
+// atlasGeography loads the shared Map texture; without it the Map still works, unpainted.
+func (g *GameScene) atlasGeography(game *Game) *ebiten.Image {
+	if game == nil {
+		return nil
+	}
+	texture, err := game.atlasTexture.load(g.gameState.GameReferences.OverworldLargeMapReference)
+	if err != nil {
+		logging.Warnf(logging.CategoryUI, "Traveller's map geography unavailable: %v", err)
+	}
+
+	return texture
+}
+
 func (g *GameScene) openAtlas(game *Game) {
 	g.clearProvisionFeedback()
-	var texture *ebiten.Image
-	if game != nil {
-		var err error
-		texture, err = game.atlasTexture.load(g.gameState.GameReferences.OverworldLargeMapReference)
-		if err != nil {
-			logging.Warnf(logging.CategoryUI, "Traveller's map geography unavailable: %v", err)
-		}
-	}
+	texture := g.atlasGeography(game)
 	g.keyboard.PrepareForTransition(0)
 	session := &atlasSession{
 		dialog: nil, child: nil, noteDraft: nil, state: g.gameState,

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
+	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
 // PlayerNotes returns a detached notebook; a fresh one shows the built-in sections.
@@ -48,8 +49,50 @@ func playerSectionIndex(state *journal.NotesState, id uint64) (int, error) {
 	return index, nil
 }
 
-// AddPlayerNote writes a note into a section, stamped with the game time and place.
-func (g *GameState) AddPlayerNote(sectionID uint64, title, text, place string) (journal.NotesState, uint64, error) {
+// PlayerNoteSite is where a note written at origin links on the Traveller's Map:
+// the settlement or dungeon the party is in, or outdoors the spot a sextant
+// could measure right now. The Map never learns an unmeasured position, so a
+// note written outdoors without a sextant reading, underground or in a battle
+// away from a settlement has no link (nil). origin is where the party really is
+// (the place a battle, camp or shrine was entered from).
+func (g *GameState) PlayerNoteSite(origin references.PlayerLocation) *journal.SiteLocation {
+	if origin.Location >= references.Moonglow && origin.Location <= references.Doom {
+		return &journal.SiteLocation{Map: origin.Location, Floor: 0, X: 0, Y: 0}
+	}
+	if origin != g.MapState.PlayerLocation {
+		return nil
+	}
+	fix, ok := g.CurrentSextantFix()
+	if !ok {
+		return nil
+	}
+	if site := moonstoneJournalSite(fix); journal.ValidAtlasSurfacePosition(site) {
+		return &site
+	}
+
+	return nil
+}
+
+// AtlasPlaceKey names the Traveller's Map entry for a settlement or dungeon. The
+// entry exists only once the Map knows the place, so callers look it up.
+func (g *GameState) AtlasPlaceKey(location references.Location) string {
+	if location.GetMapType() == references.DungeonMapType {
+		return "dungeon-" + location.String()
+	}
+	for _, point := range references.SuppliedAtlasChart(g.GameReferences.LocationReferences.WorldLocations) {
+		if point.SiteKey != 0 && references.Location(point.SiteKey) == location {
+			return point.Key
+		}
+	}
+
+	return fmt.Sprintf("observed-%d", int(location))
+}
+
+// AddPlayerNote writes a note into a section, stamped with the game time, place
+// and Map link (see PlayerNoteSite).
+func (g *GameState) AddPlayerNote(
+	sectionID uint64, title, text, place string, site *journal.SiteLocation,
+) (journal.NotesState, uint64, error) {
 	var id uint64
 	state, err := g.updatePlayerNotes(func(notes *journal.NotesState) error {
 		if len(notes.Notes) >= journal.MaxNotes || notes.LastNoteID >= journal.MaxAtlasIdentity {
@@ -62,7 +105,11 @@ func (g *GameState) AddPlayerNote(sectionID uint64, title, text, place string) (
 		id = notes.LastNoteID
 		notes.Notes = append(notes.Notes, journal.NoteRecord{ID: id, SectionID: sectionID,
 			Title: strings.TrimSpace(title), Text: text, Place: strings.TrimSpace(place),
-			RecordedAt: g.playerNoteTime(), Done: false})
+			RecordedAt: g.playerNoteTime(), Done: false, Site: nil})
+		if site != nil {
+			copied := *site
+			notes.Notes[len(notes.Notes)-1].Site = &copied
+		}
 
 		return nil
 	})

@@ -169,3 +169,27 @@ func TestAtlasLayoutsKeepRowsAndControlsInsideLogicalScreen(t *testing.T) {
 		require.LessOrEqual(t, dialog.footer.GetTotalHeightForLines(dialog.footer.GetPanelContentLineCount()), float64(dialog.footerRect.Dy()))
 	}
 }
+
+func TestAtlasFocusSelectsAnEntryFromOutsideTheMap(t *testing.T) {
+	setQuestJournalTestResolution(t, 1280, 720)
+	view := NewAtlasViewState()
+	view.Zoom = 2
+	dossier := atlasTestDossier()
+	dossier.Entries = append(dossier.Entries, journal.AtlasEntry{Key: "journal-note-3", Name: "Hermit hut",
+		Kind: AtlasJournalNoteKind, Category: journal.AtlasNotes, Phase: -1, NameKnown: true,
+		Note: journal.AtlasNoteRecord{ID: 3, Position: journal.SiteLocation{X: 40, Y: 30}, Label: "Hermit hut",
+			Description: "North of Yew."}})
+	dialog := NewAtlasDialog(dossier, nil, newWidgetTestKeyboard(0), &view, func() {})
+
+	require.True(t, dialog.Focus("journal-note-3", journal.AtlasNotePlaces))
+	require.Equal(t, journal.AtlasNotePlaces, view.Filters.Places)
+	require.Equal(t, "journal-note-3", view.SelectedKey)
+	require.Equal(t, []float64{40, 30, 2}, []float64{view.CenterX, view.CenterY, float64(view.Zoom)},
+		"centred on the note; zoom stays the player's")
+	require.Equal(t, [2]string{"Journal note", "Hermit hut"}, dialog.detailFields()[0])
+
+	require.True(t, dialog.Focus("known", journal.AtlasPlaceFilter(journal.AtlasSettlements)+1))
+	require.Equal(t, "Measure this place to locate it from the list.", dialog.status,
+		"an unmeasured place is selected but never located")
+	require.False(t, dialog.Focus("missing", journal.AtlasAllPlaces))
+}
