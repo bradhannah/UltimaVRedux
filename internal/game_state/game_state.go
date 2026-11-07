@@ -71,7 +71,6 @@ type GameState struct {
 	completingSurfaceCycle     bool
 	transientLargeMapPushTiles map[transientLargeMapPushTileKey]transientLargeMapPushTile
 
-	RawSave         [savedGamFileSize]byte
 	MoonstoneStatus MoonstoneStatus
 
 	// Moonstone system for moongate transportation
@@ -351,28 +350,6 @@ func (g *GameState) SetupEnvironmentalSystemCallbacks() {
 	g.environmentalHazards.SetCallbacks(&messageCallbacksAdapter{g.SystemCallbacks})
 	g.windSystem.SetCallbacks(&windSystemCallbacksAdapter{g.SystemCallbacks})
 	g.earthquakeSystem.SetCallbacks(&earthquakeCallbacksAdapter{g})
-}
-
-// NewGameStateFromLegacyTemplateBytes creates template/test state from raw one-file save data.
-// Production continuation must use the paired SAVED.GAM/SAVED.OOL conversion path.
-//
-// Parameters:
-//   - rawSaveData: Raw byte array containing SAVED.GAM format data
-//   - gameConfig: Game configuration including data file paths
-//   - gameReferences: Preloaded game data references
-//   - xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen: Display dimensions
-func NewGameStateFromLegacyTemplateBytes(rawSaveData []byte,
-	gameConfig *config.UltimaVConfiguration,
-	gameReferences *references.GameReferences,
-	xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen int,
-) (*GameState, error) {
-	gameState := initBlankGameState(gameReferences, gameConfig, xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen)
-	err := gameState.LoadLegacySaveGameFromBytes(rawSaveData)
-	if err != nil {
-		return nil, fmt.Errorf("loading legacy save game from bytes: %w", err)
-	}
-
-	return gameState, nil
 }
 
 // IsAvatarAtPosition compares a position with the party's current coordinates.
@@ -1065,18 +1042,6 @@ func (g *GameState) IsNPCDead(location references.Location, npcID int) bool {
 }
 
 // Active Player Management Methods
-
-// SetAvatarName replaces the Avatar's persisted identity after validating the legacy name limit.
-func (g *GameState) SetAvatarName(name string) error {
-	if name == "" || len(name) > party_state.NMaxPlayerNameSize {
-		return fmt.Errorf("avatar name must contain 1 to %d bytes", party_state.NMaxPlayerNameSize)
-	}
-	avatar := g.PartyState.GetAvatar()
-	avatar.Name = [party_state.NMaxPlayerNameSize]byte{}
-	copy(avatar.Name[:], name)
-
-	return nil
-}
 
 // SetActivePlayer sets the active player (0-5) or -1 for all/none
 // Returns false if the index is invalid or character is not in party

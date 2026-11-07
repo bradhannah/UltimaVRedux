@@ -397,7 +397,7 @@ func TestActiveCombatClearRoomRequiresFixedOriginAndDeclaresVictory(t *testing.T
 }
 
 func newActiveCombatWorkbenchTestState() (*game_state.GameState, *game_state.CombatMonster) {
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	avatar := party.GetAvatar()
 	avatar.SetMaxHp(100)
 	avatar.SetHp(100)

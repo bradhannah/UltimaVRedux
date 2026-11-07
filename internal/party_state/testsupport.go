@@ -98,3 +98,14 @@ func (p *PlayerCharacter) HasTwoHandedWeaponEquipped() bool {
 
 	return weapon.IsTwoHanded()
 }
+
+// NewBlankPartyState returns sixteen zero-valued roster slots, the party an
+// all-zero original save decodes to. Tests place the members they need.
+func NewBlankPartyState() *PartyState {
+	var roster [NRosterSlots]*PlayerCharacter
+	for index := range roster {
+		roster[index] = new(PlayerCharacter)
+	}
+
+	return NewPartyStateFromRoster(roster)
+}

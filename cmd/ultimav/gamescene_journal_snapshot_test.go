@@ -44,7 +44,7 @@ func newJournalSnapshotOriginalScene(t *testing.T) *GameScene {
 	var err error
 	configuration.RawDataOvl, err = os.ReadFile(filepath.Join(directory, "DATA.OVL"))
 	require.NoError(t, err)
-	scene, err := NewGameSceneFromLegacySaveFile(configuration, filepath.Join(directory, "SAVED.GAM"))
+	scene, err := newGameSceneFromOriginalSave(configuration, filepath.Join(directory, "SAVED.GAM"))
 	require.NoError(t, err)
 	t.Cleanup(scene.Dispose)
 	seedSceneJournalPresentation(t, scene)

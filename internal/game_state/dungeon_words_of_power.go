@@ -150,27 +150,6 @@ func GetDungeonForResponse(response string) (references.Location, bool) {
 	return references.Location(0), false
 }
 
-// InitializeDungeonStatesFromSave initializes dungeon states from save file data
-// Save file offset 0x032A contains 8 bytes, one for each dungeon
-// Bit 0x80 set means dungeon is open (matches original game logic)
-func (gs *GameState) InitializeDungeonStatesFromSave(saveData []byte) {
-	const dungeonStatesOffset = 0x032A
-	const numDungeons = 8
-
-	// Initialize all dungeons as closed by default
-	for i := range numDungeons {
-		gs.DungeonStates[i] = false
-	}
-
-	// If save data is available and large enough, read dungeon states
-	if len(saveData) >= dungeonStatesOffset+numDungeons {
-		for i := range numDungeons {
-			// Bit 0x80 set means dungeon is open
-			gs.DungeonStates[i] = (saveData[dungeonStatesOffset+i] & 0x80) != 0
-		}
-	}
-}
-
 // absInt returns the absolute value of an integer
 func absInt(x int) int {
 	if x < 0 {

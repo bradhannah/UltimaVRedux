@@ -256,7 +256,7 @@ func TestInventoryEquipmentClearRequiresCompleteReviewedStateAndReportsExactChan
 }
 
 func initializeEmptyInventoryLockerRoster(state *game_state.GameState) {
-	state.PartyState = *party_state.LoadFromRaw([4192]byte{})
+	state.PartyState = *party_state.NewBlankPartyState()
 	state.PartyState.ForEachCharacter(func(_ int, character *party_state.PlayerCharacter) {
 		for _, slot := range references.EquipmentSlots() {
 			character.SetEquippedItem(slot, references.NoEquipment)

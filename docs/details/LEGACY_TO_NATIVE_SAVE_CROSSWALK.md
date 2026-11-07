@@ -158,10 +158,10 @@ process-only and never appears in native JSON.
 
 ## Startup Authority
 
-Production `SAVED.GAM` startup and player-facing import both call
-`legacy_save.ReadBundle`, `legacy_save.Convert`, and native snapshot hydration.
-The source pair is read-only. A private `INIT.GAM` template initializer remains
-only for test fixtures that use the one-file template path.
+Player-facing import calls `legacy_save.ReadBundleContext`,
+`legacy_save.Convert`, and native snapshot hydration. The source pair is
+read-only. Test fixtures load their checked-in `SAVED.GAM` through the same
+conversion, with an empty `SAVED.OOL`; there is no separate one-file loader.
 
 Outdoor map-window offsets are not imported as durable history. Normal original
 startup overwrites loaded offsets by initializing from the final party position.

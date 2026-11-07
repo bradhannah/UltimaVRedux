@@ -47,22 +47,3 @@ func (ml *MoonstoneLocation) CanCreateMoongate() bool {
 	// See ref:MOON-0004.
 	return ml.Map != 0xFF && (ml.IsBuried() || ml.IsFoundNotCollected())
 }
-
-// MoonstoneLocationFromSaveFormat creates MoonstoneLocation from SAVED.GAM data
-// Interprets stones_x, stones_y, stones_m, stones_l array values
-// Note: IsFound status is loaded separately from obj_found bit array
-func MoonstoneLocationFromSaveFormat(x, y, m, l uint8) MoonstoneLocation {
-	state := MoonstoneStateBuried
-	if m == 0xff {
-		state = MoonstoneStateInInventory
-	}
-
-	return MoonstoneLocation{
-		X:       x,
-		Y:       y,
-		Map:     m,
-		Level:   l,
-		State:   state,
-		IsFound: false,
-	}
-}

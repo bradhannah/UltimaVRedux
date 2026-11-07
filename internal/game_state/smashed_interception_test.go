@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/helpers"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -231,18 +232,21 @@ func TestSmashedLegacyTownContinuationPreservesNextInterception(t *testing.T) {
 	if gameReferences == nil || cachedIntegrationCfg == nil {
 		t.Skip("integration test requires original Ultima V game data")
 	}
-	rawSaveData := make([]byte, savedGamFileSize)
+	// Patch a valid party save into Iolo's hut with the party smashed and no
+	// saved town objects (32 eight-byte records at 0x6B4).
+	rawSaveData := helpers.LoadBootstrapSaveData(t)
+	clear(rawSaveData[0x6B4 : 0x6B4+32*8])
 	rawSaveData[0x2ED] = byte(references.IolosHut)
 	rawSaveData[0x2EF] = 0
 	rawSaveData[0x2F0] = 16
 	rawSaveData[0x2F1] = 16
 	rawSaveData[0x03B1] = 1
 
-	left := mustNewGameStateFromLegacySaveBytes(
+	left := mustNewGameStateFromOriginalSaveBytes(
 		rawSaveData, cachedIntegrationCfg, gameReferences,
 		xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen,
 	)
-	right := mustNewGameStateFromLegacySaveBytes(
+	right := mustNewGameStateFromOriginalSaveBytes(
 		rawSaveData, cachedIntegrationCfg, gameReferences,
 		xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen,
 	)

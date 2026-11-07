@@ -7,15 +7,6 @@ type Karma struct {
 	Value int
 }
 
-// NewKarma wraps the saved karma byte.
-func NewKarma(karma byte) Karma {
-	k := Karma{
-		Value: int(karma),
-	}
-
-	return k
-}
-
 // AddDiff applies a signed karma change and clamps the result to 0..99.
 func (k *Karma) AddDiff(nDiff int) {
 	k.Value += nDiff

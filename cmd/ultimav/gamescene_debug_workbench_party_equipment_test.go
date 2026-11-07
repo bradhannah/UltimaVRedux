@@ -15,7 +15,7 @@ import (
 func TestPartyEquipmentLoadoutUpdateAppliesReviewedMixedSourceChanges(t *testing.T) {
 	state := newApprovedToolTestState()
 	initializeEmptyInventoryLockerRoster(state)
-	require.NoError(t, state.SetAvatarName("Avatar"))
+	copy(state.PartyState.GetAvatar().Name[:], "Avatar")
 	avatar := state.PartyState.GetCharacter(0)
 	prepareEquipmentTestCharacter(avatar)
 	avatar.Strength = 30
@@ -50,7 +50,7 @@ func TestPartyEquipmentLoadoutUpdateAppliesReviewedMixedSourceChanges(t *testing
 func TestPartyEquipmentLoadoutUpdateRejectsStaleReviewWithoutMutation(t *testing.T) {
 	state := newApprovedToolTestState()
 	initializeEmptyInventoryLockerRoster(state)
-	require.NoError(t, state.SetAvatarName("Avatar"))
+	copy(state.PartyState.GetAvatar().Name[:], "Avatar")
 	avatar := state.PartyState.GetCharacter(0)
 	prepareEquipmentTestCharacter(avatar)
 	avatar.Strength = 30
@@ -74,7 +74,7 @@ func TestPartyEquipmentLoadoutUpdateRejectsStaleReviewWithoutMutation(t *testing
 func TestPartyEquipmentLoadoutUpdateRejectsManufacturedAmmo(t *testing.T) {
 	state := newApprovedToolTestState()
 	initializeEmptyInventoryLockerRoster(state)
-	require.NoError(t, state.SetAvatarName("Avatar"))
+	copy(state.PartyState.GetAvatar().Name[:], "Avatar")
 	avatar := state.PartyState.GetCharacter(0)
 	prepareEquipmentTestCharacter(avatar)
 	avatar.Strength = 30

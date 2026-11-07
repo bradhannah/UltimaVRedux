@@ -221,16 +221,6 @@ func (uc *UltimaVConfiguration) normalizedCombatSpeed(value float64, source stri
 	return normalized
 }
 
-// ConfigurationDiagnostics returns detached startup diagnostics even when the
-// categorized logger was disabled during loading.
-func (uc *UltimaVConfiguration) ConfigurationDiagnostics() []string {
-	if uc == nil {
-		return nil
-	}
-
-	return append([]string(nil), uc.configurationDiagnostics...)
-}
-
 // GetCombatSpeedFactor returns the canonical master combat presentation speed.
 func (uc *UltimaVConfiguration) GetCombatSpeedFactor() float64 {
 	if uc == nil || uc.GameplayConfiguration == nil {
@@ -303,19 +293,4 @@ func (uc *UltimaVConfiguration) saveGameplayPreference(update func(*GameplayConf
 // SetCombatSpeedFactor validates and persists before changing the live model.
 func (uc *UltimaVConfiguration) SetCombatSpeedFactor(value float64) error {
 	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.CombatSpeedFactor = value })
-}
-
-// SetConfirmQuickSave persists the quick-save confirmation preference atomically.
-func (uc *UltimaVConfiguration) SetConfirmQuickSave(value bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.ConfirmQuickSave = value })
-}
-
-// SetShowCombatHPBars persists battlefield health-bar visibility atomically.
-func (uc *UltimaVConfiguration) SetShowCombatHPBars(value bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.ShowCombatHPBars = value })
-}
-
-// SetMaxVisibleActionPopups persists the bounded popup count atomically.
-func (uc *UltimaVConfiguration) SetMaxVisibleActionPopups(value int) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.MaxVisibleActionPopups = value })
 }

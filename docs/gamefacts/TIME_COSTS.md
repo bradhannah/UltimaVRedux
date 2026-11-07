@@ -227,5 +227,5 @@ persists `continuation.openingCampaignEncounterReduction` in every supported
 native version. Tests distinguish the live flag from calendar date. Full monster-count
 distribution and special-category equivalence remain outside this review.
 
-**Implementation:** `internal/game_state/turn.go`, `internal/game_state/legacy_save_game.go`
+**Implementation:** `internal/game_state/turn.go`, `internal/legacy_save/conversion.go`
 **Tests:** `internal/game_state/combat_encounter_test.go`

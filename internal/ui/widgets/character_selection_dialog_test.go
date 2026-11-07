@@ -140,8 +140,7 @@ func characterSelectionTestOptions() []CharacterSelectionOption {
 }
 
 func createMockPartyState() *party_state.PartyState {
-	var rawData [4192]byte
-	state := party_state.LoadFromRaw(rawData)
+	state := party_state.NewBlankPartyState()
 	characters := []struct {
 		name string
 		role party_state.CharacterClass

@@ -23,7 +23,7 @@ func createTestGameStateWithRealData(t *testing.T, location references.Location)
 	}
 
 	// Create game state with real data
-	gameState, err := newGameStateFromLegacyTemplateFile(
+	gameState, err := newGameStateFromOriginalSaveFile(
 		gameConfig.SavedConfigData.DataFilePath+"/SAVED.GAM",
 		gameConfig,
 		gameRefs,

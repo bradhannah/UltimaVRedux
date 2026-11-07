@@ -25,8 +25,7 @@ func TestSelectCharacterForJimmy(t *testing.T) {
 		{name: "all dead", statuses: allDead, want: -1},
 	} {
 		gs := &GameState{}
-		var rawData [4192]byte
-		gs.PartyState = *party_state.LoadFromRaw(rawData)
+		gs.PartyState = *party_state.NewBlankPartyState()
 		for index, status := range test.statuses {
 			gs.PartyState.GetCharacter(index).SetStatus(status)
 		}

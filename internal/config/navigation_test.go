@@ -20,14 +20,14 @@ func TestFlexibleSextantUseDefaultsAndPersistence(t *testing.T) {
 		assert.Equal(t, original, unchanged, "loading a legacy preference must not rewrite it")
 		gameplay := configuration.GameplayConfiguration
 		for _, enabled := range []bool{true, false} {
-			require.NoError(t, configuration.SetFlexibleSextantUse(enabled))
+			require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.FlexibleSextantUse = enabled }))
 			assert.Same(t, gameplay, configuration.GameplayConfiguration)
 			loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 			require.NoError(t, err)
 			assert.Equal(t, enabled, loaded.GameplayConfiguration.FlexibleSextantUse)
 		}
 	}
-	assert.ErrorIs(t, (&UltimaVConfiguration{}).SetFlexibleSextantUse(true), ErrGameplayConfigNil)
+	assert.ErrorIs(t, (&UltimaVConfiguration{}).saveGameplayPreference(func(settings *GameplayConfiguration) { settings.FlexibleSextantUse = true }), ErrGameplayConfigNil)
 }
 
 func TestFlexibleSextantUseSurvivesNormalSettingsSave(t *testing.T) {

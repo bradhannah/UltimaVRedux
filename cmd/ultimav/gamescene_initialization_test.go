@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -20,25 +22,19 @@ import (
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
 
-func TestNewGameSceneFromLegacySaveFileRejectsInvalidSizeRecoverably(t *testing.T) {
-	t.Parallel()
+// newGameSceneFromOriginalSave loads an original SAVED.GAM pair the way a
+// player's import does: conversion to a native snapshot, then a scene.
+func newGameSceneFromOriginalSave(gameConfig *config.UltimaVConfiguration, savedGamPath string) (*GameScene, error) {
+	bundle, err := legacy_save.ReadBundleContext(context.Background(), savedGamPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading original save: %w", err)
+	}
+	conversion, err := legacy_save.Convert(bundle)
+	if err != nil {
+		return nil, fmt.Errorf("converting original save: %w", err)
+	}
 
-	directory := t.TempDir()
-	filePath := filepath.Join(directory, "SAVED.GAM")
-	if err := os.WriteFile(filePath, make([]byte, 4191), 0o600); err != nil {
-		t.Fatalf("writing legacy save fixture: %v", err)
-	}
-	if err := os.WriteFile(filepath.Join(directory, "SAVED.OOL"), make([]byte, legacy_save.SavedObjectsSize), 0o600); err != nil {
-		t.Fatalf("writing legacy object fixture: %v", err)
-	}
-
-	gameScene, err := NewGameSceneFromLegacySaveFile(nil, filePath)
-	if gameScene != nil {
-		t.Fatal("NewGameSceneFromLegacySaveFile() returned a scene for an invalid save")
-	}
-	if !errors.Is(err, legacy_save.ErrInvalidBundle) {
-		t.Fatalf("NewGameSceneFromLegacySaveFile() error = %v, want ErrInvalidBundle", err)
-	}
+	return NewGameSceneFromSaveSnapshot(gameConfig, conversion.Snapshot)
 }
 
 func TestNewGameSceneFromSaveSnapshotWithRealData(t *testing.T) {
@@ -48,7 +44,7 @@ func TestNewGameSceneFromSaveSnapshotWithRealData(t *testing.T) {
 	rawDataOvl, err := os.ReadFile(filepath.Join(gameDataPath, "DATA.OVL"))
 	requireNoError(t, err)
 	gameConfig.RawDataOvl = rawDataOvl
-	source, err := NewGameSceneFromLegacySaveFile(gameConfig, legacySavePath)
+	source, err := newGameSceneFromOriginalSave(gameConfig, legacySavePath)
 	requireNoError(t, err)
 	t.Cleanup(source.Dispose)
 	seedSceneJournalPresentation(t, source)
@@ -200,7 +196,7 @@ func TestNewGameSceneFromActiveDungeonSnapshotPermitsRollbackCapture(t *testing.
 	rawDataOvl, err := os.ReadFile(filepath.Join(gameDataPath, "DATA.OVL"))
 	requireNoError(t, err)
 	gameConfig.RawDataOvl = rawDataOvl
-	source, err := NewGameSceneFromLegacySaveFile(gameConfig, legacySavePath)
+	source, err := newGameSceneFromOriginalSave(gameConfig, legacySavePath)
 	requireNoError(t, err)
 	t.Cleanup(source.Dispose)
 	_, err = source.gameState.DebugSetupDungeon(

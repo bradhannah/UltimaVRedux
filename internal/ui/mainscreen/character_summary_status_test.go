@@ -28,7 +28,7 @@ func TestCharacterSummary_StatusColorMapping(t *testing.T) {
 }
 
 func TestCharacterSummaryStatusNameUsesCompactPoisonLabel(t *testing.T) {
-	character := party_state.LoadFromRaw([4192]byte{}).GetCharacter(0)
+	character := party_state.NewBlankPartyState().GetCharacter(0)
 	character.SetStatus(party_state.Poisoned)
 	assert.Equal(t, "Pois.", characterSummaryStatusName(character))
 }
@@ -75,7 +75,7 @@ func TestCharacterSummary_StatusEffectsErrorHandling(t *testing.T) {
 	screen := ebiten.NewImage(1, 1)
 	t.Cleanup(screen.Dispose)
 	t.Run("InvalidStatusHandling", func(t *testing.T) {
-		party := party_state.LoadFromRaw([4192]byte{})
+		party := party_state.NewBlankPartyState()
 		character := party.GetCharacter(0)
 		character.PartyMap = party_state.PartyMapActive
 		character.SetStatus(party_state.CharacterStatus(255))
@@ -85,6 +85,6 @@ func TestCharacterSummary_StatusEffectsErrorHandling(t *testing.T) {
 	})
 	t.Run("NilInputHandling", func(t *testing.T) {
 		assert.NotPanics(t, func() { summary.Draw(nil, screen, -1, false, -1) })
-		assert.NotPanics(t, func() { summary.Draw(party_state.LoadFromRaw([4192]byte{}), nil, -1, false, -1) })
+		assert.NotPanics(t, func() { summary.Draw(party_state.NewBlankPartyState(), nil, -1, false, -1) })
 	})
 }

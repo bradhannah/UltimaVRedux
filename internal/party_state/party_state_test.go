@@ -59,57 +59,6 @@ func TestMartyrNamesScansSlotsOneThroughFifteen(t *testing.T) {
 	}
 }
 
-func TestLoadFromRawPreservesArmorClassAndPartyMapSemantics(t *testing.T) {
-	var raw [4192]byte
-	const rosterOffset = 0x02
-	partyMaps := []PartyMap{PartyMapActive, PartyMapUnrecruited, PartyMapAtInn(references.Britain), PartyMapMartyr}
-	for index, partyMap := range partyMaps {
-		base := rosterOffset + index*32
-		raw[base+0x18] = byte(20 + index)
-		raw[base+0x1f] = byte(partyMap)
-	}
-
-	party := LoadFromRaw(raw)
-	for index, partyMap := range partyMaps {
-		character := party.GetCharacter(index)
-		if character.ArmorClass != byte(20+index) || character.PartyMap != partyMap {
-			t.Fatalf("slot %d = armor %d map %#x, want armor %d map %#x", index, character.ArmorClass, character.PartyMap, 20+index, partyMap)
-		}
-	}
-	if location, ok := party.GetCharacter(2).PartyMap.InnLocation(); !ok || location != references.Britain {
-		t.Fatalf("inn location = %v, %v, want Britain", location, ok)
-	}
-	if !party.GetCharacter(3).PartyMap.IsMartyr() {
-		t.Fatal("martyr state was not recognized")
-	}
-}
-
-func TestLoadFromRawMapsNPCFlagRegionToOneBasedLocationBoundaries(t *testing.T) {
-	var raw [4192]byte
-	const (
-		deadNPCsOffset = 0x5b4
-		metNPCsOffset  = 0x634
-	)
-	raw[deadNPCsOffset] = 0x01
-	raw[deadNPCsOffset+127] = 0x80
-	raw[metNPCsOffset] = 0x01
-	raw[metNPCsOffset+127] = 0x80
-
-	party := LoadFromRaw(raw)
-	for _, location := range []references.Location{references.Moonglow, references.SerpentsHold} {
-		npc := 0
-		if location == references.SerpentsHold {
-			npc = NPcsPerLocation - 1
-		}
-		if !party.IsNPCDead(location, npc) || !party.HasMetNPC(location, npc) {
-			t.Fatalf("location %d NPC %d did not load boundary flags", location, npc)
-		}
-	}
-	if party.IsNPCDead(references.BritanniaUnderworld, 0) || party.HasMetNPC(references.BritanniaUnderworld, 0) {
-		t.Fatal("first NPC flag was incorrectly assigned to the world map")
-	}
-}
-
 func TestNPCFlagSettersValidatePersistentIdentityBoundaries(t *testing.T) {
 	party := newPartyState()
 	party.SetDeadNpc(references.Moonglow, 0)

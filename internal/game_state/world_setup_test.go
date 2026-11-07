@@ -10,29 +10,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-func TestDebugEnterSmallLocationUsesAuthoritativeTransitionWithoutTimeAdvance(t *testing.T) {
-	state, _ := NewIntegrationTestBuilder(t).
-		WithLocation(references.BritanniaUnderworld).
-		WithFloor(0).
-		WithPlayerAt(80, 100).
-		WithSystemCallbacks().
-		Build()
-	state.smashed = 3
-	beforeTurn := state.DateTime.Turn
-
-	result, err := state.DebugEnterSmallLocation(references.Minoc)
-	require.NoError(t, err)
-	assert.Equal(t, references.BritanniaUnderworld, result.Before.Location)
-	assert.Equal(t, references.Minoc, result.After.Location)
-	assert.Equal(t, references.Position{X: smallMapStartingPositionX, Y: smallMapStartingPositionY}, result.After.Position)
-	assert.Equal(t, references.FloorNumber(smallMapStartingPositionFloor), result.After.Floor)
-	assert.Equal(t, 3, result.SmashedBefore)
-	assert.Zero(t, result.SmashedAfter)
-	assert.Zero(t, state.smashed)
-	assert.Equal(t, beforeTurn, state.DateTime.Turn)
-	assert.NotNil(t, state.CurrentNPCAIController)
-}
-
 func TestValidateDungeonDoorwaySetupRejectsTrappedFacing(t *testing.T) {
 	var cells references.DungeonCells
 	position := references.Position{X: 3, Y: 3}
@@ -48,27 +25,6 @@ func TestValidateDungeonDoorwaySetupRejectsTrappedFacing(t *testing.T) {
 	err = validateDungeonDoorwaySetup(dungeon, 0, position, references.DungeonFacingNorth)
 	assert.ErrorContains(t, err, "no traversable forward or reverse route")
 	assert.NoError(t, validateDungeonDoorwaySetup(dungeon, 0, position, references.DungeonFacingWest))
-}
-
-func TestDebugSetFloorValidatesAndRebuildsSmallMapState(t *testing.T) {
-	state, _ := NewIntegrationTestBuilder(t).
-		WithLocation(references.Britain).
-		WithFloor(0).
-		WithSystemCallbacks().
-		Build()
-	controller := state.CurrentNPCAIController
-
-	result, err := state.DebugSetFloor(1)
-	require.NoError(t, err)
-	assert.Equal(t, references.FloorNumber(1), result.After.Floor)
-	assert.Equal(t, controller, state.CurrentNPCAIController, "small-map floor setup must preserve controller authority")
-
-	before := state.MapState.PlayerLocation
-	rejected, err := state.DebugSetFloor(2)
-	assert.ErrorIs(t, err, ErrInvalidWorldSetup)
-	assert.Equal(t, before, rejected.Before)
-	assert.Equal(t, before, rejected.After)
-	assert.Equal(t, before, state.MapState.PlayerLocation)
 }
 
 func TestDebugEnterMerchantLocationUsesProductionControllerAndBypassesVehicleGates(t *testing.T) {
@@ -249,19 +205,6 @@ func TestDebugEnterMerchantLocationRejectsDestinationFailuresWithoutMutation(t *
 			assert.Equal(t, beforeRNGCalls, state.GetRNG().Calls())
 		})
 	}
-}
-
-func TestDebugSetFloorSwitchesLargeMapAuthority(t *testing.T) {
-	state, _ := NewIntegrationTestBuilder(t).
-		WithLocation(references.BritanniaUnderworld).
-		WithFloor(0).
-		WithSystemCallbacks().
-		Build()
-
-	result, err := state.DebugSetFloor(-1)
-	require.NoError(t, err)
-	assert.Equal(t, references.FloorNumber(-1), result.After.Floor)
-	assert.Equal(t, state.GetCurrentLargeMapNPCAIController(), state.CurrentNPCAIController)
 }
 
 func TestDebugTravelToLandmarkUsesPhysicalDestinations(t *testing.T) {
@@ -555,10 +498,6 @@ func TestDebugWorldSetupOperationsRejectActiveDungeonCommandWithoutMutation(t *t
 		name string
 		run  func(*GameState) error
 	}{
-		{name: "enter small location", run: func(state *GameState) error {
-			_, err := state.DebugEnterSmallLocation(references.Minoc)
-			return err
-		}},
 		{name: "set world position", run: func(state *GameState) error {
 			_, err := state.DebugSetWorldPosition(references.BritanniaUnderworld, 0, references.Position{X: 80, Y: 100})
 			return err
@@ -575,10 +514,6 @@ func TestDebugWorldSetupOperationsRejectActiveDungeonCommandWithoutMutation(t *t
 		}},
 		{name: "set dungeon position", run: func(state *GameState) error {
 			_, err := state.DebugSetDungeonPosition(3, references.Position{X: 3, Y: 3})
-			return err
-		}},
-		{name: "set floor", run: func(state *GameState) error {
-			_, err := state.DebugSetFloor(3)
 			return err
 		}},
 		{name: "travel to landmark", run: func(state *GameState) error {
@@ -900,49 +835,6 @@ func TestDebugSetWorldPositionRejectsDestinationBoundsBeforeMutation(t *testing.
 			assert.Equal(t, beforeDate, state.DateTime)
 			assert.Equal(t, beforeRNGCalls, state.GetRNG().Calls())
 		})
-	}
-}
-
-func TestDebugSetFloorChangesActiveDungeonExactlyAndPreservesAuthority(t *testing.T) {
-	state, _ := NewIntegrationTestBuilder(t).
-		WithLocation(references.Britain).
-		WithRandomSeed(253).
-		WithSystemCallbacks().
-		Build()
-	position := references.Position{X: 6, Y: 4}
-	_, err := state.DebugSetupDungeon(
-		references.Covetous,
-		3,
-		position,
-		references.DungeonFacingWest,
-		true,
-	)
-	require.NoError(t, err)
-	beforeDungeon := state.activeDungeon
-	beforeSnapshot := beforeDungeon.Snapshot()
-	beforeDate := state.DateTime
-	beforeElapsed := state.ElapsedMs
-	beforeRNGCalls := state.GetRNG().Calls()
-
-	result, err := state.DebugSetFloor(7)
-
-	require.NoError(t, err)
-	assert.Equal(t, references.FloorNumber(7), result.After.Floor)
-	assert.Equal(t, position, result.After.Position)
-	assert.Same(t, beforeDungeon, state.activeDungeon)
-	assert.Equal(t, beforeSnapshot, state.activeDungeon.Snapshot())
-	assert.NotNil(t, state.MapState.LayeredMaps.GetLayeredMap(references.DungeonMapType, 7))
-	assert.Equal(t, beforeDate, state.DateTime)
-	assert.Equal(t, beforeElapsed, state.ElapsedMs)
-	assert.Equal(t, beforeRNGCalls, state.GetRNG().Calls())
-
-	for _, floor := range []references.FloorNumber{-1, 8} {
-		before := state.MapState.PlayerLocation
-		rejected, floorErr := state.DebugSetFloor(floor)
-		assert.ErrorIs(t, floorErr, ErrInvalidWorldSetup)
-		assert.Equal(t, before, rejected.After)
-		assert.Equal(t, before, state.MapState.PlayerLocation)
-		assert.Same(t, beforeDungeon, state.activeDungeon)
 	}
 }
 

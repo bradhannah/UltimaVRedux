@@ -1,15 +1,11 @@
 package display
 
-import "math"
-
 // DeviceScaleFactor returns the last observed scale, independent of window size.
 func (dm *DisplayManager) DeviceScaleFactor() float64 { return dm.deviceScale }
 
 // LayoutSize observes fractional outside dimensions and chooses the automatic
 // draw canvas. Ebitengine calls Layout before the first Update.
 func (dm *DisplayManager) LayoutSize(width, height float64) (int, int) {
-	dm.containerWidth = max(1, int(math.Round(width)))
-	dm.containerHeight = max(1, int(math.Round(height)))
 	renderWidth, renderHeight := RenderSize(width, height, dm.backend.DeviceScaleFactor())
 	dm.PublishLogicalSize(renderWidth, renderHeight)
 

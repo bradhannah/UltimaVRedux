@@ -606,7 +606,7 @@ func TestShadowlordAssignmentsStartUnassignedAndQueriesDoNotConsumeRNG(t *testin
 	gameRefs := helpers.LoadTestGameReferences(t, config)
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 	gs.ShadowlordState.Reset()
 	before := gs.GetRNG().Calls()
 
@@ -623,7 +623,7 @@ func TestMoveShadowlordsAtMidnightUsesGameplayRNGAndPersistentUniqueAssignments(
 	gameRefs := helpers.LoadTestGameReferences(t, config)
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 	gs.ShadowlordState.Reset()
 	gs.SetRandomSeed(310)
 	gs.MapState.PlayerLocation.Location = references.Britain
@@ -646,7 +646,7 @@ func TestAstronomyOmitsDefeatedShadowlord(t *testing.T) {
 	gameRefs := helpers.LoadTestGameReferences(t, config)
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 	gs.ShadowlordState.Reset()
 	gs.ShadowlordState.TownAssignments = [references.ShadowlordCount]references.Location{
 		references.Moonglow, references.Jhelom, references.Yew,
@@ -666,7 +666,7 @@ func TestMidnightMovesLivingShadowlordsWithoutRefreshingLoadedPresence(t *testin
 	gameRefs := helpers.LoadTestGameReferences(t, config)
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 	mockCallbacks := NewMockSystemCallbacks(t)
 	gs.SystemCallbacks = mockCallbacks.ToSystemCallbacks()
 	gs.ShadowlordState.Reset()
@@ -817,13 +817,13 @@ func TestShadowlordTownEntry_JailEntryVariousYPositions(t *testing.T) {
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
 
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 
 	// Test Y positions that should NOT skip presence (normal entry)
 	normalEntryYPositions := []references.Coordinate{0, 1, 2, 3, 5, 6, 10, 15, 20}
 
 	for _, yPos := range normalEntryYPositions {
-		gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+		gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 		mockCallbacks := NewMockSystemCallbacks(t)
 		gs.SystemCallbacks = mockCallbacks.ToSystemCallbacks()
 		gs.ShadowlordState.Reset()
@@ -846,7 +846,7 @@ func TestShadowlordTownEntry_JailEntryVariousYPositions(t *testing.T) {
 	}
 
 	// Test Y=4 which should skip presence (jail entry)
-	gs = mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs = mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 	mockCallbacks := NewMockSystemCallbacks(t)
 	gs.SystemCallbacks = mockCallbacks.ToSystemCallbacks()
 	gs.ShadowlordState.Reset()

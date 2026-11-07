@@ -148,7 +148,7 @@ func TestInitializeModeAvoidsRuntimeWindowPosition(t *testing.T) {
 			assert.Equal(t, test.operations, backend.operations)
 			assert.Zero(t, backend.positionReads)
 			assert.Zero(t, backend.positionCalls)
-			assert.Equal(t, test.mode, manager.RequestedMode())
+			assert.Equal(t, test.mode, manager.requestedMode)
 			assert.Equal(t, []int{1600, 900}, pair(manager.LastNormalWindowSize()))
 			assert.Equal(t, []int{1600, 900}, pair(manager.PersistableWindowSize()))
 			assert.True(t, manager.IsTransitionPending())
@@ -162,7 +162,7 @@ func TestRequestModeWaitsForDelayedBackendObservation(t *testing.T) {
 
 	require.NoError(t, manager.RequestMode(config.ModeFullscreen, 1280, 720))
 	assert.Equal(t, config.ModeWindowed, manager.Mode())
-	assert.Equal(t, config.ModeFullscreen, manager.RequestedMode())
+	assert.Equal(t, config.ModeFullscreen, manager.requestedMode)
 	assert.True(t, manager.IsTransitionPending())
 	assert.False(t, manager.Update())
 	assert.True(t, manager.IsTransitionPending())
@@ -183,7 +183,7 @@ func TestUnobservedRequestTimesOutAndCanBeRetried(t *testing.T) {
 	}
 
 	assert.False(t, manager.IsTransitionPending())
-	assert.Equal(t, config.ModeWindowed, manager.RequestedMode())
+	assert.Equal(t, config.ModeWindowed, manager.requestedMode)
 	require.NoError(t, manager.RequestMode(config.ModeMaximized, 1280, 720))
 	assert.True(t, manager.IsTransitionPending())
 }
@@ -321,9 +321,8 @@ func TestLogicalWindowMonitorAndContainerSizesRemainDistinct(t *testing.T) {
 	backend.fullscreen = true
 	manager := newDisplayManager(backend)
 
-	assert.Equal(t, []int{1600, 1000}, pair(manager.WindowSize()))
+	assert.Equal(t, []int{1600, 1000}, []int{manager.windowWidth, manager.windowHeight})
 	assert.Equal(t, []int{3440, 1440}, pair(manager.MonitorSize()))
-	assert.Equal(t, []int{3440, 1440}, pair(manager.ContainerSize()))
 	assert.Equal(t, []int{2560, 1440}, pair(manager.GetCurrentSize()))
 	assert.Equal(t, []int{0, 0}, pair(manager.LogicalSize()))
 

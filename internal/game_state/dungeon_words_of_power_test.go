@@ -298,54 +298,6 @@ func TestGameState_ToggleDungeon(t *testing.T) {
 	assert.False(t, newState) // Should return false for invalid dungeon
 }
 
-func TestGameState_InitializeDungeonStatesFromSave(t *testing.T) {
-	gs := &GameState{}
-
-	t.Run("Default initialization with empty save data", func(t *testing.T) {
-		gs.InitializeDungeonStatesFromSave([]byte{})
-
-		// All dungeons should be closed
-		for i := 0; i < 8; i++ {
-			assert.False(t, gs.DungeonStates[i], "Dungeon %d should be closed by default", i)
-		}
-	})
-
-	t.Run("Initialize from save data with some dungeons open", func(t *testing.T) {
-		// Create save data with dungeons at offset 0x032A
-		saveData := make([]byte, 0x0332) // Large enough to contain dungeon states
-
-		// Set some dungeons as open (0x80 bit set)
-		saveData[0x032A+0] = 0x80 // Deceit open
-		saveData[0x032A+2] = 0x80 // Destard open
-		saveData[0x032A+7] = 0x80 // Doom open
-		// Others remain 0x00 (closed)
-
-		gs.InitializeDungeonStatesFromSave(saveData)
-
-		// Check states
-		assert.True(t, gs.DungeonStates[DeceitIndex])    // Should be open
-		assert.False(t, gs.DungeonStates[DespiseIndex])  // Should be closed
-		assert.True(t, gs.DungeonStates[DestardIndex])   // Should be open
-		assert.False(t, gs.DungeonStates[WrongIndex])    // Should be closed
-		assert.False(t, gs.DungeonStates[CovetousIndex]) // Should be closed
-		assert.False(t, gs.DungeonStates[ShameIndex])    // Should be closed
-		assert.False(t, gs.DungeonStates[HythlothIndex]) // Should be closed
-		assert.True(t, gs.DungeonStates[DoomIndex])      // Should be open
-	})
-
-	t.Run("Initialize with partial save data", func(t *testing.T) {
-		// Save data too small to contain dungeon states
-		saveData := make([]byte, 0x0300) // Smaller than required
-
-		gs.InitializeDungeonStatesFromSave(saveData)
-
-		// All dungeons should default to closed
-		for i := 0; i < 8; i++ {
-			assert.False(t, gs.DungeonStates[i], "Dungeon %d should be closed with partial save data", i)
-		}
-	})
-}
-
 func TestDungeonIndexFollowsDungeonStatesOrder(t *testing.T) {
 	dungeons := []references.Location{
 		references.Deceit, references.Despise, references.Destard, references.Wrong,

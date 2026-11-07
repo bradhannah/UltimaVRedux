@@ -12,9 +12,7 @@ import (
 
 // createTestPartyStateForResurrection creates a PartyState with test characters for resurrection testing.
 func createTestPartyStateForResurrection() *party_state.PartyState {
-	// Use LoadFromRaw to properly initialize pointer array
-	var rawData [4192]byte
-	state := party_state.LoadFromRaw(rawData)
+	state := party_state.NewBlankPartyState()
 
 	// Set up three characters
 	char0 := state.GetCharacter(0)
