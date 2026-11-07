@@ -84,9 +84,14 @@ Rules for every page:
 **A facts or how-it-works page.** Add `site/content/pages/<name>.json` with `slug`,
 `tier` (`facts` or `how`), `title`, `summary`, `lede`, `rules` (every cited rule
 ID) and `blocks`. Block types are `p`, `h2`, `ul`, `steps`, `stats`, `callout`,
-`myths` and `computed`. A `computed` block renders a table calculated from the Game
-Facts (`level_table`, `ambush_table`); add new ones in
-`scripts/site_pages_content.py`. Verify every number against the cited rule.
+`table` (`head` and `rows`; cells may hold inline Markdown), `myths` and
+`computed`; an `h2` may set an `id` for links. A `computed` block renders
+a table calculated from the Game Facts (`level_table`, `ambush_table`); register new
+ones in `scripts/site_pages_content.py`. The combat page's `hit_table`,
+`fight_example` (its creature, weapon, `dex` and `armour` are block fields),
+`chest_contents` and `chest_arms` live in
+[`scripts/site_combat.py`](../scripts/site_combat.py). Verify every number against
+the cited rule.
 Links inside content use site-absolute paths such as `/original/levels/`.
 
 **A walkthrough for an Under the hood guide.** Add `site/content/hood/<slug>.json`,
@@ -95,7 +100,7 @@ named after the guide's slug in `scripts/site_pages_hood.py`. It holds `intro`,
 `pipeline_notes`, `sections` and `not_yet`. Each section has an `id`, an optional
 `step` number, a `title`, `rules` and `blocks`. A section may cite only rules from
 its own guide, and each cited rule's Original status is shown beside it. On top of
-the shared block types, walkthroughs add `chips`, `table`, `code`, `bits` (an
+the shared block types, walkthroughs add `chips`, `code`, `bits` (an
 example byte, decoded at build time) and `bitfield`. Computed blocks are
 `archive_offsets`, recomputed and checked against the rule text, and
 `ega_palette`, read from `pkg/graphics/legacy/model.go`. They live in
@@ -138,7 +143,7 @@ page builder with `data-key` (and optionally `data-group`) on each row and
 
 | File | Rules | Records |
 | --- | --- | --- |
-| `creatures.json` | ENEMY-0001, ENEMY-0002, PROGRESS-0002 | 48 |
+| `creatures.json` | ENEMY-0001, ENEMY-0002, PROGRESS-0002, COMBAT-0009 | 48 |
 | `equipment.json` | EQUIP-0001 | 48 |
 | `locations.json` | MAP-0003, MAP-0004, WORD-0001 | 40 |
 | `moon_phases.json` | MOON-0002 | 28 |

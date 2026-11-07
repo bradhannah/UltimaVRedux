@@ -416,7 +416,10 @@ entry without consuming allowance or RNG. A new lifetime is safe, value 30 and
 uninspected. Children have independent identities/value/knowledge, never the
 parent's daily history. Town Open still charges its ordinary karma, not Get again.
 
-Loot uses actual low-seven-bit value. Miscellaneous categories are considered
+Every chest object opened on a town, surface or combat map, including a monster's
+([COMBAT-0009](COMBAT.md#combat-0009)), generates loot from its actual
+low-seven-bit value; first-person dungeon chests use
+[DNG-0005](DUNGEON_SYSTEM.md#dng-0005) instead. Miscellaneous categories are considered
 in reverse order of the following table. Skip without a probability draw when
 threshold exceeds value; otherwise draw `1..30` and accept when it is at least
 threshold. Accepted categories draw their quantity/type; chest and gold make
@@ -433,9 +436,22 @@ replacement draws after their initial quantity draw.
 | Torches | 7 | 1–2 |
 | Food | 7 | 1–2 |
 
-Armaments make `floor(value/2)+1` attempts (16 at value 30), selecting equipment
-ID then applying its value/threshold/`1..30` tests. Seven `0xFF` exclusions stay
-excluded; Magic Shield threshold is 28. Empty loot is valid, with no minimum
+Armaments make `floor(value/2)+1` attempts (16 at value 30), each selecting an
+EQUIP-0001 ID from `0..47` then applying that item's value/threshold/`1..30`
+tests. The seven `0xFF` exclusions never pass.
+
+| Threshold | Equipment |
+| ---: | --- |
+| 5 | Dagger |
+| 10 | Leather Helm, Chain Coif, Small Shield, Sling, Club, Flaming Oil, Main Gauche, Spear, Throwing Axe, Short Sword, Arrows, Quarrels |
+| 15 | Iron Helm, Large Shield, Cloth Armour, Leather Armour, Mace, Morning Star, Bow, Crossbow, Spiked Collar |
+| 20 | Spiked Helm, Spiked Shield, Ring Mail, Scale Mail, Chain Mail, Long Sword, Two-Handed Hammer, Two-Handed Axe, Two-Handed Sword, Halberd |
+| 23 | Magic Bow, Silver Sword, Magic Axe, Ring of Invisibility, Ring of Protection, Ring of Regeneration, Amulet of Turning |
+| 24 | Plate Mail |
+| 28 | Magic Shield |
+| 0xFF | Jewel Shield, Mystic Armour, Sword of Chaos, Glass Sword, Jeweled Sword, Mystic Sword, Ankh |
+
+Empty loot is valid, with no minimum
 or retry-until-eligible. Children are unopened safe world objects requiring Open,
 not carried items. Source short-circuit and replacement-draw order remains even
 when later object admission lacks space; bounds do not prove original uniformity.

@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import build_site
+import site_combat
 import site_context
 import site_data
 import site_data_play
@@ -35,6 +36,8 @@ KEY_PAGES = [
     "original/commands/index.html",
     "original/how/levelling/index.html",
     "original/how/camping/index.html",
+    "original/how/combat/index.html",
+    "original/karma/index.html",
     "original/myths/index.html",
     "original/hood/index.html",
     "original/hood/graphics/index.html",
@@ -58,6 +61,8 @@ PLAYER_PAGES = [
     "original/commands/index.html",
     "original/how/levelling/index.html",
     "original/how/camping/index.html",
+    "original/how/combat/index.html",
+    "original/karma/index.html",
 ]
 HOOD_TOPICS = [
     "graphics",
@@ -173,7 +178,12 @@ class SiteStructureTest(SiteBuildCase):
         self.assertEqual(daemon["missile"], "red")
         self.assertIn("summons_daemons", site_data.strings(daemon["abilities"]))
         self.assertIsNone(rows["Orc"]["missile"], "range 1 is melee, not a bow")
-        self.assertEqual(site_data.mapping(rows["Dragon"]["derived"])["kill_xp"], 25)
+        dragon = site_data.mapping(rows["Dragon"]["derived"])
+        self.assertEqual(dragon["kill_xp"], 25)
+        self.assertEqual(
+            (dragon["chest_percent"], dragon["trapped_percent"]), (100, 98)
+        )
+        self.assertIsNone(site_data.mapping(daemon["derived"])["chest_percent"])
         self.assertIn("derived_from", data)
 
     def test_play_datasets(self) -> None:
@@ -292,6 +302,18 @@ class SiteContentTest(SiteBuildCase):
         rule["text"] = rule["text"].replace("`0x72`", "`0x74`")
         with self.assertRaisesRegex(ValueError, "GFX-0002 no longer states"):
             site_hood_walkthrough.archive_offsets(context)
+
+    def test_combat_odds_must_match_the_rules(self) -> None:
+        """Odds a rule no longer quotes, or a loot table missing an item, fail."""
+        context = copy.deepcopy(self.context)
+        rule = context.rules["EQUIP-0012"]
+        rule["text"] = rule["text"].replace("51% at 15", "50% at 15")
+        with self.assertRaisesRegex(ValueError, "EQUIP-0012 odds at 15"):
+            site_combat.hit_table(context)
+        rule = context.rules["CMD-0009"]
+        rule["text"] = rule["text"].replace("| 28 | Magic Shield |\n", "")
+        with self.assertRaisesRegex(ValueError, "every EQUIP-0001 item"):
+            site_combat.chest_arms(context)
 
     def test_spoiler_answers_only_inside_reveal_elements(self) -> None:
         """Mantras, Words of Power and quest item positions are never in plain text."""

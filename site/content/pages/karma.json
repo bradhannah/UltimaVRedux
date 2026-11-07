@@ -1,0 +1,71 @@
+{
+  "slug": "karma",
+  "tier": "facts",
+  "title": "Karma",
+  "summary": "What raises it, what lowers it, what it costs",
+  "lede": "Karma is one number for the whole party, from 0 to 99, and a new game starts at 75. Here is every change the Game Facts record, and what your karma decides.",
+  "rules": ["KARMA-0001", "KARMA-0002", "KARMA-0003", "KARMA-0004", "KARMA-0005", "KARMA-0006", "KARMA-0007", "KARMA-0008", "KARMA-0009", "KARMA-0010", "KARMA-0011", "KARMA-0012", "KARMA-0013", "KARMA-0014", "KARMA-0015", "KARMA-0016", "KARMA-0017", "KARMA-0018", "RECOVERY-0002"],
+  "blocks": [
+    {
+      "type": "stats",
+      "items": [
+        {"label": "Range", "value": "0–99", "note": "Shared by the party. Changes stop at either end."},
+        {"label": "New game", "value": "75", "note": "Where every new game starts."},
+        {"label": "Worst act", "value": "−10", "note": "Attacking a person who cannot fight back."},
+        {"label": "Best act", "value": "+9", "note": "A 900-gold offering at a shrine you have completed."}
+      ]
+    },
+    {"type": "h2", "id": "lower", "text": "What lowers it"},
+    {
+      "type": "table",
+      "head": ["What you do", "Karma", "Good to know"],
+      "rows": [
+        ["Attack a person in a settlement", "−5", "Guards come for you."],
+        ["…who is lying in a bed, or held in the stocks or manacles", "−5 more", "−10 in all."],
+        ["Fire a town cannon at someone", "−5", "Only when the shot removes them."],
+        ["Open a chest in a settlement", "−2", "Any chest: empty, trapped, even Lord British's."],
+        ["Pick crops or take food from a table", "−1", "Anywhere, even in a dungeon room. You gain 1 food."],
+        ["Order another drink after the barkeep's warning", "−1", "The warning comes after your third drink."],
+        ["Give Blackthorn the mantra he demands", "−5", "That shrine is closed to you."],
+        ["Give certain answers in conversation", "−1", "Each time, as written into that character's dialogue."]
+      ]
+    },
+    {
+      "type": "p",
+      "text": "A settlement is any town, castle, keep or dwelling: the places on the [Atlas](/original/atlas/) that are not dungeons."
+    },
+    {"type": "h2", "id": "raise", "text": "What raises it"},
+    {
+      "type": "table",
+      "head": ["What you do", "Karma", "Good to know"],
+      "rows": [
+        ["Free a prisoner from the stocks or manacles", "+2", "Jimmy it with a key. A failed try uses up the key. Once per prisoner."],
+        ["Complete a shrine quest", "+3", "Humility gives +6; the other virtues add stats instead."],
+        ["Make an offering at a completed shrine", "+1 per 100 gold", "Offer 100 to 900. At karma 99 you still pay."],
+        ["Give a beggar money", "+1", "Only when the beggar counter is full. Give away your last coin then for +2 more."],
+        ["Give certain answers in conversation", "+1", "Each time, as written into that character's dialogue."]
+      ]
+    },
+    {
+      "type": "p",
+      "text": "Beggars only reward you now and then. A hidden counter goes up by one at each of the game's regular party updates, as you play and as you rest, and must reach 100. A reward empties it. Giving before then costs gold and earns nothing, and the amount never matters."
+    },
+    {"type": "h2", "id": "decides", "text": "What karma decides"},
+    {
+      "type": "ul",
+      "items": [
+        "**Resurrection costs experience.** When a spell or scroll brings someone back, their XP is multiplied by your karma as a percentage: at karma 60 they keep 60%. Only karma 98 or 99 keeps it all. Their level and maximum HP are then worked out again from the new XP.",
+        "**If the whole party dies,** you hear a report chosen by your karma, the dead come back with that same XP cut, and only then is karma raised to at least 75. The party wakes in Castle Britannia at 6 o'clock in the morning.",
+        "**The Wanderer's report** is chosen by your karma in bands of 20 (0–19, 20–39, 40–59, 60–79, 80–99). See [Levelling and the Wanderer](/original/how/levelling/).",
+        "**Some characters** say certain things only when your karma is at or above a value written into their dialogue."
+      ]
+    },
+    {"type": "h2", "text": "Myths about karma"},
+    {"type": "myths", "ids": ["british-chests", "big-donations", "resurrection-xp"]},
+    {
+      "type": "callout",
+      "label": "Redux differs",
+      "text": "A town cannon's shot stops at walls, so it cannot remove someone behind one. See [Differences you'll notice](/redux/differences/#karma-0004)."
+    }
+  ]
+}

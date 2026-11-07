@@ -9,12 +9,11 @@ from the Redux code. A walkthrough cites only rules from its own guide.
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
 
 from gamefacts_public import JSONValue, require
 from site_context import Context, badge, chip, esc, github
 from site_data import objects, strings
-from site_pages_content import plain
+from site_pages_content import plain, table
 from site_pages_content import render_block as render_common
 
 type Obj = dict[str, JSONValue]
@@ -41,25 +40,6 @@ class Walkthrough:
     lede: str
     body: str
     contents: str
-
-
-def rows_of(value: JSONValue) -> list[list[str]]:
-    """Narrow a JSON value to a list of string rows."""
-    require(isinstance(value, list), "table rows must be a list")
-    return [strings(row) for row in cast(list[JSONValue], value)]
-
-
-def table(head: list[str], rows: list[list[str]]) -> str:
-    """Render a plain table whose cells may hold inline Markdown."""
-    header = "".join(f'<th scope="col">{esc(cell)}</th>' for cell in head)
-    body = "".join(
-        "<tr>" + "".join(f"<td>{plain(cell)}</td>" for cell in row) + "</tr>"
-        for row in rows
-    )
-    return (
-        f'<div class="table-wrap"><table><thead><tr>{header}</tr></thead>'
-        f"<tbody>{body}</tbody></table></div>"
-    )
 
 
 def archive_offsets(ctx: Context) -> str:
@@ -159,7 +139,6 @@ def render_block(ctx: Context, block: Obj) -> str:
             + "".join(chip(item) for item in strings(b["items"]))
             + "</div>"
         ),
-        "table": lambda b: table(strings(b["head"]), rows_of(b["rows"])),
         "code": lambda b: (
             (f'<p class="muted">{esc(b["caption"])}</p>' if "caption" in b else "")
             + f'<pre><code>{esc(chr(10).join(strings(b["lines"])))}</code></pre>'

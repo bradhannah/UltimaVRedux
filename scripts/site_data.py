@@ -8,6 +8,7 @@ original game files; every number comes from a public Game Facts table.
 
 import re
 from collections.abc import Callable
+from fractions import Fraction
 from typing import cast
 
 from gamefacts_public import JSONValue, Rule, field, require
@@ -150,6 +151,26 @@ def terrain_classes(rules: Rules) -> dict[int, str]:
     return classes
 
 
+def d30_at_most(face: int) -> Fraction:
+    """RNG-0001: R(0,60) halved, zero read as one, is at most `face`.
+
+    Like the rules' own quoted odds, this assumes the 61 draws are equally likely.
+    """
+    return Fraction(sum(max(draw // 2, 1) <= face for draw in range(61)), 61)
+
+
+def whole_percent(chance: Fraction) -> int:
+    """Round a probability to a whole percent, halves up."""
+    return int(chance * 100 + Fraction(1, 2))
+
+
+def treasure_odds(rating: int, abilities: list[str]) -> tuple[int | None, int | None]:
+    """COMBAT-0009: a chest when D30 <= rating, trapped when a second D30 < rating."""
+    if rating <= 0 or "no_corpse" in abilities or "vanishes_on_death" in abilities:
+        return None, None
+    return whole_percent(d30_at_most(rating)), whole_percent(d30_at_most(rating - 1))
+
+
 def creature_group(index: int) -> str:
     """Editorial grouping by index range; ENEMY-0001 does not name the groups."""
     if index <= 15:
@@ -164,6 +185,8 @@ def creatures(rules: Rules) -> Record:
     for row in table_dicts(tables(rules["ENEMY-0001"]["text"])[0]):
         index, mode = int(row["Index"]), int(row["Mode"], 16)
         hit_points, reach = int(row["HP"]), int(row["Range"])
+        abilities = [n for bit, n in MODE_BITS.items() if mode & bit]
+        chest, trapped = treasure_odds(int(row["Tr"]), abilities)
         records.append(
             {
                 "index": index,
@@ -177,13 +200,15 @@ def creatures(rules: Rules) -> Record:
                 "group_max": int(row["Num"]),
                 "treasure": int(row["Tr"]),
                 "mode": row["Mode"],
-                "abilities": [n for bit, n in MODE_BITS.items() if mode & bit],
+                "abilities": abilities,
                 "range": reach,
                 # Range 1 is melee-only: the table's Arrow entry is not a bow.
                 "missile": row["Missile"].lower() if reach > 1 else None,
                 "friend": row["Friend"],
                 "derived": {
                     "kill_xp": hit_points // 4 + 1 if hit_points else None,
+                    "chest_percent": chest,
+                    "trapped_percent": trapped,
                     "movement": terrain.get(index),
                     "group": creature_group(index),
                 },
@@ -194,9 +219,13 @@ def creatures(rules: Rules) -> Record:
         "schema_version": 1,
         "title": "Creatures",
         "key": "index",
-        "source": source(rules, "ENEMY-0001", "ENEMY-0002", "PROGRESS-0002"),
+        "source": source(
+            rules, "ENEMY-0001", "ENEMY-0002", "PROGRESS-0002", "COMBAT-0009"
+        ),
         "derived_from": {
             "kill_xp": "PROGRESS-0002",
+            "chest_percent": "COMBAT-0009 and RNG-0001",
+            "trapped_percent": "COMBAT-0009 and RNG-0001 (share of chests)",
             "movement": "ENEMY-0002",
             "group": "ENEMY-0001 (editorial grouping by index range)",
         },

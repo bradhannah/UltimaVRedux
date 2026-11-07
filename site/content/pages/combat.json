@@ -1,0 +1,105 @@
+{
+  "slug": "combat",
+  "tier": "how",
+  "title": "Combat, by the numbers",
+  "summary": "Hit odds, damage, and what monsters drop",
+  "lede": "Every swing is one roll against a target number set by two attributes. Damage is a second roll, armour a third. Here is the whole calculation, one fight worked through, and what monsters leave behind.",
+  "rules": ["EQUIP-0012", "EQUIP-0013", "RNG-0001", "ENEMY-0001", "ENEMY-0003", "COMBAT-0002", "COMBAT-0004", "COMBAT-0009", "CMD-0009", "PROGRESS-0002"],
+  "blocks": [
+    {
+      "type": "stats",
+      "items": [
+        {"label": "Even match", "value": "51%", "note": "Equal attributes: just over half of all swings land."},
+        {"label": "Turn speed", "value": "3.5×", "note": "A DEX 30 creature acts 3.5 times as often as a DEX 15 one."},
+        {"label": "Monster damage", "value": "Fixed", "note": "A Dragon always swings for 30, before your armour."},
+        {"label": "Dragon chest", "value": "Always", "note": "And 98% of them are trapped."}
+      ]
+    },
+    {"type": "h2", "id": "hit", "text": "Will it hit?"},
+    {
+      "type": "p",
+      "text": "The game sets a target number, then rolls from 1 to 30. Meet or beat the target and you hit."
+    },
+    {
+      "type": "steps",
+      "items": [
+        {"title": "Pick the attacking attribute.", "text": "Dexterity, unless the weapon bludgeons (Club, Mace, Two-Handed Hammer, Spiked Helm, Spiked Shield); then Strength. Monsters that bludgeon use their Strength too."},
+        {"title": "Work out the target.", "text": "30, plus the defender's Dexterity, minus the attacking attribute, halved (drop any fraction)."},
+        {"title": "Roll.", "text": "A roll at or above the target hits. A target of 1 or less always hits."}
+      ]
+    },
+    {"type": "computed", "name": "hit_table"},
+    {
+      "type": "p",
+      "text": "Every 2 points of difference move the target by 1, which is worth about 3 percentage points."
+    },
+    {
+      "type": "callout",
+      "label": "Armour does not help here",
+      "text": "Armour never makes you harder to hit. It only takes damage away once a blow lands. Level and equipment add nothing to the attribute either."
+    },
+    {
+      "type": "ul",
+      "items": [
+        "The die is lopsided. The game halves a roll from 0 to 60 and counts 0 as 1, so a 1 comes up twice as often as most numbers and a 30 half as often.",
+        "A sleeping target counts as Dexterity 1. An attacker with DEX 20 then hits 84% of the time.",
+        "The Glass Sword and the Jeweled Sword skip the roll and always hit. The Glass Sword kills almost anything in one blow, then shatters. The Jeweled Sword does no damage at all.",
+        "A creature's Dexterity is rolled again for each fight: from 4 below its [Bestiary](/original/bestiary/) figure to 3 above.",
+        "Turns are not taken in rounds. Each fighter waits 36 minus its Dexterity ticks between turns, so DEX 30 acts every 6 ticks and DEX 15 every 21.",
+        "A miss is not wasted. It lands on a random square next to the target and can hit whoever stands there, your own party included."
+      ]
+    },
+    {"type": "h2", "id": "damage", "text": "How much damage?"},
+    {
+      "type": "steps",
+      "items": [
+        {"title": "Weapon roll.", "text": "From 1 to the weapon's Attack on [Arms and armour](/original/equipment/). Bare hands do 1. Monsters do not roll: they deal their full Damage rating."},
+        {"title": "Armour roll.", "text": "Subtract a roll from 1 to the target's armour."},
+        {"title": "Undead and immortal.", "text": "Undead take half from weapons that are not magical. The immortal take nothing."},
+        {"title": "Zero or less is a graze.", "text": "The blow landed but did no harm."}
+      ]
+    },
+    {"type": "p", "text": "Strength adds nothing to damage."},
+    {"type": "h2", "id": "example", "text": "A fight, worked through"},
+    {"type": "computed", "name": "fight_example", "creature": "Orc", "weapon": "Long Sword", "dex": 20, "armour": 8},
+    {"type": "h2", "id": "loot", "text": "What monsters drop"},
+    {
+      "type": "p",
+      "text": "When a monster dies, the game rolls 1 to 30 against its Treasure rating. At or under the rating, it leaves a chest; otherwise a corpse. A second roll, under the rating this time, traps the chest. One number decides both, so the richer the monster, the likelier the trap."
+    },
+    {
+      "type": "p",
+      "text": "Every creature's odds are in the Chest and Trapped columns of the [Bestiary](/original/bestiary/). Treasure 0, creatures that leave no body, and anything that dies on water or an archway never leave a chest. A trapped chest splashes acid on whoever opens it, for 1 to 30 damage, or poisons them: even odds."
+    },
+    {
+      "type": "p",
+      "text": "Two creatures leave something else. A Gazer leaves a corpse and tries to put an Insect Swarm in its place. A Gargoyle crumbles into small rocks and leaves nothing."
+    },
+    {"type": "h2", "id": "inside", "text": "What's inside a chest"},
+    {
+      "type": "p",
+      "text": "A chest is worth its creature's Treasure rating. Each kind of find needs a minimum value. When the chest qualifies, a roll of 1 to 30 at or above that minimum adds it."
+    },
+    {"type": "computed", "name": "chest_contents"},
+    {
+      "type": "p",
+      "text": "Each try for arms or armour picks one of the 48 items at random, then needs that item's minimum and a roll to match."
+    },
+    {"type": "computed", "name": "chest_arms"},
+    {
+      "type": "p",
+      "text": "The last column is the chance of at least one item from that row. Chests can hold chests: from value 25, one chest in five has another inside, worth anything up to its own value. These figures leave those out."
+    },
+    {"type": "h2", "text": "Myths about combat"},
+    {"type": "myths", "ids": ["strength-damage", "silver-sword", "rich-chests"]},
+    {
+      "type": "callout",
+      "label": "Redux differs",
+      "text": "A missed blow only lands on squares the weapon could reach. See [Differences you'll notice](/redux/differences/#combat-0004)."
+    },
+    {
+      "type": "p",
+      "text": "Percentages assume fair dice, as the rules do when they quote odds. The 1988 original's random number source has not been recovered, so its real odds may differ a little."
+    }
+  ]
+}
