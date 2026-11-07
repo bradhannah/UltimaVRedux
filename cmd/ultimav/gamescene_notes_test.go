@@ -6,6 +6,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
@@ -55,4 +57,18 @@ func TestJournalNoteEditorSavesStampedNoteAndHeldEscStaysInJournal(t *testing.T)
 	update()
 	require.NotNil(t, scene.journalSession, "held child cancel cannot close the Journal")
 	require.False(t, scene.journalSession.closing)
+}
+
+func TestSimpleNotesModeSkipsJournalNoticeAndKeepExcerpt(t *testing.T) {
+	dialog := newBoundaryTalkDialog(t, boundaryTalkDefinition(semantic.Body{}))
+	scene := dialog.gameScene
+	require.Contains(t, dialog.conversationFooterGuidance(1000), "[Tab] Keep excerpt")
+	scene.gameConfig = &config.UltimaVConfiguration{GameplayConfiguration: config.DefaultGameplayConfiguration()}
+	scene.gameConfig.GameplayConfiguration.SimpleNotesMode = true
+	require.NotContains(t, dialog.conversationFooterGuidance(1000), "Keep excerpt")
+	require.Contains(t, dialog.conversationFooterGuidance(1000), "[Shift+J] Journal")
+
+	scene.output.Clear()
+	scene.writeKnowledgeNotice(journal.AtlasChange{})
+	require.NotContains(t, scene.output.GetOutputStr(false), "Journal updated.")
 }

@@ -23,6 +23,7 @@ const (
 	gameplayConfirmQuickSaveKey = "Gameplay.Saves.ConfirmQuickSave"
 	gameplayShowCombatHPBarsKey = "Gameplay.Combat.ShowHealthBars"
 	gameplayMaxActionPopupsKey  = "Gameplay.Presentation.MaxVisibleActionPopups"
+	gameplaySimpleNotesModeKey  = "Gameplay.Presentation.SimpleNotesMode"
 	legacyCombatSpeedKey        = "Debug.CombatMovementSpeedFactor"
 	numericGridTolerance        = 1e-9 // In step-index units; half-steps remain exactly representable.
 )
@@ -179,6 +180,7 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
 		MaxVisibleActionPopups:          int(ActionPopupsSpec().Default),
+		SimpleNotesMode:                 false,
 	}
 }
 
@@ -197,6 +199,7 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	uc.configuredBoolean(&settings.ShowSubduedUnlitDungeons, gameplayShowSubduedUnlitDungeonsKey)
 	uc.configuredBoolean(&settings.ConfirmQuickSave, gameplayConfirmQuickSaveKey)
 	uc.configuredBoolean(&settings.ShowCombatHPBars, gameplayShowCombatHPBarsKey)
+	uc.configuredBoolean(&settings.SimpleNotesMode, gameplaySimpleNotesModeKey)
 	if uc.source.IsSet(gameplayCombatSpeedKey) {
 		settings.CombatSpeedFactor = uc.normalizedCombatSpeed(uc.source.GetFloat64(gameplayCombatSpeedKey), "combat speed")
 	} else if uc.source.IsSet(legacyCombatSpeedKey) {
@@ -233,6 +236,11 @@ func (uc *UltimaVConfiguration) GetCombatSpeedFactor() float64 {
 // GetConfirmQuickSave defaults to confirmation when a fixture has no settings.
 func (uc *UltimaVConfiguration) GetConfirmQuickSave() bool {
 	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ConfirmQuickSave
+}
+
+// GetSimpleNotesMode defaults to Off, showing every Journal tab.
+func (uc *UltimaVConfiguration) GetSimpleNotesMode() bool {
+	return uc != nil && uc.GameplayConfiguration != nil && uc.GameplayConfiguration.SimpleNotesMode
 }
 
 // GetShowCombatHPBars defaults to visible when a fixture has no settings.

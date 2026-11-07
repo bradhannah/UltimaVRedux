@@ -714,6 +714,19 @@ the dialog shows a detached copy and sends every change to the scene as a
 - **Search.** `/` indexes every note, including those in folded sections, by title,
   text, section and place. Opening a result unfolds its section and selects it.
 
+### Simple Notes Mode
+
+Configure → Gameplay → Simple Notes Mode (default Off) is for players who keep
+their own notes and nothing more. When it is on, My Notes is the Journal's only
+tab, with a grey "Simple Notes Mode" line where the second header row would be;
+Tab does nothing and its hint is dropped, and search covers My Notes only. Chronicle
+is not acknowledged when the Journal opens, so new-entry stars survive until the
+player actually sees the hidden tabs. "Journal updated." is skipped in the main
+Output, and conversations neither show nor accept Tab Keep excerpt. The game still
+records everything and deletes nothing; turning the mode off shows every tab, up
+to date. The preference belongs to the installation, not the save, and the
+Traveller's Map is unchanged.
+
 ### Main Output Compatibility
 
 History is no longer a Journal reader, tab or search source. The bounded

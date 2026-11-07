@@ -80,6 +80,8 @@ type QuestJournalDialogConfig struct {
 	// Notes is a detached notebook; OnNotesIntent asks the scene to change it.
 	Notes         journal.NotesState
 	OnNotesIntent func(NotesIntent)
+	// NotesOnly is Simple Notes Mode: My Notes is the only tab. Nothing else is lost.
+	NotesOnly bool
 }
 
 type questJournalLayout struct {
@@ -197,6 +199,11 @@ func NewQuestJournalDialog(
 	dialog.notesView.notes, dialog.notesView.onIntent = config.Notes.Normalized(), config.OnNotesIntent
 	for tab := QuestJournalChronicleTab; tab < questJournalTabCount; tab++ {
 		dialog.tabs = append(dialog.tabs, tab)
+	}
+	if config.NotesOnly {
+		// Hidden tabs keep recording; Chronicle is not acknowledged unless it is really seen.
+		dialog.tabs = []QuestJournalTab{QuestJournalNotesTab}
+		dialog.activeTab, dialog.visitedTabs = QuestJournalNotesTab, [3]bool{}
 	}
 	dialog.rebuildNoteRows()
 	dialog.refreshVisibleExcerpts("")
@@ -559,6 +566,14 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 	d.titleOutput.AppendLine().WithAlignment(etext.AlignCenter).Text("Quest Journal", DialogHeaderColor).Done()
 	d.titleOutput.DrawPanelContent(screen, d.layout.titleRect.Min, d.layout.titleRect.Dx(), etext.AlignCenter)
 
+	if d.notesOnly() {
+		const modeLabel = "Simple Notes Mode"
+		rect := d.layout.tabRects[QuestJournalChronicleTab]
+		width, _ := d.font.MeasureString(modeLabel)
+		left := d.layout.tabsRect.Min.X + max(0, (d.layout.tabsRect.Dx()-int(math.Ceil(width)))/questJournalCenterDivisor)
+		d.drawSingleLine(screen, image.Rect(left, rect.Min.Y, d.layout.tabsRect.Max.X, rect.Max.Y),
+			fitJournalLine(modeLabel, d.font, d.layout.tabsRect.Max.X-left), DialogEmptyColor)
+	}
 	for _, index := range d.tabs {
 		rect := d.layout.tabRects[index]
 		textColor := DialogEmptyColor

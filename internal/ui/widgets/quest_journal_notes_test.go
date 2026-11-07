@@ -138,6 +138,19 @@ func TestMyNotesTabSectionsKeysSearchAndSimpleMode(t *testing.T) {
 	dialog.ensureLayout()
 	writeNotesReview(t, dialog, "my-notes")
 
+	// Simple Notes Mode: one tab, nothing else searchable, Chronicle not acknowledged unseen.
+	configuration.NotesOnly = true
+	simple := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
+	require.Equal(t, QuestJournalNotesTab, simple.activeTab)
+	press(simple, ebiten.KeyTab, false)
+	require.Equal(t, QuestJournalNotesTab, simple.activeTab)
+	require.NotContains(t, simple.footerGuidance(), "Tab/Shift+Tab")
+	simple.beginSearch()
+	simple.setSearchQuery("truth")
+	require.Empty(t, simple.searchResults, "the Virtues entry is still recorded, just not shown")
+	simple.leaveSearch()
+	require.Equal(t, [3]bool{}, simple.VisitedTabs())
+	writeNotesReview(t, simple, "my-notes-simple-mode")
 }
 
 func detailValues(dialog *QuestJournalDialog) []string {

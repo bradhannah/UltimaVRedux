@@ -20,7 +20,8 @@ func (d *LinearTalkDialog) Update() {
 	}
 	d.ensureTalkLayout()
 	d.expireExcerptNotice()
-	if d.gameScene.keyboard.IsKeyPressedAndRegister(ebiten.KeyTab) {
+	// Simple Notes Mode hides Excerpts, so Tab does not keep passages there.
+	if !d.gameScene.gameConfig.GetSimpleNotesMode() && d.gameScene.keyboard.IsKeyPressedAndRegister(ebiten.KeyTab) {
 		d.keepPresentedExchange()
 		d.gameScene.keyboard.PrepareForTransition(0)
 

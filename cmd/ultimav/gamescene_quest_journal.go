@@ -73,6 +73,7 @@ func (g *GameScene) ShowQuestJournalDossier(dossier game_state.QuestJournalDossi
 		ExcerptError:     excerptError,
 		Notes:            g.gameState.PlayerNotes(),
 		OnNotesIntent:    g.handleNotesIntent,
+		NotesOnly:        g.gameConfig.GetSimpleNotesMode(),
 	})
 	g.dialogStack.PushModalDialog(session.dialog)
 	g.journalSession = session

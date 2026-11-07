@@ -48,6 +48,7 @@ const (
 	gameplayConfirmQuickSaveIndex
 	gameplayShowCombatHPBarsIndex
 	gameplayMaxActionPopupsIndex
+	gameplaySimpleNotesModeIndex
 )
 
 //nolint:exhaustruct_v5,funlen // Explicit row catalog; boolean rows have no numeric accessors.
@@ -137,6 +138,15 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 
 					return strconv.Itoa(int(value))
 				},
+			},
+		},
+		{
+			label: "Simple Notes Mode",
+			helpLines: []string{
+				"Journal shows only My Notes.", "",
+				"On: My Notes only.", "Off: all tabs.", "",
+				"Nothing is deleted.", "",
+				"Default: Off",
 			},
 		},
 	}
@@ -743,6 +753,8 @@ func (d *ConfigurationDialog) gameplaySettingValue(index int) bool {
 		return d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:
 		return d.stagedGameplay.ShowCombatHPBars
+	case gameplaySimpleNotesModeIndex:
+		return d.stagedGameplay.SimpleNotesMode
 	default:
 		panic("unsupported Gameplay setting index")
 	}
@@ -770,6 +782,8 @@ func (d *ConfigurationDialog) toggleFocusedGameplaySetting() {
 		d.stagedGameplay.ConfirmQuickSave = !d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:
 		d.stagedGameplay.ShowCombatHPBars = !d.stagedGameplay.ShowCombatHPBars
+	case gameplaySimpleNotesModeIndex:
+		d.stagedGameplay.SimpleNotesMode = !d.stagedGameplay.SimpleNotesMode
 	case gameplayCombatSpeedIndex, gameplayMaxActionPopupsIndex:
 		return
 	default:

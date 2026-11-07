@@ -231,6 +231,9 @@ func (d *QuestJournalDialog) drawSearch(screen *ebiten.Image) {
 	prompt := image.Rect(content.Min.X, content.Min.Y-d.rowHeight()*questJournalSearchHeaderRows,
 		content.Max.X, content.Min.Y-d.rowHeight()*(questJournalSearchHeaderRows-1))
 	label := "Search Journal: "
+	if d.notesOnly() {
+		label = "Search My Notes: "
+	}
 	labelWidth, _ := d.font.MeasureString(label)
 	query := d.searchQuery + "_"
 	for len(query) > 1 {
@@ -248,6 +251,9 @@ func (d *QuestJournalDialog) drawSearch(screen *ebiten.Image) {
 		image.Rect(content.Min.X, prompt.Max.Y, content.Max.X, prompt.Max.Y+d.rowHeight()),
 		d.searchStatus(), DialogEmptyColor)
 	scope := "Recent history; archived excerpts hidden (Excerpts: H)."
+	if d.notesOnly() {
+		scope = "Simple Notes Mode: searching My Notes only."
+	}
 	if d.showArchived {
 		scope = "Recent history; archived excerpts included."
 	}

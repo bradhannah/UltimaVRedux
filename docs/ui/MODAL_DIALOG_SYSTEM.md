@@ -311,6 +311,7 @@ The additional Gameplay preferences are:
 | Confirm Quick Save | `Gameplay.Saves.ConfirmQuickSave` | On / Off | On |
 | Show Combat HP Bars | `Gameplay.Combat.ShowHealthBars` | On / Off | On |
 | Maximum Action Popups | `Gameplay.Presentation.MaxVisibleActionPopups` | integer 0–3; 0 is Off | 3 |
+| Simple Notes Mode | `Gameplay.Presentation.SimpleNotesMode` | On / Off | Off |
 
 The details pane uses short player-facing sentences and blank paragraph rows,
 appended as separate `Output` lines with natural wrapping. Measurement uses the

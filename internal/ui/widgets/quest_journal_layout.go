@@ -108,6 +108,10 @@ func (d *QuestJournalDialog) calculateTabs() {
 		{QuestJournalChronicleTab, QuestJournalVirtuesTab, QuestJournalShadowlordsTab, QuestJournalDungeonsTab},
 		{QuestJournalConversationTab, QuestJournalExcerptsTab, QuestJournalMoonstonesTab, QuestJournalNotesTab},
 	}
+	if d.notesOnly() {
+		// The second header row names the mode, so the missing tabs are explained in words.
+		rows = [][]QuestJournalTab{{QuestJournalNotesTab}, {QuestJournalChronicleTab}}
+	}
 	for row, tabs := range rows {
 		total := 0
 		widths := make([]int, len(tabs))

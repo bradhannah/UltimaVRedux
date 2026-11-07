@@ -40,7 +40,8 @@ func validateConfigurationTypes(source *viper.Viper) error {
 			"Debug.CombatDetailShown", "Gameplay.Combat.AllowRepeatedMonsterDivision", gameplayBatchMerchantTheftKey,
 			gameplayShowConcealedTurnOrderSlotsKey, gameplayPersistHiddenDungeonDiscoveriesKey,
 			gameplayShowSubduedUnlitDungeonsKey, gameplaySmoothSurfaceMovementKey, gameplayFlexibleSextantUseKey,
-			gameplayAnkhWandererBonusKey, gameplayConfirmQuickSaveKey, gameplayShowCombatHPBarsKey},
+			gameplayAnkhWandererBonusKey, gameplayConfirmQuickSaveKey, gameplayShowCombatHPBarsKey,
+			gameplaySimpleNotesModeKey},
 			func(value any) bool {
 				_, ok := value.(bool)
 
