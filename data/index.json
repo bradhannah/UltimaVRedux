@@ -19,6 +19,10 @@
     {
      "rule": "PROGRESS-0002",
      "original": "Established"
+    },
+    {
+     "rule": "COMBAT-0009",
+     "original": "Established"
     }
    ]
   },
