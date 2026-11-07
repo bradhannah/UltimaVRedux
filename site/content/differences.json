@@ -18,6 +18,14 @@
       "setting": "Repeated Monster Division"
     },
     {
+      "area": "Combat",
+      "title": "Missed blows stay in range",
+      "kind": "always_on",
+      "original": "A miss lands on a random square next to the target, even one the weapon could not reach, and can hit whoever stands there.",
+      "redux": "A miss only lands on squares within the weapon's normal range, so where you aim is where it can hurt.",
+      "rule": "COMBAT-0004"
+    },
+    {
       "area": "Party",
       "title": "A stat award for every level",
       "kind": "always_on",
