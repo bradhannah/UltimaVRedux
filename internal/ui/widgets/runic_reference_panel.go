@@ -17,6 +17,9 @@ const (
 	runicReferencePixelsPerUnit = 160
 )
 
+// RunicReferenceFunctionKey toggles the rune chart exactly like Ctrl+R.
+const RunicReferenceFunctionKey = ebiten.KeyF7
+
 // The alphabet uses the same byte-indexed font as signs and conversation.
 // Dungeon graffiti includes compound forms (ref:SIGN-0005): [E, WRO],
 // D\\P, and LO_. See docs/gamefacts/SIGNS_AND_FONTS.md.

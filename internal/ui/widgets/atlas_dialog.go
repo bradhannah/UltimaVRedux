@@ -38,6 +38,10 @@ type AtlasDialog struct {
 	panelHeader, position, zoom                *text.Output
 	tabs                                       [journal.AtlasPlaceFilterCount]image.Rectangle
 	tabText                                    *text.Output
+	lighting                                   AtlasLighting
+	lightPool                                  *ebiten.Image
+	lightPoolCore                              float32
+	lightFrames                                int64
 }
 
 var _ Widget = (*AtlasDialog)(nil)
@@ -53,7 +57,7 @@ func NewAtlasDialog(dossier journal.AtlasDossier, texture *ebiten.Image, keyboar
 	}
 	//nolint:exhaustruct_v5 // Refresh and ensureLayout initialize detached data and measured panels.
 	d := &AtlasDialog{navigation: newNavigation(keyboard.IsKeyHeld), keyboard: keyboard,
-		view: view, texture: texture, onDismiss: onDismiss, focused: true}
+		view: view, texture: texture, onDismiss: onDismiss, focused: true, lighting: AtlasDaylight()}
 	d.Refresh(dossier)
 	d.ensureLayout()
 
@@ -98,6 +102,9 @@ func (d *AtlasDialog) onDialogFocusChanged(focused bool) {
 	d.navigation.onDialogFocusChanged(focused)
 }
 
+// AtlasFunctionKey opens and closes the map exactly like Shift+M.
+const AtlasFunctionKey = ebiten.KeyF6
+
 // IsAtlasChord is exact: extra Ctrl/Alt/Meta modifiers retain their own routing.
 func IsAtlasChord(keyboard *input.Keyboard) bool {
 	return keyboard.IsModifierComboPressed(input.ModifierShift, ebiten.KeyM) &&
@@ -107,11 +114,13 @@ func IsAtlasChord(keyboard *input.Keyboard) bool {
 
 // Update handles reader input without acquiring or modifying gameplay knowledge.
 func (d *AtlasDialog) Update() {
+	d.lightFrames++
 	if d.closed || !d.focused {
 		return
 	}
 	d.ensureLayout()
-	if IsAtlasChord(d.keyboard) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyM) {
+	if IsAtlasChord(d.keyboard) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyM) ||
+		d.keyboard.IsKeyPressedAndRegister(AtlasFunctionKey) {
 		d.close()
 
 		return

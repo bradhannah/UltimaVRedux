@@ -11,10 +11,14 @@ const (
 	commandHelpPartyKeys    = "0 / 1-6"
 	commandKeyLabelSpace    = "Space"
 	commandKeyLabelEscape   = "Esc"
+	commandHelpJournalKeys  = "Shift+J or F5"
+	commandHelpMapKeys      = "Shift+M or F6"
+	commandHelpRunesKeys    = "Ctrl+R or F7"
+	commandHelpHelpKeys     = "/ or ? or F1"
 )
 
 func (g *GameScene) handleCommandHelpShortcut(key ebiten.Key) bool {
-	if key != ebiten.KeySlash || g.secondaryKeyState != PrimaryInput ||
+	if key != ebiten.KeySlash && key != ebiten.KeyF1 || g.secondaryKeyState != PrimaryInput ||
 		g.gameState.EventQueueManager.HasActiveWorkflows() {
 		return false
 	}
@@ -65,12 +69,13 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: "Y", Purpose: "Yell", NextInput: "Type words, then Enter."},
 		{Key: "Z", Purpose: "Inspect party statistics", NextInput: "Navigate the dossier; Esc closes."},
 		{Key: commandHelpPartyKeys, Purpose: "Active party member", NextInput: "0 selects all; 1-6 selects a party position."},
-		{Key: "Shift+J", Purpose: "Quest journal", NextInput: "Review discovered information; Esc closes."},
+		{Key: commandHelpJournalKeys, Purpose: "Quest journal", NextInput: "Review discovered information; Esc closes."},
+		{Key: commandHelpMapKeys, Purpose: "Traveller's map", NextInput: "Browse places, notes and your position; Esc closes. Time stops while it is open."},
 		{Key: "Ctrl+N", Purpose: "Mark current position", NextInput: "On the surface overworld, open the map note editor at your current sextant fix. Requires a usable sextant; Esc returns to the map."},
 		{Key: "F4", Purpose: "Last battle summary", NextInput: "Review collected totals from the last completed encounter in this session; Enter/Esc closes. No turn is spent."},
 		{Key: "Ctrl+M", Purpose: "Toggle music", NextInput: "Toggle music from primary input."},
-		{Key: "Ctrl+R", Purpose: "Runic alphabet reference", NextInput: "Toggle the right-side chart during exploration, sign reading or conversation. Translate the runes yourself; no time is spent."},
-		{Key: "/ or ?", Purpose: "Context command help", NextInput: "PgUp/PgDn to read; Space: Next page; Esc closes. Available only at primary input."},
+		{Key: commandHelpRunesKeys, Purpose: "Runic alphabet reference", NextInput: "Toggle the right-side chart during exploration, sign reading or conversation. Translate the runes yourself; no time is spent."},
+		{Key: commandHelpHelpKeys, Purpose: "Context command help", NextInput: "PgUp/PgDn to read; Space: Next page; Esc closes. Available only at primary input."},
 		{Key: commandKeyLabelEscape, Purpose: "Game menu", NextInput: "Choose Help, Save, Load or Configure; Esc returns."},
 		{Key: "D / W", Purpose: "Unassigned command keys", Unavailable: "No player action is assigned to these keys."},
 	}
@@ -82,7 +87,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		switch context {
 		case references.CombatMapType:
 			switch entry.Key {
-			case "B", "E", "F", "H", "I", "L", "M", "N", "Q", "T", "V", "X", "Ctrl+R":
+			case "B", "E", "F", "H", "I", "L", "M", "N", "Q", "T", "V", "X", commandHelpMapKeys, commandHelpRunesKeys:
 				entry.Unavailable = "Not available during combat."
 			}
 			switch entry.Key {

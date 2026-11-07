@@ -81,6 +81,7 @@ var boundKeysGame = []ebiten.Key{
 	// Special keys
 	ebiten.KeyTab,      // Combat auto advance/attack
 	ebiten.KeySlash,    // Help
+	ebiten.KeyF1,       // Help (alias for /)
 	ebiten.KeyEscape,   // Escape menu
 	ebiten.KeyF2,       // Combat detail toggle
 	ebiten.KeyF3,       // Review noteworthy combat results
@@ -182,8 +183,9 @@ func (g *GameScene) Update(game *Game) error {
 		return nil
 	}
 	if g.finalePresentation == nil && !g.textEntryFocused() &&
-		g.keyboard.IsModifierComboPressed(input.ModifierShift, ebiten.KeyJ) &&
-		g.keyboard.IsKeyPressedAndRegister(ebiten.KeyJ) {
+		(g.keyboard.IsModifierComboPressed(input.ModifierShift, ebiten.KeyJ) &&
+			g.keyboard.IsKeyPressedAndRegister(ebiten.KeyJ) ||
+			g.keyboard.IsKeyPressedAndRegister(widgets.QuestJournalFunctionKey)) {
 		g.ResetTransientCommandInput()
 		g.gameState.ActionQuestJournal()
 

@@ -432,7 +432,8 @@ func (d *ReagentMixingDialog) drawIngredientRow(screen *ebiten.Image, rect image
 	if selected {
 		labelColor, valueColor = DialogSelectedLabelColor, DialogSelectedText
 	}
-	output.AppendLine().Text("Have: ", labelColor).Text(strconv.Itoa(reagent.Quantity), valueColor).Done()
+	// Spaces as wide as the "[X] " mark put Have: under the reagent name.
+	output.AppendLine().Text("    Have: ", labelColor).Text(strconv.Itoa(reagent.Quantity), valueColor).Done()
 	drawSpellOutput(screen, output, rect, 0, spellBrowserRowLines)
 }
 

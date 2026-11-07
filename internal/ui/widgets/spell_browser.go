@@ -539,7 +539,7 @@ func prepareSpellTextRow(rowOutput, countOutput *text.Output,
 	prepareSpellOutput(rowOutput, nameRect)
 	name = unavailableRowLabel(name, available)
 	rowOutput.AppendLine().Text(FitDialogLine(name, rowOutput.Font, nameRect.Dx()), nameColor).Done()
-	rowOutput.AppendLine().Text(FitDialogLine(effect, rowOutput.Font, nameRect.Dx()), effectColor).Done()
+	rowOutput.AppendLine().Text(FitDialogLine(rowDetailIndent+effect, rowOutput.Font, nameRect.Dx()), effectColor).Done()
 	if count == "" {
 		return nameRect, image.Rect(0, 0, 0, 0)
 	}

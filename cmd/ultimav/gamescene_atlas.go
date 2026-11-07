@@ -42,6 +42,9 @@ func (g *GameScene) pollAtlasRequest() bool {
 	if !g.keyboard.IsKeyHeld(ebiten.KeyM) {
 		g.atlasChordHeld = false
 	}
+	if g.keyboard.IsKeyPressedAndRegister(widgets.AtlasFunctionKey) {
+		return true
+	}
 	if !widgets.IsAtlasChord(g.keyboard) {
 		return false
 	}
@@ -75,6 +78,7 @@ func (g *GameScene) openAtlas(game *Game) {
 	}
 	session.dialog = widgets.NewAtlasDialog(g.gameState.CurrentAtlasDossier(), texture, g.keyboard, &g.atlasView, func() { g.closeAtlasSession(false) })
 	session.dialog.SetNoteIntentHandler(g.handleAtlasNoteIntent)
+	session.dialog.SetLighting(g.atlasLighting())
 	g.atlasSession = session
 	g.dialogStack.PushModalDialog(session.dialog)
 }

@@ -231,7 +231,8 @@ func (d *QuestJournalDialog) handleDismissInput() bool {
 	escape := questJournalDismissShortcut(ebiten.KeyEscape, shiftPressed) &&
 		d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape)
 	toggle := questJournalDismissShortcut(ebiten.KeyJ, shiftPressed) &&
-		d.keyboard.IsKeyPressedAndRegister(ebiten.KeyJ)
+		d.keyboard.IsKeyPressedAndRegister(ebiten.KeyJ) ||
+		d.keyboard.IsKeyPressedAndRegister(QuestJournalFunctionKey)
 	if !escape && !toggle {
 		return false
 	}
@@ -846,6 +847,9 @@ func questJournalTabDelta(shiftPressed bool) int {
 
 	return 1
 }
+
+// QuestJournalFunctionKey opens and closes the journal exactly like Shift+J.
+const QuestJournalFunctionKey = ebiten.KeyF5
 
 func questJournalDismissShortcut(key ebiten.Key, shiftPressed bool) bool {
 	return key == ebiten.KeyEscape || key == ebiten.KeyJ && shiftPressed
