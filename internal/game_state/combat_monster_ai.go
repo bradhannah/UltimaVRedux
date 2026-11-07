@@ -842,6 +842,9 @@ func (g *GameState) executeMonsterTurn(entry *TurnQueueEntry, _ ...MonsterTurnPl
 	fromPosition := monster.Position()
 	movement := g.monsterSeek(monster, monsterIdx)
 	if movement.moved {
+		if g.completeMonsterEdgeEscape(monster, monsterIdx, fromPosition) {
+			return MonsterTurnExecutionResult{Moved: true}
+		}
 		toPosition := monster.Position()
 		if !movement.teleported {
 			g.SystemCallbacks.Combat.PublishEvent(CombatEvent{
@@ -860,6 +863,31 @@ func (g *GameState) executeMonsterTurn(entry *TurnQueueEntry, _ ...MonsterTurnPl
 	}
 
 	return MonsterTurnExecutionResult{}
+}
+
+// completeMonsterEdgeEscape removes a monster whose move crossed the map edge.
+// Only fleeing monsters may cross, and the no-opponent check can make a monster
+// flee in the middle of its own turn, so every seek result must be checked.
+func (g *GameState) completeMonsterEdgeEscape(monster *CombatMonster, monsterIdx int, from references.Position) bool {
+	to := monster.Position()
+	if to.X >= 0 && to.X < references.XCombatMapTiles &&
+		to.Y >= 0 && to.Y < references.YCombatMapTiles {
+		return false
+	}
+	monster.SetActive(false)
+	g.CombatScene.TurnQueue.MarkFled(monsterIdx, false)
+	g.SystemCallbacks.Combat.PublishEvent(CombatEvent{
+		Kind: CombatEventFled,
+		Attacker: CombatFeedbackEntity{
+			Index:    monsterIdx,
+			Position: to,
+		},
+		From: from,
+		To:   to,
+	})
+	g.releaseCombatController(monster.CombatantID(), CombatPossessionReleaseControllerEscaped)
+
+	return true
 }
 
 func (g *GameState) executeFleeingMonsterTurn(monster *CombatMonster, monsterIdx int) (bool, bool) {
@@ -888,21 +916,7 @@ func (g *GameState) executeFleeingMonsterTurnWithRNG(
 	if movement.teleported {
 		return true, true
 	}
-	if to.X < 0 || to.X >= references.XCombatMapTiles ||
-		to.Y < 0 || to.Y >= references.YCombatMapTiles {
-		monster.SetActive(false)
-		g.CombatScene.TurnQueue.MarkFled(monsterIdx, false)
-		g.SystemCallbacks.Combat.PublishEvent(CombatEvent{
-			Kind: CombatEventFled,
-			Attacker: CombatFeedbackEntity{
-				Index:    monsterIdx,
-				Position: to,
-			},
-			From: from,
-			To:   to,
-		})
-		g.releaseCombatController(monster.CombatantID(), CombatPossessionReleaseControllerEscaped)
-
+	if g.completeMonsterEdgeEscape(monster, monsterIdx, from) {
 		return true, false
 	}
 	g.SystemCallbacks.Combat.PublishEvent(CombatEvent{

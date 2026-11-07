@@ -234,7 +234,14 @@ inside healing before the later Wanderer decision; final-value agreement does
 not establish identical intermediate state. Wanderer restoration/advancement is
 outside this rule.
 
-**Implementation:** `internal/game_state/action_hole_up_camping.go`, `internal/game_state/action_hole_up_dungeon.go`
+**REDUX DEVIATION: CAMP-0005:** optional `AnkhWandererBonus`, off by default,
+adds five percentage points to the one-of-four Wanderer check for each active,
+non-Dead member wearing an Ankh: 25% to 55% with six wearers, on the same single
+roll. Players have long told a folk tale that the Ankh draws the Wanderer; no
+evidence shows the original doing so. Redux offers it for players who enjoy the
+idea, and the default keeps the original chance.
+
+**Implementation:** `internal/game_state/action_hole_up_camping.go`, `internal/game_state/action_hole_up_dungeon.go`, `internal/game_state/action_camping_wanderer.go`
 **Tests:** `internal/game_state/action_hole_up_dungeon_test.go`, `internal/game_state/action_camping_wanderer_test.go`
 
 ### CAMP-0006

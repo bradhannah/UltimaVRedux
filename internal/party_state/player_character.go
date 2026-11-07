@@ -28,17 +28,6 @@ func (p *PlayerCharacter) GetKeySpriteIndex() indexes.SpriteIndex {
 	return 0
 }
 
-// IncStatWithCap increments a stat by amount, capping at maxValue
-// Applies the capped attribute increase used for Wanderer awards; ref:PROGRESS-0003.
-// Wanderer stat boosts cap STR/DEX/INT at 30; ref:PROGRESS-0003.
-func IncStatWithCap(currentValue *byte, amount byte, maxValue byte) {
-	newValue := *currentValue + amount
-	if newValue > maxValue {
-		newValue = maxValue
-	}
-	*currentValue = newValue
-}
-
 // IsAlive reports whether the character is in the party, has hit points and is not dead.
 func (p *PlayerCharacter) IsAlive() bool {
 	return p.currentHp > 0 && !p.IsDead() && p.IsInParty()

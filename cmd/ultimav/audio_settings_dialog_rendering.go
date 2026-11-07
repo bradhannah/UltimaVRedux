@@ -43,6 +43,7 @@ const (
 	gameplaySmoothSurfaceMovementIndex
 	gameplayConcealedTurnSlotsIndex
 	gameplayFlexibleSextantUseIndex
+	gameplayAnkhWandererBonusIndex
 	gameplayCombatSpeedIndex
 	gameplayConfirmQuickSaveIndex
 	gameplayShowCombatHPBarsIndex
@@ -88,6 +89,11 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 			label: "Flexible Sextant Use",
 			detail: "Redux: day or night, including surface settlement interiors. Sextant required. " +
 				"No dungeons or Underworld. Off: night world-map use.",
+		},
+		{
+			label: "Ankh Visit Bonus",
+			detail: "Folk tale: an Ankh draws Lord British to camp. No evidence the original did this. " +
+				"On: each living Ankh wearer adds 5% to the 25% visit chance. Off: the original 25%.",
 		},
 		{
 			label:     "Combat Speed",
@@ -731,6 +737,8 @@ func (d *ConfigurationDialog) gameplaySettingValue(index int) bool {
 		return d.stagedGameplay.ShowConcealedTurnOrderSlots
 	case gameplayFlexibleSextantUseIndex:
 		return d.stagedGameplay.FlexibleSextantUse
+	case gameplayAnkhWandererBonusIndex:
+		return d.stagedGameplay.AnkhWandererBonus
 	case gameplayConfirmQuickSaveIndex:
 		return d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:
@@ -756,6 +764,8 @@ func (d *ConfigurationDialog) toggleFocusedGameplaySetting() {
 		d.stagedGameplay.ShowConcealedTurnOrderSlots = !d.stagedGameplay.ShowConcealedTurnOrderSlots
 	case gameplayFlexibleSextantUseIndex:
 		d.stagedGameplay.FlexibleSextantUse = !d.stagedGameplay.FlexibleSextantUse
+	case gameplayAnkhWandererBonusIndex:
+		d.stagedGameplay.AnkhWandererBonus = !d.stagedGameplay.AnkhWandererBonus
 	case gameplayConfirmQuickSaveIndex:
 		d.stagedGameplay.ConfirmQuickSave = !d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:

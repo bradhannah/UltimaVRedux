@@ -226,6 +226,25 @@ func TestNoOpponentForcesEveryMonsterToOneHPAndFleeing(t *testing.T) {
 	assert.True(t, second.IsFleeing())
 }
 
+// A monster made to flee mid-turn by the no-opponent check can step off an
+// edge through ordinary seek; it must leave the battle rather than crash the
+// end-of-turn field check (issue #84).
+func TestNoOpponentEdgeMonsterFleesOffMapDuringSeek(t *testing.T) {
+	gs, mock, monster, monsterIndex := setupMonsterTeleportTest(t, false)
+	gs.CombatScene.SetPartyMemberInvisible(0, true)
+	require.False(t, monster.IsFleeing())
+	entry := gs.CombatScene.TurnQueue.GetEntry(monsterIndex, false)
+	require.NotNil(t, entry)
+
+	result := gs.executeMonsterTurn(entry)
+
+	assert.True(t, result.Moved)
+	assert.False(t, monster.IsActive())
+	assert.Equal(t, turnQueueFled, entry.status)
+	require.NotEmpty(t, mock.CombatEvents)
+	assert.Equal(t, CombatEventFled, mock.CombatEvents[len(mock.CombatEvents)-1].Kind)
+}
+
 // ─── monsterSeek tests ──────────────────────────────────────────────────────
 // Validates monster pursuit from original combat movement rules.
 // See ref:COMBAT-0008.

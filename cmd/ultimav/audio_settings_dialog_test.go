@@ -701,7 +701,7 @@ func TestConfigurationDialogFlexibleSextantKeyboardApplyCancelAndReload(t *testi
 		}
 		require.Equal(t, gameplayFlexibleSextantUseIndex, dialog.focusedGameplayIndex)
 		pressAudioSettingsKey(dialog, ebiten.KeyDown)
-		require.Equal(t, gameplayCombatSpeedIndex, dialog.focusedGameplayIndex)
+		require.Equal(t, gameplayAnkhWandererBonusIndex, dialog.focusedGameplayIndex)
 		pressAudioSettingsKey(dialog, ebiten.KeyUp)
 
 		return dialog

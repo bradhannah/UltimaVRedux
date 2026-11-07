@@ -57,6 +57,9 @@ revival. INT awards precede MP calculation.
 
 **REDUX DEVIATION: PROGRESS-0003:** Redux gives one stat award per upward level
 gained and none for downward correction, tying rewards to earned advancement.
+Each award rolls only among STR/DEX/INT values below 30, so a capped stat never
+absorbs it; with all three at 30 the award and its announcement are omitted. With
+no stat at 30 the roll matches the original R(1,3).
 It still reconciles levels both ways, restores HP, computes MP after INT awards,
 and refreshes Dead members' class MP without reviving them.
 

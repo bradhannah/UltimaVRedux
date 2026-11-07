@@ -65,6 +65,11 @@
       "effect": "Day or night, including surface settlement interiors. A Sextant is required; no dungeons or Underworld. Off: night use on the world map."
     },
     {
+      "label": "Ankh Visit Bonus",
+      "tag": "original",
+      "effect": "A folk tale says an Ankh draws Lord British to your camp. There's no evidence the original did this, but it's here if you enjoy the idea. On: each living party member wearing an Ankh adds 5% to the 25% visit chance. Off: the original 25%."
+    },
+    {
       "label": "Combat Speed",
       "tag": "look",
       "effect": "Change how quickly combat actions and animations play. 1x is normal speed; higher values make combat faster."

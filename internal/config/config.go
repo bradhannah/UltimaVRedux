@@ -99,7 +99,9 @@ type GameplayConfiguration struct {
 	// SmoothSurfaceMovement enables optional surface camera scrolling, including boats.
 	SmoothSurfaceMovement bool
 	// FlexibleSextantUse opts into daytime and settlement sextant navigation.
-	FlexibleSextantUse     bool
+	FlexibleSextantUse bool
+	// AnkhWandererBonus raises the camping Wanderer chance for each living Ankh wearer.
+	AnkhWandererBonus      bool
 	CombatSpeedFactor      float64
 	ConfirmQuickSave       bool
 	ShowCombatHPBars       bool
@@ -120,6 +122,7 @@ const (
 	gameplayShowSubduedUnlitDungeonsKey        = "Gameplay.Dungeons.ShowSubduedUnlitDungeons"
 	gameplaySmoothSurfaceMovementKey           = "Gameplay.Presentation.SmoothSurfaceMovement"
 	gameplayFlexibleSextantUseKey              = "Gameplay.Navigation.FlexibleSextantUse"
+	gameplayAnkhWandererBonusKey               = "Gameplay.Camping.AnkhWandererBonus"
 )
 
 // LoggingConfiguration holds logging system settings
@@ -700,6 +703,7 @@ func setGameplayConfiguration(configuration *viper.Viper, gameplay GameplayConfi
 	configuration.Set(gameplayShowSubduedUnlitDungeonsKey, gameplay.ShowSubduedUnlitDungeons)
 	configuration.Set(gameplaySmoothSurfaceMovementKey, gameplay.SmoothSurfaceMovement)
 	configuration.Set(gameplayFlexibleSextantUseKey, gameplay.FlexibleSextantUse)
+	configuration.Set(gameplayAnkhWandererBonusKey, gameplay.AnkhWandererBonus)
 }
 
 func writeViperConfigAtomically(configuration *viper.Viper, configPath string) error {

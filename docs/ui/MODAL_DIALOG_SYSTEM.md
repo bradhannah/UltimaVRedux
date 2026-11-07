@@ -289,9 +289,11 @@ Gameplay includes **Flexible Sextant Use**, an off-by-default Redux option for
 daytime and indoor surface-settlement readings. It requires a sextant and excludes
 dungeons and the Underworld. It stages the existing
 `Gameplay.Navigation.FlexibleSextantUse` preference with the same Apply/Cancel
-transaction as the other settings. The eleven measured Gameplay rows use a
-clipped scrolling viewport that keeps the selected row visible and reserves top
-and bottom frame clearance plus a scrollbar gutter. Each checkbox or numeric
+transaction as the other settings. **Ankh Visit Bonus** is an
+off-by-default folk-tale option staging `Gameplay.Camping.AnkhWandererBonus`; see
+[CAMP-0005](../gamefacts/CAMPING_MECHANICS.md#camp-0005). The twelve measured
+Gameplay rows use a clipped scrolling viewport that keeps the selected row
+visible and reserves top and bottom frame clearance plus a scrollbar gutter. Each checkbox or numeric
 value has a separate measured column; label
 continuations align with the label. Complete label buffers and measured detail
 heights prevent leading-line loss. Row gaps preserve normal typography.

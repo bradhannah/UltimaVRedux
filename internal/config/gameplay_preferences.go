@@ -174,6 +174,7 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		ShowSubduedUnlitDungeons:        true,
 		SmoothSurfaceMovement:           false,
 		FlexibleSextantUse:              false,
+		AnkhWandererBonus:               false,
 		CombatSpeedFactor:               CombatSpeedSpec().Default,
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
@@ -189,6 +190,7 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	uc.configuredBoolean(&settings.BatchMerchantTheft, gameplayBatchMerchantTheftKey)
 	uc.configuredBoolean(&settings.SmoothSurfaceMovement, gameplaySmoothSurfaceMovementKey)
 	uc.configuredBoolean(&settings.FlexibleSextantUse, gameplayFlexibleSextantUseKey)
+	uc.configuredBoolean(&settings.AnkhWandererBonus, gameplayAnkhWandererBonusKey)
 	uc.configuredBoolean(&settings.AllowRepeatedMonsterDivision, "Gameplay.Combat.AllowRepeatedMonsterDivision")
 	uc.configuredBoolean(&settings.ShowConcealedTurnOrderSlots, gameplayShowConcealedTurnOrderSlotsKey)
 	uc.configuredBoolean(&settings.PersistHiddenDungeonDiscoveries, gameplayPersistHiddenDungeonDiscoveriesKey)
