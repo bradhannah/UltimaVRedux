@@ -72,7 +72,7 @@ Apply/Cancel explanation. Failed persistence keeps the live model and source
 unchanged.
 
 The other persisted Redux preferences (hidden-dungeon discoveries, subdued unlit
-visibility, smooth surface movement, flexible sextant use, quick-save
+visibility, smooth surface movement, flexible sextant use, the Ankh visit bonus, quick-save
 confirmation, combat health bars, action popups and repeated-monster division)
 are available only in the game's own Configure dialog; the Workbench no longer
 exposes a Redux Modifications console or setters for them.

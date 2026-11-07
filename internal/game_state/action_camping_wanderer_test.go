@@ -99,6 +99,39 @@ func TestCheckForWandererAppearanceDoesNotSuppressSameMonth(t *testing.T) {
 	t.Fatal("unable to find Wanderer seed")
 }
 
+// The optional Ankh setting adds 5% per living wearer to the same single roll (issue #83).
+func TestCheckForWandererAppearanceAnkhBonusCountsLivingWearers(t *testing.T) {
+	gs, _ := NewIntegrationTestBuilder(t).
+		WithLocation(references.BritanniaUnderworld).
+		WithSystemCallbacks().
+		Build()
+	require.GreaterOrEqual(t, gs.PartyState.GetActivePartyCount(), 3)
+	for index := range 3 {
+		gs.PartyState.GetCharacter(index).SetEquippedItem(references.SlotAmulet, references.Ankh)
+	}
+	gs.PartyState.GetCharacter(2).SetStatus(party_state.Dead)
+	seedForRoll := func(low, high int) uint64 {
+		for seed := uint64(0); seed < 1000; seed++ {
+			if roll := beradrng.New(seed).Intn(100); roll >= low && roll < high {
+				return seed
+			}
+		}
+		t.Fatalf("no seed rolls in [%d,%d)", low, high)
+
+		return 0
+	}
+	bonusRoll := seedForRoll(25, 35)
+
+	gs.SetRandomSeed(bonusRoll)
+	assert.False(t, gs.CheckForWandererAppearance(false), "off by default: the original 25%")
+
+	gs.GameConfig.GameplayConfiguration.AnkhWandererBonus = true
+	gs.SetRandomSeed(bonusRoll)
+	assert.True(t, gs.CheckForWandererAppearance(false), "two living wearers raise the chance to 35%")
+	gs.SetRandomSeed(seedForRoll(35, 40))
+	assert.False(t, gs.CheckForWandererAppearance(false), "a Dead wearer adds nothing")
+}
+
 func TestResolveCampingRestAndWandererUsesPartyOrderedD63ThenD100(t *testing.T) {
 	for _, test := range []struct {
 		name         string

@@ -32,7 +32,14 @@ func (g *GameState) CheckForWandererAppearance(forceWanderer bool) bool {
 
 	// Camp restoration uses random(0,99) < 25 after ordinary camp restoration.
 	// See ref:PROGRESS-0003.
-	randomResult := g.RandomIntInRange(0, 99) < 25
+	chance := wandererAppearanceChance
+	// REDUX DEVIATION: CAMP-0005: the optional Ankh setting adds five points per
+	// living Ankh wearer, a folk belief kept for players who enjoy it. It consumes
+	// the same single roll.
+	if g.GameConfig.GameplayConfiguration.AnkhWandererBonus {
+		chance += wandererAnkhBonusPerWearer * g.livingAnkhWearers()
+	}
+	randomResult := g.RandomIntInRange(0, 99) < chance
 	logging.Debugf(logging.CategoryGameState, "CheckForWandererAppearance: Random d100 check result=%t", randomResult)
 
 	if randomResult {
@@ -42,6 +49,24 @@ func (g *GameState) CheckForWandererAppearance(forceWanderer bool) bool {
 	}
 
 	return randomResult
+}
+
+const (
+	wandererAppearanceChance   = 25 // percent
+	wandererAnkhBonusPerWearer = 5  // percent per living Ankh wearer
+)
+
+// livingAnkhWearers counts active, non-Dead party members wearing an Ankh.
+func (g *GameState) livingAnkhWearers() int {
+	wearers := 0
+	for index := range g.PartyState.GetActivePartyCount() {
+		char := g.PartyState.GetCharacter(index)
+		if !char.IsDead() && char.GetEquippedItem(references.SlotAmulet) == references.Ankh {
+			wearers++
+		}
+	}
+
+	return wearers
 }
 
 // CalculateLevelFromExperience maps XP to the repeatedly doubled thresholds.
