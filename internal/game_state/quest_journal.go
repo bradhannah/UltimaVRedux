@@ -150,25 +150,6 @@ func (g *GameState) requireQuestJournal() {
 	}
 }
 
-func (g *GameState) inferMigratedQuestJournal() {
-	g.requireQuestJournal()
-	if g.ShadowlordState == nil {
-		panic("GameState Shadowlord state is not initialized")
-	}
-	for lord := references.Faulinei; lord < references.ShadowlordCount; lord++ {
-		if g.ShadowlordState.IsAlive(lord) {
-			continue
-		}
-		subject, _ := questJournalSubjectForShadowlord(lord)
-		g.questJournal.append(QuestJournalEvent{
-			Kind:         QuestJournalEventShadowlordDefeated,
-			Subject:      subject,
-			Source:       QuestJournalSourceMigration,
-			Acknowledged: true,
-		})
-	}
-}
-
 func questJournalSubjectForShadowlord(lord references.Shadowlord) (QuestJournalSubject, bool) {
 	switch lord {
 	case references.Faulinei:

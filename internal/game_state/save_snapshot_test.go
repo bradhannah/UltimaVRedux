@@ -51,7 +51,7 @@ func TestSaveSnapshotHydrationNormalizesStaleInQuasXenRecipe(t *testing.T) {
 		state.MapState.YTilesVisibleOnGameScreen,
 	)
 	require.NoError(t, err)
-	mask, known := restored.MagicState.GetKnownRecipe(references.InQuasXen)
+	mask, known := restored.MagicState.KnownRecipes[references.InQuasXen]
 	assert.True(t, known)
 	assert.Equal(t, canonical, mask)
 
@@ -455,7 +455,7 @@ func TestPlayerKnowledgeSnapshotConversionIsDetachedAndExact(t *testing.T) {
 	require.True(t, state.DiscoverShrineMantraKnowledge(0, DialogueKnowledgeSource("Malifora")))
 	state.playerKnowledge.entries[KnowledgeKey{Category: KnowledgeCategorySpell, ID: spellKnowledgeRelXenBet}] = KnowledgeEntry{
 		Key:    KnowledgeKey{Category: KnowledgeCategorySpell, ID: spellKnowledgeRelXenBet},
-		Source: migrationKnowledgeSource(),
+		Source: KnowledgeSource{Kind: KnowledgeSourceMigration, DisplayName: migratedKnowledgeDisplayName},
 	}
 	state.playerKnowledge.entries[KnowledgeKey{Category: KnowledgeCategorySpell, ID: spellKnowledgeAnYlem}] = KnowledgeEntry{
 		Key:          KnowledgeKey{Category: KnowledgeCategorySpell, ID: spellKnowledgeAnYlem},

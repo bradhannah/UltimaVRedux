@@ -58,7 +58,7 @@ func getBritain2GameState() *GameState {
 		return nil // No configuration available
 	}
 
-	baseState := mustNewGameStateFromLegacySaveBytes(
+	baseState := mustNewGameStateFromOriginalSaveBytes(
 		saveFile, cachedIntegrationCfg, baseGameReferences,
 		xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen,
 	)

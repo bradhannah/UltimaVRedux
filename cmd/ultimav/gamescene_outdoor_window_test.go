@@ -73,8 +73,8 @@ func TestOutdoorWindowBlockedProductionStepPreservesHistory(t *testing.T) {
 func TestOutdoorWindowAutomaticSailingMovesOnlyOnActualStep(t *testing.T) {
 	fixture := newAutomaticSailingWorkflowFixture(t, environment.North)
 	state := fixture.state
-	_, err := state.TeleportPlayerOnCurrentMap(119, 120)
-	require.NoError(t, err)
+	state.SetPlayerPosition(references.Position{X: 119, Y: 120})
+	state.InitializeOutdoorWindow()
 	state.CurrentNPCAIController.GetNpcs().ReplaceWith(nil)
 	prepareSceneBlinkRay(state, 100, 124, 140)
 	state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapOverrideLayer, &references.Position{X: 120, Y: 120}, indexes.Water2)

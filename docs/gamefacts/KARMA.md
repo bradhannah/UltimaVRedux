@@ -63,7 +63,7 @@ Redux's tested new-game fixture expects 75 and counter zero. Imported state is
 read from its own saved fields rather than universally reset to the new-game
 values. The starting state of every historical distribution remains unverified.
 
-**Implementation:** `internal/new_game/initial_state.go`, `internal/game_state/legacy_save_game.go`
+**Implementation:** `internal/new_game/initial_state.go`, `internal/legacy_save/conversion.go`
 **Tests:** `internal/new_game/initial_state_original_test.go`, `internal/new_game/initial_state_test.go`
 
 ### KARMA-0003

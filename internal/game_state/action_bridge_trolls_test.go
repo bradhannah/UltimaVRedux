@@ -15,8 +15,7 @@ import (
 // the inn, so each test places exactly the party members it needs.
 func newBridgeTrollTestState() *GameState {
 	gs := &GameState{}
-	var rawData [4192]byte
-	gs.PartyState = *party_state.LoadFromRaw(rawData)
+	gs.PartyState = *party_state.NewBlankPartyState()
 	for i := range 16 {
 		char := gs.PartyState.GetCharacter(i)
 		char.PartyMap = party_state.PartyMapAtInn(references.Britain)

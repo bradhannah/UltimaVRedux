@@ -52,7 +52,7 @@ func TestOriginalReferenceConversionAndPublication(t *testing.T) {
 	require.Equal(t, save_snapshot.CurrentVersion, envelope.Snapshot.Version)
 	require.NotNil(t, envelope.Snapshot.MapUnits)
 	require.False(t, envelope.Snapshot.NeedsMapUnitReconstruction())
-	bundle, err := legacy_save.ReadBundle(filepath.Join(source, "SAVED.GAM"))
+	bundle, err := legacy_save.ReadBundleContext(t.Context(), filepath.Join(source, "SAVED.GAM"))
 	require.NoError(t, err)
 	raw, err := legacy_save.Convert(bundle)
 	require.NoError(t, err)

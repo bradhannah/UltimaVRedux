@@ -1,9 +1,12 @@
 package game_state
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/internal/environment"
+	"github.com/bradhannah/UltimaVRedux/internal/legacy_save"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/test/helpers"
@@ -100,23 +103,25 @@ func (b *IntegrationTestBuilder) Build() (*GameState, *MockSystemCallbacks) {
 	}
 
 	// Use the checked-in bootstrap save rather than mutable player progress.
-	rawSave := helpers.LoadBootstrapSaveData(b.t)
 	var err error
-	b.gameState, err = NewGameStateFromLegacyTemplateBytes(
-		rawSave,
-		b.gameConfig,
-		b.gameRefs,
+	b.gameState, err = newGameStateFromOriginalSaveBytes(helpers.LoadBootstrapSaveData(b.t), b.gameConfig, b.gameRefs,
 		19, 13) // Standard screen dimensions for testing
 	if err != nil {
-		b.t.Fatalf("Failed to load legacy test save: %v", err)
+		b.t.Fatalf("Failed to load bootstrap test save: %v", err)
 	}
-	// Reset campaign progress that changes command behavior while retaining map
-	// and character data needed by integration fixtures.
+	// Reset weather and campaign progress that change command behavior while
+	// retaining map and character data needed by integration fixtures.
+	b.gameState.windSystem.Restore(environment.WindSnapshot{
+		Direction: environment.Calm, UpdateCounter: 0, NextTickMs: environment.WindTickIntervalMs,
+	})
 	b.gameState.SetHMSCapeActivated(false)
 	b.gameState.ShadowlordState = references.NewShadowlordState()
 	b.gameState.DungeonStates = [8]bool{}
+	b.gameState.shrineQuestsActive = [TotalShrines]bool{}
+	b.gameState.shrineQuestsCompleted = [TotalShrines]bool{}
+	b.gameState.closedShrines = [TotalShrines]bool{}
 	b.gameState.PartyState.RestoreNPCFlags(nil, nil)
-	b.gameState.PartyState.Karma = party_state.NewKarma(50)
+	b.gameState.PartyState.Karma = party_state.Karma{Value: 50}
 	b.gameState.PartyState.Inventory = *party_state.NewInventory()
 	b.gameState.PartyState.Inventory.Provisions.Food.Set(999)
 	b.gameState.PartyState.Inventory.Provisions.Keys.Set(1)
@@ -187,4 +192,44 @@ func (b *IntegrationTestBuilder) loadGameData() error {
 	b.gameConfig, b.gameRefs, err = helpers.LoadGameData()
 
 	return err
+}
+
+// newGameStateFromOriginalSaveBytes loads SAVED.GAM bytes the way a player's
+// save loads. Fixtures have no SAVED.OOL, so the overworld and underworld start
+// without saved objects.
+func newGameStateFromOriginalSaveBytes(
+	rawSave []byte,
+	gameConfig *config.UltimaVConfiguration,
+	gameReferences *references.GameReferences,
+	xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen int,
+) (*GameState, error) {
+	bundle, err := legacy_save.DecodeBundle(rawSave, make([]byte, legacy_save.SavedObjectsSize))
+	if err != nil {
+		return nil, fmt.Errorf("decoding original save: %w", err)
+	}
+
+	return newGameStateFromOriginalBundle(bundle, gameConfig, gameReferences,
+		xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen)
+}
+
+// newGameStateFromOriginalBundle converts an original save and hydrates it.
+// Tests start from seed 1, not the seed the conversion derives from the save.
+func newGameStateFromOriginalBundle(
+	bundle legacy_save.Bundle,
+	gameConfig *config.UltimaVConfiguration,
+	gameReferences *references.GameReferences,
+	xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen int,
+) (*GameState, error) {
+	conversion, err := legacy_save.Convert(bundle)
+	if err != nil {
+		return nil, fmt.Errorf("converting original save: %w", err)
+	}
+	gameState, err := NewGameStateFromSaveSnapshot(conversion.Snapshot, gameConfig, gameReferences,
+		xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen)
+	if err != nil {
+		return nil, fmt.Errorf("hydrating converted save: %w", err)
+	}
+	gameState.SetRandomSeed(1)
+
+	return gameState, nil
 }

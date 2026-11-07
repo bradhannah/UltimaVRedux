@@ -207,21 +207,32 @@ func TestGenerateCombatChestContentsCreatesCollectibleObjects(t *testing.T) {
 	}
 }
 
-func TestCombatArmamentRevealLineUsesOriginalCategoryWording(t *testing.T) {
+func TestCombatChestRevealLineUsesOriginalWording(t *testing.T) {
+	item := func(item references.Item) references.ChestLoot {
+		return references.ChestLoot{Item: references.ItemAndQuantity{Item: item, Quantity: 1}}
+	}
 	testCases := []struct {
-		equipment references.Equipment
-		expected  string
+		entry    references.ChestLoot
+		expected string
 	}{
-		{equipment: references.LeatherHelm, expected: "a helm!"},
-		{equipment: references.SmallShield, expected: "a shield!"},
-		{equipment: references.ClothArmour, expected: "some armour!"},
-		{equipment: references.Dagger, expected: "a weapon!"},
-		{equipment: references.RingInvisibility, expected: "a ring!"},
-		{equipment: references.AmuletOfTurning, expected: "an amulet!"},
+		{entry: references.ChestLoot{ChestValue: 1}, expected: "a chest!"},
+		{entry: item(references.Gold), expected: "a sack of gold!"},
+		{entry: item(references.Potion(0)), expected: "a potion!"},
+		{entry: item(references.Scroll(0)), expected: "a scroll!"},
+		{entry: item(references.Key), expected: "a ring of keys!"},
+		{entry: item(references.Gem), expected: "a gem!"},
+		{entry: item(references.Torches), expected: "some torches!"},
+		{entry: item(references.Food), expected: "some food!"},
+		{entry: item(references.LeatherHelm), expected: "a helm!"},
+		{entry: item(references.SmallShield), expected: "a shield!"},
+		{entry: item(references.ClothArmour), expected: "some armour!"},
+		{entry: item(references.Dagger), expected: "a weapon!"},
+		{entry: item(references.RingInvisibility), expected: "a ring!"},
+		{entry: item(references.AmuletOfTurning), expected: "an amulet!"},
 	}
 
 	for _, test := range testCases {
-		assert.Equal(t, test.expected, combatArmamentRevealLine(test.equipment))
+		assert.Equal(t, test.expected, combatChestRevealLine(test.entry))
 	}
 }
 

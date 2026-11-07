@@ -35,7 +35,7 @@ func TestExplicitConfigurationIgnoresOppositeHomePreferences(t *testing.T) {
 			configuration, file := configurationFixture(t, fmt.Sprintf("Gameplay:\n  Presentation:\n    SmoothSurfaceMovement: %t\n", !homePreference))
 			require.Equal(t, !homePreference, configuration.GameplayConfiguration.SmoothSurfaceMovement)
 			for _, enabled := range []bool{homePreference, !homePreference} {
-				require.NoError(t, configuration.SetSmoothSurfaceMovement(enabled))
+				require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = enabled }))
 				loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 				require.NoError(t, err)
 				assert.Equal(t, enabled, loaded.GameplayConfiguration.SmoothSurfaceMovement)
@@ -132,7 +132,7 @@ func TestSelectedConfigurationPathRemainsBoundAfterDirectoryChange(t *testing.T)
 	configuration, err := LoadUltimaVConfiguration("preferences", directory)
 	require.NoError(t, err)
 	t.Chdir(t.TempDir())
-	require.NoError(t, configuration.SetSmoothSurfaceMovement(true))
+	require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = true }))
 	persisted := readConfigurationFixture(t, filepath.Join(directory, "preferences"))
 	assert.True(t, persisted.GetBool(gameplaySmoothSurfaceMovementKey))
 	assert.Equal(t, "retained", persisted.GetString("unknown"))
@@ -153,7 +153,7 @@ func TestStartupCreatesOnlyMissingDefaultConfiguration(t *testing.T) {
 	require.NoError(t, os.WriteFile(file, []byte("DataFilePath: ./OLD\n"), 0o600))
 	configuration, err := NewUltimaVConfiguration()
 	require.NoError(t, err)
-	require.NoError(t, configuration.SetSmoothSurfaceMovement(true))
+	require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = true }))
 	assert.True(t, readConfigurationFixture(t, file).GetBool(gameplaySmoothSurfaceMovementKey))
 }
 

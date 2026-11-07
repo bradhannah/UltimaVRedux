@@ -32,20 +32,6 @@ func NewMoonstoneSystem() *MoonstoneSystem {
 	}
 }
 
-// LoadFromSaveData creates moonstone system from SAVED.GAM data
-// Loads from stones_x, stones_y, stones_m, stones_l arrays at offsets 0x028A-0x02A9
-func (ms *MoonstoneSystem) LoadFromSaveData(stonesX, stonesY, stonesM, stonesL []byte) {
-	if len(stonesX) != 8 || len(stonesY) != 8 || len(stonesM) != 8 || len(stonesL) != 8 {
-		return // Invalid data, keep defaults
-	}
-
-	ms.Moonstones = make([]MoonstoneLocation, 8)
-	for i := range 8 {
-		ms.Moonstones[i] = MoonstoneLocationFromSaveFormat(
-			stonesX[i], stonesY[i], stonesM[i], stonesL[i])
-	}
-}
-
 // GetMoonstoneByIndex returns moonstone at specific index (0-7)
 func (ms *MoonstoneSystem) GetMoonstoneByIndex(index int) *MoonstoneLocation {
 	if index < 0 || index >= len(ms.Moonstones) {

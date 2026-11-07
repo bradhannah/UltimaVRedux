@@ -215,7 +215,7 @@ func TestReturnBeforeDoomRealSceneHydrationPreservesCanonicalStateAndRNG(t *test
 	rawDataOvl, err := os.ReadFile(filepath.Join(gameDataPath, "DATA.OVL"))
 	require.NoError(t, err)
 	configuration.RawDataOvl = rawDataOvl
-	source, err := NewGameSceneFromLegacySaveFile(configuration, legacySavePath)
+	source, err := newGameSceneFromOriginalSave(configuration, legacySavePath)
 	require.NoError(t, err)
 	source.keyboard = newPresentationTestKeyboard()
 	t.Cleanup(source.Dispose)

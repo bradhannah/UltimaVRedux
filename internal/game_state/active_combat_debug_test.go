@@ -11,7 +11,7 @@ import (
 )
 
 func TestCombatMonsterIDsAreEncounterScopedAndNeverReused(t *testing.T) {
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	combat := NewCombatState(references.NewCombatMapReference(0, references.BritanniaCombatTerritory), CombatEntryNorth, party)
 	reference := activeCombatDebugEnemyReference()
 	first := NewCombatMonster(references.MonsterOrc, &reference, references.Position{X: 4, Y: 4}, newFixedRNG(1))
@@ -43,7 +43,7 @@ func TestSetDebugCombatMonsterAsleepUsesStableIdentityAndQuiescentBoundary(t *te
 }
 
 func newActiveCombatDebugTestState() (*GameState, *CombatMonster) {
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	combat := NewCombatState(references.NewCombatMapReference(0, references.BritanniaCombatTerritory), CombatEntryNorth, party)
 	combat.EncounterID = 7
 	reference := activeCombatDebugEnemyReference()
@@ -364,7 +364,7 @@ func newCombatMutationTestState(
 	monsterCount int,
 ) (*GameState, []*CombatMonster, *MockSystemCallbacks) {
 	t.Helper()
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	party.GetAvatar().SetMaxHp(100)
 	party.GetAvatar().SetHp(100)
 	combat := NewCombatState(
@@ -401,7 +401,7 @@ func debugCombatSnapshotForTest(t *testing.T, state *GameState) DebugCombatSnaps
 }
 
 func newDebugCombatSpawnTestState() *GameState {
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	party.GetAvatar().SetMaxHp(100)
 	party.GetAvatar().SetHp(100)
 	combatMap := references.NewCombatMapReference(0, references.BritanniaCombatTerritory)

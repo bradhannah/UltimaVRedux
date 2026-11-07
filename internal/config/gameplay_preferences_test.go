@@ -38,7 +38,7 @@ func TestQoLEveryNumericValueRoundTrips(t *testing.T) {
 	for _, speed := range CombatSpeedSpec().Choices() {
 		for count := 0; count <= 3; count++ {
 			require.NoError(t, configuration.SetCombatSpeedFactor(speed))
-			require.NoError(t, configuration.SetMaxVisibleActionPopups(count))
+			require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.MaxVisibleActionPopups = count }))
 			loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 			require.NoError(t, err)
 			assert.Equal(t, speed, loaded.GetCombatSpeedFactor())
@@ -83,10 +83,10 @@ func TestLegacySpeedMigrationAndCanonicalPrecedence(t *testing.T) {
 		configuration, file := configurationFixture(t, fmt.Sprintf("Debug:\n  CombatMovementSpeedFactor: %g\n", test.legacy))
 		assert.Equal(t, test.want, configuration.GetCombatSpeedFactor())
 		if test.legacy != test.want {
-			require.Len(t, configuration.ConfigurationDiagnostics(), 1)
-			assert.Contains(t, configuration.ConfigurationDiagnostics()[0], fmt.Sprintf("%g to %g", test.legacy, test.want))
+			require.Len(t, configuration.configurationDiagnostics, 1)
+			assert.Contains(t, configuration.configurationDiagnostics[0], fmt.Sprintf("%g to %g", test.legacy, test.want))
 		} else {
-			assert.Empty(t, configuration.ConfigurationDiagnostics())
+			assert.Empty(t, configuration.configurationDiagnostics)
 		}
 		require.NoError(t, configuration.SaveDebugConfiguration())
 		assert.Equal(t, test.want, readConfigurationFixture(t, file).GetFloat64(gameplayCombatSpeedKey))
@@ -100,15 +100,15 @@ func TestLegacySpeedMigrationAndCanonicalPrecedence(t *testing.T) {
 	}
 	configuration, _ := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 16\nDebug:\n  CombatMovementSpeedFactor: 1.25\n")
 	assert.Equal(t, 16.0, configuration.GetCombatSpeedFactor())
-	assert.Empty(t, configuration.ConfigurationDiagnostics())
+	assert.Empty(t, configuration.configurationDiagnostics)
 }
 
 func TestFormerCanonicalSpeedGridValuesMoveToNearestChoice(t *testing.T) {
 	for _, test := range []struct{ saved, want float64 }{{2.5, 3}, {3.5, 4}, {5, 6}, {13.5, 12}} {
 		configuration, file := configurationFixture(t, fmt.Sprintf("Gameplay:\n  Combat:\n    SpeedFactor: %g\n", test.saved))
 		assert.Equal(t, test.want, configuration.GetCombatSpeedFactor())
-		require.Len(t, configuration.ConfigurationDiagnostics(), 1)
-		assert.Contains(t, configuration.ConfigurationDiagnostics()[0], fmt.Sprintf("combat speed %g to %g", test.saved, test.want))
+		require.Len(t, configuration.configurationDiagnostics, 1)
+		assert.Contains(t, configuration.configurationDiagnostics[0], fmt.Sprintf("combat speed %g to %g", test.saved, test.want))
 		require.NoError(t, configuration.SaveGameplayConfiguration())
 		assert.Equal(t, test.want, readConfigurationFixture(t, file).GetFloat64(gameplayCombatSpeedKey))
 	}
@@ -126,7 +126,7 @@ func TestQoLInvalidPersistenceDoesNotMutateSourceOrFile(t *testing.T) {
 		settings.Gameplay.CombatSpeedFactor = speed
 		require.ErrorIs(t, configuration.SaveConfigurationSettings(settings), ErrGameplayPreference)
 	}
-	require.ErrorIs(t, configuration.SetMaxVisibleActionPopups(4), ErrGameplayPreference)
+	require.ErrorIs(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.MaxVisibleActionPopups = 4 }), ErrGameplayPreference)
 	assert.Equal(t, before, *configuration.GameplayConfiguration)
 	configuration.GameplayConfiguration.CombatSpeedFactor = 0
 	for _, save := range []func() error{configuration.SaveGameplayConfiguration, configuration.SaveDebugConfiguration,
@@ -146,10 +146,18 @@ func TestQoLStagedConflictAndFailedWritePreserveLiveSettings(t *testing.T) {
 	assert.True(t, configuration.ConfigurationEditing())
 	for _, mutate := range []func() error{
 		func() error { return configuration.SetCombatSpeedFactor(2) },
-		func() error { return configuration.SetConfirmQuickSave(false) },
-		func() error { return configuration.SetShowCombatHPBars(false) },
-		func() error { return configuration.SetMaxVisibleActionPopups(0) },
-		func() error { return configuration.SetSmoothSurfaceMovement(true) },
+		func() error {
+			return configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.ConfirmQuickSave = false })
+		},
+		func() error {
+			return configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.ShowCombatHPBars = false })
+		},
+		func() error {
+			return configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.MaxVisibleActionPopups = 0 })
+		},
+		func() error {
+			return configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = true })
+		},
 	} {
 		require.ErrorIs(t, mutate(), ErrConfigurationEditing)
 	}

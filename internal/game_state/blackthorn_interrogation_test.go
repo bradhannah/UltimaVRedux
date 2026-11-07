@@ -130,37 +130,6 @@ func TestBlackthornMartyrSurvivesNativeSnapshotHydration(t *testing.T) {
 	require.False(t, got.IsDead())
 }
 
-func TestLegacySaveHydrationPreservesMartyrFullRecord(t *testing.T) {
-	state, _ := newBlackthornTestState(t, 1)
-	raw := make([]byte, savedGamFileSize)
-	const (
-		characterOffset   = 0x02
-		characterSize     = 32
-		martyrSlot        = 15
-		statusFieldOffset = 11
-		strengthField     = 12
-		dexterityField    = 13
-		intelligenceField = 14
-		partyMapField     = 31
-	)
-	record := characterOffset + martyrSlot*characterSize
-	copy(raw[record:], "Gorn")
-	raw[record+statusFieldOffset] = byte(party_state.Good)
-	raw[record+strengthField] = 27
-	raw[record+dexterityField] = 19
-	raw[record+intelligenceField] = 16
-	raw[record+partyMapField] = byte(party_state.PartyMapMartyr)
-
-	require.NoError(t, state.LoadLegacySaveGameFromBytes(raw))
-	martyr := state.PartyState.GetCharacter(martyrSlot)
-	require.Equal(t, "Gorn", martyr.GetNameAsString())
-	require.Equal(t, byte(27), martyr.Strength)
-	require.Equal(t, byte(19), martyr.Dexterity)
-	require.Equal(t, byte(16), martyr.Intelligence)
-	require.Equal(t, party_state.PartyMapMartyr, martyr.PartyMap)
-	require.False(t, martyr.IsDead())
-}
-
 func newBlackthornTestState(t *testing.T, living int) (*GameState, *MockSystemCallbacks) {
 	t.Helper()
 	state, callbacks := NewIntegrationTestBuilder(t).

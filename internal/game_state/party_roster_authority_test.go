@@ -23,19 +23,6 @@ func TestCurrentPartyRosterSnapshotIsDetachedAndFingerprinted(t *testing.T) {
 	assert.Equal(t, current.Fingerprint, state.CurrentPartyRosterSnapshot().Fingerprint)
 }
 
-func TestSetAvatarNameRestoresSelectableIdentity(t *testing.T) {
-	state, _ := newPartyRosterAuthorityTestState(t, 1)
-	avatar := state.PartyState.GetAvatar()
-	avatar.Name = [party_state.NMaxPlayerNameSize]byte{}
-	assert.False(t, state.SetActivePlayer(0))
-
-	require.NoError(t, state.SetAvatarName("Custom"))
-	assert.Equal(t, "Custom", avatar.GetNameAsString())
-	assert.True(t, state.SetActivePlayer(0), "restored Avatar identity must remain selectable with key 1")
-	assert.Error(t, state.SetAvatarName(""))
-	assert.Error(t, state.SetAvatarName("TooLongName"))
-}
-
 func TestMaximizeActivePartyUsesProgressionAndRecoveryRules(t *testing.T) {
 	state, _ := newPartyRosterAuthorityTestState(t, 3)
 	first := state.PartyState.GetCharacter(0)

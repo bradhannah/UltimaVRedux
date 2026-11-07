@@ -28,7 +28,7 @@ func TestSmoothSurfaceMovementLoadsOptionalGameplayPreference(t *testing.T) {
 	assert.False(t, configuration.GameplayConfiguration.SmoothSurfaceMovement)
 	gameplay := configuration.GameplayConfiguration
 	for _, enabled := range []bool{true, false} {
-		require.NoError(t, configuration.SetSmoothSurfaceMovement(enabled))
+		require.NoError(t, configuration.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = enabled }))
 		assert.Same(t, gameplay, configuration.GameplayConfiguration)
 		assert.Equal(t, enabled, gameplay.SmoothSurfaceMovement)
 		loaded, loadErr := LoadUltimaVConfiguration(configPath, directory)

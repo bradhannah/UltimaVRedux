@@ -50,22 +50,6 @@ type DungeonSetupResult struct {
 	AfterDungeon  DungeonSetupSemanticState
 }
 
-// DebugEnterSmallLocation transitions directly to the normal entry point without simulating travel time.
-func (g *GameState) DebugEnterSmallLocation(location references.Location) (WorldSetupResult, error) {
-	if location < references.Moonglow || location > references.SerpentsHold {
-		result := g.currentWorldSetupResult()
-
-		return result, fmt.Errorf("%w: location %d is not a supported small map", ErrInvalidWorldSetup, location)
-	}
-
-	return g.debugSetWorldPosition(
-		location,
-		smallMapStartingPositionFloor,
-		references.Position{X: smallMapStartingPositionX, Y: smallMapStartingPositionY},
-		true,
-	)
-}
-
 // ValidateDebugMerchantLocationTransition verifies a remote Merchant Tester
 // launch without changing world, session, callback, time, or RNG state.
 func (g *GameState) ValidateDebugMerchantLocationTransition(id references.MerchantID) error {
@@ -223,7 +207,7 @@ func (g *GameState) debugSetWorldPosition(
 	if err := g.validateWorldSetupContext(); err != nil {
 		return result, err
 	}
-	minimumFloor, maximumFloor, err := g.debugFloorRangeForLocation(location, false)
+	minimumFloor, maximumFloor, err := g.debugFloorRangeForLocation(location)
 	if err != nil {
 		return result, err
 	}
@@ -430,38 +414,6 @@ func (g *GameState) debugDungeonSetupSemanticState() DungeonSetupSemanticState {
 	return state
 }
 
-// DebugSetFloor transitions to one exact valid floor without climbing or advancing time.
-func (g *GameState) DebugSetFloor(floor references.FloorNumber) (WorldSetupResult, error) {
-	before := g.MapState.PlayerLocation
-	result := g.currentWorldSetupResult()
-	if err := g.validateWorldSetupContext(); err != nil {
-		return result, err
-	}
-	minimum, maximum, err := g.debugFloorRange()
-	if err != nil {
-		return result, err
-	}
-	if floor < minimum || floor > maximum {
-		return result, fmt.Errorf(
-			"%w: floor %d outside %d..%d for %s",
-			ErrInvalidWorldSetup,
-			floor,
-			minimum,
-			maximum,
-			before.Location.String(),
-		)
-	}
-	if floor == before.Floor {
-		return result, nil
-	}
-
-	g.TransitionToLocation(before.Location, floor, before.Position, TransitionFloorOnly, false)
-	result.After = g.MapState.PlayerLocation
-	result.SmashedAfter = g.smashed
-
-	return result, nil
-}
-
 // DebugTravelToLandmark transitions to a curated physical landmark
 // without simulating travel time.
 func (g *GameState) DebugTravelToLandmark(name string) (WorldSetupResult, error) {
@@ -519,19 +471,12 @@ func (g *GameState) validateStableWorldSetupContext() error {
 	return fmt.Errorf("%w: unavailable in the current map context", ErrInvalidWorldSetup)
 }
 
-func (g *GameState) debugFloorRange() (references.FloorNumber, references.FloorNumber, error) {
-	return g.debugFloorRangeForLocation(g.MapState.PlayerLocation.Location, true)
-}
-
 func (g *GameState) debugFloorRangeForLocation(
 	location references.Location,
-	allowDungeon bool,
 ) (references.FloorNumber, references.FloorNumber, error) {
 	switch {
 	case location == references.BritanniaUnderworld:
 		return -1, 0, nil
-	case allowDungeon && location >= references.Deceit && location <= references.Doom:
-		return 0, references.DungeonFloorCount - 1, nil
 	case location < references.Moonglow || location > references.SerpentsHold:
 		return 0, 0, fmt.Errorf("%w: location %d is not a supported world map", ErrInvalidWorldSetup, location)
 	case g.GameReferences == nil || g.GameReferences.LocationReferences == nil:
