@@ -569,7 +569,7 @@ func TestZStatsDossierDialogArmoryNamesAndSpellCounts(t *testing.T) {
 	dialog.prepareListRow(rowRect, 0, false)
 	spellRow := dialog.rowOutput.GetOutputStr(false)
 	require.Contains(t, spellRow, "In Lor")
-	require.Contains(t, spellRow, "Light")
+	require.Contains(t, spellRow, "\n"+rowDetailIndent+"Light", "the meaning sits indented under the incantation")
 	require.Equal(t, "2", dialog.spellView.count.GetOutputStr(false))
 	require.NotContains(t, spellRow, "Prepared")
 	require.NotContains(t, spellRow, "NEW")

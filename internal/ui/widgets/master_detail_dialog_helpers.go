@@ -27,6 +27,10 @@ func drawMasterDetailCenteredLine(
 	output.DrawPanelContent(screen, image.Pt(rect.Min.X, top), max(1, rect.Dx()), etext.AlignCenter)
 }
 
+// rowDetailIndent sets a two-line row's second line (a spell's meaning) in from
+// its first, so each pair reads as one entry.
+const rowDetailIndent = "  "
+
 // fillSelectedRow draws the shared white bar behind a row drawn in DialogSelectedText.
 func fillSelectedRow(screen *ebiten.Image, row image.Rectangle) {
 	vector.FillRect(screen, float32(row.Min.X), float32(row.Min.Y), float32(row.Dx()), float32(row.Dy()),
