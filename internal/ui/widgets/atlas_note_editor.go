@@ -27,6 +27,23 @@ type AtlasNoteEditorConfig struct {
 	Cancel   func()
 	// AppendInputChars is an explicit legacy test seam. Nil selects owned native input.
 	AppendInputChars func([]rune) []rune
+	// Text replaces the Map wording, limits and rules; nil keeps the Map editor.
+	Text *NoteEditorText
+}
+
+// NoteEditorText lets the same two-field editor write Journal notes.
+type NoteEditorText struct {
+	Heading  string
+	Info     [2][]EditorInfo
+	Captions [2]string
+	Limits   [2]int
+	Initial  [2]string
+	Validate func(title, text string) error
+}
+
+// EditorInfo is one label and value pair on an editor's information rows.
+type EditorInfo struct {
+	Label, Value string
 }
 
 // AtlasNoteEditor is a keyboard-only, two-field multiline editor. Its owner
@@ -56,6 +73,14 @@ type AtlasNoteEditor struct {
 	fieldRects                [2]image.Rectangle
 	hintRect, validationRect  image.Rectangle
 	scroll                    [2]int
+	// wraps caches each field's measured lines; long notes are too slow to re-wrap every frame.
+	wraps [2]atlasEditorWrap
+}
+
+type atlasEditorWrap struct {
+	text  string
+	width int
+	lines []atlasEditorLine
 }
 
 const (
@@ -77,6 +102,9 @@ func newAtlasNoteEditor(config AtlasNoteEditorConfig, fields [2]nativeTextField)
 	editor.appendChars = config.AppendInputChars
 	editor.nativeFields, editor.isWindowFocused = fields, ebiten.IsFocused
 	editor.fields = [2][]rune{[]rune(config.Record.Label), []rune(config.Record.Description)}
+	if config.Text != nil {
+		editor.fields = [2][]rune{[]rune(config.Text.Initial[0]), []rune(config.Text.Initial[1])}
+	}
 	for fieldIndex := range editor.fields {
 		if fields[fieldIndex] == nil {
 			panic("atlas editor requires native text fields")
@@ -254,11 +282,30 @@ func (e *AtlasNoteEditor) insert(runes []rune) bool {
 	return true
 }
 
-func (e *AtlasNoteEditor) validFieldText(value string) bool {
-	limit := journal.MaxAtlasNoteLabelRunes
-	if e.focus == 1 {
-		limit = journal.MaxAtlasNoteDescriptionRunes
+func (e *AtlasNoteEditor) fieldLimit(field int) int {
+	switch {
+	case e.config.Text != nil:
+		return e.config.Text.Limits[field]
+	case field == 1:
+		return journal.MaxAtlasNoteDescriptionRunes
+	default:
+		return journal.MaxAtlasNoteLabelRunes
 	}
+}
+
+func (e *AtlasNoteEditor) fieldCaption(field int) string {
+	switch {
+	case e.config.Text != nil:
+		return e.config.Text.Captions[field]
+	case field == 1:
+		return atlasNoteDescriptionLabel
+	default:
+		return "Map label"
+	}
+}
+
+func (e *AtlasNoteEditor) validFieldText(value string) bool {
+	limit := e.fieldLimit(e.focus)
 	for _, r := range value {
 		if r < ' ' || r > '~' {
 			if e.focus == 1 && r == '\n' {
@@ -280,8 +327,12 @@ func (e *AtlasNoteEditor) validFieldText(value string) bool {
 
 func (e *AtlasNoteEditor) submit() {
 	label, description := strings.TrimSpace(string(e.fields[0])), string(e.fields[1])
+	validate := journal.ValidateAtlasNoteText
+	if e.config.Text != nil {
+		validate = e.config.Text.Validate
+	}
 	if !e.config.Deleting {
-		if err := journal.ValidateAtlasNoteText(label, description); err != nil {
+		if err := validate(label, description); err != nil {
 			e.message = err.Error()
 
 			return
@@ -305,6 +356,17 @@ func (e *AtlasNoteEditor) lines(field int) []atlasEditorLine {
 
 func (e *AtlasNoteEditor) linesForContent(field int, content []rune) []atlasEditorLine {
 	width := e.fieldLayout(field).textWidth
+	key := string(content)
+	if cached := e.wraps[field]; cached.lines != nil && cached.width == width && cached.text == key {
+		return cached.lines
+	}
+	lines := e.wrapContent(content, width)
+	e.wraps[field] = atlasEditorWrap{text: key, width: width, lines: lines}
+
+	return lines
+}
+
+func (e *AtlasNoteEditor) wrapContent(content []rune, width int) []atlasEditorLine {
 	start := 0
 	var lines []atlasEditorLine
 	for index, r := range content {
@@ -367,6 +429,7 @@ func (e *AtlasNoteEditor) ensureLayout() {
 		return
 	}
 	e.width, e.height = w, h
+	e.wraps = [2]atlasEditorWrap{}
 	config := FontConfig{Size: FontSizeBody, LineSpacing: 0,
 		LineSpacingMultiplier: 1.15, MaxLines: 32, MaxChars: 128}
 	e.font, e.output = GetScaledFontWithOutput(config)
@@ -436,6 +499,9 @@ func (e *AtlasNoteEditor) Draw(screen *ebiten.Image) {
 	if e.config.Deleting {
 		title = "Delete this map note?"
 	}
+	if e.config.Text != nil {
+		title = e.config.Text.Heading
+	}
 	e.drawLine(target, title, point, DialogHeaderColor)
 	point.Y += e.lineHeight
 	if e.config.Deleting {
@@ -448,18 +514,30 @@ func (e *AtlasNoteEditor) Draw(screen *ebiten.Image) {
 
 //nolint:mnd // Coordinate and field captions share the pane's paired twelve-pixel insets.
 func (e *AtlasNoteEditor) drawFields(target *ebiten.Image, point image.Point) {
-	e.output.Reset()
-	e.output.SetMaxCharsPerLine(max(1, e.font.CharsForWidth(e.pane.Dx()-24)))
-	e.output.AppendLine().Text("Coordinates: ", DialogLabelColor).
-		Text(atlasCoordinates(e.config.Record.Position), DialogValueColor).Done()
-	e.output.DrawPanelContent(target, point, e.pane.Dx()-24, etext.AlignStart)
-	point.Y += e.lineHeight
-	e.drawLine(target, e.config.Context, point, DialogValueColor)
-	for field, name := range []string{"Map label", atlasNoteDescriptionLabel} {
-		limit := journal.MaxAtlasNoteLabelRunes
-		if field == 1 {
-			limit = journal.MaxAtlasNoteDescriptionRunes
+	rows := [2][]EditorInfo{{{Label: "Coordinates", Value: atlasCoordinates(e.config.Record.Position)}},
+		{{Label: "", Value: e.config.Context}}}
+	if e.config.Text != nil {
+		rows = e.config.Text.Info
+	}
+	for _, row := range rows {
+		e.output.Reset()
+		e.output.SetMaxCharsPerLine(max(1, e.font.CharsForWidth(e.pane.Dx()-24)))
+		line := e.output.AppendLine()
+		for index, info := range row {
+			if index > 0 {
+				line.Text("  ", DialogValueColor)
+			}
+			if info.Label != "" {
+				line.Text(info.Label+": ", DialogLabelColor)
+			}
+			line.Text(info.Value, DialogValueColor)
 		}
+		line.Done()
+		e.output.DrawPanelContent(target, point, e.pane.Dx()-24, etext.AlignStart)
+		point.Y += e.lineHeight
+	}
+	for field := range e.fields {
+		name, limit := e.fieldCaption(field), e.fieldLimit(field)
 		rect := e.fieldRects[field]
 		e.output.Reset()
 		e.output.SetMaxCharsPerLine(64)
