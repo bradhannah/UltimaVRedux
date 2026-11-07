@@ -467,7 +467,7 @@ post-hit condition data without invoking the fleeing updater or consuming RNG.
 **Division, death attribution, and treasure**
 
 **Kind:** rule
-**Uses:** RNG-0001, PROGRESS-0001
+**Uses:** RNG-0001, PROGRESS-0001, CMD-0009
 **Original:** Established
 **Redux:** Intentional deviation
 
@@ -476,6 +476,10 @@ PC, not divided among the party. Field/unattributed paths may kill without XP.
 On ordinary corpse-eligible terrain, request D30: a result ≤ treasure rating
 creates a chest; only then request a separate D30 and mark trapped if it is
 strictly < rating. A failed drop leaves a corpse and consumes no trap draw.
+The chest's value is the treasure rating, with the trap in bit 0x80. Opening it
+generates loot by [CMD-0009](COMMANDS_REFERENCE.md#cmd-0009). A sprung combat
+trap is Acid (one D30 of damage to the opener) or Poison, chosen by R(0,1), not
+the eight-entry noncombat selector.
 
 Gazer death instead leaves a corpse and attempts an Insect at the same square;
 Gargoyle death changes terrain to Small Rocks and leaves no object. These occur
@@ -498,7 +502,7 @@ Redux preserves the separate drop/trap calls, special-death ordering, shared
 capacity, and fresh hostile child semantics. These are scoped comparisons, not
 proof of binary PRNG sequences or every malformed capacity edge.
 
-**Implementation:** `internal/game_state/combat_formulas.go`, `internal/game_state/combat_special_death.go`, `internal/game_state/combat_monster_division.go`
+**Implementation:** `internal/game_state/combat_formulas.go`, `internal/game_state/combat_treasure.go`, `internal/game_state/combat_special_death.go`, `internal/game_state/combat_monster_division.go`
 **Tests:** `internal/game_state/combat_treasure_test.go`, `internal/game_state/combat_special_death_test.go`, `internal/game_state/combat_monster_division_test.go`
 
 ### COMBAT-0010
