@@ -115,8 +115,12 @@ func TestAtlasUnavailableChordIsConsumedThroughRelease(t *testing.T) {
 func TestFunctionKeysOpenAndCloseMapAndJournal(t *testing.T) {
 	now := time.Unix(100, 0)
 	keys := map[ebiten.Key]bool{}
+	// The keyboard refuses a repeat of the same key within one input-clock
+	// millisecond, so each tap advances this clock instead of the wall clock.
+	inputMs := int64(1000)
 	newScene := func(state *game_state.GameState) *GameScene {
 		keyboard := input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool { return keys[key] })
+		keyboard.SetElapsedMillisecondsSource(func() int64 { return inputMs })
 		scene := &GameScene{gameState: state, gameConfig: state.GameConfig, keyboard: keyboard,
 			output: text.NewOutput(nil, 1, 64, 80), spriteSheet: sharedPresentationTestSpriteSheet(),
 			now: func() time.Time { return now }, startTime: now}
@@ -127,6 +131,7 @@ func TestFunctionKeysOpenAndCloseMapAndJournal(t *testing.T) {
 	// Each frame stays inside the reader's own pause: press, then release.
 	tap := func(scene *GameScene, key ebiten.Key) {
 		t.Helper()
+		inputMs += keyPressDelay + 1
 		keys[key] = true
 		require.NoError(t, scene.Update(nil))
 		clear(keys)
