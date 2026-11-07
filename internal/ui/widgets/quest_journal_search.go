@@ -19,6 +19,7 @@ const (
 type questJournalSearchEntry struct {
 	tab     QuestJournalTab
 	row     int
+	noteID  uint64
 	title   string
 	text    string
 	source  string
@@ -37,13 +38,17 @@ func (d *QuestJournalDialog) buildSearchEntries() {
 	d.searchResults = nil
 	d.searchSelection = 0
 	d.searchEntries = nil
-	d.appendCuratedSearchEntries()
-	d.appendConversationSearchEntries()
+	if !d.notesOnly() {
+		d.appendCuratedSearchEntries()
+		d.appendConversationSearchEntries()
+	}
+	d.appendNoteSearchEntries()
 	d.setSearchQuery(query)
 	if hasSelection {
 		for index, result := range d.searchResults {
 			entry := d.searchEntries[result]
-			if entry.tab == selected.tab && entry.row == selected.row && entry.title == selected.title {
+			if entry.tab == selected.tab && entry.row == selected.row && entry.noteID == selected.noteID &&
+				entry.title == selected.title {
 				d.searchSelection = index
 
 				break
@@ -76,7 +81,7 @@ func (d *QuestJournalDialog) appendCuratedSearchEntries() {
 			}
 			source := questJournalTabTitle(tab)
 			d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
-				tab: tab, row: row, title: title, text: strings.ToLower(searchable.String()),
+				tab: tab, row: row, noteID: 0, title: title, text: strings.ToLower(searchable.String()),
 				source: source, body: searchable.String(), snippet: "",
 			})
 		}
@@ -88,7 +93,8 @@ func (d *QuestJournalDialog) appendCuratedSearchEntries() {
 func (d *QuestJournalDialog) appendConversationSearchEntries() {
 	for row, exchange := range d.lastConversation.Exchanges {
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
-			tab: QuestJournalConversationTab, row: row, title: exchange.Title(), text: strings.ToLower(exchange.SearchText()),
+			tab: QuestJournalConversationTab, row: row, noteID: 0, title: exchange.Title(),
+			text:   strings.ToLower(exchange.SearchText()),
 			source: exchange.Speaker + " - " + exchange.Location, body: journalSnippetSource(exchange), snippet: "",
 		})
 	}
@@ -99,7 +105,7 @@ func (d *QuestJournalDialog) appendConversationSearchEntries() {
 			searchable += " Archived"
 		}
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
-			tab: QuestJournalExcerptsTab, row: row, title: excerptTitle(exchange), text: strings.ToLower(searchable),
+			tab: QuestJournalExcerptsTab, row: row, noteID: 0, title: excerptTitle(exchange), text: strings.ToLower(searchable),
 			source: exchange.Speaker + " - " + exchange.Location, body: journalSnippetSource(exchange), snippet: "",
 		})
 	}
@@ -185,6 +191,9 @@ func (d *QuestJournalDialog) openSearchResult() {
 	d.detailPage = 0
 	d.leaveSearch()
 	d.enterTab()
+	if entry.tab == QuestJournalNotesTab {
+		d.openNoteSearchResult(entry.noteID)
+	}
 	d.readingQuery = d.searchQuery
 	d.exchangeOutput, d.cachedDetailPages = nil, nil
 	d.revealSearchMatch()

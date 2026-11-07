@@ -598,9 +598,10 @@ not establish native OS runtime acceptance.
 ## QuestJournalDialog
 
 The Journal is a modal over a detached opening snapshot, with Chronicle, Virtues,
-Shadowlords, Dungeons, Last Conversation, Excerpts, and Moonstones tabs. The scene
-owns the [Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal,
-visit acknowledgements, and excerpt persistence. Browsing never mutates gameplay.
+Shadowlords, Dungeons, Last Conversation, Excerpts, Moonstones and My Notes tabs,
+in two header rows of four. The scene owns the
+[Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal, visit
+acknowledgements, and excerpt and note persistence. Browsing never mutates gameplay.
 
 ### Navigation And New Entries
 
@@ -667,7 +668,7 @@ Rows, search-result titles, and the persistent detail heading use the actual
 `0x30 + phase` Runic glyph through mixed-font `text.Output`; full names are
 measured to fit, never ellipsized or wrapped away in one-row buffers. Selected
 glyphs use the selected text foreground, preserving the New Moon outline against
-both backgrounds. Moonstones occupies the second measured header row.
+both backgrounds. Moonstones and My Notes occupy the second measured header row.
 
 Moonstone details distinguish carried, current last-observed placement, and
 unmeasured states. Coordinates appear only from public current surveyed records,
@@ -679,6 +680,39 @@ Carried with no destination; an unmeasured reburial has no pin or old-coordinate
 fallback. Neither widgets nor search receive private recognition sites or observer contexts. See
 [moonstone knowledge](../gamefacts/MOONSTONE_LOCATIONS.md#moon-0006) and
 [surveys](../gamefacts/MOONSTONE_LOCATIONS.md#moon-0008).
+
+### My Notes
+
+My Notes is the player's own notebook, last in the tab order so Shift+Tab reaches
+it from Chronicle. Game state owns the notebook and saves it with each checkpoint
+(see [Snapshot 26](../details/SAVE_SNAPSHOT_SCHEMA.md#snapshot-26-player-notes));
+the dialog shows a detached copy and sends every change to the scene as a
+`NotesIntent`. The scene applies it through `GameState` and answers with
+`NotesChanged`, which rebuilds the rows, selection, status line and search entries.
+
+- **Sections.** Every notebook starts with To Do and Places; players add up to 16
+  sections in all, named in 1–14 printable characters, unique ignoring case. To Do
+  can be renamed but not deleted; Places can be neither. Headings show a fold mark
+  and a note count; whether a section is folded is saved.
+- **Rows.** Notes are indented under their section, newest first. Ticked notes say
+  `[Done]` before the title, as archived excerpts say `[Archived]`, and sink below
+  the rest of their section. An untitled note lists its first line.
+- **Keys on a note.** N writes a new note in the same section, E or Enter edits, X
+  ticks or unticks, S moves it with an inline section chooser, and D or Delete
+  deletes after the footer asks. Left folds its section.
+- **Keys on a heading.** Left/Right fold, N writes in that section, R renames, and D
+  deletes a player-made section after asking; its notes move to To Do. Shift+N adds
+  a section from any row. Refusals (renaming Places, deleting a built-in section, a
+  full notebook of 512 notes) appear as a status line in words.
+- **Writing.** N and E open the Map note editor with Journal wording: an optional
+  title of up to 32 characters, text of up to 2,000 with paragraphs, and Section,
+  Recorded and Place rows. Recorded is the game date and time; Place is the Save
+  screen's label for the party's real location, so combat, camping and shrines name
+  the place they were entered from. The editor caches wrapped lines, because
+  re-wrapping 2,000 characters every frame is too slow. Section names use the
+  mixed-case one-line entry box with a Name prompt.
+- **Search.** `/` indexes every note, including those in folded sections, by title,
+  text, section and place. Opening a result unfolds its section and selects it.
 
 ### Main Output Compatibility
 

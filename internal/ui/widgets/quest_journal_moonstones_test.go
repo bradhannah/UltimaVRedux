@@ -99,7 +99,7 @@ func TestQuestJournalMoonstoneGlyphRowsHeadingPagingAndEightTabs(t *testing.T) {
 			t.Cleanup(d.outerBorder.Dispose)
 			dossier.Moonstones[0].ChartedOrigin = "Changed"
 			assert.Equal(t, "Near Moonglow", d.dossier.Moonstones[0].ChartedOrigin)
-			d.switchTabBy(-1)
+			d.switchTabBy(-2)
 			require.Equal(t, QuestJournalMoonstonesTab, d.GetActiveTab())
 			require.Equal(t, 8, d.currentItemCount())
 			for tab, rect := range d.layout.tabRects {
@@ -146,7 +146,7 @@ func TestQuestJournalMoonstoneGlyphRowsHeadingPagingAndEightTabs(t *testing.T) {
 			pressQuestJournalKey(d, keyboard, ebiten.KeyEnd)
 			assert.Equal(t, 7, d.GetSelectedIndex())
 			pressQuestJournalKey(d, keyboard, ebiten.KeyTab)
-			assert.Equal(t, QuestJournalChronicleTab, d.GetActiveTab())
+			assert.Equal(t, QuestJournalNotesTab, d.GetActiveTab())
 			d.switchTabBy(-1)
 			assert.Equal(t, 7, d.GetSelectedIndex())
 			pressQuestJournalKey(d, keyboard, ebiten.KeyEnter)

@@ -566,8 +566,13 @@ Journal without beginning a dungeon command cycle, calling `FinishTurn`, or
 finishing a combat action. Plain J continues to reach the existing Jimmy path.
 The top modal isolates Tab/Shift+Tab, repeatable Up/Down and Page Up/Page Down,
 Home/End, Space detail paging, `/` Journal search, Escape, and Shift+J.
-Curated page keys move selection a full viewport. The seven-section Journal no
-longer exposes main-output History through tabs, navigation or search.
+Curated page keys move selection a full viewport. The eight-section Journal no
+longer exposes main-output History through tabs, navigation or search. On My
+Notes, N, Shift+N, E, Enter, X, S, R, D, Delete and Left/Right act on the selected
+note or section heading before Tab, search or dismissal; delete confirmations and
+the move chooser own Enter, Escape and Up/Down until they finish. Note editors and
+section-name boxes open as a child modal over the Journal, and a held Escape from
+a child cannot also close the Journal.
 Search owns text input, Enter opens a matching Journal destination, and Escape
 returns to the previous tab without closing Journal. Shift+J closes from either
 mode. `PrepareForTransition` prevents the opening or closing chord from bleeding

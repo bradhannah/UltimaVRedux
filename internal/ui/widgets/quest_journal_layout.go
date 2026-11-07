@@ -104,10 +104,11 @@ func (d *QuestJournalDialog) tabTitle(tab QuestJournalTab) string {
 
 func (d *QuestJournalDialog) calculateTabs() {
 	const headerRows = 2
-	for row, tabs := range [][]QuestJournalTab{
-		{QuestJournalChronicleTab, QuestJournalVirtuesTab, QuestJournalShadowlordsTab},
-		{QuestJournalDungeonsTab, QuestJournalConversationTab, QuestJournalExcerptsTab, QuestJournalMoonstonesTab},
-	} {
+	rows := [][]QuestJournalTab{
+		{QuestJournalChronicleTab, QuestJournalVirtuesTab, QuestJournalShadowlordsTab, QuestJournalDungeonsTab},
+		{QuestJournalConversationTab, QuestJournalExcerptsTab, QuestJournalMoonstonesTab, QuestJournalNotesTab},
+	}
+	for row, tabs := range rows {
 		total := 0
 		widths := make([]int, len(tabs))
 		for i, tab := range tabs {
@@ -215,6 +216,14 @@ func (d *QuestJournalDialog) drawShadowlordSprite(screen *ebiten.Image) {
 func (d *QuestJournalDialog) footerGuidance() string {
 	if d.runicReferenceOpen {
 		return "[Ctrl+R/Esc] Close rune reference  [Space/Shift+Space] Detail page  [Shift+J] Close Journal"
+	}
+	if d.activeTab == QuestJournalNotesTab && !d.searching {
+		tabs := "[Tab/Shift+Tab] Tab  "
+		if d.notesOnly() {
+			tabs = ""
+		}
+
+		return d.notesFooterGuidance(tabs)
 	}
 	if d.deletePending {
 		return "Permanently delete excerpt?  [Enter] Delete  [Esc] Cancel"

@@ -5,6 +5,7 @@ import (
 	"image"
 	stdcolor "image/color"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -21,7 +22,7 @@ import (
 )
 
 const (
-	questJournalTabCount              = 7
+	questJournalTabCount              = 8
 	questJournalMarginX               = 0.06
 	questJournalMarginY               = 0.04
 	questJournalFooterLines           = 2
@@ -58,6 +59,8 @@ const (
 	QuestJournalExcerptsTab
 	// QuestJournalMoonstonesTab separates charted origins from observed destinations.
 	QuestJournalMoonstonesTab
+	// QuestJournalNotesTab holds the player's own notes, filed in sections.
+	QuestJournalNotesTab
 )
 
 // QuestJournalDialogConfig configures the presentation-owned journal modal.
@@ -74,6 +77,9 @@ type QuestJournalDialogConfig struct {
 	// ArchiveExcerpt is optional for read-only consumers; nil reports storage unavailable.
 	ArchiveExcerpt func(string, bool) ([]journal.Exchange, error)
 	ExcerptError   string
+	// Notes is a detached notebook; OnNotesIntent asks the scene to change it.
+	Notes         journal.NotesState
+	OnNotesIntent func(NotesIntent)
 }
 
 type questJournalLayout struct {
@@ -138,6 +144,8 @@ type QuestJournalDialog struct {
 	conversationRows       []int
 	runicReferenceOpen     bool
 	runicReference         RunicReferencePanel
+	notesView              notesState
+	tabs                   []QuestJournalTab
 
 	lastScreenWidth  int
 	lastScreenHeight int
@@ -186,6 +194,11 @@ func NewQuestJournalDialog(
 	for tab := range dialog.newEntries {
 		dialog.newEntries[tab] = append([]bool(nil), config.NewEntries[tab]...)
 	}
+	dialog.notesView.notes, dialog.notesView.onIntent = config.Notes.Normalized(), config.OnNotesIntent
+	for tab := QuestJournalChronicleTab; tab < questJournalTabCount; tab++ {
+		dialog.tabs = append(dialog.tabs, tab)
+	}
+	dialog.rebuildNoteRows()
 	dialog.refreshVisibleExcerpts("")
 	dialog.clampAllSelections()
 	dialog.ensureLayout()
@@ -204,7 +217,7 @@ func (d *QuestJournalDialog) Update() {
 	if d.handleRunicReferenceInput() {
 		return
 	}
-	if d.handleExcerptInput() {
+	if d.handleExcerptInput() || d.handleNotesInput() {
 		return
 	}
 	if d.handleDismissInput() {
@@ -351,8 +364,9 @@ func (d *QuestJournalDialog) GetDetailPageCount() int {
 
 func (d *QuestJournalDialog) switchTabBy(delta int) {
 	d.Reset()
-	next := (int(d.activeTab) + delta + questJournalTabCount) % questJournalTabCount
-	d.activeTab = QuestJournalTab(next)
+	count := len(d.tabs)
+	next := (max(0, slices.Index(d.tabs, d.activeTab)) + delta%count + count) % count
+	d.activeTab = d.tabs[next]
 	d.clampCurrentSelection()
 	d.detailPage = 0
 	d.enterTab()
@@ -381,6 +395,7 @@ func (d *QuestJournalDialog) moveSelection(delta int) {
 		return
 	}
 	d.selections[d.activeTab] = selection
+	d.notesView.status = ""
 	d.readingQuery = ""
 	d.runicReferenceOpen = false
 	d.detailPage = 0
@@ -424,6 +439,8 @@ func (d *QuestJournalDialog) currentItemCount() int {
 		return len(d.dossier.Dungeons)
 	case QuestJournalMoonstonesTab:
 		return len(d.dossier.Moonstones)
+	case QuestJournalNotesTab:
+		return len(d.notesView.rows)
 	default:
 		return 0
 	}
@@ -542,17 +559,18 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 	d.titleOutput.AppendLine().WithAlignment(etext.AlignCenter).Text("Quest Journal", DialogHeaderColor).Done()
 	d.titleOutput.DrawPanelContent(screen, d.layout.titleRect.Min, d.layout.titleRect.Dx(), etext.AlignCenter)
 
-	for index, rect := range d.layout.tabRects {
+	for _, index := range d.tabs {
+		rect := d.layout.tabRects[index]
 		textColor := DialogEmptyColor
-		if QuestJournalTab(index) == d.activeTab && !d.searching {
+		if index == d.activeTab && !d.searching {
 			textColor = pkgcolor.EGAYellow
 		}
-		d.tabOutput.SetMaxCharsPerLine(len(d.tabTitle(QuestJournalTab(index))))
+		d.tabOutput.SetMaxCharsPerLine(len(d.tabTitle(index)))
 		d.tabOutput.Reset()
 		builder := d.tabOutput.AppendLine().
 			WithAlignment(etext.AlignCenter).
-			Text(questJournalTabTitle(QuestJournalTab(index)), textColor)
-		if d.tabIsNew(QuestJournalTab(index)) {
+			Text(questJournalTabTitle(index), textColor)
+		if d.tabIsNew(index) {
 			builder.Text(" *", DialogLabelColor)
 		}
 		builder.Done()
@@ -562,6 +580,11 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 }
 
 func (d *QuestJournalDialog) drawList(screen *ebiten.Image) {
+	if d.activeTab == QuestJournalNotesTab && d.notesView.moving {
+		d.drawNotesChooser(screen)
+
+		return
+	}
 	content := d.listContentRect()
 	count := d.currentItemCount()
 	if count == 0 {
@@ -650,8 +673,8 @@ func (d *QuestJournalDialog) drawFooter(screen *ebiten.Image) {
 
 func (d *QuestJournalDialog) footerLineCount() int {
 	lines := questJournalFooterLines
-	if d.activeTab == QuestJournalExcerptsTab {
-		// Archive management needs one extra row without hiding navigation hints.
+	if d.activeTab == QuestJournalExcerptsTab || d.activeTab == QuestJournalNotesTab {
+		// Archive and notebook management need one extra row without hiding navigation hints.
 		lines++
 	}
 	if d.hasRunicExchange() {
@@ -763,6 +786,8 @@ func (d *QuestJournalDialog) detailLines() []detailLine {
 		return questJournalMoonstoneDetail(d.dossier.Moonstones[selection])
 	case QuestJournalConversationTab, QuestJournalExcerptsTab:
 		return nil // Conversation readers own their measured exchange output.
+	case QuestJournalNotesTab:
+		return d.notesDetailLines()
 	default:
 		return nil
 	}
@@ -790,6 +815,8 @@ func (d *QuestJournalDialog) listRowText(index int) string {
 		return d.dossier.Dungeons[index].Name
 	case QuestJournalMoonstonesTab:
 		return d.dossier.Moonstones[index].Phase.String()
+	case QuestJournalNotesTab:
+		return d.notesRowText(index)
 	default:
 		return ""
 	}
@@ -835,6 +862,8 @@ func questJournalTabTitle(tab QuestJournalTab) string {
 		return "Excerpts"
 	case QuestJournalMoonstonesTab:
 		return "Moonstones"
+	case QuestJournalNotesTab:
+		return "My Notes"
 	default:
 		return ""
 	}

@@ -15,7 +15,9 @@ import (
 )
 
 type journalSession struct {
-	dialog             *widgets.QuestJournalDialog
+	dialog *widgets.QuestJournalDialog
+	// child is the note editor or section-name box open over the Journal.
+	child              widgets.Widget
 	openingRevision    uint64
 	frozenMs           int64
 	closing            bool
@@ -69,6 +71,8 @@ func (g *GameScene) ShowQuestJournalDossier(dossier game_state.QuestJournalDossi
 		DeleteExcerpt:    g.deleteExcerpt,
 		ArchiveExcerpt:   g.archiveExcerpt,
 		ExcerptError:     excerptError,
+		Notes:            g.gameState.PlayerNotes(),
+		OnNotesIntent:    g.handleNotesIntent,
 	})
 	g.dialogStack.PushModalDialog(session.dialog)
 	g.journalSession = session
@@ -87,6 +91,10 @@ func (g *GameScene) closeJournalSession(session *journalSession, acknowledge boo
 	}
 	if acknowledge {
 		g.journalVisits.Acknowledge(session.openingRevision, session.dialog.VisitedTabs())
+	}
+	if session.child != nil {
+		g.dialogStack.MustRemoveWidgetInstance(session.child)
+		session.child = nil
 	}
 	g.dialogStack.MustRemoveWidgetInstance(session.dialog)
 	g.keyboard.PrepareForTransition(0)

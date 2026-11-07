@@ -95,13 +95,14 @@ func TestQuestJournalTabCycleContainsOnlyRetainedReaders(t *testing.T) {
 	configuration := testQuestJournalConfig(keyboard)
 	dialog := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
 	var titles []string
-	for range 7 {
+	for range questJournalTabCount {
 		titles = append(titles, questJournalTabTitle(dialog.activeTab))
 		pressQuestJournalKey(dialog, keyboard, ebiten.KeyTab)
 	}
-	require.Equal(t, []string{"Chronicle", "Virtues", "Shadowlords", "Dungeons", "Last Conversation", "Excerpts", "Moonstones"}, titles)
+	require.Equal(t, []string{"Chronicle", "Virtues", "Shadowlords", "Dungeons", "Last Conversation", "Excerpts",
+		"Moonstones", "My Notes"}, titles)
 	require.Equal(t, QuestJournalChronicleTab, dialog.activeTab)
-	for range 7 {
+	for range questJournalTabCount {
 		dialog.switchTabBy(-1)
 		require.NotEqual(t, "History", questJournalTabTitle(dialog.activeTab))
 	}

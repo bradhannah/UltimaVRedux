@@ -50,7 +50,9 @@ type SaveDescriptionEntryCallback func(text string, submitted bool)
 // SaveDescriptionEntryModalConfig configures optional checkpoint text and the
 // reviewed overwrite warning. Persistence remains the caller's responsibility.
 type SaveDescriptionEntryModalConfig struct {
-	Title        string
+	Title string
+	// Prompt names the field; empty keeps "Description (optional)".
+	Prompt       string
 	Notice       string
 	InitialText  string
 	Keyboard     *input.Keyboard
@@ -131,6 +133,9 @@ func newSaveDescriptionEntryModal(
 
 	modal := new(SaveDescriptionEntryModal)
 	modal.prompt = "Description (optional)"
+	if config.Prompt != "" {
+		modal.prompt = config.Prompt
+	}
 	modal.maxRunes = config.MaxRunes
 	modal.title = config.Title
 	if modal.title == "" {
