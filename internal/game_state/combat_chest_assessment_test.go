@@ -138,7 +138,7 @@ func TestCombatChestReplacementAndNestedLootStartUninspected(t *testing.T) {
 	replacement, _ := state.CombatScene.ObjectAt(position)
 	assert.Equal(t, removed.originalObjectSlot, replacement.originalObjectSlot)
 	assert.Equal(t, references.ChestUninspected, replacement.ChestAssessment())
-	assert.Equal(t, "a chest!", state.generateCombatMiscellaneousItem(position, 30, 0, 1))
+	assert.True(t, state.admitCombatChestLoot(position, references.ChestLoot{ChestValue: 30}))
 	nested, _ := state.CombatScene.ObjectAt(position)
 	assert.NotEqual(t, replacement.originalObjectSlot, nested.originalObjectSlot)
 	assert.Equal(t, references.ChestUninspected, nested.ChestAssessment())

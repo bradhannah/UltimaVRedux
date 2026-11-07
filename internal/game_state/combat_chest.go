@@ -7,125 +7,64 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-// generateCombatChestContents reproduces miscellaneous chest-loot selection and chest equipment selection from original Search/Get/Open/Jimmy rules.
-// See ref:CMD-0001.
+// generateCombatChestContents admits the shared chest-loot roll in generation
+// order and returns one reveal line per admitted object. The roll finishes
+// before admission, so a full object list still consumes every draw.
+// See ref:CMD-0009.
 func (g *GameState) generateCombatChestContents(position references.Position, maximumValue int) []string {
-	revealLines := g.generateCombatMiscellaneous(position, maximumValue)
-
-	return append(revealLines, g.generateCombatArmaments(position, maximumValue)...)
-}
-
-// The tables and loop bounds are original U5 data rather than tunable values.
-func (g *GameState) generateCombatMiscellaneous(position references.Position, maximumValue int) []string {
-	miscFrequencies := [...]int{25, 3, 17, 17, 9, 15, 7, 7}
-	miscMaximums := [...]int{10, 90, 8, 8, 2, 2, 2, 2}
 	var revealLines []string
-
-	for index := len(miscFrequencies) - 1; index >= 0; index-- {
-		frequency := miscFrequencies[index]
-		if frequency > maximumValue || frequency > g.RollDice(combatTreasureDiceSides) {
-			continue
-		}
-
-		number := g.RandomIntInRange(1, miscMaximums[index])
-		if reveal := g.generateCombatMiscellaneousItem(position, maximumValue, index, number); reveal != "" {
-			revealLines = append(revealLines, reveal)
+	for _, entry := range references.RollChestLoot(maximumValue, g.AsRandomProvider()) {
+		if g.admitCombatChestLoot(position, entry) {
+			revealLines = append(revealLines, combatChestRevealLine(entry))
 		}
 	}
 
 	return revealLines
 }
 
-func (g *GameState) generateCombatMiscellaneousItem(
-	position references.Position,
-	maximumValue, index, number int,
-) string {
-	switch index {
-	case 0:
-		treasureValue := g.RandomIntInRange(1, maximumValue)
-		if !g.CombatScene.addLootObject(NewCombatChest(
-			position,
-			treasureValue,
-			false,
-		)) {
-			return ""
-		}
+func (g *GameState) admitCombatChestLoot(position references.Position, entry references.ChestLoot) bool {
+	if entry.ChestValue != 0 {
+		return g.CombatScene.addLootObject(NewCombatChest(position, int(entry.ChestValue), false))
+	}
 
+	return g.addCombatChestLooseItem(position, entry.Item.Item, entry.Item.Quantity)
+}
+
+func combatChestRevealLine(entry references.ChestLoot) string {
+	if entry.ChestValue != 0 {
 		return "a chest!"
-	case 1:
-		quantity := combatQuantity(g.RandomIntInRange(1, maximumValue*3))
-		if !g.addCombatChestLooseItem(position, references.Gold, quantity) {
-			return ""
-		}
-
-		return "a sack of gold!"
-	case 2:
-		if !g.addCombatChestLooseItem(position, references.Potion(number-1), 1) {
-			return ""
-		}
-
+	}
+	switch item := entry.Item.Item.(type) {
+	case references.Equipment:
+		return combatArmamentRevealLine(item)
+	case references.Potion:
 		return "a potion!"
-	case 3:
-		if !g.addCombatChestLooseItem(position, references.Scroll(number-1), 1) {
-			return ""
-		}
-
+	case references.Scroll:
 		return "a scroll!"
-	case 4:
-		if !g.addCombatChestLooseItem(position, references.Key, combatQuantity(number)) {
-			return ""
-		}
-
-		return "a ring of keys!"
-	case 5:
-		if !g.addCombatChestLooseItem(position, references.Gem, combatQuantity(number)) {
-			return ""
-		}
-
-		return "a gem!"
-	case 6:
-		if !g.addCombatChestLooseItem(position, references.Torches, combatQuantity(number)) {
-			return ""
-		}
-
-		return "some torches!"
-	case 7:
-		if !g.addCombatChestLooseItem(position, references.Food, combatQuantity(number)) {
-			return ""
-		}
-
-		return "some food!"
+	case references.Provision:
+		return combatProvisionRevealLine(item)
 	default:
-		panic("combat chest selected an unknown miscellaneous item")
+		panic("combat chest generated an unknown item type")
 	}
 }
 
-func (g *GameState) generateCombatArmaments(position references.Position, maximumValue int) []string {
-	armamentFrequencies := [...]int{
-		10, 10, 15, 20,
-		10, 15, 20, 28, 0xff,
-		15, 15, 20, 20, 20, 24, 0xff,
-		5, 10, 10, 10, 10, 10, 10,
-		10, 15, 15, 15, 10, 15, 10,
-		20, 20, 20, 20, 20, 0xff, 23,
-		23, 23, 0xff, 0xff, 0xff,
-		23, 23, 23,
-		23, 15, 0xff,
+func combatProvisionRevealLine(provision references.Provision) string {
+	switch provision {
+	case references.Gold:
+		return "a sack of gold!"
+	case references.Key:
+		return "a ring of keys!"
+	case references.Gem:
+		return "a gem!"
+	case references.Torches:
+		return "some torches!"
+	case references.Food:
+		return "some food!"
+	case references.NoProvision, references.SkullKeys:
+		panic("combat chest generated a provision outside the loot table")
+	default:
+		panic("combat chest generated an unknown provision")
 	}
-	var revealLines []string
-	for range maximumValue/2 + 1 {
-		index := g.RandomIntInRange(0, len(armamentFrequencies)-1)
-		frequency := armamentFrequencies[index]
-		if frequency > maximumValue || frequency > g.RollDice(combatTreasureDiceSides) {
-			continue
-		}
-		equipment := references.Equipment(index)
-		if g.addCombatChestLooseItem(position, equipment, 1) {
-			revealLines = append(revealLines, combatArmamentRevealLine(equipment))
-		}
-	}
-
-	return revealLines
 }
 
 func combatArmamentRevealLine(equipment references.Equipment) string {
