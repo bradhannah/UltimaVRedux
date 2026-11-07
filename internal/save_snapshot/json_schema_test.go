@@ -43,9 +43,9 @@ func compileNativeSaveSchemaFile(t *testing.T, filename string) (*jsonschema.Sch
 	compiler.DefaultDraft(jsonschema.Draft2020)
 	compiler.AssertFormat()
 	// Frozen e2 schemas form the $ref chain that the current schema reuses.
-	formatVersion := CurrentVersion
-	if filename == fmt.Sprintf("native-save-e2-s%d.schema.json", MinimumVersion) {
-		formatVersion = MinimumVersion
+	var formatVersion int
+	if _, scanErr := fmt.Sscanf(filename, "native-save-e2-s%d.schema.json", &formatVersion); scanErr != nil {
+		t.Fatalf("schema filename %q has no snapshot version: %v", filename, scanErr)
 	}
 	registerJournalSchemaFormats(compiler, formatVersion)
 	var dependencies []string

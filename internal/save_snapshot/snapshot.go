@@ -6,7 +6,7 @@ import "github.com/bradhannah/UltimaVRedux/internal/journal"
 
 const (
 	// CurrentVersion is the native snapshot schema version.
-	CurrentVersion = 25
+	CurrentVersion = 26
 	// MinimumVersion is the oldest native snapshot schema this build promotes.
 	// It shipped in v0.1.0-preview.1; older native saves are unsupported.
 	MinimumVersion = 24
@@ -56,6 +56,7 @@ type SaveSnapshot struct {
 	Presentation            journal.Presentation                `json:"presentation"`
 	LastConversation        journal.Conversation                `json:"lastConversation"`
 	Excerpts                journal.Excerpts                    `json:"excerpts"`
+	Notes                   journal.NotesState                  `json:"notes"`
 	DungeonJournal          [8]journal.DungeonObservation       `json:"dungeonJournal"`
 	MoonstoneJournal        [8]journal.MoonstoneObservation     `json:"moonstoneJournal"`
 	AtlasLandmarks          []journal.AtlasLandmarkObservation  `json:"atlasLandmarks"`

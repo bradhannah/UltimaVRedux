@@ -211,11 +211,9 @@ func Decode(data []byte) (Envelope, error) {
 			return Envelope{}, fmt.Errorf("%w: decode JSON: %w", ErrInvalidEnvelope, err)
 		}
 	} else {
-		var previous saveSnapshotV24
-		if err = decodeRequiredJSON(encoded.Snapshot, &previous); err != nil {
-			return Envelope{}, fmt.Errorf("%w: decode version %d snapshot: %w", ErrInvalidEnvelope, version, err)
+		if snapshot, err = decodePreviousSnapshot(encoded.Snapshot, version); err != nil {
+			return Envelope{}, err
 		}
-		snapshot = previous.validationView()
 		if issues := validateSnapshot(snapshot, version); len(issues) != 0 {
 			return Envelope{}, &ValidationError{Issues: issues}
 		}
@@ -234,6 +232,29 @@ func Decode(data []byte) (Envelope, error) {
 	}
 
 	return envelope, nil
+}
+
+// decodePreviousSnapshot decodes a frozen older format into the current shape.
+// Members the older format lacked keep their zero value.
+func decodePreviousSnapshot(data json.RawMessage, version int) (SaveSnapshot, error) {
+	switch version {
+	case 24:
+		var previous saveSnapshotV24
+		if err := decodeRequiredJSON(data, &previous); err != nil {
+			return SaveSnapshot{}, fmt.Errorf("%w: decode version %d snapshot: %w", ErrInvalidEnvelope, version, err)
+		}
+
+		return previous.validationView(), nil
+	case 25:
+		var previous saveSnapshotV25
+		if err := decodeRequiredJSON(data, &previous); err != nil {
+			return SaveSnapshot{}, fmt.Errorf("%w: decode version %d snapshot: %w", ErrInvalidEnvelope, version, err)
+		}
+
+		return previous.validationView(), nil
+	default:
+		return SaveSnapshot{}, &UnsupportedVersionError{Version: version}
+	}
 }
 
 func validateSnapshotJSONMembers(snapshotFields map[string]json.RawMessage, reduxArrayMembers ...string) error {

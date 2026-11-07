@@ -400,6 +400,7 @@ func showPlayerSaveDescriptionEditor(
 	var editor *widgets.SaveDescriptionEntryModal
 	editor = widgets.NewSaveDescriptionEntryModal(widgets.SaveDescriptionEntryModalConfig{
 		Title:       title + " " + playerSaveSlotName(summary.Slot),
+		Prompt:      "",
 		Notice:      playerSaveDescriptionNotice(summary, playthroughID),
 		InitialText: playerSaveDescriptionInitial(summary, playthroughID, draft),
 		Keyboard:    keyboard, Validate: validatePlayerSaveDescriptionInput,

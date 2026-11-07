@@ -598,9 +598,10 @@ not establish native OS runtime acceptance.
 ## QuestJournalDialog
 
 The Journal is a modal over a detached opening snapshot, with Chronicle, Virtues,
-Shadowlords, Dungeons, Last Conversation, Excerpts, and Moonstones tabs. The scene
-owns the [Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal,
-visit acknowledgements, and excerpt persistence. Browsing never mutates gameplay.
+Shadowlords, Dungeons, Last Conversation, Excerpts, Moonstones and My Notes tabs,
+in two header rows of four. The scene owns the
+[Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal, visit
+acknowledgements, and excerpt and note persistence. Browsing never mutates gameplay.
 
 ### Navigation And New Entries
 
@@ -667,7 +668,7 @@ Rows, search-result titles, and the persistent detail heading use the actual
 `0x30 + phase` Runic glyph through mixed-font `text.Output`; full names are
 measured to fit, never ellipsized or wrapped away in one-row buffers. Selected
 glyphs use the selected text foreground, preserving the New Moon outline against
-both backgrounds. Moonstones occupies the second measured header row.
+both backgrounds. Moonstones and My Notes occupy the second measured header row.
 
 Moonstone details distinguish carried, current last-observed placement, and
 unmeasured states. Coordinates appear only from public current surveyed records,
@@ -679,6 +680,79 @@ Carried with no destination; an unmeasured reburial has no pin or old-coordinate
 fallback. Neither widgets nor search receive private recognition sites or observer contexts. See
 [moonstone knowledge](../gamefacts/MOONSTONE_LOCATIONS.md#moon-0006) and
 [surveys](../gamefacts/MOONSTONE_LOCATIONS.md#moon-0008).
+
+### My Notes
+
+My Notes is the player's own notebook, last in the tab order so Shift+Tab reaches
+it from Chronicle. Game state owns the notebook and saves it with each checkpoint
+(see [Snapshot 26](../details/SAVE_SNAPSHOT_SCHEMA.md#snapshot-26-player-notes));
+the dialog shows a detached copy and sends every change to the scene as a
+`NotesIntent`. The scene applies it through `GameState` and answers with
+`NotesChanged` (or `MapNotesChanged` for a Map note), which rebuilds the rows,
+selection, status line and search entries.
+
+- **Sections.** Every notebook starts with To Do and Places; players add up to 16
+  sections in all, named in 1–14 printable characters, unique ignoring case. To Do
+  can be renamed but not deleted; Places can be neither. Headings show a fold mark
+  and a note count; whether a section is folded is saved.
+- **Rows.** Notes are indented under their section, newest first by recorded game
+  time. Ticked notes say `[Done]` before the title, as archived excerpts say
+  `[Archived]`, and sink below the rest of their section. An untitled note lists
+  its first line.
+- **Show Done.** Notes already done when the Journal opens are hidden; a note
+  ticked during the visit stays in view so a mistaken tick is easy to undo. H
+  toggles them from any row, and the footer says `[H] Show Done: Off (N hidden)`
+  or `On` while any exist. The setting is not saved: each visit starts hidden.
+  Search still finds hidden notes, and opening one shows it.
+- **Map notes in Places.** Places also lists the Traveller's Map notes, marked
+  `[Map]`, in the same newest-first order; the heading count includes them. They
+  stay stored once, as Map notes. E or Enter edits one in the Map's own editor and
+  limits, D or Delete deletes it after the footer asks, and M shows it on the Map.
+  They stay in Places and are never done, so S and X explain that in words.
+- **Map links.** A new note records where it can open the Map: the settlement or
+  dungeon it was written in, or outdoors the exact spot a sextant could measure at
+  that moment (night, sextant carried, the party's own square). The Map never learns
+  an unmeasured position, so a note written outdoors without a reading,
+  underground or in a battle away from a settlement has no link, and its footer
+  offers no M. A linked spot's coordinates appear in the details.
+- **The Map from a note.** M opens the Traveller's Map as a read-only child modal
+  over the Journal, so the Journal's pause continues. `AtlasDialog.Focus` shows the
+  entry's category, selects it and centres on it; zoom stays the player's choice.
+  A Journal note's spot joins the dossier for that one view, labelled
+  `Journal note`; a settlement or dungeon selects the place's own entry, which the
+  Map locates only once it is measured; a place the Map does not know yet stays in
+  the Journal with a status line. Esc, F6 or Shift+M returns to the same row.
+- **Keys on a note.** N writes a new note in the same section, E or Enter edits, M
+  opens the Map when the note is linked, X ticks or unticks, S moves it with an
+  inline section chooser, and D or Delete deletes after the footer asks. Left
+  folds its section.
+- **Keys on a heading.** Left/Right fold, N writes in that section, R renames, and D
+  deletes a player-made section after asking; its notes move to To Do. Shift+N adds
+  a section from any row. Refusals (renaming Places, deleting a built-in section, a
+  full notebook of 512 notes) appear as a status line in words.
+- **Writing.** N and E open the Map note editor with Journal wording: an optional
+  title of up to 32 characters, text of up to 2,000 with paragraphs, and Section,
+  Recorded and Place rows. Recorded is the game date and time; Place is the Save
+  screen's label for the party's real location, so combat, camping and shrines name
+  the place they were entered from. The editor caches wrapped lines, because
+  re-wrapping 2,000 characters every frame is too slow. Section names use the
+  mixed-case one-line entry box with a Name prompt.
+- **Search.** `/` indexes every note, including those in folded sections and hidden
+  done notes, by title, text, section and place, plus Map notes by label and
+  description. Opening a result unfolds its section and selects it.
+
+### Simple Notes Mode
+
+Configure → Gameplay → Simple Notes Mode (default Off) is for players who keep
+their own notes and nothing more. When it is on, My Notes is the Journal's only
+tab, with a grey "Simple Notes Mode" line where the second header row would be;
+Tab does nothing and its hint is dropped, and search covers My Notes only. Chronicle
+is not acknowledged when the Journal opens, so new-entry stars survive until the
+player actually sees the hidden tabs. "Journal updated." is skipped in the main
+Output, and conversations neither show nor accept Tab Keep excerpt. The game still
+records everything and deletes nothing; turning the mode off shows every tab, up
+to date. The preference belongs to the installation, not the save, and the
+Traveller's Map is unchanged.
 
 ### Main Output Compatibility
 

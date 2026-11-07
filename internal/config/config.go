@@ -106,6 +106,8 @@ type GameplayConfiguration struct {
 	ConfirmQuickSave       bool
 	ShowCombatHPBars       bool
 	MaxVisibleActionPopups int
+	// SimpleNotesMode shows only My Notes in the Journal; nothing else is lost.
+	SimpleNotesMode bool
 }
 
 // ConfigurationSettings is the complete player-facing Configuration transaction.
@@ -690,6 +692,7 @@ func setGameplayConfiguration(configuration *viper.Viper, gameplay GameplayConfi
 	configuration.Set(gameplayConfirmQuickSaveKey, gameplay.ConfirmQuickSave)
 	configuration.Set(gameplayShowCombatHPBarsKey, gameplay.ShowCombatHPBars)
 	configuration.Set(gameplayMaxActionPopupsKey, gameplay.MaxVisibleActionPopups)
+	configuration.Set(gameplaySimpleNotesModeKey, gameplay.SimpleNotesMode)
 	configuration.Set(gameplayBatchMerchantTheftKey, gameplay.BatchMerchantTheft)
 	configuration.Set(
 		"Gameplay.Combat.AllowRepeatedMonsterDivision",

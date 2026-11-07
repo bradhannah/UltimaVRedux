@@ -28,6 +28,7 @@ func TestNativeConversationArchiveMemberCodecSchemaAgreement(t *testing.T) {
 			body["version"] = version
 			if version < CurrentVersion {
 				delete(body, "excerpts")
+				delete(body, "notes")
 			}
 			schema, _ := compileNativeSaveSchemaFile(t, fmt.Sprintf("native-save-e2-s%d.schema.json", version))
 			data, err := json.Marshal(document)

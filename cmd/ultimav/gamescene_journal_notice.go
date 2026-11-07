@@ -96,6 +96,9 @@ func (g *GameScene) updateJournalNoticeAfterFrame(blockedAtStart bool) {
 
 func (g *GameScene) writeKnowledgeNotice(change journal.AtlasChange) {
 	if change.EntryKey == "" {
+		if g.gameConfig.GetSimpleNotesMode() {
+			return // The update is recorded, but it belongs to tabs Simple Notes Mode hides.
+		}
 		g.output.AppendLine().Text("Journal updated.", widgets.DialogLabelColor).Done()
 		g.output.AppendLine().Text("[Shift+J]", widgets.DialogControlKeyColor).
 			Text(" View journal", widgets.DialogControlHintColor).Done()

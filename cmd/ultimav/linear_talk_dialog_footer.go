@@ -59,16 +59,19 @@ func (d *LinearTalkDialog) conversationFooterGuidance(width int) string {
 
 		return notice + "\n[Tab] Retry"
 	}
-	keep := "[Tab] Keep excerpt"
+	keep := "[Tab] Keep excerpt   "
 	if d.excerptNotice == "Excerpt kept" {
-		keep = "[Tab] Excerpt kept"
+		keep = "[Tab] Excerpt kept   "
+	}
+	if d.gameScene.gameConfig.GetSimpleNotesMode() {
+		keep = "" // Excerpts is hidden in Simple Notes Mode.
 	}
 	if d.historyPanel != nil {
-		return "[Up/Down] Exchange   [Shift+Up/Down/PgUp/PgDn] Read   " + keep + "   [Esc] Back"
+		return "[Up/Down] Exchange   [Shift+Up/Down/PgUp/PgDn] Read   " + keep + "[Esc] Back"
 	}
 
 	// History is left out so these hints fit one row; command help lists PgUp.
-	return acknowledge + keep + "   [Shift+J] Journal"
+	return acknowledge + keep + "[Shift+J] Journal"
 }
 
 func (d *LinearTalkDialog) drawConversationFooter(screen *ebiten.Image, layout linearTalkDialogLayout) {

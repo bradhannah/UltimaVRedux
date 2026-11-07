@@ -21,8 +21,9 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 		assert.True(t, config.GetConfirmQuickSave())
 		assert.True(t, config.GetShowCombatHPBars())
 		assert.Equal(t, 3, config.GetMaxVisibleActionPopups())
+		assert.False(t, config.GetSimpleNotesMode(), "Simple Notes Mode defaults to Off")
 	}
-	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n")
+	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
 	require.NoError(t, configuration.UpdateSaveFile())
 	loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 	require.NoError(t, err)
@@ -30,6 +31,7 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 	assert.False(t, loaded.GetConfirmQuickSave())
 	assert.False(t, loaded.GetShowCombatHPBars())
 	assert.Zero(t, loaded.GetMaxVisibleActionPopups())
+	assert.True(t, loaded.GetSimpleNotesMode())
 }
 
 func TestQoLEveryNumericValueRoundTrips(t *testing.T) {

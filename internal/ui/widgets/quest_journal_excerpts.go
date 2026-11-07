@@ -88,6 +88,16 @@ func (d *QuestJournalDialog) emptyListText() string {
 func (d *QuestJournalDialog) journalRowColors(
 	tab QuestJournalTab, row int, selected bool,
 ) (stdcolor.Color, stdcolor.Color) {
+	if tab == QuestJournalNotesTab {
+		if selected {
+			return DialogSelectedText, DialogSelectedBackground
+		}
+		if row >= 0 && row < len(d.notesView.rows) {
+			return d.notesRowColor(row), DialogSelectedBackground
+		}
+
+		return DialogItemNameColor, DialogSelectedBackground
+	}
 	archived := tab == QuestJournalExcerptsTab && d.excerpts[d.visibleExcerpts[row]].Archived
 	if selected {
 		if archived {

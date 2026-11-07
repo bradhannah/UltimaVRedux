@@ -71,6 +71,12 @@ a Look observation at Guardians. Imported `atlasLandmarks` remains empty and
 all unmeasured surveys retain `flexible: false`. These are quiet native defaults,
 not inferred acquisition events or new conversion warnings.
 
+### Snapshot 26 Notes Default
+
+Original saves have no player notebook. Conversion writes the zero `notes` value,
+which the game shows as a fresh My Notes notebook. See
+[player notes](SAVE_SNAPSHOT_SCHEMA.md#snapshot-26-player-notes).
+
 ### Snapshot 25 Excerpt Defaults
 
 Original saves do not contain Redux kept excerpts. Conversion initializes an

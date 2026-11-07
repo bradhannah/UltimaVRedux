@@ -251,6 +251,7 @@ type GameState struct {
 	atlasNotes              journal.AtlasNotesState
 	atlasFleet              journal.AtlasFleetState
 	atlasNoteSession        *atlasNoteSession
+	playerNotes             journal.NotesState
 	moonstoneJournal        [8]journal.MoonstoneObservation
 
 	// Criminal status tracking - guards arrest criminals instead of extortion

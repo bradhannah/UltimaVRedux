@@ -18,6 +18,7 @@ func (g *GameState) capturePersonalSnapshot(snapshot *save_snapshot.SaveSnapshot
 	if g.atlasNotes.Records != nil && len(g.atlasNotes.Records) == 0 {
 		snapshot.AtlasNotes.Records = g.atlasNotes.Records[:0:0]
 	}
+	snapshot.Notes = g.CapturePlayerNotes()
 	snapshot.AtlasFleet = g.CaptureAtlasFleet()
 	snapshot.CodexRevelationComplete = g.CodexRevelationComplete
 	for i, record := range g.BasementChestHistory {
@@ -45,6 +46,9 @@ func (g *GameState) restorePersonalSnapshot(snapshot save_snapshot.SaveSnapshot)
 	}
 	if snapshot.AtlasNotes.Records != nil && len(snapshot.AtlasNotes.Records) == 0 {
 		g.atlasNotes.Records = snapshot.AtlasNotes.Records[:0:0]
+	}
+	if err := g.RestorePlayerNotes(snapshot.Notes); err != nil {
+		return fmt.Errorf("hydrating player notes: %w", err)
 	}
 	if err := g.RestoreAtlasFleet(snapshot.AtlasFleet); err != nil {
 		return fmt.Errorf("hydrating atlas fleet: %w", err)

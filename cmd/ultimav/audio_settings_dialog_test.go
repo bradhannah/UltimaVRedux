@@ -235,8 +235,9 @@ func TestConfigurationDialogUsesPreferredCardWidthAndEqualTabs(t *testing.T) {
 
 	assert.Equal(t, int(math.Round(audioSettingsPreferredWidthPercent*1280)), dialog.layout.cardRect.Dx())
 	naturalMetrics := dialog.measureLayout(dialog.layout.pixelUnit, dialog.layout.bodyRect.Dx())
+	// The preferred height is capped by the 720-pixel screen; the Gameplay list scrolls.
 	assert.Equal(t,
-		int(math.Ceil(float64(naturalMetrics.cardHeight)*audioSettingsPreferredHeightScale)),
+		min(int(math.Ceil(float64(naturalMetrics.cardHeight)*audioSettingsPreferredHeightScale)), 720),
 		dialog.layout.cardRect.Dy(),
 	)
 	require.Len(t, dialog.layout.tabRects, 3)

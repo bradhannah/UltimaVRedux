@@ -18,7 +18,7 @@ const testPlaythroughID = "0123456789abcdef0123456789abcdef"
 func TestEnvelopeTwoMetadataCombinationsRoundTripAndMatchSchema(t *testing.T) {
 	t.Parallel()
 	require.Equal(t, 2, CurrentEnvelopeVersion)
-	require.Equal(t, 25, CurrentVersion)
+	require.Equal(t, 26, CurrentVersion)
 	require.Equal(t, 80, MaxUserDescriptionRunes)
 	compiled, document := compileCurrentNativeSaveSchema(t)
 	walkJSONSchema(t, document, func(reference string) {
@@ -35,7 +35,9 @@ func TestEnvelopeTwoMetadataCombinationsRoundTripAndMatchSchema(t *testing.T) {
 			strings.HasPrefix(reference, "native-save-e2-s23.schema.json#/$defs/") ||
 			strings.HasPrefix(reference, "native-save-e2-s23.schema.json#/properties/") ||
 			strings.HasPrefix(reference, "native-save-e2-s24.schema.json#/$defs/") ||
-			strings.HasPrefix(reference, "native-save-e2-s24.schema.json#/properties/"), "unapproved reference %q", reference)
+			strings.HasPrefix(reference, "native-save-e2-s24.schema.json#/properties/") ||
+			strings.HasPrefix(reference, "native-save-e2-s25.schema.json#/$defs/") ||
+			strings.HasPrefix(reference, "native-save-e2-s25.schema.json#/properties/"), "unapproved reference %q", reference)
 	})
 	for _, identity := range []string{"", testPlaythroughID} {
 		for _, note := range []string{"", "  About to go to Doom!  ", strings.Repeat("\u754c", 80), strings.Repeat("\U0001f409", 80), "e\u0301"} {

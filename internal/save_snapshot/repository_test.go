@@ -130,6 +130,7 @@ func TestRepositoryPromotesMinimumVersionWithCanonicalRevision(t *testing.T) {
 	body := document["snapshot"].(map[string]any)
 	body["version"] = MinimumVersion
 	delete(body, "excerpts")
+	delete(body, "notes")
 	data, err := json.Marshal(document)
 	if err != nil {
 		t.Fatal(err)

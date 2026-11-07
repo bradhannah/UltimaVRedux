@@ -1,0 +1,332 @@
+package widgets
+
+import (
+	"fmt"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/stretchr/testify/require"
+
+	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/internal/journal"
+	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/pkg/input"
+)
+
+func notesTestNotebook(t *testing.T) journal.NotesState {
+	t.Helper()
+	at := journal.GameTime{Year: 139, Month: 4, Day: 12, Hour: 9, Minute: 15}
+	notes := journal.DefaultNotes()
+	notes.Sections = append(notes.Sections, journal.NoteSection{ID: 3, Name: "Clues", Folded: true})
+	notes.LastSectionID, notes.LastNoteID = 3, 3
+	notes.Notes = []journal.NoteRecord{
+		{ID: 1, SectionID: 1, Title: "Buy sextant", Text: "", Place: "Minoc", RecordedAt: at, Done: true},
+		{ID: 2, SectionID: 1, Title: "", Text: "Keys and torches\nThe guild has both.", Place: "Minoc", RecordedAt: at},
+		{ID: 3, SectionID: 3, Title: "Hermit's riddle", Text: "Watch the moongates at night.", Place: "Yew", RecordedAt: at},
+	}
+	require.NoError(t, journal.ValidateNotes(notes))
+
+	return notes
+}
+
+func notesListRows(dialog *QuestJournalDialog) []string {
+	var rows []string
+	for index := range dialog.currentItemCount() {
+		rows = append(rows, dialog.listRowText(index))
+	}
+
+	return rows
+}
+
+func TestMyNotesTabSectionsKeysSearchAndSimpleMode(t *testing.T) {
+	setQuestJournalTestResolution(t, 1280, 720)
+	held := map[ebiten.Key]bool{}
+	keyboard := input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return held[key] })
+	var intents []NotesIntent
+	configuration := testQuestJournalConfig(keyboard)
+	configuration.Notes = notesTestNotebook(t)
+	configuration.OnNotesIntent = func(intent NotesIntent) { intents = append(intents, intent) }
+	dialog := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
+	press := func(target *QuestJournalDialog, key ebiten.Key, shift bool) {
+		keyboard.SetAllowKeyPressImmediately()
+		held[key], held[ebiten.KeyShift] = true, shift
+		target.Update()
+		delete(held, key)
+		delete(held, ebiten.KeyShift)
+		keyboard.ClearFrameConsumption()
+	}
+
+	// My Notes is last, so Shift+Tab reaches it from Chronicle in one press.
+	press(dialog, ebiten.KeyTab, true)
+	require.Equal(t, QuestJournalNotesTab, dialog.activeTab)
+	require.Equal(t, []string{"- TO DO (2)", "  Keys and torches", "- PLACES (0)", "+ CLUES (1)"},
+		notesListRows(dialog), "notes done before this visit are hidden; folded sections hide their notes")
+	require.Contains(t, dialog.footerGuidance(), "[H] Show Done: Off (1 hidden)")
+	press(dialog, ebiten.KeyH, false)
+	require.Equal(t, []string{"- TO DO (2)", "  Keys and torches", "  [Done] Buy sextant", "- PLACES (0)", "+ CLUES (1)"},
+		notesListRows(dialog), "H shows them; newest first, ticked notes sink")
+	require.Contains(t, dialog.footerGuidance(), "[H] Show Done: On")
+
+	// Keys on a note only ask the scene; the scene owns every change.
+	press(dialog, ebiten.KeyDown, false)
+	for _, key := range []ebiten.Key{ebiten.KeyX, ebiten.KeyE, ebiten.KeyN} {
+		press(dialog, key, false)
+	}
+	press(dialog, ebiten.KeyN, true)
+	press(dialog, ebiten.KeyS, false)
+	require.Contains(t, dialog.footerGuidance(), "[Enter] Move")
+	press(dialog, ebiten.KeyDown, false)
+	press(dialog, ebiten.KeyDown, false)
+	press(dialog, ebiten.KeyEnter, false)
+	press(dialog, ebiten.KeyD, false)
+	require.Contains(t, dialog.footerGuidance(), "Permanently delete this note?")
+	press(dialog, ebiten.KeyEnter, false)
+	require.Equal(t, []NotesIntent{
+		{Action: NotesToggleDone, NoteID: 2, SectionID: 1, Folded: false},
+		{Action: NotesEdit, NoteID: 2, SectionID: 1, Folded: false},
+		{Action: NotesNew, NoteID: 0, SectionID: 1, Folded: false},
+		{Action: NotesNewSection, NoteID: 0, SectionID: 0, Folded: false},
+		{Action: NotesMove, NoteID: 2, SectionID: 3, Folded: false},
+		{Action: NotesDelete, NoteID: 2, SectionID: 1, Folded: false},
+	}, intents)
+
+	// Headings: Places keeps its name, built-ins can't be deleted, own sections fold and delete after asking.
+	intents = nil
+	press(dialog, ebiten.KeyEnd, false)
+	press(dialog, ebiten.KeyUp, false)
+	press(dialog, ebiten.KeyR, false)
+	require.Contains(t, strings.Join(detailValues(dialog), " "), "Places keeps its name.")
+	press(dialog, ebiten.KeyEnd, false)
+	press(dialog, ebiten.KeyRight, false)
+	press(dialog, ebiten.KeyR, false)
+	press(dialog, ebiten.KeyD, false)
+	require.Contains(t, dialog.footerGuidance(), "Delete section Clues? Its 1 notes move to To Do.")
+	press(dialog, ebiten.KeyEscape, false)
+	require.False(t, dialog.IsDismissed(), "Esc cancels only the confirmation")
+	require.Equal(t, []NotesIntent{
+		{Action: NotesFold, NoteID: 0, SectionID: 3, Folded: false},
+		{Action: NotesRenameSection, NoteID: 0, SectionID: 3, Folded: false},
+	}, intents)
+
+	// The scene's answer refreshes the list, selects the note and explains the result.
+	updated := notesTestNotebook(t)
+	updated.Sections[2].Folded = false
+	dialog.NotesChanged(updated, 3, 0, "Note saved.")
+	require.Equal(t, "  Hermit's riddle", dialog.listRowText(dialog.selections[QuestJournalNotesTab]))
+	require.Equal(t, "Note saved.", detailValues(dialog)[0])
+
+	// Search reaches a note in a folded section, unfolds it and selects it.
+	intents = nil
+	dialog.NotesChanged(notesTestNotebook(t), 0, 1, "")
+	dialog.switchTabBy(1)
+	dialog.beginSearch()
+	dialog.setSearchQuery("moongates")
+	require.Len(t, dialog.searchResults, 1)
+	dialog.openSearchResult()
+	require.Equal(t, QuestJournalNotesTab, dialog.activeTab)
+	require.Equal(t, "  Hermit's riddle", dialog.listRowText(dialog.selections[QuestJournalNotesTab]))
+	require.Equal(t, []NotesIntent{{Action: NotesFold, NoteID: 3, SectionID: 3, Folded: false}}, intents)
+
+	// Every row kind's footer fits its reserved rows at every supported size.
+	sizes := append(config.SupportedWindowResolutions(), config.ScreenResolution{X: 320, Y: 200})
+	for _, size := range sizes {
+		setQuestJournalTestResolution(t, size.X, size.Y)
+		dialog.ensureLayout()
+		for row := range dialog.currentItemCount() {
+			dialog.selections[QuestJournalNotesTab] = row
+			rows := packedFooterRows(dialog.font, dialog.footerGuidance(), dialog.footerContentRect().Dx())
+			require.LessOrEqual(t, len(rows), dialog.footerLineCount(), "%dx%d row %d", size.X, size.Y, row)
+		}
+	}
+	setQuestJournalTestResolution(t, 1280, 720)
+	dialog.ensureLayout()
+	writeNotesReview(t, dialog, "my-notes")
+
+	// Simple Notes Mode: one tab, nothing else searchable, Chronicle not acknowledged unseen.
+	configuration.NotesOnly = true
+	simple := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
+	require.Equal(t, QuestJournalNotesTab, simple.activeTab)
+	press(simple, ebiten.KeyTab, false)
+	require.Equal(t, QuestJournalNotesTab, simple.activeTab)
+	require.NotContains(t, simple.footerGuidance(), "Tab/Shift+Tab")
+	simple.beginSearch()
+	simple.setSearchQuery("truth")
+	require.Empty(t, simple.searchResults, "the Virtues entry is still recorded, just not shown")
+	simple.leaveSearch()
+	require.Equal(t, [3]bool{}, simple.VisitedTabs())
+	writeNotesReview(t, simple, "my-notes-simple-mode")
+}
+
+func detailValues(dialog *QuestJournalDialog) []string {
+	var values []string
+	for _, line := range dialog.detailLines() {
+		values = append(values, line.value)
+	}
+
+	return values
+}
+
+func writeNotesReview(t *testing.T, dialog *QuestJournalDialog, name string) {
+	t.Helper()
+	screen := ebiten.NewImage(1280, 720)
+	t.Cleanup(screen.Deallocate)
+	screen.Fill(ucolor.EGABlack)
+	dialog.Draw(screen)
+	writeBatchWidgetReview(t, screen, name)
+}
+
+func TestNoteEditorUsesJournalWordingAndAcceptsUntitledNotes(t *testing.T) {
+	setQuestJournalTestResolution(t, 1280, 720)
+	var saved []string
+	editor := NewAtlasNoteEditor(AtlasNoteEditorConfig{Keyboard: newWidgetTestKeyboard(0), Cancel: func() {},
+		Submit: func(title, text string) error {
+			saved = append(saved, title, text)
+
+			return nil
+		},
+		Text: &NoteEditorText{Heading: "NEW NOTE",
+			Info: [2][]EditorInfo{{{Label: "Section", Value: "To Do"}},
+				{{Label: "Recorded", Value: "4-12-139 09:15"}, {Label: "Place", Value: "Britain"}}},
+			Captions: [2]string{"Title (optional)", "Text"},
+			Limits:   [2]int{journal.MaxNoteTitleRunes, journal.MaxNoteTextRunes},
+			Initial:  [2]string{"", strings.Repeat("Ask Iolo about the Shards. ", 80)[:journal.MaxNoteTextRunes]},
+			Validate: journal.ValidateNoteText}})
+	require.Equal(t, "Title (optional)", editor.fieldCaption(0))
+	require.Equal(t, journal.MaxNoteTextRunes, editor.fieldLimit(1))
+	editor.focus = 1
+	require.False(t, editor.validFieldText(string(editor.fields[1])+"x"), "2,000 characters is the limit")
+	require.Equal(t, fmt.Sprintf("This field allows at most %d characters.", journal.MaxNoteTextRunes), editor.message)
+	screen := ebiten.NewImage(1280, 720)
+	t.Cleanup(screen.Deallocate)
+	editor.Draw(screen)
+	writeBatchWidgetReview(t, screen, "note-editor")
+	editor.submit()
+	require.Equal(t, []string{"", string(editor.fields[1])}, saved, "an untitled note saves")
+
+	mapEditor := NewAtlasNoteEditor(AtlasNoteEditorConfig{Keyboard: newWidgetTestKeyboard(0), Cancel: func() {},
+		Submit: func(string, string) error { return nil }})
+	require.Equal(t, "Map label", mapEditor.fieldCaption(0), "without note wording the Map editor is unchanged")
+	require.Equal(t, journal.MaxAtlasNoteDescriptionRunes, mapEditor.fieldLimit(1))
+}
+
+func TestMyNotesPlacesListsMapNotesAndHidesDoneNotesOnOpening(t *testing.T) {
+	setQuestJournalTestResolution(t, 1280, 720)
+	held := map[ebiten.Key]bool{}
+	keyboard := input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return held[key] })
+	var intents []NotesIntent
+	early, middle, late := journal.GameTime{Year: 139, Month: 4, Day: 1, Hour: 9, Minute: 0},
+		journal.GameTime{Year: 139, Month: 4, Day: 2, Hour: 9, Minute: 0}, journal.GameTime{Year: 139, Month: 4, Day: 3, Hour: 9, Minute: 0}
+	notes := journal.DefaultNotes()
+	notes.LastNoteID = 3
+	notes.Notes = []journal.NoteRecord{
+		{ID: 1, SectionID: journal.NoteSectionToDo, Title: "Old errand", RecordedAt: early, Done: true},
+		{ID: 2, SectionID: journal.NoteSectionToDo, Title: "Buy torches", RecordedAt: early},
+		{ID: 3, SectionID: journal.NoteSectionPlaces, Title: "Hermit hut", Text: "North of Yew.", RecordedAt: middle,
+			Site: &journal.SiteLocation{Map: 0, X: 40, Y: 30}},
+	}
+	require.NoError(t, journal.ValidateNotes(notes))
+	mapNotes := []journal.AtlasNoteRecord{
+		{ID: 7, Position: journal.SiteLocation{X: 10, Y: 20}, Label: "Old ruin", Description: "Skeletons.", RecordedAt: early},
+		{ID: 8, Position: journal.SiteLocation{X: 90, Y: 80}, Label: "Ferry", Description: "Boats wait here.", RecordedAt: late},
+	}
+	configuration := testQuestJournalConfig(keyboard)
+	configuration.Notes, configuration.MapNotes = notes, mapNotes
+	configuration.OnNotesIntent = func(intent NotesIntent) { intents = append(intents, intent) }
+	dialog := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
+	dialog.switchTabBy(-1)
+	press := func(key ebiten.Key) {
+		keyboard.SetAllowKeyPressImmediately()
+		held[key] = true
+		dialog.Update()
+		delete(held, key)
+		keyboard.ClearFrameConsumption()
+	}
+	selectRow := func(text string) {
+		index := slices.Index(notesListRows(dialog), text)
+		require.GreaterOrEqual(t, index, 0, text)
+		dialog.selections[QuestJournalNotesTab] = index
+		dialog.cachedDetailPages, dialog.notesView.status = nil, ""
+	}
+	require.Equal(t, []string{"- TO DO (2)", "  Buy torches", "- PLACES (3)", "  [Map] Ferry", "  Hermit hut",
+		"  [Map] Old ruin"}, notesListRows(dialog), "Map notes join Places, newest first")
+
+	// A Map note opens, edits and deletes from Places, but stays there and is never done.
+	selectRow("  [Map] Ferry")
+	require.Contains(t, dialog.footerGuidance(), "[E] Edit  [M] Map  [D] Delete")
+	require.NotContains(t, dialog.footerGuidance(), "[X]")
+	require.Contains(t, strings.Join(detailValues(dialog), " "), "A note on the Traveller's Map. It stays in Places.")
+	press(ebiten.KeyX)
+	require.Equal(t, "Map notes can't be marked done.", detailValues(dialog)[0])
+	press(ebiten.KeyS)
+	require.Equal(t, "Map notes stay in Places.", detailValues(dialog)[0])
+	press(ebiten.KeyM)
+	press(ebiten.KeyE)
+	press(ebiten.KeyD)
+	require.Contains(t, dialog.footerGuidance(), "Permanently delete this Map note?")
+	press(ebiten.KeyEnter)
+	places := journal.NoteSectionPlaces
+	require.Equal(t, []NotesIntent{
+		{Action: NotesShowOnMap, NoteID: 8, SectionID: places, MapNote: true},
+		{Action: NotesEdit, NoteID: 8, SectionID: places, MapNote: true},
+		{Action: NotesDelete, NoteID: 8, SectionID: places, MapNote: true},
+	}, intents)
+	dialog.MapNotesChanged(mapNotes[:1], 0, "Map note deleted.")
+	require.Equal(t, "- PLACES (2)", dialog.listRowText(dialog.selections[QuestJournalNotesTab]))
+	require.Equal(t, "Map note deleted.", detailValues(dialog)[0])
+
+	// A Journal note opens the Map only when it was linked.
+	intents = nil
+	selectRow("  Hermit hut")
+	require.Contains(t, dialog.footerGuidance(), "[M] Map")
+	press(ebiten.KeyM)
+	selectRow("  Buy torches")
+	require.NotContains(t, dialog.footerGuidance(), "[M] Map")
+	press(ebiten.KeyM)
+	require.Equal(t, "This note has no place on the Map.", detailValues(dialog)[0])
+	require.Equal(t, []NotesIntent{{Action: NotesShowOnMap, NoteID: 3, SectionID: places}}, intents)
+
+	// A note ticked during this visit stays in view; H shows the ones done before it.
+	notes.Notes[1].Done = true
+	dialog.NotesChanged(notes, 2, 0, "")
+	require.Equal(t, []string{"- TO DO (2)", "  [Done] Buy torches"}, notesListRows(dialog)[:2])
+	press(ebiten.KeyH)
+	require.Equal(t, []string{"- TO DO (2)", "  [Done] Buy torches", "  [Done] Old errand"}, notesListRows(dialog)[:3])
+	require.Equal(t, "  [Done] Buy torches", dialog.listRowText(dialog.selections[QuestJournalNotesTab]),
+		"the selection stays on its note")
+	press(ebiten.KeyH)
+	require.NotContains(t, notesListRows(dialog), "  [Done] Old errand")
+
+	// Search finds hidden done notes and Map notes in a folded Places, and shows them.
+	intents = nil
+	notes.Sections[1].Folded = true
+	dialog.NotesChanged(notes, 0, places, "")
+	for _, search := range []struct{ query, row string }{{"errand", "  [Done] Old errand"}, {"skeletons", "  [Map] Old ruin"}} {
+		dialog.beginSearch()
+		dialog.setSearchQuery(search.query)
+		require.Len(t, dialog.searchResults, 1, search.query)
+		dialog.openSearchResult()
+		require.Equal(t, search.row, dialog.listRowText(dialog.selections[QuestJournalNotesTab]))
+	}
+	require.Equal(t, []NotesIntent{{Action: NotesFold, SectionID: places}}, intents)
+
+	// Every footer still fits its reserved rows at every supported size.
+	notes.Sections[1].Folded = false
+	dialog.NotesChanged(notes, 0, 0, "")
+	dialog.MapNotesChanged(mapNotes, 0, "")
+	sizes := append(config.SupportedWindowResolutions(), config.ScreenResolution{X: 320, Y: 200})
+	for _, size := range sizes {
+		setQuestJournalTestResolution(t, size.X, size.Y)
+		dialog.ensureLayout()
+		for row := range dialog.currentItemCount() {
+			dialog.selections[QuestJournalNotesTab] = row
+			rows := packedFooterRows(dialog.font, dialog.footerGuidance(), dialog.footerContentRect().Dx())
+			require.LessOrEqual(t, len(rows), dialog.footerLineCount(), "%dx%d row %d", size.X, size.Y, row)
+		}
+	}
+	setQuestJournalTestResolution(t, 1280, 720)
+	dialog.ensureLayout()
+	selectRow("  [Map] Ferry")
+	writeNotesReview(t, dialog, "my-notes-places")
+}

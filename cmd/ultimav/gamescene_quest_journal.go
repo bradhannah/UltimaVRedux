@@ -15,7 +15,13 @@ import (
 )
 
 type journalSession struct {
-	dialog             *widgets.QuestJournalDialog
+	dialog *widgets.QuestJournalDialog
+	// child is the note editor, section-name box or Map open over the Journal.
+	child widgets.Widget
+	// noteDraft is the Map note the child editor is changing, if any.
+	noteDraft *game_state.AtlasNoteDraft
+	// mapRequest asks the next frame to show a note on the Map; the frame owns the texture.
+	mapRequest         *widgets.NotesIntent
 	openingRevision    uint64
 	frozenMs           int64
 	closing            bool
@@ -69,6 +75,10 @@ func (g *GameScene) ShowQuestJournalDossier(dossier game_state.QuestJournalDossi
 		DeleteExcerpt:    g.deleteExcerpt,
 		ArchiveExcerpt:   g.archiveExcerpt,
 		ExcerptError:     excerptError,
+		Notes:            g.gameState.PlayerNotes(),
+		MapNotes:         g.gameState.CaptureAtlasNotes().Records,
+		OnNotesIntent:    g.handleNotesIntent,
+		NotesOnly:        g.gameConfig.GetSimpleNotesMode(),
 	})
 	g.dialogStack.PushModalDialog(session.dialog)
 	g.journalSession = session
@@ -88,6 +98,7 @@ func (g *GameScene) closeJournalSession(session *journalSession, acknowledge boo
 	if acknowledge {
 		g.journalVisits.Acknowledge(session.openingRevision, session.dialog.VisitedTabs())
 	}
+	g.closeNotesChild()
 	g.dialogStack.MustRemoveWidgetInstance(session.dialog)
 	g.keyboard.PrepareForTransition(0)
 	session.closing = true

@@ -98,8 +98,11 @@ func assertHistoricalPersistedBase(t *testing.T, original []byte, recaptured sav
 	decoder.UseNumber()
 	require.NoError(t, decoder.Decode(&current))
 	current["version"] = old["version"]
-	if version < save_snapshot.CurrentVersion {
+	if version < 25 {
 		delete(current, "excerpts") // Notebook excerpts are imported outside the snapshot.
+	}
+	if version < 26 {
+		delete(current, "notes") // Older saves start with a fresh notebook.
 	}
 	require.Equal(t, old, current, "every persisted field must survive promotion and hydration")
 	t.Logf("v%d: full persisted base, hydration/recapture and metadata preserved", version)

@@ -36,6 +36,7 @@ func TestV25ExcerptsCodecSchemaAndFrozenV24(t *testing.T) {
 	_, err = Decode(missing)
 	require.Error(t, err, "current saves must explicitly own even an empty collection")
 	require.Error(t, schema.Validate(document))
+	delete(body, "notes")
 	body["version"] = 24
 	old, err := json.Marshal(document)
 	require.NoError(t, err)
