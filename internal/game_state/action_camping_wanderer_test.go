@@ -350,7 +350,8 @@ func TestProcessWandererHealingForCharacter_MultiLevelGain_Integration(t *testin
 	assert.Equal(t, 0, len(mockCallbacks.Messages), "No messages should be sent from this function")
 }
 
-func TestProcessWandererHealingForCharacter_UpwardRollsRespectStatCaps(t *testing.T) {
+// Awards skip stats already at 30 and stop once all three are capped (issue #82).
+func TestProcessWandererHealingForCharacter_UpwardRollsSkipCappedStats(t *testing.T) {
 	gs, _ := NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
@@ -360,21 +361,15 @@ func TestProcessWandererHealingForCharacter_UpwardRollsRespectStatCaps(t *testin
 	char.SetStatus(party_state.Good)
 	char.Level = 1
 	char.Exp = 400
-	char.Strength, char.Dexterity, char.Intelligence = 30, 30, 30
+	char.Strength, char.Dexterity, char.Intelligence = 30, 30, 28
 	gs.SetRandomSeed(12345)
 
 	outcome := gs.ProcessWandererHealingForCharacter(0)
-	actualNextRoll := gs.RollDice(3)
-	gs.SetRandomSeed(12345)
-	for range 3 {
-		gs.RollDice(3)
-	}
 
-	assert.Len(t, outcome.StatBoosts, 3)
+	assert.Equal(t, []string{"wiser", "wiser"}, outcome.StatBoosts, "the third award has no stat below 30")
 	assert.Equal(t, byte(30), char.Strength)
 	assert.Equal(t, byte(30), char.Dexterity)
 	assert.Equal(t, byte(30), char.Intelligence)
-	assert.Equal(t, gs.RollDice(3), actualNextRoll, "capped boosts must still consume their rolls")
 }
 
 func TestProcessWandererHealingForCharacter_ClassMPRestore(t *testing.T) {

@@ -52,9 +52,6 @@ const (
 	// WandererHealMin Wanderer healing (original: random(1,63) one-time heal)
 	WandererHealMin = 1  // Minimum HP healed by wanderer
 	WandererHealMax = 63 // Maximum HP healed by wanderer
-
-	// SingleStatBoost Stat boost messaging
-	SingleStatBoost = 1 // Number of stats indicating singular message
 )
 
 // ActionHoleUpLargeMap starts outdoor camp or anchored-ship repair selection.
@@ -931,27 +928,24 @@ func (g *GameState) processWandererCharacter(
 // Handles both single and multi-level gains, showing all stat boosts
 // See ref:CAMP-0005.
 func (g *GameState) showLevelUpMessages(char *party_state.PlayerCharacter, statBoosts []string) {
-	// Format stat boosts as comma-separated list for multi-level gains
-	// Example: "stronger, quicker, wiser" for 3 levels gained
-	var statBoostText string
-	if len(statBoosts) == SingleStatBoost {
-		statBoostText = statBoosts[0]
-	} else {
-		statBoostText = strings.Join(statBoosts, ", ")
+	// Highlight the attained level and any stat awards, e.g. "stronger, quicker, wiser"
+	// for three levels. A character with every stat at its maximum hears only the level.
+	segments := []MessageSegment{
+		{Text: "\"", Style: MessageQuotation},
+		{Text: "Thou art now level", Style: MessageSpoken},
+		{Text: fmt.Sprintf(" %d", char.Level), Style: MessageHighlight},
 	}
-
-	// Highlight the attained level and stat boosts within the spoken announcement.
-	g.SystemCallbacks.Message.AppendStyledMessage(StyledMessage{
-		Segments: []MessageSegment{
-			{Text: "\"", Style: MessageQuotation},
-			{Text: "Thou art now level", Style: MessageSpoken},
-			{Text: fmt.Sprintf(" %d", char.Level), Style: MessageHighlight},
-			{Text: ", and ", Style: MessageSpoken},
-			{Text: statBoostText, Style: MessageHighlight},
-			{Text: "!", Style: MessageSpoken},
-			{Text: "\"", Style: MessageQuotation},
-		},
-	})
+	if len(statBoosts) > 0 {
+		segments = append(segments,
+			MessageSegment{Text: ", and ", Style: MessageSpoken},
+			MessageSegment{Text: strings.Join(statBoosts, ", "), Style: MessageHighlight},
+		)
+	}
+	segments = append(segments,
+		MessageSegment{Text: "!", Style: MessageSpoken},
+		MessageSegment{Text: "\"", Style: MessageQuotation},
+	)
+	g.SystemCallbacks.Message.AppendStyledMessage(StyledMessage{Segments: segments})
 }
 
 // cleanupCampingScene handles cleanup when leaving camping

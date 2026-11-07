@@ -111,16 +111,8 @@ func (g *GameState) ProcessWandererHealingForCharacter(characterIndex int) Wande
 			// Redux retains one roll per upward level gained, while downward correction grants none.
 			// See ref:PROGRESS-0003.
 			for range levelsGained {
-				switch g.RollDice(3) {
-				case 1:
-					party_state.IncStatWithCap(&char.Strength, 1, 30)
-					outcome.StatBoosts = append(outcome.StatBoosts, "stronger")
-				case 2:
-					party_state.IncStatWithCap(&char.Dexterity, 1, 30)
-					outcome.StatBoosts = append(outcome.StatBoosts, "quicker")
-				case 3:
-					party_state.IncStatWithCap(&char.Intelligence, 1, 30)
-					outcome.StatBoosts = append(outcome.StatBoosts, "wiser")
+				if boost, awarded := g.awardWandererStat(char); awarded {
+					outcome.StatBoosts = append(outcome.StatBoosts, boost)
 				}
 			}
 		}
@@ -131,4 +123,32 @@ func (g *GameState) ProcessWandererHealingForCharacter(characterIndex int) Wande
 	char.RestoreMpByClass()
 
 	return outcome
+}
+
+// awardWandererStat raises one of STR, DEX or INT by one.
+//
+// REDUX DEVIATION: PROGRESS-0003: the original rolls R(1,3) and wastes the award
+// on a stat already at 30. Redux rolls only among stats below 30, so an earned
+// level is never wasted, and awards nothing once all three are at 30. With no
+// stat at 30 the roll and outcome match the original.
+func (g *GameState) awardWandererStat(char *party_state.PlayerCharacter) (string, bool) {
+	type statAward struct {
+		value *byte
+		boost string
+	}
+	open := make([]statAward, 0, 3)
+	for _, award := range [...]statAward{
+		{&char.Strength, "stronger"}, {&char.Dexterity, "quicker"}, {&char.Intelligence, "wiser"},
+	} {
+		if *award.value < MaxStatValue {
+			open = append(open, award)
+		}
+	}
+	if len(open) == 0 {
+		return "", false
+	}
+	award := open[g.RollDice(len(open))-1]
+	*award.value++
+
+	return award.boost, true
 }
