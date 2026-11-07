@@ -100,7 +100,6 @@ func TestLordBritishFinaleExactAnswerTruthTable(t *testing.T) {
 			assert.Equal(t, test.wantOutcome, state.LordBritishFinaleOutcome())
 			assert.True(t, state.IsGameplayTerminal())
 			assert.False(t, state.CanAcceptGameplayCommands())
-			assert.ErrorIs(t, state.LoadLegacySaveGameFromBytes(make([]byte, savedGamFileSize)), ErrSaveSnapshotNotRepresentable)
 			date, hasDate := state.LordBritishFinaleCompletionDate()
 			if test.wantOutcome == LordBritishFinaleSucceeded {
 				assert.True(t, hasDate)

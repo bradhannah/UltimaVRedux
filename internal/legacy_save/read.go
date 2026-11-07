@@ -90,13 +90,6 @@ func validateResolvedSavePairContext(ctx context.Context, gamPath string) (strin
 	return gamPath, nil
 }
 
-// ReadBundle reads a selected SAVED.GAM and its exact SAVED.OOL sibling. It
-// performs no writes and resolves filename case variations when the host file
-// system permits distinct casing.
-func ReadBundle(selectedSavedGamPath string) (Bundle, error) {
-	return ReadBundleContext(context.Background(), selectedSavedGamPath)
-}
-
 // ReadBundleContext reads a selected save pair with exact allocation bounds and
 // observes cancellation between filesystem and decode steps.
 func ReadBundleContext(ctx context.Context, selectedSavedGamPath string) (Bundle, error) {

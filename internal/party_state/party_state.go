@@ -154,37 +154,6 @@ func (p *PartyState) RestoreNPCFlags(met, dead map[references.Location][]bool) {
 	}
 }
 
-// LoadFromRaw builds a PartyState from the original 4192-byte party block of SAVED.GAM:
-// a 16-record character roster at offset 2 followed by the met and dead NPC flag masks.
-func LoadFromRaw(raw [4192]byte) *PartyState {
-	partyState := newPartyState()
-	const lCharacters = 0x02
-	const metNpcsOffset = 0x634  // Corrected offset for met NPCs
-	const deadNpcsOffset = 0x5B4 // Corrected offset for dead NPCs
-	const npcFlagLocationCount = 32
-	const bitsPerByte = 8
-
-	// Decode all 16 roster slots; each record is one packed original character.
-	for i := range NRosterSlots {
-		start := lCharacters + i*characterRecordSize
-		character := decodeCharacter(raw[start : start+characterRecordSize])
-		partyState.characters[i] = &character
-	}
-
-	// Each original array is 32 little-endian 32-bit location masks indexed by onmap-1.
-	for locationIndex := range npcFlagLocationCount {
-		location := references.Location(locationIndex + int(references.Moonglow))
-		for npcIndex := range NPcsPerLocation {
-			byteIndex := locationIndex*(NPcsPerLocation/bitsPerByte) + npcIndex/bitsPerByte
-			bit := byte(1 << (npcIndex % bitsPerByte))
-			partyState.metNpcs[location][npcIndex] = raw[metNpcsOffset+byteIndex]&bit != 0
-			partyState.deadNpcs[location][npcIndex] = raw[deadNpcsOffset+byteIndex]&bit != 0
-		}
-	}
-
-	return partyState
-}
-
 // HasRoom returns true if the party can accept another companion.
 // A party has room when fewer than MaxActiveParty (6) characters have PartyStatus = InTheParty.
 func (p *PartyState) HasRoom() bool {

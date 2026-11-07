@@ -188,7 +188,7 @@ func TestReviewedBroadMutationsRejectCombatAndWorkflowContextsBeforeMutation(t *
 
 func newReviewedMutationTestState(t *testing.T) *GameState {
 	t.Helper()
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	for slot := range party_state.NRosterSlots {
 		party.GetCharacter(slot).PartyMap = party_state.PartyMapAtInn(references.Britain)
 	}

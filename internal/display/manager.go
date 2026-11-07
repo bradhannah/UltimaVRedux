@@ -78,18 +78,16 @@ type DisplayManager struct {
 	requestActive bool
 	requestTicks  int
 
-	windowWidth     int
-	windowHeight    int
-	monitorWidth    int
-	monitorHeight   int
-	logicalWidth    int
-	logicalHeight   int
-	logicalDirty    bool
-	deviceScale     float64
-	containerWidth  int
-	containerHeight int
-	outputWidth     int
-	outputHeight    int
+	windowWidth   int
+	windowHeight  int
+	monitorWidth  int
+	monitorHeight int
+	logicalWidth  int
+	logicalHeight int
+	logicalDirty  bool
+	deviceScale   float64
+	outputWidth   int
+	outputHeight  int
 
 	requestedWindowWidth  int
 	requestedWindowHeight int
@@ -280,26 +278,9 @@ func (dm *DisplayManager) GetCurrentSize() (int, int) {
 	return aspectFit16By9(width, height)
 }
 
-// WindowSize returns the last observed decorated/restored window size.
-func (dm *DisplayManager) WindowSize() (int, int) {
-	return dm.windowWidth, dm.windowHeight
-}
-
 // MonitorSize returns the last observed current-monitor size.
 func (dm *DisplayManager) MonitorSize() (int, int) {
 	return dm.monitorWidth, dm.monitorHeight
-}
-
-// ContainerSize returns the current outer container dimensions.
-func (dm *DisplayManager) ContainerSize() (int, int) {
-	if dm.containerWidth > 0 && dm.containerHeight > 0 {
-		return dm.containerWidth, dm.containerHeight
-	}
-	if dm.mode == config.ModeFullscreen {
-		return dm.monitorWidth, dm.monitorHeight
-	}
-
-	return dm.windowWidth, dm.windowHeight
 }
 
 // LogicalSize returns the published logical draw size, or zeroes before publication.
@@ -310,11 +291,6 @@ func (dm *DisplayManager) LogicalSize() (int, int) {
 // Mode returns the last observed desktop mode.
 func (dm *DisplayManager) Mode() config.Mode {
 	return dm.mode
-}
-
-// RequestedMode returns the mode most recently requested by the application.
-func (dm *DisplayManager) RequestedMode() config.Mode {
-	return dm.requestedMode
 }
 
 // IsTransitionPending reports whether the requested mode and size remain unobserved.

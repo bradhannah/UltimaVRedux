@@ -1,25 +1,27 @@
 package game_state
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/internal/legacy_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-// One-file template loading is fixture setup. Production continuation uses the
-// paired SAVED.GAM/SAVED.OOL conversion and native snapshot hydration path.
-func newGameStateFromLegacyTemplateFile(savedGamFilePath string,
+// newGameStateFromOriginalSaveFile loads an installed SAVED.GAM and its
+// SAVED.OOL sibling exactly as a player's save loads.
+func newGameStateFromOriginalSaveFile(savedGamFilePath string,
 	gameConfig *config.UltimaVConfiguration,
 	gameReferences *references.GameReferences,
 	xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen int,
 ) (*GameState, error) {
-	rawSaveData, err := ReadLegacySaveFile(savedGamFilePath)
+	bundle, err := legacy_save.ReadBundleContext(context.Background(), savedGamFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("loading legacy save file %s: %w", savedGamFilePath, err)
+		return nil, fmt.Errorf("reading original save %s: %w", savedGamFilePath, err)
 	}
 
-	return NewGameStateFromLegacyTemplateBytes(rawSaveData,
+	return newGameStateFromOriginalBundle(bundle,
 		gameConfig, gameReferences, xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen)
 }
 

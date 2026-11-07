@@ -337,10 +337,8 @@ func TestDaylightTintingOriginalDebugRebuildClearsOpenDoor(t *testing.T) {
 				position := inside
 				if len(test.floors) == 1 {
 					position = references.Position{X: 9, Y: 14}
-					result, err = state.DebugSetWorldPosition(references.SerpentsHold, floor, position)
-				} else {
-					result, err = state.DebugSetFloor(floor)
 				}
+				result, err = state.DebugSetWorldPosition(references.SerpentsHold, floor, position)
 				require.NoError(t, err)
 				assert.Equal(t, before, result.Before)
 				assert.Equal(t, references.PlayerLocation{Location: references.SerpentsHold, Floor: floor, Position: position}, result.After)

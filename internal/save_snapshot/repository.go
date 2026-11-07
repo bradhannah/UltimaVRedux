@@ -38,20 +38,13 @@ type Summary struct {
 // Repository persists immutable captures under injected source roots.
 // Cooperating instances and processes serialize mutation with advisory locks.
 type Repository struct {
-	roots              map[Source]string
-	referenceLockRoots []repositoryfs.Root
-	mutationMu         sync.Mutex
-}
-
-// ConfigureReferenceLockRoots adds scenario roots to the cross-process lock
-// set used while removing snapshots.
-func (repository *Repository) ConfigureReferenceLockRoots(roots []repositoryfs.Root) {
-	repository.referenceLockRoots = append(repository.referenceLockRoots[:0], roots...)
+	roots      map[Source]string
+	mutationMu sync.Mutex
 }
 
 // ReferenceLockRoots returns detached lock-root metadata for coordination.
 func (repository *Repository) ReferenceLockRoots() []repositoryfs.Root {
-	return append(repository.ownRoots(), repository.referenceLockRoots...)
+	return repository.ownRoots()
 }
 
 // NewRepository constructs a repository for project, personal, and rollback sources.

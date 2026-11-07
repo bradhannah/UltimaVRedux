@@ -32,14 +32,6 @@ func (ms *MagicState) IsRecipeKnown(spell references.Spell) bool {
 	return exists
 }
 
-// GetKnownRecipe returns the reagent mask for a known spell recipe.
-// Returns (mask, true) if known, (0, false) if unknown.
-func (ms *MagicState) GetKnownRecipe(spell references.Spell) (uint16, bool) {
-	mask, exists := ms.KnownRecipes[spell]
-
-	return mask, exists
-}
-
 // RecordRecipe stores a successfully mixed spell recipe for future reference.
 // This enables automatic reagent selection when the player types this spell in the future.
 func (ms *MagicState) RecordRecipe(spell references.Spell, reagentMask uint16) {

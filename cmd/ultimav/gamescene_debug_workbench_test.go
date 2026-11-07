@@ -136,14 +136,6 @@ func TestActiveCharacterOptionSetUsesOpaqueSlotAndOccupantToken(t *testing.T) {
 	assert.Equal(t, "2", positions.Choices[0].Value)
 }
 
-func mustUnmarshalDebugString(t *testing.T, raw json.RawMessage) string {
-	t.Helper()
-	var value string
-	require.NoError(t, json.Unmarshal(raw, &value))
-
-	return value
-}
-
 func TestExecuteDebugCommandPartyCharacterInspect(t *testing.T) {
 	state := debugWorkbenchStateStub{roster: game_state.PartyRosterSnapshot{Fingerprint: "reviewed", Characters: []game_state.PartyRosterCharacterSnapshot{{RosterIndex: 0, Name: "Avatar", PartyMap: party_state.PartyMapActive}}}, characters: []game_state.ActiveCharacterSnapshot{{
 		Slot:         0,

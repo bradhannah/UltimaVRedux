@@ -9,9 +9,9 @@ import (
 )
 
 func TestBCarpetFixtureReadsAndConvertsToNativeSnapshot(t *testing.T) {
-	bundle, err := ReadBundle(filepath.Join("testdata", "b_carpet", "SAVED.GAM"))
+	bundle, err := ReadBundleContext(t.Context(), filepath.Join("testdata", "b_carpet", "SAVED.GAM"))
 	if err != nil {
-		t.Fatalf("ReadBundle() b_carpet error = %T %v", err, err)
+		t.Fatalf("ReadBundleContext() b_carpet error = %T %v", err, err)
 	}
 
 	result, err := Convert(bundle)

@@ -8,13 +8,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/test/helpers"
 )
 
-func mustNewGameStateFromLegacySaveBytes(
+func mustNewGameStateFromOriginalSaveBytes(
 	rawSaveData []byte,
 	gameConfig *config.UltimaVConfiguration,
 	gameReferences *references.GameReferences,
 	xTilesVisibleOnGameScreen, yTilesVisibleOnGameScreen int,
 ) *GameState {
-	gameState, err := NewGameStateFromLegacyTemplateBytes(
+	gameState, err := newGameStateFromOriginalSaveBytes(
 		rawSaveData,
 		gameConfig,
 		gameReferences,
@@ -34,7 +34,7 @@ func newBootstrapSaveTestState(t *testing.T) (*GameState, *MockSystemCallbacks) 
 	t.Helper()
 	gameConfig := helpers.LoadTestConfiguration(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
-	gs := mustNewGameStateFromLegacySaveBytes(helpers.LoadBootstrapSaveData(t), gameConfig,
+	gs := mustNewGameStateFromOriginalSaveBytes(helpers.LoadBootstrapSaveData(t), gameConfig,
 		helpers.LoadTestGameReferences(t, gameConfig), xTiles, yTiles)
 	mockCallbacks := NewMockSystemCallbacks(t)
 	gs.SystemCallbacks = mockCallbacks.ToSystemCallbacks()

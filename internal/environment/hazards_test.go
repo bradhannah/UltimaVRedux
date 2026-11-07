@@ -50,10 +50,8 @@ func (m *MockSystemCallbacks) Reset() {
 }
 
 func createTestPartyWithStats(stats []TestCharacterStats) *party_state.PartyState {
-	// Use LoadFromRaw to create a properly initialized PartyState with pointer array
-	// We'll use an empty raw byte array and then modify the characters
-	var rawData [4192]byte
-	party := party_state.LoadFromRaw(rawData)
+	// Start from a blank roster, then set the character stats.
+	party := party_state.NewBlankPartyState()
 
 	// Now set the character stats
 	for i, stat := range stats {

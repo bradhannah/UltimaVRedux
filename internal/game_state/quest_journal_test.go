@@ -126,24 +126,3 @@ func TestCurrentQuestJournalDossierRedactsIndependentLoreAndReprojectsChronicle(
 	assert.Equal(t, "Falsehood", retained.Shadowlords[0].Association)
 	assert.Equal(t, "CAH", retained.Virtues[4].Mantra)
 }
-
-func TestInferMigratedQuestJournalUsesStableIdentityOrder(t *testing.T) {
-	state := &GameState{
-		ShadowlordState: references.NewShadowlordState(),
-		questJournal:    newQuestJournal(),
-	}
-	state.ShadowlordState.Kill(references.Faulinei)
-	state.ShadowlordState.Kill(references.Nosfentor)
-	state.inferMigratedQuestJournal()
-	state.inferMigratedQuestJournal()
-
-	events := state.QuestJournalEvents()
-	require.Len(t, events, 2)
-	assert.Equal(t, []QuestJournalSubject{QuestJournalSubjectFaulinei, QuestJournalSubjectNosfentor}, []QuestJournalSubject{events[0].Subject, events[1].Subject})
-	for index, event := range events {
-		assert.Equal(t, uint64(index+1), event.Sequence)
-		assert.Nil(t, event.OccurredOn)
-		assert.Equal(t, QuestJournalSourceMigration, event.Source)
-		assert.True(t, event.Acknowledged)
-	}
-}

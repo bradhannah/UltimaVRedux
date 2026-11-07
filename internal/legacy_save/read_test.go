@@ -23,12 +23,12 @@ func TestReadBundleFindsCaseInsensitiveExactSiblingWithoutWriting(t *testing.T) 
 		t.Fatal(err)
 	}
 
-	bundle, err := ReadBundle(gamPath)
+	bundle, err := ReadBundleContext(t.Context(), gamPath)
 	if err != nil {
-		t.Fatalf("ReadBundle() error = %v", err)
+		t.Fatalf("ReadBundleContext() error = %v", err)
 	}
 	if bundle.Game.Characters[0].Name != "C00" {
-		t.Fatalf("ReadBundle() character name = %q, want C00", bundle.Game.Characters[0].Name)
+		t.Fatalf("ReadBundleContext() character name = %q, want C00", bundle.Game.Characters[0].Name)
 	}
 
 	gamAfter, err := os.ReadFile(gamPath)
@@ -40,14 +40,14 @@ func TestReadBundleFindsCaseInsensitiveExactSiblingWithoutWriting(t *testing.T) 
 		t.Fatal(err)
 	}
 	if !bytes.Equal(gamAfter, gam) || !bytes.Equal(oolAfter, ool) {
-		t.Fatal("ReadBundle() modified a source file")
+		t.Fatal("ReadBundleContext() modified a source file")
 	}
 	entries, err := os.ReadDir(directory)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(entries) != 2 {
-		t.Fatalf("ReadBundle() changed directory contents: %#v", entries)
+		t.Fatalf("ReadBundleContext() changed directory contents: %#v", entries)
 	}
 }
 
@@ -62,7 +62,7 @@ func TestReadBundleRequiresExactSiblingName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bundle, err := ReadBundle(gamPath)
+	bundle, err := ReadBundleContext(t.Context(), gamPath)
 	if bundle != (Bundle{}) {
 		t.Fatal("missing sibling returned a partial bundle")
 	}
@@ -80,7 +80,7 @@ func TestReadBundleRejectsWrongSelectedFilename(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err := ReadBundle(gamPath)
+	_, err := ReadBundleContext(t.Context(), gamPath)
 	assertValidationIssue(t, err, "gam", "invalid_filename", -1)
 }
 
@@ -107,7 +107,7 @@ func TestReadBundlePropagatesExactFileLengthValidation(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			bundle, err := ReadBundle(gamPath)
+			bundle, err := ReadBundleContext(t.Context(), gamPath)
 			if bundle != (Bundle{}) {
 				t.Fatal("invalid source length returned a partial bundle")
 			}
@@ -131,7 +131,7 @@ func TestReadBundleRejectsHugeFileBeforeAllocation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = ReadBundle(gamPath)
+	_, err = ReadBundleContext(t.Context(), gamPath)
 	assertValidationIssue(t, err, "gam", "invalid_length", -1)
 }
 

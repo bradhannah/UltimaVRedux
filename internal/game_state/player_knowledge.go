@@ -103,10 +103,6 @@ func ExperimentationKnowledgeSource() KnowledgeSource {
 	return KnowledgeSource{Kind: KnowledgeSourceExperimentation, DisplayName: experimentationKnowledgeDisplayName}
 }
 
-func migrationKnowledgeSource() KnowledgeSource {
-	return KnowledgeSource{Kind: KnowledgeSourceMigration, DisplayName: migratedKnowledgeDisplayName}
-}
-
 // SpellFormulaState identifies whether a stored formula is tentative or canonical.
 type SpellFormulaState string
 
@@ -473,24 +469,6 @@ func (g *GameState) knowledge(key KnowledgeKey) (KnowledgeEntry, bool) {
 	}
 
 	return cloneKnowledgeEntry(entry), true
-}
-
-func (g *GameState) inferMigratedHiddenSpellKnowledge() {
-	g.requirePlayerKnowledge()
-	for _, spell := range []references.Spell{references.AnYlem, references.InXenMani, references.RelXenBet} {
-		mask, recipeKnown := g.MagicState.GetKnownRecipe(spell)
-		if g.PartyState.Inventory.Spells.Get(spell) == 0 && !recipeKnown {
-			continue
-		}
-		var formula *SpellFormulaKnowledge
-		if recipeKnown && mask == references.GetSpellReagents(spell) {
-			formula = confirmedSpellFormula(spell)
-		}
-		key, _ := SpellKnowledgeKey(spell)
-		g.playerKnowledge.entries[key] = KnowledgeEntry{
-			Key: key, Source: migrationKnowledgeSource(), Unread: false, SpellFormula: formula,
-		}
-	}
 }
 
 func validateKnowledgeSource(source KnowledgeSource, allowMigration bool) {

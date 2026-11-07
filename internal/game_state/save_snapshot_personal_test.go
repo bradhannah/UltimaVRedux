@@ -200,7 +200,7 @@ func TestSaveSnapshotV24CodexPartialAndComplete(t *testing.T) {
 
 func TestSaveSnapshotV24LegacyBasementResumePreservesActiveAbsence(t *testing.T) {
 	state, _ := basementFixture(t)
-	bundle, err := legacy_save.ReadBundle(filepath.Join("..", "legacy_save", "testdata", "b_carpet", "SAVED.GAM"))
+	bundle, err := legacy_save.ReadBundleContext(t.Context(), filepath.Join("..", "legacy_save", "testdata", "b_carpet", "SAVED.GAM"))
 	require.NoError(t, err)
 	bundle.Game.Position.Location = legacy_save.MapID(references.LordBritishsCastle)
 	bundle.Game.Position.X, bundle.Game.Position.Y, bundle.Game.Position.Floor = 15, 21, 0xff

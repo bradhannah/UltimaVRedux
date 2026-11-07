@@ -794,35 +794,6 @@ func setDebugConfiguration(configuration *viper.Viper, debug DebugConfiguration)
 	}
 }
 
-// SetAllowRepeatedMonsterDivision updates and persists the repeated-division rule atomically.
-func (uc *UltimaVConfiguration) SetAllowRepeatedMonsterDivision(enabled bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) {
-		settings.AllowRepeatedMonsterDivision = enabled
-	})
-}
-
-// SetPersistHiddenDungeonDiscoveries updates and persists hidden-discovery retention atomically.
-func (uc *UltimaVConfiguration) SetPersistHiddenDungeonDiscoveries(enabled bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) {
-		settings.PersistHiddenDungeonDiscoveries = enabled
-	})
-}
-
-// SetShowSubduedUnlitDungeons updates and persists subdued unlit rendering atomically.
-func (uc *UltimaVConfiguration) SetShowSubduedUnlitDungeons(enabled bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.ShowSubduedUnlitDungeons = enabled })
-}
-
-// SetSmoothSurfaceMovement updates and persists optional surface scrolling atomically.
-func (uc *UltimaVConfiguration) SetSmoothSurfaceMovement(enabled bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.SmoothSurfaceMovement = enabled })
-}
-
-// SetFlexibleSextantUse updates and persists optional sextant navigation atomically.
-func (uc *UltimaVConfiguration) SetFlexibleSextantUse(enabled bool) error {
-	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.FlexibleSextantUse = enabled })
-}
-
 // configuredBoolean replaces value with the configured setting, if one is set.
 func (uc *UltimaVConfiguration) configuredBoolean(value *bool, key string) {
 	if uc.source.IsSet(key) {

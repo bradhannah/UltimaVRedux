@@ -11,9 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/audio"
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/display"
-	"github.com/bradhannah/UltimaVRedux/internal/files"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/legacy_save"
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
@@ -30,33 +28,6 @@ var (
 
 // GameScene initialization and constructor
 // Handles creation and setup of all GameScene components
-
-// NewGameScene creates a new GameScene with all necessary systems initialized
-func NewGameScene(gameConfig *config.UltimaVConfiguration) (*GameScene, error) {
-	saveFilePath := files.Resolve(gameConfig.SavedConfigData.DataFilePath, "SAVED.GAM")
-
-	return NewGameSceneFromLegacySaveFile(gameConfig, saveFilePath)
-}
-
-// NewGameSceneFromLegacySaveFile creates a GameScene from an explicitly supplied legacy save file.
-func NewGameSceneFromLegacySaveFile(
-	gameConfig *config.UltimaVConfiguration,
-	saveFilePath string,
-) (*GameScene, error) {
-	bundle, err := legacy_save.ReadBundle(saveFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("reading original save bundle: %w", err)
-	}
-	conversion, err := legacy_save.Convert(bundle)
-	if err != nil {
-		return nil, fmt.Errorf("converting original save bundle: %w", err)
-	}
-	if len(conversion.Warnings) > 0 {
-		logging.Warnf(logging.CategoryGameState, "Original save conversion completed with %d warnings", len(conversion.Warnings))
-	}
-
-	return NewGameSceneFromSaveSnapshot(gameConfig, conversion.Snapshot)
-}
 
 // NewGameSceneFromSaveSnapshot constructs a dormant gameplay scene from a native snapshot.
 // The scene does not start audio or alter process-wide display settings until Game activates it.

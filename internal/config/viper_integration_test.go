@@ -129,27 +129,6 @@ func TestConfigurationSettingsFailurePreservesModelsSourceAndFiles(t *testing.T)
 	assert.Len(t, entries, 2, "failed atomic write must clean up temporary files")
 }
 
-func TestPreferenceSettersRollBackOnWriteFailure(t *testing.T) {
-	for _, setter := range []func(*UltimaVConfiguration, bool) error{
-		(*UltimaVConfiguration).SetSmoothSurfaceMovement,
-		(*UltimaVConfiguration).SetFlexibleSextantUse,
-		(*UltimaVConfiguration).SetAllowRepeatedMonsterDivision,
-		(*UltimaVConfiguration).SetPersistHiddenDungeonDiscoveries,
-		(*UltimaVConfiguration).SetShowSubduedUnlitDungeons,
-	} {
-		configuration, file := configurationFixture(t, "existing: true\n")
-		before := *configuration.GameplayConfiguration
-		source := configuration.source.AllSettings()
-		require.NoError(t, os.Remove(file))
-		require.NoError(t, os.Mkdir(file, 0o700))
-		for _, enabled := range []bool{true, false} {
-			require.Error(t, setter(configuration, enabled))
-			assert.Equal(t, before, *configuration.GameplayConfiguration)
-			assert.Equal(t, source, configuration.source.AllSettings())
-		}
-	}
-}
-
 func TestConfigurationSectionSavesAreAtomic(t *testing.T) {
 	for name, save := range map[string]func(*UltimaVConfiguration) error{
 		"audio":    (*UltimaVConfiguration).SaveAudioConfiguration,

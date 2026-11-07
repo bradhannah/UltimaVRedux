@@ -60,13 +60,3 @@ func (p *PlayerCharacter) CanEquipItem(item references.Equipment) (bool, string)
 
 	return true, ""
 }
-
-// InnLocation returns the stored map ID when this is an inn-held companion.
-func (p PartyMap) InnLocation() (references.Location, bool) {
-	location := references.Location(p)
-	if location < references.Moonglow || location > references.Doom || p == PartyMapMartyr {
-		return references.EmptyLocation, false
-	}
-
-	return location, true
-}

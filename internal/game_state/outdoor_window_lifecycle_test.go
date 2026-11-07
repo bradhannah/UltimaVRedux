@@ -41,8 +41,6 @@ func TestOutdoorWindowRejectedHydrationAndDebugRequestPreserveLiveHistory(t *tes
 	candidate, err := NewGameStateFromSaveSnapshot(snapshot, state.GameConfig, state.GameReferences, 19, 13)
 	require.Error(t, err)
 	assert.Nil(t, candidate)
-	_, err = state.TeleportPlayerOnCurrentMap(256, 120)
-	require.Error(t, err)
 	_, err = state.DebugSetWorldPosition(references.BritanniaUnderworld, -2, before.Position)
 	require.Error(t, err)
 	assert.Equal(t, window, state.outdoorWindow)
@@ -52,7 +50,7 @@ func TestOutdoorWindowRejectedHydrationAndDebugRequestPreserveLiveHistory(t *tes
 }
 
 func TestOutdoorWindowWorldRelocationsInitializeEvenAtSamePosition(t *testing.T) {
-	for _, route := range []string{"same-map debug", "world setup", "Gate", "cross-plane Gate", "town return", "floor transition"} {
+	for _, route := range []string{"world setup", "Gate", "cross-plane Gate", "town return", "floor transition"} {
 		t.Run(route, func(t *testing.T) {
 			floor := references.FloorNumber(-1)
 			if route == "cross-plane Gate" {
@@ -64,9 +62,6 @@ func TestOutdoorWindowWorldRelocationsInitializeEvenAtSamePosition(t *testing.T)
 			setBlinkRayTiles(t, underworld, position, references.Right, indexes.Forest1)
 			underworld.SetTileByLayer(map_state.MapOverrideLayer, &references.Position{X: 140, Y: 120}, indexes.Grass)
 			switch route {
-			case "same-map debug":
-				_, err := state.TeleportPlayerOnCurrentMap(120, 120)
-				require.NoError(t, err)
 			case "world setup":
 				_, err := state.DebugSetWorldPosition(references.BritanniaUnderworld, -1, position)
 				require.NoError(t, err)
@@ -245,21 +240,6 @@ func TestOutdoorWindowViewAndDisplayUpdatesPreserveNextBlink(t *testing.T) {
 	assert.Equal(t, window, state.outdoorWindow)
 	require.Equal(t, BlinkSuccess, state.BlinkTeleport(references.Right))
 	assert.Equal(t, references.Position{X: 124, Y: 120}, state.MapState.PlayerLocation.Position)
-}
-
-func TestOutdoorWindowLegacyTemplateLoadReinitializesAfterFinalCoordinates(t *testing.T) {
-	state := newBlinkHistoryFixture(t, -1)
-	raw := append([]byte(nil), state.RawSave[:]...)
-	raw[0x2ed], raw[0x2ef], raw[0x2f0], raw[0x2f1] = 0, 255, 120, 120
-	require.NoError(t, state.LoadLegacySaveGameFromBytes(raw))
-	assert.Equal(t, references.FloorNumber(-1), state.outdoorWindow.floor)
-	assert.Equal(t, references.Position{X: 112, Y: 112}, state.outdoorWindow.origin)
-	setBlinkRayTiles(t, state.GetCurrentLayeredMap(), state.MapState.PlayerLocation.Position, references.Right, indexes.Forest1)
-	for _, x := range []references.Coordinate{124, 140} {
-		state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapOverrideLayer, &references.Position{X: x, Y: 120}, indexes.Grass)
-	}
-	require.Equal(t, BlinkSuccess, state.BlinkTeleport(references.Right))
-	assert.Equal(t, references.Position{X: 140, Y: 120}, state.MapState.PlayerLocation.Position)
 }
 
 func TestOutdoorWindowWaterfallUpdatesEachForcedSouthStep(t *testing.T) {

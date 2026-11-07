@@ -4,28 +4,6 @@ import (
 	"testing"
 )
 
-func TestNewKarma(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    byte
-		expected int
-	}{
-		{"zero karma", 0, 0},
-		{"middle karma", 50, 50},
-		{"max karma", 99, 99},
-		{"byte max", 255, 255}, // Note: exceeds maxKarma, but NewKarma doesn't clamp
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			k := NewKarma(tt.input)
-			if k.Value != tt.expected {
-				t.Errorf("NewKarma(%d): got %d, want %d", tt.input, k.Value, tt.expected)
-			}
-		})
-	}
-}
-
 func TestKarmaAddDiffClampsToRange(t *testing.T) {
 	tests := []struct {
 		name     string

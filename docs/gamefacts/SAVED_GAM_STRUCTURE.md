@@ -251,5 +251,5 @@ field or every shipped template. Redux's native state deliberately has its own
 semantic schema; only explicitly converted legacy fields become authoritative,
 with preservation/default warnings handled by the import boundary.
 
-**Implementation:** `internal/legacy_save/decode.go`, `internal/game_state/legacy_save_game.go`
-**Tests:** `internal/legacy_save/decode_test.go`, `internal/game_state/legacy_save_game_test.go`
+**Implementation:** `internal/legacy_save/decode.go`, `internal/legacy_save/conversion.go`
+**Tests:** `internal/legacy_save/decode_test.go`, `internal/legacy_save/conversion_test.go`

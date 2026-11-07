@@ -98,7 +98,7 @@ func TestMoonstoneMapMatching(t *testing.T) {
 	saveData := helpers.LoadBootstrapSaveData(t)
 	xTiles, yTiles := helpers.GetTestGameConstants()
 
-	gs := mustNewGameStateFromLegacySaveBytes(saveData, config, gameRefs, xTiles, yTiles)
+	gs := mustNewGameStateFromOriginalSaveBytes(saveData, config, gameRefs, xTiles, yTiles)
 
 	mockCallbacks := NewMockSystemCallbacks(t)
 	gs.SystemCallbacks = mockCallbacks.ToSystemCallbacks()

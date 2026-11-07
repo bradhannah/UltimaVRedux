@@ -185,7 +185,7 @@ func TestCharacterSummaryRenderingMatchesOriginalPortraitAndTextBaseline(t *test
 }
 
 func summaryBaselineParty() *party_state.PartyState {
-	party := party_state.LoadFromRaw([4192]byte{})
+	party := party_state.NewBlankPartyState()
 	for index, status := range []party_state.CharacterStatus{
 		party_state.Good, party_state.Poisoned, party_state.Sleep, party_state.Charmed, party_state.Dead, party_state.Good,
 	} {
