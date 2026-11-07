@@ -73,6 +73,11 @@ func (g *GameScene) handleRunicReferenceShortcut() bool {
 		// The Journal places the same passive reference beside its retained text.
 		return false
 	}
+	if g.keyboard.IsKeyPressedAndRegister(widgets.RunicReferenceFunctionKey) {
+		g.toggleRunicReference()
+
+		return true
+	}
 	if !g.keyboard.IsBoundKeyPressed(&[]ebiten.Key{ebiten.KeyR}) {
 		g.runicReference.shortcutHeld = false
 
@@ -85,16 +90,23 @@ func (g *GameScene) handleRunicReferenceShortcut() bool {
 		return false
 	}
 	g.runicReference.shortcutHeld = true
-	if g.keyboard.IsKeyPressedAndRegister(ebiten.KeyR) && g.runicReferenceAvailable() {
-		if g.runicReference.open {
-			g.closeRunicReference()
-		} else {
-			g.runicReference.open = true
-			g.runicReference.owner = g.dialogStack.PeekTopModalDialog()
-		}
+	if g.keyboard.IsKeyPressedAndRegister(ebiten.KeyR) {
+		g.toggleRunicReference()
 	}
 
 	return true
+}
+
+func (g *GameScene) toggleRunicReference() {
+	if !g.runicReferenceAvailable() {
+		return
+	}
+	if g.runicReference.open {
+		g.closeRunicReference()
+	} else {
+		g.runicReference.open = true
+		g.runicReference.owner = g.dialogStack.PeekTopModalDialog()
+	}
 }
 
 func (g *GameScene) drawRunicReference(screen *ebiten.Image) {

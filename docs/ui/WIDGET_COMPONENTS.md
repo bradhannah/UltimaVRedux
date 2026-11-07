@@ -118,7 +118,7 @@ C is a documented alternative, not a shipped control or required follow-on.
 ## Traveller's Map
 
 The keyboard-only atlas opens/toggles with exact `Shift+M` (either Shift, no
-Ctrl/Alt/Meta). Its ten visible category tabs are All, Settlements, Keeps,
+Ctrl/Alt/Meta) or `F6`. Its ten visible category tabs are All, Settlements, Keeps,
 Castles, Shrines, Lighthouses, Dungeons, Moonstones, Vessels, and My Notes. `Tab` advances the category
 and `Shift+Tab` reverses it, wrapping at either end. Fresh released taps are
 accepted immediately without gameplay repeat timing; holding Tab selects once.

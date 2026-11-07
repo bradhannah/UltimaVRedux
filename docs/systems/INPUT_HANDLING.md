@@ -59,7 +59,10 @@ cannot acknowledge all-key prompts, count as intro activity, hold release gates,
 or enter focus-return suppression. Real held controls still require release.
 Native committed text and composition keep their existing case policies.
 **Shift+M/Shift+J require physically held left or right Shift**, with existing
-context/other-modifier rules. While a text box has focus, Shift+J types a capital J
+context/other-modifier rules. Single-key aliases skip the chord: F5 for Shift+J,
+F6 for Shift+M, F7 for Ctrl+R and F1 for `/`. Each alias joins its chord's own
+check, so it opens and closes the same reader under the same context rules.
+Command Help lists both keys; on-screen hint strips show only the chord. While a text box has focus, Shift+J types a capital J
 instead of opening the Journal. Caps Lock alone routes M/J to Mix/Jimmy; Caps Lock
 plus physical Shift opens readers even if native text is lowercase. Native
 save-description Ctrl+U accepts either ASCII shortcut insertion (`u`/`U`) without
@@ -104,7 +107,7 @@ Outside that session, each frame follows this ownership order:
 6. Accept a still-valid pending combat verb through its normal handler before
     ordinary movement; if `secondaryKeyState != PrimaryInput`, route only to the
     current map's secondary handler and return.
-7. Otherwise read and debounce a bound key, intercept `/` (also shifted `/`, `?`)
+7. Otherwise read and debounce a bound key, intercept `/` (also shifted `/`, `?`, and F1)
    Help, F4 last-battle review, and global Shift+J journal routing, process active-player number keys, and call the large-, small-,
    dungeon-, or combat-map primary handler.
 
@@ -334,7 +337,7 @@ Notices add no save restriction, game time, RNG work or persisted queue. Scene
 replacement/disposal clears pending notices; hydration does not replay them. See
 `gamescene_journal_notice.go` and `gamescene_map_notice_test.go`.
 
-`gamescene_atlas.go` admits exact Shift+M only at idle PrimaryInput on actual
+`gamescene_atlas.go` admits exact Shift+M (or F6) only at idle PrimaryInput on actual
 large, small or dungeon maps, including read-only surface-chart access from the
 Underworld. Combat, camping, virtual scenes, workflows, modals, pending battle
 summaries/encounters, auto-open transitions and input locks reject opening. NPC
@@ -406,7 +409,7 @@ attention, accounting, and lifecycle contracts.
 
 ### Runic reference
 
-`Ctrl+R` toggles the full right-rail alphabet during ordinary surface/dungeon
+`Ctrl+R` (or F7) toggles the full right-rail alphabet during ordinary surface/dungeon
 exploration, Sign Look, and semantic NPC Talk. The source remains in its existing
 left-side presentation; the chart pairs the existing Runic font with Latin A-Z
 and the authored TH, EE, NG, and ST forms. It does not decode the current text.
@@ -554,7 +557,7 @@ Mix, New Order, and Ready likewise retain one token through success, rejection,
 and cancellation. Immediate validation rejection completes synchronously;
 started workflow finalizers own exact-once full completion after cleanup.
 
-Shift+J is intercepted before queues, modal input, and primary handlers in
+Shift+J (or F5) is intercepted before queues, modal input, and primary handlers in
 exploration, conversations, retained prompts, workflows, dungeons, and combat
 including targeting. Terminal finale presentation is excluded, and so is a
 focused text box (typed Yell, conversation keyword or text prompt), where Shift+J

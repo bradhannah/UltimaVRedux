@@ -386,7 +386,8 @@ func (d *QuestJournalDialog) handleRunicReferenceInput() bool {
 
 		return true
 	}
-	if d.keyboard.IsModifierPressed(input.ModifierCtrl) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyR) {
+	if d.keyboard.IsModifierPressed(input.ModifierCtrl) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyR) ||
+		d.keyboard.IsKeyPressedAndRegister(RunicReferenceFunctionKey) {
 		if d.hasRunicExchange() {
 			d.runicReferenceOpen = !d.runicReferenceOpen
 		}

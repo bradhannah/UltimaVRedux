@@ -42,6 +42,9 @@ func (g *GameScene) pollAtlasRequest() bool {
 	if !g.keyboard.IsKeyHeld(ebiten.KeyM) {
 		g.atlasChordHeld = false
 	}
+	if g.keyboard.IsKeyPressedAndRegister(widgets.AtlasFunctionKey) {
+		return true
+	}
 	if !widgets.IsAtlasChord(g.keyboard) {
 		return false
 	}

@@ -8,6 +8,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
@@ -109,4 +110,43 @@ func TestAtlasUnavailableChordIsConsumedThroughRelease(t *testing.T) {
 	clear(keys)
 	require.False(t, scene.pollAtlasRequest())
 	require.False(t, scene.atlasChordHeld)
+}
+
+func TestFunctionKeysOpenAndCloseMapAndJournal(t *testing.T) {
+	now := time.Unix(100, 0)
+	keys := map[ebiten.Key]bool{}
+	newScene := func(state *game_state.GameState) *GameScene {
+		keyboard := input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool { return keys[key] })
+		scene := &GameScene{gameState: state, gameConfig: state.GameConfig, keyboard: keyboard,
+			output: text.NewOutput(nil, 1, 64, 80), spriteSheet: sharedPresentationTestSpriteSheet(),
+			now: func() time.Time { return now }, startTime: now}
+		t.Cleanup(state.EventQueueManager.Shutdown)
+
+		return scene
+	}
+	// Each frame stays inside the reader's own pause: press, then release.
+	tap := func(scene *GameScene, key ebiten.Key) {
+		t.Helper()
+		keys[key] = true
+		require.NoError(t, scene.Update(nil))
+		clear(keys)
+		require.NoError(t, scene.Update(nil))
+	}
+
+	atlasState, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+		WithSystemCallbacks().WithRandomSeed(42).Build()
+	atlasScene := newScene(atlasState)
+	tap(atlasScene, widgets.AtlasFunctionKey)
+	require.NotNil(t, atlasScene.atlasSession, "F6 opens the map like Shift+M")
+	tap(atlasScene, widgets.AtlasFunctionKey)
+	require.Nil(t, atlasScene.atlasSession, "F6 closes the map like Shift+M")
+
+	journalState := newGameActionCallbacksKnowledgeState(t)
+	journalScene := newScene(journalState)
+	journalState.SystemCallbacks.UI.JournalChanged = journalScene.journalChanged
+	journalState.SystemCallbacks.UI.ShowQuestJournalDossier = journalScene.ShowQuestJournalDossier
+	tap(journalScene, widgets.QuestJournalFunctionKey)
+	require.NotNil(t, journalScene.journalSession, "F5 opens the journal like Shift+J")
+	tap(journalScene, widgets.QuestJournalFunctionKey)
+	require.Nil(t, journalScene.journalSession, "F5 closes the journal like Shift+J")
 }

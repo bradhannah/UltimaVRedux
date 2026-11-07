@@ -98,6 +98,9 @@ func (d *AtlasDialog) onDialogFocusChanged(focused bool) {
 	d.navigation.onDialogFocusChanged(focused)
 }
 
+// AtlasFunctionKey opens and closes the map exactly like Shift+M.
+const AtlasFunctionKey = ebiten.KeyF6
+
 // IsAtlasChord is exact: extra Ctrl/Alt/Meta modifiers retain their own routing.
 func IsAtlasChord(keyboard *input.Keyboard) bool {
 	return keyboard.IsModifierComboPressed(input.ModifierShift, ebiten.KeyM) &&
@@ -111,7 +114,8 @@ func (d *AtlasDialog) Update() {
 		return
 	}
 	d.ensureLayout()
-	if IsAtlasChord(d.keyboard) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyM) {
+	if IsAtlasChord(d.keyboard) && d.keyboard.IsKeyPressedAndRegister(ebiten.KeyM) ||
+		d.keyboard.IsKeyPressedAndRegister(AtlasFunctionKey) {
 		d.close()
 
 		return

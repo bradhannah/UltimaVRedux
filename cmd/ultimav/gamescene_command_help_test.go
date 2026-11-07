@@ -84,12 +84,16 @@ func TestCommandHelpDoesNotStealSecondaryDirectionInput(t *testing.T) {
 func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 	for _, context := range []references.GeneralMapType{references.SmallMapType, references.LargeMapType, references.DungeonMapType, references.CombatMapType} {
 		entries := commandHelpEntries(context)
-		foundJournal, foundDirection := false, false
+		foundJournal, foundMap, foundDirection := false, false, false
 		for _, entry := range entries {
 			require.NotEmpty(t, entry.Purpose)
 			require.True(t, entry.NextInput != "" || entry.Unavailable != "")
-			if entry.Key == "Shift+J" {
+			if entry.Key == commandHelpJournalKeys {
 				foundJournal = true
+			}
+			if entry.Key == commandHelpMapKeys {
+				foundMap = true
+				require.Equal(t, context == references.CombatMapType, entry.Unavailable != "")
 			}
 			if entry.Key == "Ctrl+N" {
 				require.Contains(t, entry.NextInput, "current sextant fix")
@@ -99,7 +103,7 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 					require.NotEmpty(t, entry.Unavailable)
 				}
 			}
-			if entry.Key == "/ or ?" {
+			if entry.Key == commandHelpHelpKeys {
 				require.Contains(t, entry.NextInput, "Space: Next page")
 			}
 			if entry.Key == "C" {
@@ -145,6 +149,7 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 			}
 		}
 		require.True(t, foundJournal)
+		require.True(t, foundMap, "Help lists the Traveller's map")
 		if context == references.SmallMapType {
 			require.True(t, foundDirection)
 		}
