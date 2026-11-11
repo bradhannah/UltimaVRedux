@@ -94,7 +94,7 @@ func (g *GameScene) startScheduledMonsterTurnWithPacing(
 	queue := g.gameState.EventQueueManager.Workflow("monster_turn_delay").
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput().
-		InputReleaseReady(func() bool { return !g.keyboard.HasUnprotectedHeldKey() }).
+		InputReleaseReady(g.combatTurnReleaseReady).
 		First(func() {}).
 		Wait(delayMs).
 		Then(g.combatTimingStep(timing, func() {
@@ -173,7 +173,7 @@ func (g *GameScene) startScheduledCombatAutoPass(step game_state.CombatPresentat
 	g.gameState.EventQueueManager.Workflow("combat_pc_auto_pass").
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput().
-		InputReleaseReady(func() bool { return !g.keyboard.HasUnprotectedHeldKey() }).
+		InputReleaseReady(g.combatTurnReleaseReady).
 		First(func() {}).
 		Wait(delayMs).
 		Then(func() {}). // Preserve Wait's delay before While installs its immediate loop entry.

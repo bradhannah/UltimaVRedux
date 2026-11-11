@@ -308,6 +308,7 @@ The additional Gameplay preferences are:
 | Preference | Persisted key | Allowed values | Default |
 |---|---|---|---|
 | Combat Speed | `Gameplay.Combat.SpeedFactor` | 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x, Ludicrous (stored as 100) | 1x |
+| Combat Key Repeat | `Gameplay.Combat.KeyRepeat` | Off, Measured, Fast 10, Fast 20, Fast 30 (stored as 0, 6, 10, 20, 30 per second) | Measured |
 | Confirm Quick Save | `Gameplay.Saves.ConfirmQuickSave` | On / Off | On |
 | Show Combat HP Bars | `Gameplay.Combat.ShowHealthBars` | On / Off | On |
 | Maximum Action Popups | `Gameplay.Presentation.MaxVisibleActionPopups` | integer 0–3; 0 is Off | 3 |

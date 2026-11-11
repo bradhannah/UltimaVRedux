@@ -45,6 +45,7 @@ const (
 	gameplayFlexibleSextantUseIndex
 	gameplayAnkhWandererBonusIndex
 	gameplayCombatSpeedIndex
+	gameplayCombatKeyRepeatIndex
 	gameplayConfirmQuickSaveIndex
 	gameplayShowCombatHPBarsIndex
 	gameplayMaxActionPopupsIndex
@@ -104,6 +105,16 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 				get:    func(s config.GameplayConfiguration) float64 { return s.CombatSpeedFactor },
 				set:    func(s *config.GameplayConfiguration, value float64) { s.CombatSpeedFactor = value },
 				format: config.FormatCombatSpeed,
+			},
+		},
+		{
+			label:     "Combat Key Repeat",
+			helpLines: combatKeyRepeatHelpLines(),
+			numeric: &gameplayNumericSetting{
+				spec:   config.CombatKeyRepeatSpec(),
+				get:    func(s config.GameplayConfiguration) float64 { return float64(s.CombatKeyRepeat) },
+				set:    func(s *config.GameplayConfiguration, value float64) { s.CombatKeyRepeat = int(value) },
+				format: formatCombatKeyRepeat,
 			},
 		},
 		{
@@ -786,7 +797,7 @@ func (d *ConfigurationDialog) toggleFocusedGameplaySetting() {
 		d.stagedGameplay.ShowCombatHPBars = !d.stagedGameplay.ShowCombatHPBars
 	case gameplaySimpleNotesModeIndex:
 		d.stagedGameplay.SimpleNotesMode = !d.stagedGameplay.SimpleNotesMode
-	case gameplayCombatSpeedIndex, gameplayMaxActionPopupsIndex:
+	case gameplayCombatSpeedIndex, gameplayCombatKeyRepeatIndex, gameplayMaxActionPopupsIndex:
 		return
 	default:
 		panic("unsupported Gameplay setting index")

@@ -33,6 +33,29 @@ func combatSpeedHelpLines(spec config.NumericSettingSpec) []string {
 	)
 }
 
+// formatCombatKeyRepeat names a Combat Key Repeat choice: Off, Measured, or a
+// Fast rate in actions per second.
+func formatCombatKeyRepeat(value float64) string {
+	switch rate := int(value); rate {
+	case 0:
+		return gameplaySettingOffLabel
+	case config.CombatKeyRepeatMeasured:
+		return "Measured"
+	default:
+		return "Fast " + strconv.Itoa(rate)
+	}
+}
+
+func combatKeyRepeatHelpLines() []string {
+	return []string{
+		"Hold a key in combat to repeat it, for every party member in turn.", "",
+		"Measured repeats arrows and Tab about 6 times a second.",
+		"Fast also repeats A, up to 10, 20 or 30 times a second.", "",
+		"Repeats begin after a short hold. Blocked, a prompt or the end of combat stops them.", "",
+		"Default: " + formatCombatKeyRepeat(config.CombatKeyRepeatSpec().Default),
+	}
+}
+
 func actionPopupsHelpLines(spec config.NumericSettingSpec) []string {
 	choices := make([]string, 0, len(spec.Choices()))
 	for _, value := range spec.Choices() {

@@ -22,8 +22,9 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 		assert.True(t, config.GetShowCombatHPBars())
 		assert.Equal(t, 3, config.GetMaxVisibleActionPopups())
 		assert.False(t, config.GetSimpleNotesMode(), "Simple Notes Mode defaults to Off")
+		assert.Equal(t, CombatKeyRepeatMeasured, config.GetCombatKeyRepeat(), "Combat Key Repeat defaults to Measured")
 	}
-	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
+	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
 	require.NoError(t, configuration.UpdateSaveFile())
 	loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 	require.NoError(t, err)
@@ -32,6 +33,7 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 	assert.False(t, loaded.GetShowCombatHPBars())
 	assert.Zero(t, loaded.GetMaxVisibleActionPopups())
 	assert.True(t, loaded.GetSimpleNotesMode())
+	assert.Equal(t, 20, loaded.GetCombatKeyRepeat())
 }
 
 func TestQoLEveryNumericValueRoundTrips(t *testing.T) {
@@ -67,6 +69,7 @@ func TestQoLStrictSourceValidation(t *testing.T) {
 		{gameplayCombatSpeedKey, math.NaN()}, {gameplayCombatSpeedKey, math.Inf(1)},
 		{gameplayMaxActionPopupsKey, 1.5}, {gameplayMaxActionPopupsKey, 1.0},
 		{gameplayMaxActionPopupsKey, -1}, {gameplayMaxActionPopupsKey, 4},
+		{gameplayCombatKeyRepeatKey, 5}, {gameplayCombatKeyRepeatKey, 31}, {gameplayCombatKeyRepeatKey, 6.0},
 		{gameplayConfirmQuickSaveKey, "false"}, {gameplayShowCombatHPBarsKey, 0},
 	} {
 		t.Run(fmt.Sprintf("%s=%v", test.key, test.value), func(t *testing.T) {

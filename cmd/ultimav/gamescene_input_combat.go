@@ -75,6 +75,7 @@ func (g *GameScene) combatMapInputHandler(key ebiten.Key) {
 			g.appendToCurrentRowStr("Auto")
 			g.addRowStr("No reachable enemy.")
 			g.gameState.SystemCallbacks.Message.ShowCommandPrompt("")
+			g.stopCombatKeyRepeat()
 
 			return
 		default:
@@ -144,6 +145,7 @@ func (g *GameScene) combatMapInputHandler(key ebiten.Key) {
 		} else {
 			skipFinishTurn = true
 			g.gameState.SystemCallbacks.Message.ShowCommandPrompt("")
+			g.stopCombatKeyRepeat()
 		}
 	case ebiten.KeyU:
 		g.appendToCurrentRowStr("Use...")
@@ -196,9 +198,9 @@ func (g *GameScene) resolveCombatAutoAttack(target references.Position) {
 	}
 	combat := g.gameState.CombatScene
 	targeting := combat.AttackTargeting
-	queue := g.gameState.EventQueueManager.Workflow(combatAutoAttackWorkflowName).
+	queue := g.releaseAfterCombatAction(g.gameState.EventQueueManager.Workflow(combatAutoAttackWorkflowName).
 		Priority(event_queue.PriorityHigh).
-		Sequential().BlockInput().
+		Sequential().BlockInput()).
 		First(func() {})
 	// A bounded source count lets every launch/return finish in the same owner.
 	// Later steps review live ammo, obstruction and the exact original victim.
@@ -733,6 +735,9 @@ func (g *GameScene) handleCombatAttackTargetInput() {
 
 		return
 	}
+	if g.repeatCombatAttackConfirmation(targeting) {
+		return
+	}
 
 	g.handleCombatAttackConfirmation(targeting)
 }
@@ -750,9 +755,14 @@ func (g *GameScene) handleCombatAttackConfirmation(targeting *game_state.CombatA
 		}
 		confirm = true
 	}
-	if !confirm {
-		return
+	if confirm {
+		g.confirmCombatAttack(targeting)
 	}
+}
+
+// confirmCombatAttack fires the current source at the aimed square, as A, Enter
+// or Space does.
+func (g *GameScene) confirmCombatAttack(targeting *game_state.CombatAttackTargeting) {
 	if targeting.Cursor == targeting.Origin {
 		g.finishCombatAttackTargetAction(g.gameState.ConfirmCombatAttackTarget())
 
@@ -774,9 +784,9 @@ func (g *GameScene) startCombatProjectileAttack(result game_state.CombatAttackTa
 	resolution := game_state.CombatAttackTargetResult{Outcome: game_state.CombatAttackTargetIgnored}
 	resolved := false
 
-	g.gameState.EventQueueManager.Workflow("combat_physical_projectile_attack").
+	g.releaseAfterCombatAction(g.gameState.EventQueueManager.Workflow("combat_physical_projectile_attack").
 		Priority(event_queue.PriorityHigh).
-		Sequential().BlockInput().
+		Sequential().BlockInput()).
 		First(func() {}).
 		ThenSequence(g.combatPhysicalProjectileSequence(result, func(impact game_state.CombatAttackTargetResult) {
 			resolution = impact
@@ -1139,6 +1149,7 @@ func (g *GameScene) handleCombatMovement(direction references.Direction) bool {
 	case game_state.CombatMoveBlocked:
 		g.addRowStr("Blocked!")
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("")
+		g.stopCombatKeyRepeat()
 
 		return false
 	default:

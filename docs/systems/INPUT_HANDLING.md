@@ -214,6 +214,32 @@ a hitch. Release stops immediately. Readers, modals, blocking workflows, focus
 loss and location/floor changes cancel the hold and require a fresh press.
 Space cannot bleed from a repeat into another prompt or command owner.
 
+### Combat key repeat
+
+Configure → Gameplay → Combat Key Repeat (`Gameplay.Combat.KeyRepeat`) is
+Measured by default. Measured (6) repeats the cardinal arrows, keypad arrows and
+Tab at most once per 165 ms, the walking pace outside combat. Off keeps the
+behavior above: one action per press, and a held key pauses enemy turns until
+release.
+Fast 10, 20 and 30 also repeat A, at most that many actions per second.
+
+`gamescene_combat_key_repeat.go` mirrors the exploration Pass repeat. A fresh
+unmodified press at a ready party turn starts the repeat and acts at once
+through the ordinary command route. While the key stays held the scene owns it:
+the first repeat waits 300 ms, later ones wait for the rate cap, which is shared
+by every party member, and one Update emits at most one action with no backlog.
+Each repeat acts for whichever member's turn has come, in solo or all-party
+mode, including a step off the battlefield that flees. Enemy turns, automatic
+passes and the party's own movement, projectile and Tab workflows treat the
+held repeat key as released (`HasUnprotectedHeldKeyExcept`); any other held key
+still holds them. A held A opens aim on the remembered target and confirms it
+in the next update; an aim that opens on the attacker stops the repeat.
+
+Release ends a repeat. Blocked!, No reachable enemy., a failed Attack, another
+fresh key, a prompt or reader, a dialog, focus loss, turning the setting Off or
+the end of its encounter stop it and suppress the key until release, so it can
+never act on the map after combat. Space is never repeated in combat.
+
 ### Sleeping Space
 
 Outdoor and dungeon Hole Up retain their workflow input block. Only a fresh
@@ -277,7 +303,8 @@ updates remain suspended. Journal and Atlas keep their full gameplay pause.
 These fields and release guards are transient and never saved.
 
 The two combat presentation workflows use a narrow release guard that permits
-handoff over keys already suppressed until physical release. This does not alter
+handoff over keys already suppressed until physical release, and over a key held
+by [combat key repeat](#combat-key-repeat). This does not alter
 raw `WaitForAnyKey` or camping release-before-unblock behavior.
 
 ### Early all-party combat reset

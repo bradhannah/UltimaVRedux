@@ -76,9 +76,9 @@ func (g *GameScene) startPlayerCombatMovementWorkflow(
 	fromPos, toPos references.Position,
 	token game_state.CombatPresentationToken,
 ) {
-	queue := g.gameState.EventQueueManager.Workflow("player_combat_movement").
+	queue := g.releaseAfterCombatAction(g.gameState.EventQueueManager.Workflow("player_combat_movement").
 		Priority(event_queue.PriorityHigh).
-		Sequential().BlockInput().
+		Sequential().BlockInput()).
 		First(func() {})
 	g.animateCombatMovement(queue, true, identity.EntityIndex, identity.Slot, fromPos, toPos).Finally(func() {
 		g.clearCombatMovement()
@@ -91,9 +91,9 @@ func (g *GameScene) startControlledMonsterCombatMovementWorkflow(
 	fromPos, toPos references.Position,
 	token game_state.CombatPresentationToken,
 ) {
-	queue := g.gameState.EventQueueManager.Workflow("controlled_monster_combat_movement").
+	queue := g.releaseAfterCombatAction(g.gameState.EventQueueManager.Workflow("controlled_monster_combat_movement").
 		Priority(event_queue.PriorityHigh).
-		Sequential().BlockInput().
+		Sequential().BlockInput()).
 		First(func() {})
 	g.animateCombatMovement(queue, false, entityIndex, 0, fromPos, toPos).Finally(func() {
 		g.clearCombatMovement()

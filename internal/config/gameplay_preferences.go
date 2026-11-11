@@ -21,6 +21,7 @@ var (
 
 const (
 	gameplayCombatSpeedKey      = "Gameplay.Combat.SpeedFactor"
+	gameplayCombatKeyRepeatKey  = "Gameplay.Combat.KeyRepeat"
 	gameplayConfirmQuickSaveKey = "Gameplay.Saves.ConfirmQuickSave"
 	gameplayShowCombatHPBarsKey = "Gameplay.Combat.ShowHealthBars"
 	gameplayMaxActionPopupsKey  = "Gameplay.Presentation.MaxVisibleActionPopups"
@@ -65,6 +66,25 @@ func FormatCombatSpeed(value float64) string {
 	}
 
 	return strconv.FormatFloat(value, 'f', -1, 64) + "x"
+}
+
+const (
+	// CombatKeyRepeatMeasured repeats held arrows and Tab at about six actions a
+	// second, the pace of walking outside combat.
+	CombatKeyRepeatMeasured = 6
+	combatKeyRepeatFast10   = 10
+	combatKeyRepeatFast20   = 20
+	combatKeyRepeatFastest  = 30
+)
+
+// CombatKeyRepeatSpec returns the Combat Key Repeat choices in actions per
+// second. Zero is Off, Measured (the default) repeats arrows and Tab, and Fast
+// choices add A.
+func CombatKeyRepeatSpec() NumericSettingSpec {
+	return NumericSettingSpec{
+		Min: 0, Max: combatKeyRepeatFastest, Step: 1, Default: CombatKeyRepeatMeasured,
+		Values: []float64{0, CombatKeyRepeatMeasured, combatKeyRepeatFast10, combatKeyRepeatFast20, combatKeyRepeatFastest},
+	}
 }
 
 // ActionPopupsSpec returns the integer popup preference domain; zero means Off.
@@ -180,6 +200,9 @@ func ValidateGameplayConfiguration(settings GameplayConfiguration) error {
 	if err := ActionPopupsSpec().Validate(float64(settings.MaxVisibleActionPopups)); err != nil {
 		return fmt.Errorf("%s: %w", gameplayMaxActionPopupsKey, err)
 	}
+	if err := CombatKeyRepeatSpec().Validate(float64(settings.CombatKeyRepeat)); err != nil {
+		return fmt.Errorf("%s: %w", gameplayCombatKeyRepeatKey, err)
+	}
 
 	return nil
 }
@@ -202,6 +225,7 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
 		MaxVisibleActionPopups:          int(ActionPopupsSpec().Default),
+		CombatKeyRepeat:                 int(CombatKeyRepeatSpec().Default),
 		SimpleNotesMode:                 false,
 	}
 }
@@ -230,6 +254,9 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	}
 	if uc.source.IsSet(gameplayMaxActionPopupsKey) {
 		settings.MaxVisibleActionPopups = uc.source.GetInt(gameplayMaxActionPopupsKey)
+	}
+	if uc.source.IsSet(gameplayCombatKeyRepeatKey) {
+		settings.CombatKeyRepeat = uc.source.GetInt(gameplayCombatKeyRepeatKey)
 	}
 }
 
@@ -268,6 +295,15 @@ func (uc *UltimaVConfiguration) GetSimpleNotesMode() bool {
 // GetShowCombatHPBars defaults to visible when a fixture has no settings.
 func (uc *UltimaVConfiguration) GetShowCombatHPBars() bool {
 	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ShowCombatHPBars
+}
+
+// GetCombatKeyRepeat returns held-key repeats per second in combat; zero is Off.
+func (uc *UltimaVConfiguration) GetCombatKeyRepeat() int {
+	if uc == nil || uc.GameplayConfiguration == nil {
+		return int(CombatKeyRepeatSpec().Default)
+	}
+
+	return uc.GameplayConfiguration.CombatKeyRepeat
 }
 
 // GetMaxVisibleActionPopups preserves explicit zero (Off).

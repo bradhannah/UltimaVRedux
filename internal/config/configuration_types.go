@@ -30,7 +30,7 @@ func validateConfigurationTypes(source *viper.Viper) error {
 			}},
 		{"integer", []string{"Resolution", "Audio.MusicVolume", "Audio.SoundEffectVolume", "Audio.AmbientVolume",
 			"Display.WindowWidth", "Display.WindowHeight", "Display.TargetFPS", "Lighting.AmbientLightRadius",
-			"Debug.SurfaceMovementDurationMs", gameplayMaxActionPopupsKey},
+			"Debug.SurfaceMovementDurationMs", gameplayMaxActionPopupsKey, gameplayCombatKeyRepeatKey},
 			func(value any) bool {
 				_, ok := value.(int)
 
@@ -80,6 +80,11 @@ func validateGameplaySourceNumbers(source *viper.Viper) error {
 	if source.IsSet(gameplayMaxActionPopupsKey) {
 		if err := ActionPopupsSpec().Validate(source.GetFloat64(gameplayMaxActionPopupsKey)); err != nil {
 			return fmt.Errorf("%s: %w", gameplayMaxActionPopupsKey, err)
+		}
+	}
+	if source.IsSet(gameplayCombatKeyRepeatKey) {
+		if err := CombatKeyRepeatSpec().Validate(source.GetFloat64(gameplayCombatKeyRepeatKey)); err != nil {
+			return fmt.Errorf("%s: %w", gameplayCombatKeyRepeatKey, err)
 		}
 	}
 

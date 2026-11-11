@@ -160,14 +160,23 @@ Redux additionally offers a post-victory group exit after a route is established
 avoiding repetitive individual departures; original physical edges/ladders remove
 one PC at a time. Collision and established-route requirements remain authoritative.
 
+As a Redux input convenience, Combat Key Repeat (Gameplay, Measured by
+default) lets a held arrow or Tab, and at its Fast rates A, act again on each
+later party turn after a 300 ms hold, capped at Measured (one action per 165 ms)
+or 10, 20 or 30 actions per second. Each repeat is an ordinary command for the
+actor whose turn it is. Original held-key behavior in combat is not established
+here; Off keeps one action per press. Blocked, an unavailable Tab or Attack,
+another key, prompts and the end of the encounter stop it until release. See
+[combat key repeat](../systems/INPUT_HANDLING.md#combat-key-repeat).
+
 **REDUX DEVIATION: COMBAT-0003 — walkable loose loot:** in the original, loose
 items left by opening or searching block every combatant. Redux lets party
 members step onto them; monsters stay blocked, as in the original, and Get still
 takes items from an adjacent square. Kept by owner decision, so dropped loot
 never walls the party out of narrow room lanes or exits.
 
-**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_object.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`
-**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`
+**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_object.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`, `cmd/ultimav/gamescene_combat_key_repeat.go`
+**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`, `cmd/ultimav/gamescene_combat_key_repeat_test.go`
 
 ### COMBAT-0004
 
