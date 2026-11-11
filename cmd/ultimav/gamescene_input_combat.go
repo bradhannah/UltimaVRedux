@@ -223,7 +223,7 @@ func (g *GameScene) resolveCombatAutoAttack(target references.Position) {
 			if len(impacts) > 0 {
 				// Dynamic insertion starts its temporary first node immediately.
 				// Anchor the hold to a real step, not that node's ignored leading delay.
-				return q.Then(func() {}).Wait(timing.durationMs(combatAutoAttackHoldDurationMs)).Then(func() {})
+				return q.Then(func() {}).Wait(timing.pauseMs(combatAutoAttackHoldDurationMs)).Then(func() {})
 			}
 
 			return q

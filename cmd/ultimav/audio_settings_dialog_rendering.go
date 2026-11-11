@@ -103,7 +103,7 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 				spec:   config.CombatSpeedSpec(),
 				get:    func(s config.GameplayConfiguration) float64 { return s.CombatSpeedFactor },
 				set:    func(s *config.GameplayConfiguration, value float64) { s.CombatSpeedFactor = value },
-				format: formatCombatSpeed,
+				format: config.FormatCombatSpeed,
 			},
 		},
 		{
@@ -561,23 +561,25 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 			textColor = widgets.DialogSelectedText
 			markColor = widgets.DialogSelectedCheckedMarkColor
 		}
+		labelWidth := d.gameplayLabelWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit, settings[index])
+		d.gameplayOutput.SetMaxCharsPerLine(max(1, d.gameplayOutput.Font.CharsForWidth(labelWidth)))
 		d.gameplayOutput.Reset()
 		d.gameplayOutput.AppendLine().Text(settings[index].label, textColor).WordWrap().Done()
 		inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
 		top := centeredAudioOutputY(rect, d.gameplayOutput)
 		d.labelOutput.Reset()
 		if numeric := settings[index].numeric; numeric != nil {
+			// Numeric values sit at the row's right edge, after the label.
+			valueWidth := d.gameplayValueWidth(settings[index])
 			d.labelOutput.AppendLine().Text(numeric.format(numeric.get(d.stagedGameplay)), textColor).Done()
+			d.labelOutput.DrawPanelContent(clipped, image.Pt(rect.Max.X-inset-valueWidth, top), valueWidth, etext.AlignEnd)
 		} else {
 			d.labelOutput.AppendLine().Text("[", textColor).
 				Text(d.gameplayCheckmark(index), markColor).Text("]", textColor).Done()
+			d.labelOutput.DrawPanelContent(clipped, image.Pt(rect.Min.X+inset, top), d.gameplayCheckboxWidth(), etext.AlignStart)
 		}
-		d.labelOutput.DrawPanelContent(clipped, image.Pt(rect.Min.X+inset, top), d.gameplayCheckboxWidth(), etext.AlignStart)
 		d.gameplayOutput.DrawPanelContent(
-			clipped,
-			image.Pt(rect.Min.X+inset+d.gameplayCheckboxWidth(), top),
-			d.gameplayLabelWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit),
-			etext.AlignStart,
+			clipped, image.Pt(rect.Min.X+inset+d.gameplayCheckboxWidth(), top), labelWidth, etext.AlignStart,
 		)
 	}
 

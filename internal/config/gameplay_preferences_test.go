@@ -62,7 +62,7 @@ func TestQoLStrictSourceValidation(t *testing.T) {
 		key   string
 		value any
 	}{
-		{gameplayCombatSpeedKey, 0}, {gameplayCombatSpeedKey, 0.75}, {gameplayCombatSpeedKey, 20.5},
+		{gameplayCombatSpeedKey, 0}, {gameplayCombatSpeedKey, 0.75}, {gameplayCombatSpeedKey, 100.5},
 		{gameplayCombatSpeedKey, "2"}, {gameplayCombatSpeedKey, true},
 		{gameplayCombatSpeedKey, math.NaN()}, {gameplayCombatSpeedKey, math.Inf(1)},
 		{gameplayMaxActionPopupsKey, 1.5}, {gameplayMaxActionPopupsKey, 1.0},
@@ -194,12 +194,13 @@ func TestNumericSettingSpecValueListValidationAndSteps(t *testing.T) {
 	require.NoError(t, spec.Validate(12))
 	require.Error(t, spec.Validate(10))
 	require.NoError(t, spec.ValidateGrid(10))
-	assert.Equal(t, []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20}, spec.Choices())
+	assert.Equal(t, []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20, CombatSpeedLudicrous}, spec.Choices())
 	assert.Equal(t, 6.0, spec.Advance(4, 1))
 	assert.Equal(t, 3.0, spec.Advance(4, -1))
-	assert.Equal(t, 20.0, spec.Advance(16, 5))
+	assert.Equal(t, CombatSpeedLudicrous, spec.Advance(16, 5))
+	assert.Equal(t, CombatSpeedFastestAnimated, spec.Advance(CombatSpeedLudicrous, -1))
 	assert.Equal(t, 0.5, spec.Advance(1, -5))
-	for _, test := range []struct{ value, want float64 }{{0, 0.5}, {1.75, 2}, {10, 12}, {14, 16}, {99, 20}} {
+	for _, test := range []struct{ value, want float64 }{{0, 0.5}, {1.75, 2}, {10, 12}, {14, 16}, {50, 20}, {99, CombatSpeedLudicrous}} {
 		assert.Equal(t, test.want, spec.Nearest(test.value), "%g", test.value)
 	}
 }

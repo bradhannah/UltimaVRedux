@@ -76,18 +76,14 @@ func (g *GameScene) startPlayerCombatMovementWorkflow(
 	fromPos, toPos references.Position,
 	token game_state.CombatPresentationToken,
 ) {
-	g.startCombatMovement(true, identity.EntityIndex, identity.Slot, fromPos, toPos)
-	g.gameState.EventQueueManager.Workflow("player_combat_movement").
+	queue := g.gameState.EventQueueManager.Workflow("player_combat_movement").
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput().
-		First(func() {}).
-		Animate(g.combatMovementDuration(combatPlayerMovementDurationMs), g.updateCombatMovementProgress).Finally(
-
-		func() {
-			g.clearCombatMovement()
-			g.completeScheduledCombatStep("player movement", token)
-		}).
-		Start()
+		First(func() {})
+	g.animateCombatMovement(queue, true, identity.EntityIndex, identity.Slot, fromPos, toPos).Finally(func() {
+		g.clearCombatMovement()
+		g.completeScheduledCombatStep("player movement", token)
+	}).Start()
 }
 
 func (g *GameScene) startControlledMonsterCombatMovementWorkflow(
@@ -95,21 +91,31 @@ func (g *GameScene) startControlledMonsterCombatMovementWorkflow(
 	fromPos, toPos references.Position,
 	token game_state.CombatPresentationToken,
 ) {
-	g.startCombatMovement(false, entityIndex, 0, fromPos, toPos)
-	g.gameState.EventQueueManager.Workflow("controlled_monster_combat_movement").
+	queue := g.gameState.EventQueueManager.Workflow("controlled_monster_combat_movement").
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput().
-		First(func() {}).
-		Animate(g.combatMovementDuration(combatPlayerMovementDurationMs), g.updateCombatMovementProgress).
-		Finally(func() {
-			g.clearCombatMovement()
-			g.completeScheduledCombatStep("controlled-monster movement", token)
-		}).
-		Start()
+		First(func() {})
+	g.animateCombatMovement(queue, false, entityIndex, 0, fromPos, toPos).Finally(func() {
+		g.clearCombatMovement()
+		g.completeScheduledCombatStep("controlled-monster movement", token)
+	}).Start()
 }
 
-func (g *GameScene) combatMovementDuration(baseDurationMs uint64) uint64 {
-	return g.captureCombatTiming().duration(baseDurationMs)
+// animateCombatMovement adds the player-paced glide for a completed move.
+// Ludicrous adds none: the sprite is already drawn on its new square.
+func (g *GameScene) animateCombatMovement(
+	queue *event_queue.SequentialEventBuilder,
+	isPartyMember bool,
+	entityIndex, slot int,
+	fromPos, toPos references.Position,
+) *event_queue.SequentialEventBuilder {
+	timing := g.captureCombatTiming()
+	if !timing.animatesMotion() {
+		return queue
+	}
+	g.startCombatMovement(isPartyMember, entityIndex, slot, fromPos, toPos)
+
+	return queue.Animate(timing.duration(combatPlayerMovementDurationMs), g.updateCombatMovementProgress)
 }
 
 type combatMonsterPacing struct {
@@ -131,6 +137,10 @@ func (g *GameScene) fastScheduledMonsterPacing(actor game_state.CombatTurnIdenti
 	}
 
 	timing := g.captureCombatTiming()
+	if !timing.animatesMotion() {
+		// Ludicrous: no anticipation and no glide.
+		return combatMonsterPacing{}, true
+	}
 
 	return combatMonsterPacing{
 		anticipationMs: timing.duration(combatBatAnticipationMs),

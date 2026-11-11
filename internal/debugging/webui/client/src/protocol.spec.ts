@@ -6,9 +6,9 @@ import catalog from "./initial_catalog.fixture.json"
 describe("CommandResult protocol", () => {
   it("carries numeric step metadata losslessly", () => {
     const command = (JSON.parse(JSON.stringify(catalog)) as CommandDefinition[]).find(command => command.id === "combat.presentation.speed.set")!
-    expect(command.parameters?.[0]).toMatchObject({ kind: "integer", minimum: 50, maximum: 2000, step: 50 })
+    expect(command.parameters?.[0]).toMatchObject({ kind: "integer", minimum: 50, maximum: 10000, step: 50 })
     expect(command.parameters?.[0]?.choices?.map((choice) => choice.value)).toEqual(
-      ["50", "100", "150", "200", "300", "400", "600", "800", "1200", "1600", "2000"])
+      ["50", "100", "150", "200", "300", "400", "600", "800", "1200", "1600", "2000", "10000"])
   })
   it("preserves a normalized typed invocation without transport ownership fields", () => {
     const result = JSON.parse(`{

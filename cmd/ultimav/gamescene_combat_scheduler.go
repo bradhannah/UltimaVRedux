@@ -37,7 +37,7 @@ func (g *GameScene) takeCombatTurnHandOff(timing combatPresentationTiming) int64
 		return 0
 	}
 
-	return timing.durationMs(combatTurnHandOffMs)
+	return timing.pauseMs(combatTurnHandOffMs)
 }
 
 // reviewScheduledCombatStep claims typed GameState work and supplies only its
@@ -73,14 +73,15 @@ func (g *GameScene) startScheduledMonsterTurnWithPacing(
 	step game_state.CombatPresentationStep, pacing combatMonsterPacing, fastMovement bool,
 ) {
 	timing := g.captureCombatTiming()
-	delayMs := timing.durationMs(game_state.MonsterMoveDelayMs)
+	delayMs := timing.pauseMs(game_state.MonsterMoveDelayMs)
 	if fastMovement {
-		delayMs = int64(pacing.anticipationMs) //nolint:gosec // Validated speed bounds the 75ms base to 4-150ms.
+		delayMs = int64(pacing.anticipationMs) //nolint:gosec // Validated speed bounds the 75ms base to 0-150ms.
 	}
 	if step.HasTarget {
-		delayMs = timing.durationMs(game_state.MonsterAttackDelayMs)
+		delayMs = timing.pauseMs(game_state.MonsterAttackDelayMs)
 	}
 	delayMs += g.takeCombatTurnHandOff(timing)
+	animate := timing.animatesMotion()
 
 	logging.Debugf(logging.CategoryGameState,
 		"Combat scheduler: monster=%d actor=%+v target=%+v valid=%t delay=%dms",
@@ -118,7 +119,7 @@ func (g *GameScene) startScheduledMonsterTurnWithPacing(
 			combatScene = g.gameState.CombatScene
 			if combatScene != nil && result.Moved {
 				toPos = combatScene.GetCombatantPosition(step.Actor)
-				if shouldAnimateScheduledMonsterMovement(result, fromPos, toPos) {
+				if animate && shouldAnimateScheduledMonsterMovement(result, fromPos, toPos) {
 					g.startCombatMovement(
 						step.Actor.IsPartyMember, step.Actor.EntityIndex, step.Actor.Slot, fromPos, toPos,
 					)
@@ -130,7 +131,7 @@ func (g *GameScene) startScheduledMonsterTurnWithPacing(
 				g.gameState.ResolvePendingMonsterMissile()
 			})(sequence)
 		}
-		if !shouldAnimateScheduledMonsterMovement(result, fromPos, toPos) {
+		if !animate || !shouldAnimateScheduledMonsterMovement(result, fromPos, toPos) {
 			return sequence
 		}
 
@@ -168,7 +169,7 @@ func shouldAnimateScheduledMonsterMovement(
 
 func (g *GameScene) startScheduledCombatAutoPass(step game_state.CombatPresentationStep) {
 	timing := g.captureCombatTiming()
-	delayMs := timing.durationMs(combatAutoPassPCDurationMs) + g.takeCombatTurnHandOff(timing)
+	delayMs := timing.pauseMs(combatAutoPassPCDurationMs) + g.takeCombatTurnHandOff(timing)
 	g.gameState.EventQueueManager.Workflow("combat_pc_auto_pass").
 		Priority(event_queue.PriorityHigh).
 		Sequential().BlockInput().

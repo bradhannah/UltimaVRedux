@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -14,21 +15,22 @@ import (
 func combatSpeedHelpLines(spec config.NumericSettingSpec) []string {
 	choices := make([]string, 0, len(spec.Choices()))
 	for _, value := range spec.Choices() {
-		choices = append(choices, formatCombatSpeed(value))
+		choices = append(choices, config.FormatCombatSpeed(value))
 	}
 
-	return []string{
+	lines := []string{
 		"Change how quickly combat actions and animations play.", "",
-		formatCombatSpeed(spec.Default) + " is normal speed.",
-		"Higher values make combat faster.", "",
-		"Choose " + joinGameplayChoices(choices) + ".", "",
-		"Default: " + formatCombatSpeed(spec.Default),
+		config.FormatCombatSpeed(spec.Default) + " is normal speed.",
+		"Higher values make combat faster.",
 	}
-}
+	if slices.Contains(spec.Choices(), config.CombatSpeedLudicrous) {
+		lines = append(lines, "Ludicrous also skips movement and missile animation.")
+	}
 
-// formatCombatSpeed omits a trailing .0 so whole speeds read 1x and 20x.
-func formatCombatSpeed(value float64) string {
-	return strconv.FormatFloat(value, 'f', -1, 64) + "x"
+	return append(lines, "",
+		"Choose "+joinGameplayChoices(choices)+".", "",
+		"Default: "+config.FormatCombatSpeed(spec.Default),
+	)
 }
 
 func actionPopupsHelpLines(spec config.NumericSettingSpec) []string {

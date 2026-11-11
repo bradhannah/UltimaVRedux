@@ -28,12 +28,30 @@ func newCombatPresentationTiming(factor float64) combatPresentationTiming {
 	return combatPresentationTiming{factor: factor}
 }
 
+// speed is the divisor for authored durations. Ludicrous keeps the fastest
+// animated rate for every presentation it does not skip.
 func (timing combatPresentationTiming) speed() float64 {
 	if timing.factor == 0 {
 		return 1
 	}
 
-	return timing.factor
+	return min(timing.factor, config.CombatSpeedFastestAnimated)
+}
+
+// animatesMotion is false at Ludicrous: movement glides and missile flight are
+// skipped, so sprites appear on their new squares at once.
+func (timing combatPresentationTiming) animatesMotion() bool {
+	return timing.factor != config.CombatSpeedLudicrous
+}
+
+// pauseMs scales a pause that only gives the player time to watch, such as an
+// enemy's anticipation or Tab's hold. Ludicrous skips it.
+func (timing combatPresentationTiming) pauseMs(base int64) int64 {
+	if !timing.animatesMotion() {
+		return 0
+	}
+
+	return timing.durationMs(base)
 }
 
 func (timing combatPresentationTiming) duration(base uint64) uint64 {

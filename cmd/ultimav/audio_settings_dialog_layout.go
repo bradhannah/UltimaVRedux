@@ -139,7 +139,7 @@ func (metrics *audioSettingsMetrics) fitCardHeight(availableHeight int) {
 func (d *ConfigurationDialog) configurePaneTextWidths(textInset int) {
 	d.gameplayOutput.SetMaxCharsPerLine(max(
 		1,
-		d.gameplayOutput.Font.CharsForWidth(d.gameplayLabelWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit)),
+		d.gameplayOutput.Font.CharsForWidth(d.gameplayTextWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit)),
 	))
 	d.detailOutput.SetMaxCharsPerLine(max(
 		1,
@@ -325,9 +325,6 @@ func (d *ConfigurationDialog) measureLayout(pixelUnit, contentWidth int) audioSe
 func (d *ConfigurationDialog) measureGameplayHeight(pixelUnit, contentWidth, padding int) int {
 	gameplayListWidth := int(math.Round(float64(contentWidth) * audioSettingsGameplayListRatio))
 	gameplayInset := max(1, pixelUnit*audioSettingsCenterDivisor)
-	gameplayMaxChars := max(1, d.gameplayOutput.Font.CharsForWidth(
-		d.gameplayLabelWidth(gameplayListWidth, pixelUnit),
-	))
 	gameplayHeight := gameplayInset*audioSettingsCenterDivisor +
 		max(1, pixelUnit/audioSettingsCenterDivisor)*(audioSettingsGameplayCount-1)
 	for _, setting := range gameplaySettings() {
@@ -335,7 +332,7 @@ func (d *ConfigurationDialog) measureGameplayHeight(pixelUnit, contentWidth, pad
 			setting.label,
 			d.gameplayOutput.Font,
 			d.gameplayOutput.GetLineSpacing(),
-			gameplayMaxChars,
+			max(1, d.gameplayOutput.Font.CharsForWidth(d.gameplayLabelWidth(gameplayListWidth, pixelUnit, setting))),
 		)
 		gameplayHeight += int(math.Ceil(measurement.TotalHeight)) +
 			pixelUnit*audioSettingsGameplayRowPaddingUnits
@@ -366,8 +363,6 @@ func (d *ConfigurationDialog) buildGameplayRects(
 	detailRect := image.Rect(listRect.Max.X, bodyRect.Min.Y, bodyRect.Max.X, bodyRect.Max.Y)
 	rows := make([]image.Rectangle, audioSettingsGameplayCount)
 	inset := max(1, pixelUnit*audioSettingsCenterDivisor)
-	textWidth := d.gameplayLabelWidth(listRect.Dx(), pixelUnit)
-	maxChars := max(1, d.gameplayOutput.Font.CharsForWidth(textWidth))
 	rowGap := max(1, pixelUnit/audioSettingsCenterDivisor)
 	rowHeights := make([]int, len(rows))
 	for index, setting := range gameplaySettings() {
@@ -375,7 +370,7 @@ func (d *ConfigurationDialog) buildGameplayRects(
 			setting.label,
 			d.gameplayOutput.Font,
 			d.gameplayOutput.GetLineSpacing(),
-			maxChars,
+			max(1, d.gameplayOutput.Font.CharsForWidth(d.gameplayLabelWidth(listRect.Dx(), pixelUnit, setting))),
 		)
 		rowHeights[index] = int(math.Ceil(measurement.TotalHeight)) + pixelUnit*audioSettingsGameplayRowPaddingUnits
 	}
@@ -388,26 +383,37 @@ func (d *ConfigurationDialog) buildGameplayRects(
 	return listRect, rows, detailRect
 }
 
-// gameplayCheckboxWidth fits the widest value cell: a checkbox or any numeric choice.
+// gameplayCheckboxWidth fits the checkbox cell that starts every row.
 func (d *ConfigurationDialog) gameplayCheckboxWidth() int {
 	width, _ := d.gameplayOutput.Font.MeasureString("[X] ")
-	for _, setting := range gameplaySettings() {
-		if setting.numeric == nil {
-			continue
-		}
-		for _, choice := range setting.numeric.spec.Choices() {
-			choiceWidth, _ := d.gameplayOutput.Font.MeasureString(setting.numeric.format(choice) + " ")
-			width = max(width, choiceWidth)
-		}
+
+	return int(math.Ceil(width))
+}
+
+// gameplayValueWidth fits a numeric row's widest choice, drawn at the row's
+// right edge, so a long choice such as Ludicrous narrows only its own label.
+func (d *ConfigurationDialog) gameplayValueWidth(setting gameplaySettingDefinition) int {
+	if setting.numeric == nil {
+		return 0
+	}
+	width := 0.0
+	for _, choice := range setting.numeric.spec.Choices() {
+		choiceWidth, _ := d.gameplayOutput.Font.MeasureString(" " + setting.numeric.format(choice))
+		width = max(width, choiceWidth)
 	}
 
 	return int(math.Ceil(width))
 }
 
-func (d *ConfigurationDialog) gameplayLabelWidth(listWidth, pixelUnit int) int {
+// gameplayTextWidth is a checkbox row's label width.
+func (d *ConfigurationDialog) gameplayTextWidth(listWidth, pixelUnit int) int {
 	inset := max(1, pixelUnit*audioSettingsCenterDivisor)
 
 	return max(1, listWidth-inset*(audioSettingsCenterDivisor+1)-d.gameplayCheckboxWidth())
+}
+
+func (d *ConfigurationDialog) gameplayLabelWidth(listWidth, pixelUnit int, setting gameplaySettingDefinition) int {
+	return max(1, d.gameplayTextWidth(listWidth, pixelUnit)-d.gameplayValueWidth(setting))
 }
 
 func (d *ConfigurationDialog) gameplayViewport() image.Rectangle {

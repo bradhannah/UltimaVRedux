@@ -61,8 +61,8 @@ Related documents:
 
 `combat.presentation.speed.set` (category Combat) is used by the Active Combat
 console. Its integer `percent` transport is limited to listed integer `choices`
-(50, 100, 150, 200, 300, 400, 600, 800, 1200, 1600 and 2000) within 50–2000 in
-steps of 50. Integer choices are validated in the catalog and request path, and
+(50, 100, 150, 200, 300, 400, 600, 800, 1200, 1600, 2000 and 10000, labelled
+Ludicrous) within 50–10000 in steps of 50. Integer choices are validated in the catalog and request path, and
 in the browser form. It controls master combat presentation, including
 animations and action pauses, through `Gameplay.Combat.SpeedFactor`, using the
 same typed `UltimaVConfiguration` getter and atomic setter as player

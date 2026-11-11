@@ -41,13 +41,13 @@ func TestConfigurationQoLKeyboardDomainsAndScrollableReachability(t *testing.T) 
 	for range 20 {
 		pressAudioSettingsKey(dialog, ebiten.KeyLeft)
 	}
-	for _, want := range []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20} {
+	for _, want := range []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20, config.CombatSpeedLudicrous} {
 		assert.Equal(t, want, dialog.stagedGameplay.CombatSpeedFactor)
 		pressAudioSettingsKey(dialog, ebiten.KeyRight)
 	}
-	assert.Equal(t, 20.0, dialog.stagedGameplay.CombatSpeedFactor)
+	assert.Equal(t, config.CombatSpeedLudicrous, dialog.stagedGameplay.CombatSpeedFactor)
 	pressAudioSettingsKey(dialog, ebiten.KeySpace)
-	assert.Equal(t, 20.0, dialog.stagedGameplay.CombatSpeedFactor)
+	assert.Equal(t, config.CombatSpeedLudicrous, dialog.stagedGameplay.CombatSpeedFactor)
 	dialog.focusedGameplayIndex = gameplayMaxActionPopupsIndex
 	for range 5 {
 		pressAudioSettingsKey(dialog, ebiten.KeyLeft)
@@ -72,8 +72,9 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 	expected := map[int][]string{
 		gameplayCombatSpeedIndex: {
 			"Change how quickly combat actions and animations play.", "",
-			"1x is normal speed.", "Higher values make combat faster.", "",
-			"Choose 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x or 20x.", "",
+			"1x is normal speed.", "Higher values make combat faster.",
+			"Ludicrous also skips movement and missile animation.", "",
+			"Choose 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x or Ludicrous.", "",
 			"Default: 1x",
 		},
 		gameplayMaxActionPopupsIndex: {

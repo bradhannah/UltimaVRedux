@@ -52,7 +52,7 @@ and Daemon summoners, including captured-rate cases. Its oracle includes
 ### Combat Presentation Speed
 
 Combat uses one canonical preference, `GetCombatSpeedFactor()`: 0.5x, 1x, 1.5x,
-2x, 3x, 4x, 6x, 8x, 12x, 16x or 20x, default 1x. `combatPresentationTiming` captures a validated
+2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x or Ludicrous, default 1x. `combatPresentationTiming` captures a validated
 value for the committed action. Included authored millisecond durations are
 divided **once**, rounded to the nearest millisecond (positive halves upward),
 with zero preserved and a 1 ms technical minimum for positive work. A zero-valued
@@ -72,6 +72,19 @@ of explicit preferences. No old debug factor is multiplied in.
 | Floating result label (300 ms floor) | 1250 ms | 313 ms | 300 ms |
 | Minimum projectile flight | 100 ms | 25 ms | 5 ms |
 | Chest reveal interval / victory departure per member | 500 / 180 ms | 125 / 45 ms | 25 / 9 ms |
+
+**Ludicrous** is stored as `config.CombatSpeedLudicrous` (100, percent 10000)
+and is the only choice that removes presentation. Every enemy anticipation,
+scheduled hand-off, auto-pass pause and Tab source hold is zero; enemy, player
+and controlled-monster movement glides are not started, and missiles resolve
+their impact without flight (`animatesMotion` and `pauseMs`). Everything else,
+including spells, signatures, impact bursts, labels, chest reveal and victorious
+departure, keeps its 20x duration (`config.CombatSpeedFastestAnimated`). A
+scheduled enemy turn then completes in the queue update after it is reviewed,
+so consecutive enemy turns start one 60 TPS frame apart; at 20x they take about
+five frames. The skipped stages are presentation only: they draw no random
+numbers and change no rule, though, as at every speed, a shorter elapsed
+timeline can shift the wind's shared draws.
 
 Enemy turns and condition-driven auto-passes release their input block in the
 same queue update that completes them when no unprotected key is held. The next

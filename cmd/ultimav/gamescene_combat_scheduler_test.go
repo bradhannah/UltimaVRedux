@@ -34,7 +34,7 @@ func TestCombatAutoPassWithoutSignatureHonorsSpeedAdjustedDelay(t *testing.T) {
 			require.Equal(t, step.Actor, state.CombatScene.GetCurrentTurnIdentity())
 			require.Empty(t, scene.combatSignatureEffects)
 			require.False(t, scene.hasCombatSignatureEffects())
-			require.Equal(t, uint64(test.durationMs), scene.combatMovementDuration(combatAutoPassPCDurationMs))
+			require.Equal(t, uint64(test.durationMs), scene.captureCombatTiming().duration(combatAutoPassPCDurationMs))
 			actorBefore, ok := state.CombatScene.TurnQueue.GetEntrySnapshot(step.Actor)
 			require.True(t, ok)
 			rngBefore := state.GetRNG().Calls()

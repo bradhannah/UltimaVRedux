@@ -882,7 +882,7 @@ func TestCombatAutoPassSchedulerBlocksInputUntilNonActionablePCTurnIsShown(t *te
 	gs.EventQueueManager.Update()
 	assert.True(t, gs.CombatScene.HasScheduledCombatStep())
 
-	duration := scene.combatMovementDuration(combatAutoPassPCDurationMs)
+	duration := scene.captureCombatTiming().duration(combatAutoPassPCDurationMs)
 	require.Positive(t, duration)
 	gs.ElapsedMs += int64(duration - 1)
 	gs.EventQueueManager.Update()
@@ -960,7 +960,7 @@ func TestPlayerCombatMovementCompletesExactScheduledTurn(t *testing.T) {
 	require.True(t, scene.combatMovement.Active)
 	assert.True(t, gs.CombatScene.HasScheduledCombatStep())
 
-	gs.ElapsedMs += int64(scene.combatMovementDuration(combatPlayerMovementDurationMs))
+	gs.ElapsedMs += int64(scene.captureCombatTiming().duration(combatPlayerMovementDurationMs))
 	for range 5 {
 		gs.EventQueueManager.Update()
 		if !gs.CombatScene.HasScheduledCombatStep() {

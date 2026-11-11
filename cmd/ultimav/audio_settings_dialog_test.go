@@ -287,14 +287,13 @@ func TestConfigurationDialogSelectionsUseNaturalTextHeight(t *testing.T) {
 	)
 	dialog.ensureLayout(1280, 720)
 
-	textWidth := dialog.gameplayLabelWidth(dialog.layout.gameplayListRect.Dx(), dialog.layout.pixelUnit)
-	maxChars := dialog.gameplayOutput.Font.CharsForWidth(textWidth)
 	for index, setting := range gameplaySettings() {
+		textWidth := dialog.gameplayLabelWidth(dialog.layout.gameplayListRect.Dx(), dialog.layout.pixelUnit, setting)
 		measurement := gametext.MeasureText(
 			setting.label,
 			dialog.gameplayOutput.Font,
 			dialog.gameplayOutput.GetLineSpacing(),
-			maxChars,
+			dialog.gameplayOutput.Font.CharsForWidth(textWidth),
 		)
 		expectedHeight := int(math.Ceil(measurement.TotalHeight)) +
 			dialog.layout.pixelUnit*audioSettingsGameplayRowPaddingUnits

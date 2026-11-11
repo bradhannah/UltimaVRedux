@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 
 	"github.com/spf13/viper"
 
@@ -36,13 +37,34 @@ type NumericSettingSpec struct {
 	Values                  []float64
 }
 
+const (
+	// CombatSpeedFastestAnimated is the fastest Combat Speed that still animates
+	// movement and missile flight.
+	CombatSpeedFastestAnimated = 20.0
+	// CombatSpeedLudicrous is the stored value of the Ludicrous choice. It skips
+	// movement glides, missile flight and enemy pauses; every other combat
+	// presentation plays at CombatSpeedFastestAnimated.
+	CombatSpeedLudicrous      = 100.0
+	combatSpeedLudicrousLabel = "Ludicrous"
+)
+
 // CombatSpeedSpec returns the single specification used by persistence and UI.
 // Every choice lies on the half-step grid, so percent transport stays exact.
 func CombatSpeedSpec() NumericSettingSpec {
 	return NumericSettingSpec{
-		Min: 0.5, Max: 20, Step: 0.5, Default: 1, //nolint:mnd // Approved player preference domain.
-		Values: []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20},
+		Min: 0.5, Max: CombatSpeedLudicrous, Step: 0.5, Default: 1, //nolint:mnd // Approved player preference domain.
+		Values: []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, CombatSpeedFastestAnimated, CombatSpeedLudicrous},
 	}
+}
+
+// FormatCombatSpeed names a Combat Speed choice for players and the Workbench.
+// It omits a trailing .0, so whole speeds read 1x and 20x.
+func FormatCombatSpeed(value float64) string {
+	if value == CombatSpeedLudicrous {
+		return combatSpeedLudicrousLabel
+	}
+
+	return strconv.FormatFloat(value, 'f', -1, 64) + "x"
 }
 
 // ActionPopupsSpec returns the integer popup preference domain; zero means Off.
