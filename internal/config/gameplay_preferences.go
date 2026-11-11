@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strconv"
 
 	"github.com/spf13/viper"
 
@@ -20,6 +21,7 @@ var (
 
 const (
 	gameplayCombatSpeedKey      = "Gameplay.Combat.SpeedFactor"
+	gameplayCombatKeyRepeatKey  = "Gameplay.Combat.KeyRepeat"
 	gameplayConfirmQuickSaveKey = "Gameplay.Saves.ConfirmQuickSave"
 	gameplayShowCombatHPBarsKey = "Gameplay.Combat.ShowHealthBars"
 	gameplayMaxActionPopupsKey  = "Gameplay.Presentation.MaxVisibleActionPopups"
@@ -36,12 +38,52 @@ type NumericSettingSpec struct {
 	Values                  []float64
 }
 
+const (
+	// CombatSpeedFastestAnimated is the fastest Combat Speed that still animates
+	// movement and missile flight.
+	CombatSpeedFastestAnimated = 20.0
+	// CombatSpeedLudicrous is the stored value of the Ludicrous choice. It skips
+	// movement glides, missile flight and enemy pauses; every other combat
+	// presentation plays at CombatSpeedFastestAnimated.
+	CombatSpeedLudicrous      = 100.0
+	combatSpeedLudicrousLabel = "Ludicrous"
+)
+
 // CombatSpeedSpec returns the single specification used by persistence and UI.
 // Every choice lies on the half-step grid, so percent transport stays exact.
 func CombatSpeedSpec() NumericSettingSpec {
 	return NumericSettingSpec{
-		Min: 0.5, Max: 20, Step: 0.5, Default: 1, //nolint:mnd // Approved player preference domain.
-		Values: []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20},
+		Min: 0.5, Max: CombatSpeedLudicrous, Step: 0.5, Default: 1, //nolint:mnd // Approved player preference domain.
+		Values: []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, CombatSpeedFastestAnimated, CombatSpeedLudicrous},
+	}
+}
+
+// FormatCombatSpeed names a Combat Speed choice for players and the Workbench.
+// It omits a trailing .0, so whole speeds read 1x and 20x.
+func FormatCombatSpeed(value float64) string {
+	if value == CombatSpeedLudicrous {
+		return combatSpeedLudicrousLabel
+	}
+
+	return strconv.FormatFloat(value, 'f', -1, 64) + "x"
+}
+
+const (
+	// CombatKeyRepeatMeasured repeats held arrows and Tab at about six actions a
+	// second, the pace of walking outside combat.
+	CombatKeyRepeatMeasured = 6
+	combatKeyRepeatFast10   = 10
+	combatKeyRepeatFast20   = 20
+	combatKeyRepeatFastest  = 30
+)
+
+// CombatKeyRepeatSpec returns the Combat Key Repeat choices in actions per
+// second. Zero is Off, Measured (the default) repeats arrows and Tab, and Fast
+// choices add A.
+func CombatKeyRepeatSpec() NumericSettingSpec {
+	return NumericSettingSpec{
+		Min: 0, Max: combatKeyRepeatFastest, Step: 1, Default: CombatKeyRepeatMeasured,
+		Values: []float64{0, CombatKeyRepeatMeasured, combatKeyRepeatFast10, combatKeyRepeatFast20, combatKeyRepeatFastest},
 	}
 }
 
@@ -158,6 +200,9 @@ func ValidateGameplayConfiguration(settings GameplayConfiguration) error {
 	if err := ActionPopupsSpec().Validate(float64(settings.MaxVisibleActionPopups)); err != nil {
 		return fmt.Errorf("%s: %w", gameplayMaxActionPopupsKey, err)
 	}
+	if err := CombatKeyRepeatSpec().Validate(float64(settings.CombatKeyRepeat)); err != nil {
+		return fmt.Errorf("%s: %w", gameplayCombatKeyRepeatKey, err)
+	}
 
 	return nil
 }
@@ -180,6 +225,7 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
 		MaxVisibleActionPopups:          int(ActionPopupsSpec().Default),
+		CombatKeyRepeat:                 int(CombatKeyRepeatSpec().Default),
 		SimpleNotesMode:                 false,
 	}
 }
@@ -208,6 +254,9 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	}
 	if uc.source.IsSet(gameplayMaxActionPopupsKey) {
 		settings.MaxVisibleActionPopups = uc.source.GetInt(gameplayMaxActionPopupsKey)
+	}
+	if uc.source.IsSet(gameplayCombatKeyRepeatKey) {
+		settings.CombatKeyRepeat = uc.source.GetInt(gameplayCombatKeyRepeatKey)
 	}
 }
 
@@ -246,6 +295,15 @@ func (uc *UltimaVConfiguration) GetSimpleNotesMode() bool {
 // GetShowCombatHPBars defaults to visible when a fixture has no settings.
 func (uc *UltimaVConfiguration) GetShowCombatHPBars() bool {
 	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ShowCombatHPBars
+}
+
+// GetCombatKeyRepeat returns held-key repeats per second in combat; zero is Off.
+func (uc *UltimaVConfiguration) GetCombatKeyRepeat() int {
+	if uc == nil || uc.GameplayConfiguration == nil {
+		return int(CombatKeyRepeatSpec().Default)
+	}
+
+	return uc.GameplayConfiguration.CombatKeyRepeat
 }
 
 // GetMaxVisibleActionPopups preserves explicit zero (Off).

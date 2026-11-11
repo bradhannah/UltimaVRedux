@@ -307,7 +307,8 @@ The additional Gameplay preferences are:
 
 | Preference | Persisted key | Allowed values | Default |
 |---|---|---|---|
-| Combat Speed | `Gameplay.Combat.SpeedFactor` | 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x | 1x |
+| Combat Speed | `Gameplay.Combat.SpeedFactor` | 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x, Ludicrous (stored as 100) | 1x |
+| Combat Key Repeat | `Gameplay.Combat.KeyRepeat` | Off, Measured, Fast 10, Fast 20, Fast 30 (stored as 0, 6, 10, 20, 30 per second) | Measured |
 | Confirm Quick Save | `Gameplay.Saves.ConfirmQuickSave` | On / Off | On |
 | Show Combat HP Bars | `Gameplay.Combat.ShowHealthBars` | On / Off | On |
 | Maximum Action Popups | `Gameplay.Presentation.MaxVisibleActionPopups` | integer 0–3; 0 is Off | 3 |
@@ -317,9 +318,11 @@ The details pane uses short player-facing sentences and blank paragraph rows,
 appended as separate `Output` lines with natural wrapping. Measurement uses the
 same populated Output as drawing, including blank rows, at the established font
 size. Numeric choices, adjustments and defaults derive from the shared specs:
-for example, "Choose 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x or 20x." and
-"Choose Off, 1, 2 or 3." Speeds omit a trailing `.0`, and the value column is
-measured from the widest formatted choice. UI copy uses
+for example, "Choose 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x or Ludicrous." and
+"Choose Off, 1, 2 or 3." Speeds omit a trailing `.0`. Checkbox rows share a
+narrow `[X]` column; each numeric row shows its value at the row's right edge,
+measured from that row's own widest choice, so a long choice such as Ludicrous
+narrows only its own label. UI copy uses
 font-safe ASCII punctuation rather than an en dash or compact technical range
 syntax. The current value remains separately labeled. Combat speed shortens animations and action pauses while
 preserving combat rules; different elapsed timelines need not produce identical

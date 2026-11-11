@@ -22,8 +22,9 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 		assert.True(t, config.GetShowCombatHPBars())
 		assert.Equal(t, 3, config.GetMaxVisibleActionPopups())
 		assert.False(t, config.GetSimpleNotesMode(), "Simple Notes Mode defaults to Off")
+		assert.Equal(t, CombatKeyRepeatMeasured, config.GetCombatKeyRepeat(), "Combat Key Repeat defaults to Measured")
 	}
-	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
+	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
 	require.NoError(t, configuration.UpdateSaveFile())
 	loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 	require.NoError(t, err)
@@ -32,6 +33,7 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 	assert.False(t, loaded.GetShowCombatHPBars())
 	assert.Zero(t, loaded.GetMaxVisibleActionPopups())
 	assert.True(t, loaded.GetSimpleNotesMode())
+	assert.Equal(t, 20, loaded.GetCombatKeyRepeat())
 }
 
 func TestQoLEveryNumericValueRoundTrips(t *testing.T) {
@@ -62,11 +64,12 @@ func TestQoLStrictSourceValidation(t *testing.T) {
 		key   string
 		value any
 	}{
-		{gameplayCombatSpeedKey, 0}, {gameplayCombatSpeedKey, 0.75}, {gameplayCombatSpeedKey, 20.5},
+		{gameplayCombatSpeedKey, 0}, {gameplayCombatSpeedKey, 0.75}, {gameplayCombatSpeedKey, 100.5},
 		{gameplayCombatSpeedKey, "2"}, {gameplayCombatSpeedKey, true},
 		{gameplayCombatSpeedKey, math.NaN()}, {gameplayCombatSpeedKey, math.Inf(1)},
 		{gameplayMaxActionPopupsKey, 1.5}, {gameplayMaxActionPopupsKey, 1.0},
 		{gameplayMaxActionPopupsKey, -1}, {gameplayMaxActionPopupsKey, 4},
+		{gameplayCombatKeyRepeatKey, 5}, {gameplayCombatKeyRepeatKey, 31}, {gameplayCombatKeyRepeatKey, 6.0},
 		{gameplayConfirmQuickSaveKey, "false"}, {gameplayShowCombatHPBarsKey, 0},
 	} {
 		t.Run(fmt.Sprintf("%s=%v", test.key, test.value), func(t *testing.T) {
@@ -194,12 +197,13 @@ func TestNumericSettingSpecValueListValidationAndSteps(t *testing.T) {
 	require.NoError(t, spec.Validate(12))
 	require.Error(t, spec.Validate(10))
 	require.NoError(t, spec.ValidateGrid(10))
-	assert.Equal(t, []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20}, spec.Choices())
+	assert.Equal(t, []float64{0.5, 1, 1.5, 2, 3, 4, 6, 8, 12, 16, 20, CombatSpeedLudicrous}, spec.Choices())
 	assert.Equal(t, 6.0, spec.Advance(4, 1))
 	assert.Equal(t, 3.0, spec.Advance(4, -1))
-	assert.Equal(t, 20.0, spec.Advance(16, 5))
+	assert.Equal(t, CombatSpeedLudicrous, spec.Advance(16, 5))
+	assert.Equal(t, CombatSpeedFastestAnimated, spec.Advance(CombatSpeedLudicrous, -1))
 	assert.Equal(t, 0.5, spec.Advance(1, -5))
-	for _, test := range []struct{ value, want float64 }{{0, 0.5}, {1.75, 2}, {10, 12}, {14, 16}, {99, 20}} {
+	for _, test := range []struct{ value, want float64 }{{0, 0.5}, {1.75, 2}, {10, 12}, {14, 16}, {50, 20}, {99, CombatSpeedLudicrous}} {
 		assert.Equal(t, test.want, spec.Nearest(test.value), "%g", test.value)
 	}
 }

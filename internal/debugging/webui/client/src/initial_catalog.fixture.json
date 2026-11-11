@@ -3505,7 +3505,7 @@
         "kind": "integer",
         "required": true,
         "minimum": 50,
-        "maximum": 2000,
+        "maximum": 10000,
         "step": 50,
         "choices": [
           {
@@ -3551,6 +3551,10 @@
           {
             "value": "2000",
             "label": "20x"
+          },
+          {
+            "value": "10000",
+            "label": "Ludicrous"
           }
         ],
         "controlHint": "number"

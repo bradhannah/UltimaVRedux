@@ -91,7 +91,7 @@ func TestCombatFireKeyboardMovementSurvivesContactAndArrival(t *testing.T) {
 			assert.True(t, scene.combatImpactEffects[0].fireMovement)
 			assert.Zero(t, scene.combatFireImpactAlpha(true, actor.EntityIndex, actor.Slot), "no burn before contact")
 			drainCombatPacingAt(scene, state.ElapsedMs)
-			duration := int64(scene.combatMovementDuration(combatPlayerMovementDurationMs))
+			duration := int64(scene.captureCombatTiming().duration(combatPlayerMovementDurationMs))
 			state.ElapsedMs += (duration + 1) / 2
 			state.EventQueueManager.Update()
 			scene.updateCombatImpactEffects(30) // A prior frame hitch is not the new injury's age.

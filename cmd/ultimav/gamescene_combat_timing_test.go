@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"slices"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,7 +16,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-func combatTimingTestRates() []float64 { return config.CombatSpeedSpec().Choices() }
+// combatTimingTestRates lists the animated rates; Ludicrous has its own tests.
+func combatTimingTestRates() []float64 {
+	return slices.DeleteFunc(config.CombatSpeedSpec().Choices(), func(rate float64) bool {
+		return rate == config.CombatSpeedLudicrous
+	})
+}
 
 func setCombatTimingTestRate(scene *GameScene, rate float64) {
 	if scene.gameConfig == nil {

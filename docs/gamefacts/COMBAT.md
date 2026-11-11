@@ -160,14 +160,23 @@ Redux additionally offers a post-victory group exit after a route is established
 avoiding repetitive individual departures; original physical edges/ladders remove
 one PC at a time. Collision and established-route requirements remain authoritative.
 
+As a Redux input convenience, Combat Key Repeat (Gameplay, Measured by
+default) lets a held arrow or Tab, and at its Fast rates A, act again on each
+later party turn after a 300 ms hold, capped at Measured (one action per 165 ms)
+or 10, 20 or 30 actions per second. Each repeat is an ordinary command for the
+actor whose turn it is. Original held-key behavior in combat is not established
+here; Off keeps one action per press. Blocked, an unavailable Tab or Attack,
+another key, prompts and the end of the encounter stop it until release. See
+[combat key repeat](../systems/INPUT_HANDLING.md#combat-key-repeat).
+
 **REDUX DEVIATION: COMBAT-0003 — walkable loose loot:** in the original, loose
 items left by opening or searching block every combatant. Redux lets party
 members step onto them; monsters stay blocked, as in the original, and Get still
 takes items from an adjacent square. Kept by owner decision, so dropped loot
 never walls the party out of narrow room lanes or exits.
 
-**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_object.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`
-**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`
+**Implementation:** `internal/game_state/combat_terrain.go`, `internal/game_state/combat_object.go`, `internal/game_state/combat_map_trigger.go`, `internal/game_state/combat_player_selection.go`, `cmd/ultimav/gamescene_combat_solo_reset.go`, `cmd/ultimav/gamescene_combat_command_buffer.go`, `cmd/ultimav/gamescene_combat_key_repeat.go`
+**Tests:** `internal/game_state/combat_map_trigger_test.go`, `internal/game_state/combat_object_test.go`, `internal/game_state/combat_flee_victory_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_workflows_test.go`, `cmd/ultimav/gamescene_combat_solo_reset_boundaries_test.go`, `cmd/ultimav/gamescene_combat_command_buffer_test.go`, `cmd/ultimav/gamescene_combat_key_repeat_test.go`
 
 ### COMBAT-0004
 
@@ -642,9 +651,11 @@ after slot reuse. An additional interrupted-action cue is an intentional
 presentation extension; its recording slot remains silent until assigned.
 
 **REDUX DEVIATION: configurable combat presentation.** Gameplay's Combat Speed
-selects 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x or 20x, default 1x. Faster
-rates approach the near-instant animation of the original on a fast machine
-without removing presentation entirely. One immutable rate is
+selects 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x or Ludicrous, default 1x.
+Faster rates approach the near-instant animation of the original on a fast
+machine without removing presentation entirely. Ludicrous is the one exception:
+it removes enemy pauses, movement glides and missile flight so a turn advances
+every frame, while spells and other effects keep 20x. One immutable rate is
 captured for each committed action and divides its authored anticipation,
 movement, flight/return, action-effect and signature-phase durations once.
 Automatic passes, applicable Tab attack-source holds, chest reveal cadence and
@@ -746,4 +757,4 @@ with the existing workflow. See the
 for identity, disclosure and cleanup boundaries.
 
 **Implementation:** `internal/game_state/combat_attack_preview.go`, `internal/game_state/combat_auto_action.go`, `cmd/ultimav/gamescene_projectile.go`, `internal/game_state/combat_fire_injury.go`, `cmd/ultimav/gamescene_combat_fire.go`, `cmd/ultimav/gamescene_draw_entities.go`, `cmd/ultimav/gamescene_combat_active_indicator.go`, `cmd/ultimav/gamescene_combat_timing.go`, `cmd/ultimav/gamescene_combat_scheduler.go`, `cmd/ultimav/gamescene_combat_movement.go`, `cmd/ultimav/gamescene_input_combat.go`, `cmd/ultimav/gamescene_combat_signature_effect.go`, `cmd/ultimav/gamescene_combat_impact.go`, `cmd/ultimav/gamescene_combat_spell_effects.go`, `cmd/ultimav/gamescene_combat_invocation_effect.go`, `cmd/ultimav/gamescene_combat_utility_spell_effect.go`, `internal/game_state/party_state_builder_timing.go`, `internal/game_state/combat_events.go`, `internal/game_state/combat_monster_injury.go`, `cmd/ultimav/gamescene_combat_injury_report.go`, `cmd/ultimav/gamescene_combat_report_identity.go`, `cmd/ultimav/gamescene_combat_hud.go`, `cmd/ultimav/gamescene_combat_health_frame.go`, `cmd/ultimav/gamescene_combat_actor_conditions.go`, `cmd/ultimav/gamescene_combat_cone.go`, `cmd/ultimav/gamescene_combat_division_effect.go`, `cmd/ultimav/gamescene_combat_vanish_effect.go`, `cmd/ultimav/gamescene_combat_sceptre_effect.go`, `cmd/ultimav/gamescene_combat_party_spell.go`, `cmd/ultimav/gamescene_combat_loot.go`, `cmd/ultimav/gamescene_combat_exit.go`, `cmd/ultimav/gamescene_cast_spell.go`, `cmd/ultimav/gamescene_use_potion.go`, `cmd/ultimav/gamescene_use_scroll.go`, `cmd/ultimav/gamescene_visual_effects.go`, `cmd/ultimav/gamescene_update.go`, `internal/game_state/party_state_builder.go`, `internal/game_state/action_attack.go`, `internal/game_state/combat_spell_targeting.go`, `internal/game_state/combat_cone_spells.go`, `internal/game_state/combat_cone_outcomes.go`, `internal/game_state/combat_misc_spells.go`
-**Tests:** `internal/game_state/combat_attack_preview_test.go`, `internal/game_state/combat_auto_action_test.go`, `internal/game_state/combat_interruption_test.go`, `internal/game_state/combat_fire_injury_test.go`, `cmd/ultimav/gamescene_combat_fire_test.go`, `cmd/ultimav/gamescene_combat_square_visuals_test.go`, `cmd/ultimav/gamescene_combat_arch_indicator_test.go`, `cmd/ultimav/gamescene_combat_timing_test.go`, `cmd/ultimav/gamescene_combat_effect_timing_test.go`, `cmd/ultimav/gamescene_combat_spell_timing_test.go`, `cmd/ultimav/gamescene_combat_effect_admission_test.go`, `cmd/ultimav/gamescene_combat_signature_timing_test.go`, `internal/game_state/party_state_builder_timing_test.go`, `cmd/ultimav/gamescene_combat_injury_report_test.go`, `cmd/ultimav/gamescene_combat_health_preferences_test.go`, `cmd/ultimav/gamescene_combat_attack_preview_test.go`, `internal/game_state/combat_area_spell_outcome_test.go`, `internal/game_state/combat_fidelity_damage_regression_test.go`
+**Tests:** `internal/game_state/combat_attack_preview_test.go`, `internal/game_state/combat_auto_action_test.go`, `internal/game_state/combat_interruption_test.go`, `internal/game_state/combat_fire_injury_test.go`, `cmd/ultimav/gamescene_combat_fire_test.go`, `cmd/ultimav/gamescene_combat_square_visuals_test.go`, `cmd/ultimav/gamescene_combat_arch_indicator_test.go`, `cmd/ultimav/gamescene_combat_timing_test.go`, `cmd/ultimav/gamescene_combat_ludicrous_test.go`, `cmd/ultimav/gamescene_combat_effect_timing_test.go`, `cmd/ultimav/gamescene_combat_spell_timing_test.go`, `cmd/ultimav/gamescene_combat_effect_admission_test.go`, `cmd/ultimav/gamescene_combat_signature_timing_test.go`, `internal/game_state/party_state_builder_timing_test.go`, `cmd/ultimav/gamescene_combat_injury_report_test.go`, `cmd/ultimav/gamescene_combat_health_preferences_test.go`, `cmd/ultimav/gamescene_combat_attack_preview_test.go`, `internal/game_state/combat_area_spell_outcome_test.go`, `internal/game_state/combat_fidelity_damage_regression_test.go`

@@ -43,8 +43,18 @@ func (k *Keyboard) IsSuppressedUntilRelease(key ebiten.Key) bool {
 // HasUnprotectedHeldKey is a workflow-release query, not an acknowledgement
 // query. Rejected presses remain physically held for raw any-key waits.
 func (k *Keyboard) HasUnprotectedHeldKey() bool {
+	return k.hasUnprotectedHeldKey(nil)
+}
+
+// HasUnprotectedHeldKeyExcept also treats one key held by a scene-owned repeat
+// as protected, so the repeat can keep it down through workflow hand-offs.
+func (k *Keyboard) HasUnprotectedHeldKeyExcept(owned ebiten.Key) bool {
+	return k.hasUnprotectedHeldKey(&owned)
+}
+
+func (k *Keyboard) hasUnprotectedHeldKey(owned *ebiten.Key) bool {
 	for key := ebiten.KeyA; key <= ebiten.KeyMax; key++ {
-		if k.isKeyPressed(key) && !k.IsSuppressedUntilRelease(key) {
+		if (owned == nil || key != *owned) && k.isKeyPressed(key) && !k.IsSuppressedUntilRelease(key) {
 			return true
 		}
 	}

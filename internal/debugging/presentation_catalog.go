@@ -26,7 +26,7 @@ func presentationCommands() []CommandDefinition {
 	speedChoices := make([]Choice, 0, len(spec.Choices()))
 	for _, speed := range spec.Choices() {
 		speedChoices = append(speedChoices, Choice{
-			Value: strconv.Itoa(int(speed * percentScale)), Label: strconv.FormatFloat(speed, 'f', -1, 64) + "x",
+			Value: strconv.Itoa(int(speed * percentScale)), Label: config.FormatCombatSpeed(speed),
 		})
 	}
 	setBoolean := func(id, name, description string, aliases []string) CommandDefinition {

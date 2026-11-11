@@ -15,6 +15,7 @@ type transientCommandInputState struct {
 	wasUnfocused      bool
 	sample            input.KeySample
 	pass              explorationPassRepeat
+	combatRepeat      combatKeyRepeat
 	pending           pendingCombatCommand
 	campAtEntry       *camping.CampingScene
 	campRequest       bool
@@ -67,6 +68,7 @@ func (g *GameScene) beginTransientCommandInputFrame() bool {
 	if !g.explorationPassEligible() || state.pass.active && state.pass.context != g.passInputContext() {
 		g.stopExplorationPass()
 	}
+	g.observeCombatKeyRepeat()
 
 	return true
 }
@@ -176,6 +178,7 @@ func (g *GameScene) finishTransientCommandInputFrame() {
 func (g *GameScene) ResetTransientCommandInput() {
 	state := &g.transientCommandInput
 	g.stopExplorationPass()
+	state.combatRepeat = combatKeyRepeat{}
 	g.clearPendingCombatCommand()
 	state.campAtEntry, state.campRequest = nil, false
 	if g.keyboard != nil {

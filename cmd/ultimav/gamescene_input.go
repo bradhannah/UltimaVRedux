@@ -347,8 +347,11 @@ func (g *GameScene) Update(game *Game) error {
 	}
 
 	// Handle gameplay logic here
-	boundKey, passOwned := g.explorationPassKey()
-	if !passOwned {
+	boundKey, sceneOwned := g.explorationPassKey()
+	if !sceneOwned && mapType == references.CombatMapType {
+		boundKey, sceneOwned = g.combatRepeatKey()
+	}
+	if !sceneOwned {
 		boundKey = g.keyboard.GetBoundKeyPressed(&boundKeysGame)
 	}
 	if boundKey == nil {
@@ -364,13 +367,14 @@ func (g *GameScene) Update(game *Game) error {
 		*boundKey == ebiten.KeyLeft || *boundKey == ebiten.KeyRight ||
 		(!g.gameState.CanPlayHarpsichord() && primaryMovementKey(*boundKey) != *boundKey)
 
-	// The scene-owned Pass cadence already accepted its sample.
+	// A scene-owned repeat (exploration Pass or combat key repeat) already
+	// accepted its sample.
 	switch {
-	case !passOwned && isArrowKey:
+	case !sceneOwned && isArrowKey:
 		if !g.keyboard.TryToRegisterRepeatableKeyPress(*boundKey) {
 			return nil
 		}
-	case !passOwned:
+	case !sceneOwned:
 		if !g.keyboard.TryToRegisterKeyPress(*boundKey) {
 			return nil
 		}

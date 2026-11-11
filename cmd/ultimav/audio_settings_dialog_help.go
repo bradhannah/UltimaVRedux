@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 
@@ -14,21 +15,45 @@ import (
 func combatSpeedHelpLines(spec config.NumericSettingSpec) []string {
 	choices := make([]string, 0, len(spec.Choices()))
 	for _, value := range spec.Choices() {
-		choices = append(choices, formatCombatSpeed(value))
+		choices = append(choices, config.FormatCombatSpeed(value))
 	}
 
-	return []string{
+	lines := []string{
 		"Change how quickly combat actions and animations play.", "",
-		formatCombatSpeed(spec.Default) + " is normal speed.",
-		"Higher values make combat faster.", "",
-		"Choose " + joinGameplayChoices(choices) + ".", "",
-		"Default: " + formatCombatSpeed(spec.Default),
+		config.FormatCombatSpeed(spec.Default) + " is normal speed.",
+		"Higher values make combat faster.",
+	}
+	if slices.Contains(spec.Choices(), config.CombatSpeedLudicrous) {
+		lines = append(lines, "Ludicrous also skips movement and missile animation.")
+	}
+
+	return append(lines, "",
+		"Choose "+joinGameplayChoices(choices)+".", "",
+		"Default: "+config.FormatCombatSpeed(spec.Default),
+	)
+}
+
+// formatCombatKeyRepeat names a Combat Key Repeat choice: Off, Measured, or a
+// Fast rate in actions per second.
+func formatCombatKeyRepeat(value float64) string {
+	switch rate := int(value); rate {
+	case 0:
+		return gameplaySettingOffLabel
+	case config.CombatKeyRepeatMeasured:
+		return "Measured"
+	default:
+		return "Fast " + strconv.Itoa(rate)
 	}
 }
 
-// formatCombatSpeed omits a trailing .0 so whole speeds read 1x and 20x.
-func formatCombatSpeed(value float64) string {
-	return strconv.FormatFloat(value, 'f', -1, 64) + "x"
+func combatKeyRepeatHelpLines() []string {
+	return []string{
+		"Hold a key in combat to repeat it, for every party member in turn.", "",
+		"Measured repeats arrows and Tab about 6 times a second.",
+		"Fast also repeats A, up to 10, 20 or 30 times a second.", "",
+		"Repeats begin after a short hold. Blocked, a prompt or the end of combat stops them.", "",
+		"Default: " + formatCombatKeyRepeat(config.CombatKeyRepeatSpec().Default),
+	}
 }
 
 func actionPopupsHelpLines(spec config.NumericSettingSpec) []string {

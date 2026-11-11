@@ -233,7 +233,8 @@ func (g *GameScene) combatProjectileAnimationSequenceWithTiming(
 	}
 
 	return func(sequence *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
-		if !launch.Animate {
+		// Ludicrous skips the flight; the impact resolves at once.
+		if !launch.Animate || !timing.animatesMotion() {
 			return sequence.Then(g.combatTimingStep(timing, onImpact))
 		}
 		var duration uint64

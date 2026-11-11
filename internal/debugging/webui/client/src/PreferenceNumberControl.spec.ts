@@ -16,7 +16,7 @@ it("offers only listed speeds, retains drafts on refresh, and emits only allowed
     const select = root.querySelector("select")!
     const button = root.querySelector("button")!
     expect([...select.options].map((option) => option.textContent)).toEqual(
-      ["0.5x", "1x", "1.5x", "2x", "3x", "4x", "6x", "8x", "12x", "16x", "20x"])
+      ["0.5x", "1x", "1.5x", "2x", "3x", "4x", "6x", "8x", "12x", "16x", "20x", "Ludicrous"])
     expect(select.value).toBe("100")
     expect(button.disabled).toBe(true)
     select.value = "1200"

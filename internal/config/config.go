@@ -108,6 +108,8 @@ type GameplayConfiguration struct {
 	MaxVisibleActionPopups int
 	// SimpleNotesMode shows only My Notes in the Journal; nothing else is lost.
 	SimpleNotesMode bool
+	// CombatKeyRepeat is held-key repeats per second in combat; zero is Off.
+	CombatKeyRepeat int
 }
 
 // ConfigurationSettings is the complete player-facing Configuration transaction.
@@ -693,6 +695,7 @@ func setGameplayConfiguration(configuration *viper.Viper, gameplay GameplayConfi
 	configuration.Set(gameplayShowCombatHPBarsKey, gameplay.ShowCombatHPBars)
 	configuration.Set(gameplayMaxActionPopupsKey, gameplay.MaxVisibleActionPopups)
 	configuration.Set(gameplaySimpleNotesModeKey, gameplay.SimpleNotesMode)
+	configuration.Set(gameplayCombatKeyRepeatKey, gameplay.CombatKeyRepeat)
 	configuration.Set(gameplayBatchMerchantTheftKey, gameplay.BatchMerchantTheft)
 	configuration.Set(
 		"Gameplay.Combat.AllowRepeatedMonsterDivision",
