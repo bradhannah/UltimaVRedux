@@ -81,8 +81,8 @@ func (d *AtlasDialog) drawOverviewRow(screen *ebiten.Image, rect image.Rectangle
 func (d *AtlasDialog) layoutCategoryTabs(margin int) int {
 	padding := margin / 2
 	left, top := margin, margin+int(math.Ceil(d.header.GetTotalHeightForLines(1)))+2
-	for choice := journal.AtlasAllPlaces; choice < journal.AtlasPlaceFilterCount; choice++ {
-		width, _ := d.font.MeasureString(choice.String())
+	for _, choice := range atlasTabOrder() {
+		width, _ := d.font.MeasureString(d.atlasTabLabel(choice))
 		cellWidth := int(math.Ceil(width)) + margin
 		if left > margin && left+cellWidth > d.width-margin {
 			left = margin
@@ -96,15 +96,48 @@ func (d *AtlasDialog) layoutCategoryTabs(margin int) int {
 }
 
 func (d *AtlasDialog) drawCategoryTabs(screen *ebiten.Image) {
-	for choice := journal.AtlasAllPlaces; choice < journal.AtlasPlaceFilterCount; choice++ {
+	for _, choice := range atlasTabOrder() {
 		rect := d.tabs[choice]
 		colour := DialogEmptyColor
+		if choice == journal.AtlasNotePlaces {
+			colour = atlasNoteColor()
+		}
 		if choice == d.view.Filters.Places {
 			colour = DialogLabelColor
 		}
-		atlasSingleLine(d.tabText, choice.String(), colour)
+		atlasSingleLine(d.tabText, d.atlasTabLabel(choice), colour)
 		d.tabText.DrawPanelContent(screen, rect.Min, rect.Dx(), etext.AlignCenter)
 	}
+}
+
+// atlasTabOrder offers everything, then the player's own notes, then the place
+// families. It is display order only; filter values keep their meaning.
+func atlasTabOrder() [journal.AtlasPlaceFilterCount]journal.AtlasPlaceFilter {
+	return [journal.AtlasPlaceFilterCount]journal.AtlasPlaceFilter{
+		journal.AtlasAllPlaces, journal.AtlasNotePlaces, journal.AtlasTownes, journal.AtlasKeepPlaces,
+		journal.AtlasCastlePlaces, journal.AtlasShrinePlaces, journal.AtlasLighthousePlaces,
+		journal.AtlasDungeonPlaces, journal.AtlasMoonstoneSites, journal.AtlasVesselPlaces,
+	}
+}
+
+// The notes tab carries its count, so a player sees at a glance that notes exist.
+func (d *AtlasDialog) atlasTabLabel(choice journal.AtlasPlaceFilter) string {
+	if choice != journal.AtlasNotePlaces {
+		return choice.String()
+	}
+
+	return fmt.Sprintf("%s (%d)", choice, d.noteCount())
+}
+
+func (d *AtlasDialog) noteCount() int {
+	count := 0
+	for _, entry := range d.dossier.Entries {
+		if entry.Note.ID != 0 {
+			count++
+		}
+	}
+
+	return count
 }
 
 //nolint:mnd // Small label/symbol gaps are measured separately from the row's font.
@@ -113,6 +146,9 @@ func (d *AtlasDialog) drawPlaceRow(screen *ebiten.Image, rect image.Rectangle, e
 	target := atlasSubImage(screen, rect)
 	mark := "  "
 	colour, symbolColour := atlasPlaceColor(entry), atlasPlaceColor(entry)
+	if entry.Note.ID != 0 {
+		symbolColour = atlasNoteColor()
+	}
 	if selected {
 		mark, colour = "> ", DialogSelectedText
 		symbolColour = DialogSelectedLabelColor
@@ -167,10 +203,13 @@ func (d *AtlasDialog) layoutPositionStatus(right, margin int) {
 		positionLines = max(positionLines, 1+d.row.GetPanelContentLineCount())
 	}
 	statusHeight := int(math.Ceil(d.row.GetTotalHeightForLines(statusLines)))
-	positionHeight := int(math.Ceil(d.position.GetTotalHeightForLines(positionLines + 2)))
+	positionHeight := int(math.Ceil(d.position.GetTotalHeightForLines(positionLines)))
+	notesHeight := int(math.Ceil(d.row.GetTotalHeightForLines(atlasNotesBarRows))) + margin
 	d.statusRect = image.Rect(right, d.mapRect.Max.Y-statusHeight, d.width-margin, d.mapRect.Max.Y)
-	d.positionRect = image.Rect(right, d.statusRect.Min.Y-positionHeight-margin/2,
+	d.notesRect = image.Rect(right, d.statusRect.Min.Y-notesHeight-margin/2,
 		d.width-margin, d.statusRect.Min.Y-margin/2)
+	d.positionRect = image.Rect(right, d.notesRect.Min.Y-positionHeight-margin/2,
+		d.width-margin, d.notesRect.Min.Y-margin/2)
 }
 
 // Both buffers wrap complete values using measured normal body typography.
@@ -186,13 +225,6 @@ func (d *AtlasDialog) buildPositionStatus() {
 	} else {
 		d.position.AppendLine().Text("POSITION UNAVAILABLE", DialogHeaderColor).Done()
 		d.position.AppendLine().Text(d.dossier.FixUnavailable, DialogValueColor).Done()
-	}
-	if d.onNoteIntent != nil {
-		d.position.AppendLine().Text("N", DialogControlKeyColor).Text(" Mark current position", DialogControlHintColor).Done()
-		if d.selectedNoteID() != 0 {
-			d.position.AppendLine().Text("E", DialogControlKeyColor).Text(" Edit   ", DialogControlHintColor).
-				Text("D", DialogControlKeyColor).Text(" Delete", DialogControlHintColor).Done()
-		}
 	}
 	d.row.Reset()
 	d.row.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(d.statusRect.Dx())))
@@ -230,4 +262,62 @@ func (d *AtlasDialog) buildFooter() {
 	for _, hints := range d.helpRows() {
 		PackControlHints(d.footer, hints, d.footerRect.Dx(), etext.AlignStart)
 	}
+}
+
+const (
+	atlasNotesBarRows       = 2
+	atlasNotesBarHalf       = 2
+	atlasNotesBarInsetUnits = 2
+	atlasNotesBarSeparator  = "  "
+)
+
+// drawNotesBar keeps the note keys in one framed place. A key that cannot be
+// used is dimmed and the second row says why in words.
+func (d *AtlasDialog) drawNotesBar(screen *ebiten.Image) {
+	if d.onNoteIntent == nil {
+		return // A read-only Map has no notes to author.
+	}
+	unit := ClassicUIPixelUnit(d.width, d.height)
+	DrawClassicPixelRoundedFrame(screen, d.notesRect, unit, atlasNoteColor())
+	canMark, canEdit := d.dossier.CurrentFix.Measured, d.selectedNoteID() != 0
+	hints := []struct {
+		hint      ControlHint
+		available bool
+	}{{ControlHint{"N", "New here"}, canMark}, {ControlHint{"E", "Edit"}, canEdit}, {ControlHint{"D", "Delete"}, canEdit}}
+	keys := make([]ControlHint, 0, len(hints))
+	for _, entry := range hints {
+		keys = append(keys, entry.hint)
+	}
+	plain := joinControlHints(keys, atlasNotesBarSeparator)
+	heading := "NOTES" + atlasNotesBarSeparator
+	inset := atlasNotesBarInsetUnits * unit
+	width := d.notesRect.Dx() - inset - inset
+	if measured, _ := d.font.MeasureString(heading + plain); measured > float64(width) {
+		heading = "" // The magenta frame still says whose keys these are.
+	}
+	d.row.Reset()
+	d.row.SetMaxCharsPerLine(max(1, utf8.RuneCountInString(heading+plain)))
+	line := d.row.AppendLine().Text(heading, atlasNoteColor())
+	for index, entry := range hints {
+		keyColour, actionColour := DialogControlKeyColor, DialogControlHintColor
+		if !entry.available {
+			keyColour, actionColour = DialogEmptyColor, DialogEmptyColor
+		}
+		if index > 0 {
+			line.Text(atlasNotesBarSeparator, actionColour)
+		}
+		line.Text("["+entry.hint.Key+"]", keyColour).Text(" "+entry.hint.Action, actionColour)
+	}
+	line.Done()
+	d.row.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(width)))
+	switch {
+	case !canMark:
+		d.row.AppendLine().Text("N: "+d.dossier.FixUnavailable, DialogControlHintColor).Done()
+	case !canEdit:
+		d.row.AppendLine().Text("E, D: select one of your notes.", DialogControlHintColor).Done()
+	}
+	// Centre what is written: the keys alone, or the keys and their reason.
+	written := int(math.Ceil(d.row.GetTotalHeightForLines(d.row.GetPanelContentLineCount())))
+	top := max(unit, (d.notesRect.Dy()-written)/atlasNotesBarHalf)
+	d.row.DrawPanelContent(screen, d.notesRect.Min.Add(image.Pt(inset, top)), width, etext.AlignStart)
 }

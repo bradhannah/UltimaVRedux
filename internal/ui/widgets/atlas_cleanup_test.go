@@ -54,7 +54,9 @@ func TestAtlasOpeningPhysicalKeysSelectWithoutTabAndResetWithZero(t *testing.T) 
 	press(ebiten.KeyUp)
 	require.Equal(t, "moonglow", view.SelectedKey)
 	press(ebiten.KeyTab)
-	require.Equal(t, journal.AtlasTownes, view.Filters.Places, "one Tab selects the next category")
+	require.Equal(t, journal.AtlasNotePlaces, view.Filters.Places, "one Tab selects the next category: the player's notes")
+	press(ebiten.KeyTab)
+	require.Equal(t, journal.AtlasTownes, view.Filters.Places)
 	press(ebiten.KeyEqual)
 	before := view.CenterY
 	press(ebiten.KeyP)
@@ -67,6 +69,9 @@ func TestAtlasOpeningPhysicalKeysSelectWithoutTabAndResetWithZero(t *testing.T) 
 	require.False(t, dialog.panning)
 	press(ebiten.KeyDown)
 	require.Equal(t, "britain", view.SelectedKey, "plain arrows always select, even after panning")
+	step(ebiten.KeyShiftRight, ebiten.KeyTab)
+	require.Equal(t, journal.AtlasNotePlaces, view.Filters.Places)
+	step()
 	step(ebiten.KeyShiftRight, ebiten.KeyTab)
 	require.Equal(t, journal.AtlasAllPlaces, view.Filters.Places)
 	step()
@@ -86,12 +91,15 @@ func TestAtlasCategoryTabsKeepKnownUnmeasuredRowsWithoutExtraSelectors(t *testin
 	view := NewAtlasViewState()
 	dialog := NewAtlasDialog(atlasCleanupDossier(), nil, keyboard, &view, func() {})
 	press := func(key ebiten.Key) { keyboard.SimulateKeyPress(key); dialog.Update() }
+	order := atlasTabOrder()
+	require.Equal(t, journal.AtlasNotePlaces, order[1], "the player's notes follow All")
+	press(ebiten.KeyTab)
 	press(ebiten.KeyTab)
 	require.Equal(t, journal.AtlasTownes, view.Filters.Places)
 	require.Len(t, dialog.entries, 3, "supplied places and known unmeasured rows need no extra checkbox")
 	_, plottable := dialog.entries[2].PlotPosition()
 	require.False(t, plottable, "a discovered hut row must not gain a precise pin")
-	for choice := journal.AtlasKeepPlaces; choice < journal.AtlasPlaceFilterCount; choice++ {
+	for _, choice := range order[3:] {
 		press(ebiten.KeyTab)
 		require.Equal(t, choice, view.Filters.Places)
 	}
@@ -115,7 +123,8 @@ func TestAtlasCategoryTabsReverseWrapAndDoNotRepeatWhileHeld(t *testing.T) {
 		keyboard := input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool { return keys[key] })
 		view := NewAtlasViewState()
 		dialog := NewAtlasDialog(atlasCleanupDossier(), nil, keyboard, &view, func() {})
-		for index := int(journal.AtlasPlaceFilterCount) - 1; index >= 0; index-- {
+		order := atlasTabOrder()
+		for index := len(order) - 1; index >= 0; index-- {
 			clear(keys)
 			keyboard.ClearFrameConsumption()
 			dialog.Update()
@@ -123,7 +132,7 @@ func TestAtlasCategoryTabsReverseWrapAndDoNotRepeatWhileHeld(t *testing.T) {
 			for range 5 {
 				keyboard.ClearFrameConsumption()
 				dialog.Update()
-				require.EqualValues(t, index, view.Filters.Places, "one chord selects once until release")
+				require.Equal(t, order[index], view.Filters.Places, "one chord selects once until release")
 			}
 		}
 		require.Equal(t, journal.AtlasAllPlaces, view.Filters.Places)
