@@ -104,7 +104,12 @@ func (g *GameScene) drawCombatPartySpellHUD(screen *ebiten.Image, turnBounds, ev
 	top.Reset()
 	bottom.Reset()
 	setCombatHUDOutputCapacity(top, turnBounds)
-	setCombatHUDOutputCapacity(bottom, eventBounds)
+	if eventBounds.Empty() {
+		// One pane: the recipient's details and the keys follow the heading.
+		bottom = top
+	} else {
+		setCombatHUDOutputCapacity(bottom, eventBounds)
+	}
 	top.AppendLine().Text("CAST: ", widgets.DialogLabelColor).Text(references.GetSpellName(targeting.Request.Spell), widgets.DialogValueColor).WordWrap().Done()
 	top.AppendLine().Text("Caster: ", widgets.DialogLabelColor).Text(g.gameState.PartyState.GetCharacter(targeting.Caster.EntityIndex).GetNameAsString(), widgets.DialogValueColor).WordWrap().Done()
 	if !preview.Valid {
@@ -133,7 +138,9 @@ func (g *GameScene) drawCombatPartySpellHUD(screen *ebiten.Image, turnBounds, ev
 	widgets.AppendControlHints(bottom.AppendLine(), "[Arrows/keypad] Aim   [Tab] Next recipient").WordWrap().Done()
 	widgets.AppendControlHints(bottom.AppendLine(), "[Enter] Cast   [Esc] Cancel").WordWrap().Done()
 	top.DrawPanelContent(screen, turnBounds.Min, turnBounds.Dx(), etext.AlignStart)
-	bottom.DrawPanelContent(screen, eventBounds.Min, eventBounds.Dx(), etext.AlignStart)
+	if bottom != top {
+		bottom.DrawPanelContent(screen, eventBounds.Min, eventBounds.Dx(), etext.AlignStart)
+	}
 }
 
 func setCombatHUDOutputCapacity(output *text.Output, bounds image.Rectangle) {

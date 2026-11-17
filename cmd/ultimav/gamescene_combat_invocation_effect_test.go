@@ -86,7 +86,7 @@ func TestCombatRepelOnlyAnimatesTargetsThatWereConsidered(t *testing.T) {
 	}))
 }
 
-func TestCombatInsectStackPipsAndHealthAreStable(t *testing.T) {
+func TestCombatInsectStackPipsAreStable(t *testing.T) {
 	previousX := -1.0
 	for member := range 4 {
 		x, y := combatInsectStackPipPosition(member, 4)
@@ -94,9 +94,6 @@ func TestCombatInsectStackPipsAndHealthAreStable(t *testing.T) {
 		assert.Equal(t, 2.0, y)
 		previousX = x
 	}
-	assert.Equal(t, float32(0), combatInsectHealthFill(0, 10))
-	assert.Equal(t, float32(0.5), combatInsectHealthFill(5, 10))
-	assert.Equal(t, float32(1), combatInsectHealthFill(15, 10))
 }
 
 func TestCombatSummonSequenceMutatesOnceAndCleansPresentation(t *testing.T) {

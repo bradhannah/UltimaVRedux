@@ -39,7 +39,9 @@ func TestCombatActiveArchComposesOnlyContourAndSquareOverTerrain(t *testing.T) {
 			setSquareVisualTestDisplay(t, size[0], size[1])
 			state, combat := scene.gameState, scene.gameState.CombatScene
 			position := combat.GetCombatantPosition(actor)
-			scene.screenShakeOffsetX, scene.screenShakeOffsetY = 0.35, -0.65
+			// A fractional shake that keeps the body and its contour off a shared
+			// texel boundary at the battlefield's column; on one they can differ by a pixel.
+			scene.screenShakeOffsetX, scene.screenShakeOffsetY = 0.45, -0.65
 			options := scene.combatPartyIdentityDrawOptions(position, actor)
 			screen := combatLocalRaster(t, options)
 			expected := combatLocalRaster(t, options)

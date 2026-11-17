@@ -140,11 +140,10 @@ func TestCombatAttackBracketsDenseComposition(t *testing.T) {
 								if !marked[index] {
 									loyalty = game_state.CombatMonsterLoyaltyParty
 								}
-								drawCombatHealthFrameOutline(target, options[index], loyalty)
 								if index == 4 {
 									drawCombatPossessedMarker(target, options[index])
 								}
-								drawCombatHealthBar(target, options[index], 25+index%3*25, 100)
+								drawCombatHealthMark(target, options[index], combatHealthBorderColor(loyalty), 25+index%3*25, 100)
 							}
 						}
 						before := make([]byte, width*width*4)
@@ -437,6 +436,7 @@ func TestCombatActiveFrameDenseProductionAboveHealthAndBelowSelectedAim(t *testi
 	for index := range 9 {
 		position := references.Position{X: references.Coordinate(index%3 + 3), Y: references.Coordinate(index/3 + 3)}
 		monsterIndex, monster := signatureMonster(t, scene, references.MonsterOrc, position)
+		monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
 		if index%2 == 0 {
 			monster.SetLoyalty(game_state.CombatMonsterLoyaltyParty)
 		}

@@ -645,8 +645,14 @@ motion. A field/list ordinal must never stand in for a monster identity. See
 
 The forecast must not advance combat turns or consume gameplay RNG. The HUD remains static during battlefield shake while battlefield-local impact labels follow world transforms.
 
-Show Combat HP Bars defaults On. Off hides battlefield HP artwork and its attached
-allegiance outline while preserving actor pixels, independent Ally/Enemy text,
+With Battle Frame On (the default), the battlefield sits in the classic rounded
+frame the panels use, white inside (`drawCombatBattleFrame`). The frame is the
+enemy red while the battle is undecided and the panel blue once it is won. It is
+drawn straight after the ground, so figures, health marks and cursors stay on
+top, and it moves with the battlefield. Off draws no frame.
+
+Show Combat HP Bars defaults On, and the battlefield then marks only injured
+actors. Off hides the battlefield health marks while preserving actor pixels, independent Ally/Enemy text,
 status/selection/target cues, insect member pips and actual-fleeing `<>` markers.
 Numeric report damage and floating numbers remain in both modes. Off additionally
 shows the recorded [original monster injury band](../gamefacts/COMBAT.md#combat-0008)
@@ -662,7 +668,7 @@ on authored `BlackSquare`/`BrickWallArchway` terrain retains its turn forecast
 slot, scheduling, and actions, but the HUD omits its portrait and identifying
 detail. By default, `Gameplay.Combat.ShowConcealedTurnOrderSlots` preserves that
 blank forecast slot. Players may disable the preference to omit and compact
-concealed entries within the same four-action forecast; this does not inspect
+concealed entries within the same forecast; this does not inspect
 beyond the forecast or mutate scheduling. A concealed player-controlled
 monster's command prompt uses the neutral `Unknown` label. The same admission
 rule suppresses ordinary actor-local battlefield decorations. Only the current
@@ -671,24 +677,59 @@ have a narrow presentation exception; it grants no HUD identity, HP or targeting
 disclosure. A terrain trigger immediately restores the ordinary identity
 presentation without recreating the actor.
 
-The combat sidebar uses a fixed **45% Turn Order / 55% Events** split via
-`combatHUDTurnHeightPercent`, retaining the existing border overlap. This is
-separate from the gameplay right rail's unified status row. Current PC names use
-`combatEntityName` in both normal and auto-pass presentation, including the full
-`CLONE` identity. The compressed NEXT queue retains `combatEntityLabel`
-abbreviations. Current actor placement measures wrapped text as well as sprite
-height before placing equipment readouts and NEXT.
+The combat panels sit **left of the battlefield**. The panel column is a mirror
+image of the party column: the same width, with Turn Order ending level with the
+party roster. The battlefield is centred on the screen between the two columns.
+`combatLayout` (`cmd/ultimav/gamescene_combat_geometry.go`) owns that placement
+for every battlefield transform, popup viewport and panel border. The column
+holds about sixteen characters a row at the normal HUD font, so an attack line
+in the Battle Report usually takes two rows: who hit whom, then the result.
+Combat Panels (Gameplay) chooses what the column holds:
 
-`appendCombatAttackReadout` consumes the detached core preview through
-`GameScene.combatAttackPreview`. Before aiming it lists each attack source and
-its own effective range as `(RN)`; during physical aiming it lists only the
-current source, the target name with distance `(DN)`, and a concise
-presentation-only shot status. The origin says `Choose target`; an unnamed
-square says `No one seen`, preserving disclosure rather than revealing occupancy.
-Complete equipment and target labels wrap to the measured pane width at the
-normal HUD font size. `prepareCombatAttackReadout` reserves their full physical
-height before placing NEXT. The target itself labels the aiming row without an
-additional `Aim:` prefix. The core `CombatShotStatus` values remain unchanged.
+| Choice | Column | Battle lines |
+|---|---|---|
+| Order + Report (default) | Turn Order above the Battle Report, an even split via `combatHUDTurnHeightPercent` | Battle Report |
+| Turn Order only | Turn Order for the full height | message window |
+| Off | none; the battlefield is centred in the map viewport | message window |
+
+With panels Off, aiming a spell at a party member borrows the Turn Order column
+for its readout for as long as that aiming lasts.
+
+Turn Order is a ladder. The current actor keeps a full-size portrait, capitalised
+name, conditions and attack readout. Below a rule, each coming turn is one row:
+half-size portrait, name, then the battlefield's own health mark at the same
+size, on every row including full health (when Show Combat HP Bars is On). A row whose turn will be lost is dimmed and says
+why (`asleep`, otherwise `skips`); an uncertain quickness outcome appends `?`; a
+concealed slot reads `??? unseen`. Rows are drawn for as many forecast entries
+(up to twelve) as the pane has room. A party member fighting for the party shows
+no side label; enemies, allied monsters and possessed members do.
+
+Attacks are reported in plain words: `Avatar hits Troll for 14`, `Dragon misses
+Troll`, `Shamino grazes Skeleton`, `Iolo slays Orc`, `Rat poisons Julia`, `Wisp
+hits Julia: asleep`, `Gremlin steals 5 food`; a party member struck down adds
+`Julia falls!`. The line wraps by word, so most attacks take two rows of the
+column. The word that says what happened carries that effect's colour: light red
+for harm (the damage figure, `slays`, `falls!`), light gray when nothing happened
+(`misses`, `grazes`), light green for poison, light magenta for sleep and yellow
+for stolen food. Enemy names use the light red of the enemy health frame.
+`combatAttackParts` is the single source for both the coloured line and the plain
+text that measures it.
+Spell and field lines use the same voice, with a bare figure in place of
+"N damage": `Jaana casts Fireball on Troll for 31`, `... for 31, slain`, `Iolo is
+burned for 8`, `Iolo takes 8 from poison`.
+
+`appendCombatAttackReadoutRows` consumes the detached core preview through
+`GameScene.combatAttackPreview`. Every row of the readout is exactly one row of
+the column: text at the left and a figure at the right edge. Before aiming it
+lists each attack source with its own effective range as `RN`; during physical
+aiming it lists only the current source, then the target name with distance
+`DN`, then a verdict such as `Enemy: Too far` (`Ally:` for an ally, `Attack:`
+when no one is named). The origin says `Choose target`; an unnamed square says
+`No one seen`, preserving disclosure rather than revealing occupancy. A name too
+long for its row is cut plainly, with no ellipsis (`widgets.CutDialogLine`);
+Turn Order ladder names are cut the same way. A weapon whose name begins
+`Two-Handed` is listed as `2H` (`2H Hammer`), so it fits its row whole.
+The core `CombatShotStatus` values remain unchanged.
 It does not collapse mixed sources to their longest range or predict hit chance.
 Input-blocked workflows, enemy/auto-pass turns, and unrelated targeting suppress
 the assistance readout. The battlefield uses the same authoritative preview for

@@ -142,6 +142,7 @@ func (g *GameScene) Draw(screen *ebiten.Image) {
 			g.drawMap(g.mapImage)
 			g.mapDrawOptions.GeoM = g.worldDrawOptions().GeoM
 			mapRenderTarget.DrawImage(g.mapImage, g.mapDrawOptions)
+			g.drawCombatBattleFrame(mapRenderTarget)
 		}
 		g.drawTavernMealTableOverlay(mapRenderTarget)
 

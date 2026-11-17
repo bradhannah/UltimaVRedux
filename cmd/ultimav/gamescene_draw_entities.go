@@ -209,7 +209,7 @@ func (g *GameScene) drawCombatAttackCrosshair(screen *ebiten.Image) {
 // Square visuals have no actor identity. Fields, footprints, utility cues and
 // aim/wake markers share battlefield placement and shake, never actor motion.
 func (g *GameScene) combatSquareMarkerDrawOptions(position references.Position) *ebiten.DrawImageOptions {
-	x, y := combatPositionToSourcePixels(position)
+	x, y := g.combatLayout().positionToSourcePixels(position)
 	options := &ebiten.DrawImageOptions{}
 	options.GeoM.Translate(x, y)
 	mapOptions := &ebiten.DrawImageOptions{}
@@ -614,7 +614,7 @@ func (g *GameScene) combatEntityDrawOptions(
 	isPartyMember bool,
 	entityIndex, slot int,
 ) *ebiten.DrawImageOptions {
-	screenX, screenY := combatPositionToSourcePixels(position)
+	screenX, screenY := g.combatLayout().positionToSourcePixels(position)
 	drawOptions := &ebiten.DrawImageOptions{}
 	drawOptions.GeoM.Translate(screenX, screenY)
 	impactX, impactY := g.combatEntityOffset(isPartyMember, entityIndex, slot)

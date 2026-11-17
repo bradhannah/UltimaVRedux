@@ -521,7 +521,7 @@ func (g *GameScene) drawCombatDamageIndicator(
 
 	label, textBaseColor := combatImpactText(*effect)
 	textWidth, textHeight := g.combatDamageOutput.Font.MeasureString(label)
-	battlefield := combatBattlefieldRectangle(screen.Bounds())
+	battlefield := g.combatLayout().battlefieldRectangle(screen.Bounds())
 	textX = combatImpactLanePosition(
 		textX,
 		lane,

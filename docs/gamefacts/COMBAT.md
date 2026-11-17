@@ -693,14 +693,15 @@ resource commitment boundaries; the shared wind timeline qualification above app
 Committed possession, teleport, gating, and Corpser events drive feedback without
 rerolls or duplicate creation. Gate presentation intentionally uses 125 ms arrival,
 600 ms bright-leading-silhouette materialization, and 125 ms settling at 1x for readability;
-hitches retain all phases. Ally/Enemy text and a one-source-pixel cyan/red outline
-outside the black HP frame show current side; HP size/color/opacity still express
-health. Exact clone identity, visibility, possession, and recorded summon/charm
+hitches retain all phases. Ally/Enemy text and the light blue/red border of the
+health mark show current side; the strip's length and colour still express
+health. The battlefield marks only injured actors; Turn Order marks every row.
+Exact clone identity, visibility, possession, and recorded summon/charm
 provenance come from the authoritative projection, never presentation writes.
 
 **REDUX DEVIATION: optional HP artwork and supplemental injury text.** Show Combat
-HP Bars defaults On. Off removes battlefield HP fills/frames and their attached
-allegiance outline; independent Ally/Enemy text, statuses, selection/target cues,
+HP Bars defaults On. Off removes the battlefield health marks; independent
+Ally/Enemy text, statuses, selection/target cues,
 insect-member pips and the actual-fleeing `<>` marker remain. The shared health
 primitive's noncombat consumers are unaffected. Signature foreground layers still
 compose underlying actor pixels even when their HP artwork is disabled.

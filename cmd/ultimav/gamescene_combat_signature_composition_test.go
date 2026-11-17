@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -23,6 +22,7 @@ func TestCombatSignatureTeleportSelectionAndStatusFollowPresentedActor(t *testin
 	from, to := references.Position{X: 2, Y: 2}, references.Position{X: 8, Y: 7}
 	setCombatConcealmentTerrain(state, from, indexes.BrickFloor)
 	index, monster := signatureMonster(t, scene, references.MonsterShadowlord, to)
+	monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
 	monster.SetPoisoned(true)
 	monster.SetAsleep(true)
 	state.CombatScene.ActiveMonsterIndex = index
@@ -75,6 +75,7 @@ func TestCombatSignatureGateAndTeleportComposePoisonSleepAndHP(t *testing.T) {
 	for _, kind := range []game_state.CombatEventKind{game_state.CombatEventGating, game_state.CombatEventTeleport} {
 		scene, screen := newCombatConcealmentTestScene(t)
 		index, monster := signatureMonster(t, scene, references.MonsterDevil, references.Position{X: 5, Y: 5})
+		monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
 		event := signatureGateEvent(index, monster)
 		if kind == game_state.CombatEventTeleport {
 			event = game_state.CombatEvent{Kind: kind, From: references.Position{X: 4, Y: 5}, To: monster.Position(),
@@ -155,11 +156,10 @@ func assertSignatureHP(t *testing.T, frame *ebiten.Image, hp, maxHP int) {
 	t.Helper()
 	expected := ebiten.NewImage(frame.Bounds().Dx(), frame.Bounds().Dy())
 	defer expected.Dispose()
-	drawCombatHealthBar(expected, &ebiten.DrawImageOptions{}, hp, maxHP)
-	bar := image.Rect(combatHealthBarLeftSourcePixel, combatHealthBarTopSourcePixel,
-		combatHealthBarLeftSourcePixel+combatHealthBarWidthSourcePixels, combatHealthBarTopSourcePixel+combatHealthBarHeightSourcePixels)
-	actualBar := frame.SubImage(bar).(*ebiten.Image)
-	expectedBar := expected.SubImage(bar).(*ebiten.Image)
+	drawCombatHealthMark(expected, &ebiten.DrawImageOptions{}, ucolor.EGABlack, hp, maxHP)
+	interior := newCombatHealthMark(&ebiten.DrawImageOptions{}).inner
+	actualBar := frame.SubImage(interior).(*ebiten.Image)
+	expectedBar := expected.SubImage(interior).(*ebiten.Image)
 	assert.Equal(t, signaturePixels(expectedBar), signaturePixels(actualBar), "status tint must not recolor HP")
 }
 

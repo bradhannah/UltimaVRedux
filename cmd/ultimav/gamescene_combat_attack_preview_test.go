@@ -131,157 +131,75 @@ func TestCombatAttackPreviewPresentationRefreshAndCleanup(t *testing.T) {
 }
 
 func TestCombatAttackReadoutNamesRangeAndUnavailableSquare(t *testing.T) {
-	output := text.NewOutput(nil, 1, combatHUDOutputLines, 80)
-	appendCombatAttackReadout(output, game_state.CombatAttackPreview{
+	rows := appendCombatAttackReadoutRows(nil, game_state.CombatAttackPreview{
 		Sources: []game_state.CombatAttackSource{
 			{Equipment: references.SpikedHelm, MaxRange: 1},
-			{Equipment: references.Bow, MaxRange: 7},
-			{Equipment: references.MainGauche, MaxRange: 1},
+			{Equipment: references.TwoHHammer, MaxRange: 1},
 		},
 	})
-	readout := output.GetOutputStr(false)
-	assert.Contains(t, readout, "Spiked Helm (R1)")
-	assert.Contains(t, readout, "Bow (R7)")
-	assert.Contains(t, readout, "Main Gauche (R1)")
-	output.Reset()
-	appendCombatAttackReadout(output, game_state.CombatAttackPreview{
+	assert.Equal(t, []combatReadoutRow{{text: "Spiked Helm", value: "R1"}, {text: "2H Hammer", value: "R1"}}, rows)
+
+	rows = appendCombatAttackReadoutRows(nil, game_state.CombatAttackPreview{
 		Sources: []game_state.CombatAttackSource{{Equipment: references.NoEquipment, MaxRange: 1}},
 		Aim:     &game_state.CombatAttackTargetPreview{Distance: 3, Status: game_state.CombatShotOutOfRange},
 	})
-	readout = output.GetOutputStr(false)
-	assert.Contains(t, readout, "Bare Hands (R1)")
-	assert.Contains(t, readout, "No one seen (D3)")
-	assert.Contains(t, readout, "Attack: Too far")
-	assert.NotContains(t, readout, "Orc")
-}
+	assert.Equal(t, []combatReadoutRow{
+		{text: "Bare Hands", value: "R1"},
+		{text: "No one seen", value: "D3"}, // An unnamed square never reveals its occupant.
+		{label: "Attack: ", text: "Too far"},
+	}, rows)
 
-func TestCombatAttackReadoutRetainsCompleteLabelsAtSupportedResolutions(t *testing.T) {
-	statuses := []game_state.CombatShotStatus{
-		game_state.CombatShotClear,
-		game_state.CombatShotTerrainBypass,
-		game_state.CombatShotOutOfRange,
-		game_state.CombatShotBlocked,
-		game_state.CombatShotNoAmmo,
-		game_state.CombatShotInterference,
-		game_state.CombatShotUnready,
-		game_state.CombatShotChooseTarget,
-		game_state.CombatShotFriendly,
-	}
-	for _, resolution := range []image.Point{{1280, 720}, {1366, 768}, {1920, 1080}, {2560, 1440}, {3840, 2160}} {
-		t.Run(fmt.Sprintf("%dx%d", resolution.X, resolution.Y), func(t *testing.T) {
-			screen := image.Rectangle{Max: resolution}
-			turns, _ := combatHUDStackedRectangles(screen, combatHUDRectangle(screen))
-			bounds := combatHUDContentBounds(screen, turns)
-			scale := float64(resolution.X) / 1920
-			font := text.NewUltimaFont(float64(combatHUDFontSize) * scale)
-			output := text.NewOutput(font, float64(combatHUDFontSize)*scale, combatHUDOutputLines, 80)
-
-			equipment := []references.Equipment{references.NoEquipment}
-			for item := references.LeatherHelm; item <= references.MysticSword; item++ {
-				if item.GetAttackValue() > 0 {
-					equipment = append(equipment, item)
-				}
-			}
-			for _, item := range equipment {
-				name := item.String()
-				if item == references.NoEquipment {
-					name = "Bare Hands"
-				}
-				height := prepareCombatAttackReadout(output, game_state.CombatAttackPreview{
-					Sources: []game_state.CombatAttackSource{{Equipment: item, MaxRange: 15}},
-				}, bounds.Dx())
-				assert.Equal(t, fmt.Sprintf("%s (R15)", name), strings.Join(strings.Fields(output.GetOutputStr(false)), " "))
-				assertCombatAttackReadoutFits(t, output, bounds, height)
-				if measuredTextWidth(font, fmt.Sprintf("%s (R15)", name)) > float64(bounds.Dx()) {
-					assert.Greater(t, output.GetPanelContentLineCount(), 1, "%s needs complete wrapped rows", name)
-				}
-			}
-
-			for monster := references.MonsterType(0); monster < references.TotalMonsterTypes; monster++ {
-				aimText := fmt.Sprintf("%s (D15)", monster.Name())
-				height := prepareCombatAttackReadout(output, game_state.CombatAttackPreview{
-					Sources: []game_state.CombatAttackSource{{Equipment: references.MagicBow, MaxRange: 15}},
-					Aim: &game_state.CombatAttackTargetPreview{
-						Name: monster.Name(), Distance: 15, Status: game_state.CombatShotTerrainBypass,
-					},
-				}, bounds.Dx())
-				assert.Equal(t, "Magic Bow (R15) "+aimText+" Attack: Bypass",
-					strings.Join(strings.Fields(output.GetOutputStr(false)), " "))
-				assertCombatAttackReadoutFits(t, output, bounds, height)
-			}
-
-			for _, status := range statuses {
-				height := prepareCombatAttackReadout(output, game_state.CombatAttackPreview{
-					Aim: &game_state.CombatAttackTargetPreview{Status: status},
-				}, bounds.Dx())
-				target := "No one seen"
-				if status == game_state.CombatShotChooseTarget {
-					target = "Choose target"
-				}
-				assert.Equal(t, target+" (D0) Attack: "+combatShotStatusText(status),
-					strings.Join(strings.Fields(output.GetOutputStr(false)), " "))
-				assertCombatAttackReadoutFits(t, output, bounds, height)
-			}
-			assert.Same(t, font, output.Font)
-			assert.Equal(t, float64(combatHUDFontSize)*scale, output.Font.TextFace.Size)
-		})
-	}
+	rows = appendCombatAttackReadoutRows(nil, game_state.CombatAttackPreview{
+		Aim: &game_state.CombatAttackTargetPreview{Name: "Troll", Distance: 6, Status: game_state.CombatShotClear,
+			Actor: &game_state.CombatActorPresentation{Loyalty: game_state.CombatMonsterLoyaltyMonster}},
+	})
+	assert.Equal(t, []combatReadoutRow{{text: "Troll", value: "D6"}, {label: "Enemy: ", text: "Clear"}}, rows)
 	assert.Equal(t, "Bypass", combatShotStatusText(game_state.CombatShotTerrainBypass))
 	assert.Equal(t, "Bypasses terrain on hit", string(game_state.CombatShotTerrainBypass),
 		"presentation wording must not change the authoritative status")
 }
 
-func assertCombatAttackReadoutFits(t *testing.T, output *text.Output, bounds image.Rectangle, height int) {
-	t.Helper()
-	for _, row := range strings.Split(output.GetOutputStr(false), "\n") {
-		assert.LessOrEqual(t, measuredTextWidth(output.Font, strings.TrimSpace(row)), float64(bounds.Dx()), row)
-	}
-	assert.GreaterOrEqual(t, height, int(math.Ceil(output.GetTotalHeightForLines(output.GetPanelContentLineCount()))))
-	assert.LessOrEqual(t, height, bounds.Dy())
-}
-
-func TestCombatAttackHUDMeasuredReadoutFitsSupportedResolutions(t *testing.T) {
+// Every weapon, target and verdict takes exactly one row of the Turn Order
+// column. A name that is too long is cut plainly.
+func TestCombatAttackReadoutRowsFitOneRowAtSupportedResolutions(t *testing.T) {
 	for _, resolution := range []image.Point{{1280, 720}, {1366, 768}, {1920, 1080}, {2560, 1440}, {3840, 2160}} {
 		t.Run(fmt.Sprintf("%dx%d", resolution.X, resolution.Y), func(t *testing.T) {
 			screen := image.Rectangle{Max: resolution}
-			turns, events := combatHUDStackedRectangles(screen, combatHUDRectangle(screen))
-			bounds := combatHUDContentBounds(screen, turns)
-			scale := float64(resolution.X) / 1920
-			font := text.NewUltimaFont(float64(combatHUDFontSize) * scale)
-			output := text.NewOutput(font, float64(combatHUDFontSize)*scale, combatHUDOutputLines, 80)
-			lineHeight := int(math.Ceil(output.GetLineSpacing()))
-			gap := lineHeight / combatHUDLineGapDivisor
-			spriteHeight := int(math.Round(18 * float64(resolution.Y) / 208))
-			spriteWidth := int(math.Round(18 * float64(resolution.X) * 0.76 / 304))
-			output.SetMaxCharsPerLine(max(1, font.CharsForWidth(bounds.Dx()-spriteWidth-gap)))
-			output.AppendLine().White("BLACKTHORN CLONE").Done()
-			output.AppendLine().LightCyan("Enemy / Possessed").Done()
-			output.AppendLine().LightGray("D30 C06").Done()
-			actorHeight := max(spriteHeight, int(math.Ceil(output.GetTotalHeightForLines(output.GetPanelContentLineCount()))))
-			for _, preview := range []game_state.CombatAttackPreview{
-				{Sources: []game_state.CombatAttackSource{
-					{Equipment: references.SpikedHelm, MaxRange: 1},
-					{Equipment: references.MorningStar, MaxRange: 2},
-					{Equipment: references.SpikedShield, MaxRange: 1},
-				}},
-				{Sources: []game_state.CombatAttackSource{
-					{Equipment: references.SpikedHelm, MaxRange: 1},
-					{Equipment: references.TwoHHammer, MaxRange: 1},
-				}},
-				{Sources: []game_state.CombatAttackSource{{Equipment: references.TwoHHammer, MaxRange: 1}},
-					Aim: &game_state.CombatAttackTargetPreview{Name: "Lord British", Distance: 15, Status: game_state.CombatShotOutOfRange}},
-				{Sources: []game_state.CombatAttackSource{{Equipment: references.MagicBow, MaxRange: 15}},
-					Aim: &game_state.CombatAttackTargetPreview{Name: "Lord British", Distance: 15, Status: game_state.CombatShotTerrainBypass}},
-			} {
-				readoutHeight := prepareCombatAttackReadout(output, preview, bounds.Dx())
-				readout := strings.Join(strings.Fields(output.GetOutputStr(false)), " ")
-				for _, source := range preview.Sources {
-					assert.Contains(t, readout, fmt.Sprintf("%s (R%d)", source.Equipment, source.MaxRange))
+			turns, _ := combatLayout{}.turnAndReportRectangles(screen)
+			width := combatHUDContentBounds(screen, turns).Dx()
+			font := text.NewUltimaFont(float64(combatHUDFontSize) * float64(resolution.X) / 1920)
+			var rows []combatReadoutRow
+			for item := references.LeatherHelm; item <= references.MysticSword; item++ {
+				if item.GetAttackValue() > 0 {
+					rows = append(rows, combatReadoutRow{text: combatReadoutEquipmentName(item), value: "R15"})
 				}
-				assertCombatAttackReadoutFits(t, output, bounds, readoutHeight)
-				requiredHeight := lineHeight + gap + actorHeight + gap + readoutHeight + 2*lineHeight + spriteHeight + int(math.Ceil(output.GetTotalHeightForLines(1)))
-				assert.LessOrEqual(t, requiredHeight, bounds.Dy(), "full actor, wrapped readout and NEXT must fit: %s", readout)
-				assert.GreaterOrEqual(t, output.GetLineCapacity(combatHUDContentBounds(screen, events).Dy()), 10, "keep a useful event tape")
+			}
+			for monster := references.MonsterType(0); monster < references.TotalMonsterTypes; monster++ {
+				rows = append(rows, combatReadoutRow{text: monster.Name(), value: "D15"})
+			}
+			for _, status := range []game_state.CombatShotStatus{
+				game_state.CombatShotClear, game_state.CombatShotTerrainBypass, game_state.CombatShotOutOfRange,
+				game_state.CombatShotBlocked, game_state.CombatShotNoAmmo, game_state.CombatShotInterference,
+				game_state.CombatShotUnready, game_state.CombatShotChooseTarget, game_state.CombatShotFriendly,
+			} {
+				for _, label := range []string{"Attack: ", "Enemy: ", "Ally: "} {
+					rows = append(rows, combatReadoutRow{label: label, text: combatShotStatusText(status)})
+				}
+			}
+			for _, row := range rows {
+				fitted := combatReadoutRowText(font, row, width)
+				whole := row.label + fitted
+				if row.value != "" {
+					whole += " " + row.value
+				}
+				assert.LessOrEqual(t, measuredTextWidth(font, whole), float64(width), whole)
+				assert.True(t, strings.HasPrefix(row.text, fitted), "%q is a plain cut", fitted)
+				if row.label != "" {
+					assert.Equal(t, row.text, fitted, "every verdict is shown whole")
+				}
+			}
+			for _, whole := range []string{"Morning Star", "2H Hammer"} {
+				assert.Equal(t, whole, combatReadoutRowText(font, combatReadoutRow{text: whole, value: "R2"}, width))
 			}
 		})
 	}
@@ -293,7 +211,7 @@ func measuredTextWidth(font *text.UltimaFont, value string) float64 {
 	return width
 }
 
-func TestCombatCurrentNameFullAndNextAbbreviated(t *testing.T) {
+func TestCombatCurrentNameAndLadderRowAreFull(t *testing.T) {
 	scene, actor := setupCombatAutoAttackInputTest(t)
 	character := scene.gameState.PartyState.GetCharacter(actor.EntityIndex)
 	clear(character.Name[:])
@@ -325,12 +243,19 @@ func TestCombatCurrentNameFullAndNextAbbreviated(t *testing.T) {
 				content := scene.combatHUD.turnOutput.GetOutputStr(false)
 				assert.Contains(t, strings.ReplaceAll(content, "\n", " "), want)
 				assert.GreaterOrEqual(t, bottom, 22+lineHeight+lineHeight/3+int(math.Ceil(scene.combatHUD.turnOutput.GetTotalHeightForLines(scene.combatHUD.turnOutput.GetPanelContentLineCount()))))
-				scene.drawCombatQueueLabel(screen, image.Rect(622, 200, 704, 230), identity, autoPass)
-				wantNext := "SHAM"
+				scene.drawCombatLadderRow(screen, image.Rect(622, 200, 947, 240),
+					game_state.CombatTurnForecastEntry{CombatTurnIdentity: identity, CanTakeTurn: true}, lineHeight)
+				wantNext := "Shamino"
 				if clone {
-					wantNext = "CLN"
+					wantNext = "Shamino Clone 1"
 				}
-				assert.Equal(t, wantNext, strings.TrimSpace(scene.combatHUD.turnOutput.GetOutputStr(false)))
+				row := strings.TrimSpace(scene.combatHUD.turnOutput.GetOutputStr(false))
+				if autoPass && clone {
+					// The reason a turn is lost shares the row; the longest name then shortens.
+					assert.True(t, strings.HasPrefix(row, "Shamino C"), row)
+				} else {
+					assert.Equal(t, wantNext, row, "a ladder row has room for the whole name")
+				}
 			}
 		}
 	}

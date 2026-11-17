@@ -957,16 +957,18 @@ The controls advertise Space to skip that item at the origin and confirm away
 from it. Initial Escape cancels the sequence; later Escape skips the current
 item. Source order, range, resources and completion ownership are unchanged.
 
-The readout keeps full equipment `(RN)`, target `(DN)`, and compact
-`Attack` status, including `Ally`/`Enemy` for a disclosed actor. The accompanying
+The readout gives equipment with `RN` and the target with `DN` at the row's
+right edge, then a one-row verdict labelled `Enemy:` or `Ally:` for a disclosed
+actor and `Attack:` otherwise. A name too long for its row is cut plainly, and
+`Two-Handed` is shown as `2H`. The accompanying
 prompt explains R/range and D/distance and gives the target's full name, side
 and known Charmed/Summoned/Possessed provenance. At the origin it says `Choose
 target`; otherwise an unnamed square says `No one seen`. This deliberately
 describes disclosure rather than occupancy, so an invisible actor cannot be
 detected by comparing an empty-tile label. It uses the core exact-actor
-projection rather than renderer-side occupancy rules. The fixed 45% turn pane
-and normal font size remain unchanged. Complete labels wrap to the measured
-pane width; their full physical height is reserved before placing NEXT.
+projection rather than renderer-side occupancy rules. The turn pane keeps its
+normal font size. Complete labels wrap to the measured pane width; their full
+physical height is reserved before placing the ladder of coming turns.
 
 Core and scene regression assertions include resource deferral, impact,
 return-before-next-source, and shutdown cleanup in

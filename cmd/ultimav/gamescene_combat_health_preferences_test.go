@@ -191,7 +191,10 @@ func TestCombatHealthPreferenceDefaultsAndOrdinaryFrames(t *testing.T) {
 	pc := state.CombatScene.GetCurrentTurnIdentity()
 	position := state.CombatScene.GetCombatantPosition(pc)
 	setCombatConcealmentTerrain(state, position, indexes.BrickFloor)
-	index, _ := signatureMonster(t, scene, references.MonsterOrc, references.Position{X: 5, Y: 3})
+	index, monster := signatureMonster(t, scene, references.MonsterOrc, references.Position{X: 5, Y: 3})
+	monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
+	character := state.PartyState.GetCharacter(pc.EntityIndex)
+	character.SetHp(character.GetMaxHp() - 1)
 	frame := ebiten.NewImage(18, 18)
 	t.Cleanup(frame.Dispose)
 	for _, identity := range []game_state.CombatTurnIdentity{pc, {EntityIndex: index}} {

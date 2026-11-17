@@ -104,7 +104,10 @@ func (g *GameScene) updateCombatReportAttention() {
 	}
 	width, height := display.GetManager().GetCurrentSize()
 	screen := image.Rect(0, 0, width, height)
-	_, panel := combatHUDStackedRectangles(screen, combatHUDRectangle(screen))
+	_, panel := g.combatLayout().turnAndReportRectangles(screen)
+	if panel.Empty() {
+		return
+	}
 	bounds := combatHUDContentBounds(screen, panel)
 	spans := g.prepareCombatEventTape(bounds)
 	capacity := hud.eventOutput.GetLineCapacity(bounds.Dy())

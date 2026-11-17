@@ -78,11 +78,11 @@ func TestSpellFeedbackRenderedPositionAndExactDismissal(t *testing.T) {
 						centerY := float64(bounds.Min.Y+bounds.Max.Y) / 2
 						wantCenterX := 0.37 * float64(size.X)
 						if combat {
-							battlefield := combatBattlefieldRectangle(image.Rectangle{Max: size})
+							battlefield := combatLayout{}.battlefieldRectangle(image.Rectangle{Max: size})
 							wantCenterX = float64(battlefield.Min.X+battlefield.Max.X) / 2
 							assert.GreaterOrEqual(t, bounds.Min.X, battlefield.Min.X-1)
 							assert.LessOrEqual(t, bounds.Max.X, battlefield.Max.X+1)
-							assert.Greater(t, 0.37*float64(size.X)-centerX, 10.0,
+							assert.Greater(t, centerX-0.37*float64(size.X), 10.0,
 								"combat feedback must exclude the Turn Order panel, not center on the full map pane")
 						}
 						assert.InDelta(t, wantCenterX, centerX, 1.5, "rendered horizontal center")

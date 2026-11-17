@@ -227,7 +227,7 @@ func assertProjectileDrawAtCurrentPosition(t *testing.T, scene *GameScene, scree
 	x := flight.currentTileX*sprites.TileSize - 1 + sprites.TileSize/2
 	y := flight.currentTileY*sprites.TileSize - 1 + sprites.TileSize/2
 	if scene.gameState.IsInCombat() {
-		x += combatLeftGutterSourcePixels
+		x += float64(scene.combatLayout().battlefieldLeft())
 	}
 	x, y = op.GeoM.Apply(x, y)
 	unitX, unitY := op.GeoM.Apply(1, 1)

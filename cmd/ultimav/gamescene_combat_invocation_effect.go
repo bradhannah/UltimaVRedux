@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -484,26 +485,28 @@ func combatInsectStackPipPosition(member, count int) (float64, float64) {
 	return 9 + float64(member)*spacing, 2
 }
 
-func (g *GameScene) drawCombatInsectStackHealth(screen *ebiten.Image, options *ebiten.DrawImageOptions, indices []int) {
-	segmentWidth := float64(combatHealthBarInnerSourcePixels) / float64(len(indices))
+// One upright segment per swarm member shares the mark's strip, each filling
+// from the bottom, with a black gap between neighbours.
+func (g *GameScene) drawCombatInsectStackHealth(screen *ebiten.Image, strip image.Rectangle, indices []int) {
+	gap := max(1, strip.Dy()/combatHealthStackGapStripFraction)
 	for member, index := range indices {
 		monster := g.gameState.CombatScene.MonsterManager.GetMonster(index)
-		fill := combatInsectHealthFill(monster.CurrentHP(), monster.MaxHP())
-		leftSource := float64(combatHealthBarLeftSourcePixel+combatHealthBarInsetSourcePixel) + float64(member)*segmentWidth
-		left, top := options.GeoM.Apply(leftSource, combatHealthBarTopSourcePixel+combatHealthBarInsetSourcePixel)
-		right, bottom := options.GeoM.Apply(leftSource+segmentWidth-0.25,
-			combatHealthBarTopSourcePixel+combatHealthBarHeightSourcePixels-combatHealthBarInsetSourcePixel)
-		vector.FillRect(screen, float32(left), float32(top), float32(right-left), float32(bottom-top), ucolor.EGABlack, false)
-		fillTop := float32(bottom) - float32(bottom-top)*fill
-		vector.FillRect(screen, float32(left), fillTop, float32(right-left), float32(bottom)-fillTop,
-			combatHealthBarColor(monster.CurrentHP(), monster.MaxHP()), false)
+		segment := image.Rect(strip.Min.X+member*strip.Dx()/len(indices), strip.Min.Y,
+			strip.Min.X+(member+1)*strip.Dx()/len(indices), strip.Max.Y)
+		if member < len(indices)-1 {
+			segment.Max.X -= gap
+		}
+		segment.Min.Y = segment.Max.Y - combatHealthFill(monster.CurrentHP(), monster.MaxHP(), strip.Dy())
+		fillCombatHealthRect(screen, segment, combatHealthTierColor(monster.CurrentHP(), monster.MaxHP()))
 	}
 }
 
-func combatInsectHealthFill(currentHP, maxHP int) float32 {
-	if maxHP <= 0 {
-		return 0
+func (g *GameScene) combatInsectStackInjured(indices []int) bool {
+	for _, index := range indices {
+		if monster := g.gameState.CombatScene.MonsterManager.GetMonster(index); monster.CurrentHP() < monster.MaxHP() {
+			return true
+		}
 	}
 
-	return float32(min(max(currentHP, 0), maxHP)) / float32(maxHP)
+	return false
 }

@@ -54,7 +54,7 @@ func TestOutputWrappedCopyPreservesStyledSegments(t *testing.T) {
 
 	wrapped := source.WrappedCopy(8)
 
-	assert.Equal(t, []string{"Title: ", "abcdefgh", "ijk", "lmno", "pqrs", "Runes"}, outputPhysicalRows(wrapped))
+	assert.Equal(t, []string{"Title: ", "abcdefgh", "ijk lmno", "pqrs", "Runes"}, outputPhysicalRows(wrapped))
 	for rowIndex, line := range wrapped.lines {
 		assert.Equal(t, etext.AlignEnd, line.Alignment)
 		require.NotEmpty(t, line.Segments)

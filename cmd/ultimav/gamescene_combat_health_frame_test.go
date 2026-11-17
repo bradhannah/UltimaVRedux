@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"math"
 	"strings"
@@ -85,12 +84,19 @@ func assertCombatHealthSelectionComposition(
 	require.Positive(t, markerPixels, "exercise the actual foreground indicator")
 	require.Positive(t, overlaidHP, "exercise selection taking priority over HP, not just a nearby marker")
 	require.Positive(t, unchangedHP, "uncovered health pixels must still be compared exactly")
-	// These fixture layouts leave the complete HP fill and a side of each
-	// allegiance outline uncovered, even on selected actors. Pin their readability
-	// for every neighbor, including 1-HP bars, rather than just counting colours
-	// somewhere in the whole battlefield.
+	// These fixture layouts leave the mark's interior and a side of its border
+	// uncovered, even on selected actors. Pin their readability for every injured
+	// neighbor, including 1-HP bars, rather than just counting colours somewhere
+	// in the whole battlefield. An uninjured actor shows no mark and is skipped.
+	marked := 0
 	for actor, options := range actors {
-		for _, source := range []image.Rectangle{image.Rect(3, 14, 14, 16), image.Rect(15, 14, 16, 16)} {
+		middleX, middleY := options.GeoM.Apply(8.5, 15)
+		middle := image.Pt(int(middleX), int(middleY))
+		if !middle.In(bounds) || wantedHP[((middle.Y-bounds.Min.Y)*bounds.Dx()+middle.X-bounds.Min.X)*4+3] == 0 {
+			continue
+		}
+		marked++
+		for _, source := range []image.Rectangle{image.Rect(3, 14, 14, 16), image.Rect(14, 14, 15, 16)} {
 			left, top := options.GeoM.Apply(float64(source.Min.X), float64(source.Min.Y))
 			right, bottom := options.GeoM.Apply(float64(source.Max.X), float64(source.Max.Y))
 			interior := image.Rect(int(math.Ceil(left)), int(math.Ceil(top)), int(math.Floor(right)), int(math.Floor(bottom))).Intersect(bounds)
@@ -105,66 +111,59 @@ func assertCombatHealthSelectionComposition(
 			}
 		}
 	}
+	require.Positive(t, marked, "the fixture must injure someone")
 }
 
-func TestCombatHealthOutlinePreservesEveryLegacyHPPixel(t *testing.T) {
-	for _, scale := range []float64{1, 1280 * 0.76 / 304, 1366 * 0.76 / 304} {
-		for _, loyalty := range []game_state.CombatMonsterLoyalty{game_state.CombatMonsterLoyaltyParty, game_state.CombatMonsterLoyaltyMonster} {
-			for _, hp := range []int{0, 1, 25, 50, 100} {
-				// Native pixels exercise every fill/colour boundary. Fractional
-				// registration needs only living-minimum and full-width footprints.
-				if scale != 1 && hp != 1 && hp != 100 {
-					continue
-				}
-				t.Run(fmt.Sprintf("scale%g/side%d/hp%d", scale, loyalty, hp), func(t *testing.T) {
-					options := &ebiten.DrawImageOptions{}
-					options.GeoM.Scale(scale, scale)
-					options.GeoM.Translate(7.35, 9.65)
-					sample := combatFixtureRasterBounds(options)
-					legacy := ebiten.NewImageWithOptions(sample, &ebiten.NewImageOptions{Unmanaged: true})
-					outlined := ebiten.NewImageWithOptions(sample, &ebiten.NewImageOptions{Unmanaged: true})
-					border := ebiten.NewImageWithOptions(sample, &ebiten.NewImageOptions{Unmanaged: true})
-					t.Cleanup(legacy.Dispose)
-					t.Cleanup(outlined.Dispose)
-					t.Cleanup(border.Dispose)
-					drawCombatHealthBar(legacy, options, hp, 100)
-					drawCombatHealthFrameOutline(border, options, loyalty)
-					drawCombatHealthFrameOutline(outlined, options, loyalty)
-					drawCombatHealthBar(outlined, options, hp, 100)
-					before, after, ring := signaturePixels(legacy), signaturePixels(outlined), signaturePixels(border)
-					for pixel := 0; pixel < len(before); pixel += 4 {
-						if before[pixel+3] != 0 {
-							require.True(t, bytes.Equal(before[pixel:pixel+4], after[pixel:pixel+4]), "changed legacy HP at (%d,%d)", sample.Min.X+pixel/4%sample.Dx(), sample.Min.Y+pixel/4/sample.Dx())
-							require.Zero(t, ring[pixel+3], "exterior may not invade the black separator or fill")
-						}
-						if ring[pixel+3] != 0 {
-							require.Zero(t, before[pixel+3], "shared world/vehicle HP renderer must not acquire an exterior")
-						}
-					}
-					clr := ucolor.CombatAllegianceEnemy
-					if loyalty == game_state.CombatMonsterLoyaltyParty {
-						clr = ucolor.CombatAllegianceAlly
-					}
-					assert.Positive(t, countExactColor(border, clr))
-					assert.Equal(t, opaquePixelCount(border), countExactColor(border, clr), "no white pulse or alternate symbol colour")
-					_, top := options.GeoM.Apply(0, 12)
-					assert.Zero(t, opaquePixelCount(border.SubImage(image.Rect(sample.Min.X, sample.Min.Y, sample.Max.X, int(math.Floor(top)))).(*ebiten.Image)), "no upper-left emblem remains")
-				})
-			}
-		}
+func TestCombatHealthMarkLayoutIsWholePixelsWhereverItStands(t *testing.T) {
+	native := newCombatHealthMark(&ebiten.DrawImageOptions{})
+	assert.Equal(t, image.Rect(2, 13, 15, 17), native.outer)
+	assert.Equal(t, image.Rect(3, 14, 14, 16), native.inner)
+	assert.Equal(t, native.inner, native.strip, "one screen pixel per source pixel leaves no room for an inset")
+	assert.True(t, native.outer.In(combatHealthFrameBounds()), "signature effects split frames on this region")
+	for _, face := range combatAttackBracketFaces() {
+		assert.False(t, face.Inset(-1).Overlaps(combatHealthFrameBounds()))
+	}
+	// 1280x720 draws a source pixel 3.2 screen pixels wide and about 3.47 tall.
+	for _, offset := range []float64{0, 0.35, 0.5, 0.65} {
+		options := &ebiten.DrawImageOptions{}
+		options.GeoM.Scale(3.2, 610.0/176)
+		options.GeoM.Translate(100+offset, 200+offset)
+		mark := newCombatHealthMark(options)
+		assert.Equal(t, image.Pt(42, 13), mark.outer.Size(), "offset %g", offset)
+		assert.Equal(t, mark.outer.Inset(3), mark.inner, "a border one source pixel thick")
+		assert.Equal(t, mark.inner.Inset(1), mark.strip, "a black inset one screen pixel thick")
+		assert.Equal(t, 5, mark.strip.Dy(), "a health strip one and a half source pixels tall")
 	}
 }
 
-func TestCombatHealthOutlineExactNativeFootprint(t *testing.T) {
-	frame := ebiten.NewImage(18, 18)
+func TestCombatHealthMarkDrawsSideBorderBlackInsetAndHealthStrip(t *testing.T) {
+	options := &ebiten.DrawImageOptions{}
+	options.GeoM.Scale(3.2, 610.0/176)
+	frame := ebiten.NewImage(64, 64)
 	t.Cleanup(frame.Dispose)
-	drawCombatHealthFrameOutline(frame, &ebiten.DrawImageOptions{}, game_state.CombatMonsterLoyaltyParty)
-	assert.Equal(t, 38, opaquePixelCount(frame), "15x6 exterior minus the unchanged 13x4 HP frame")
-	assert.Zero(t, opaquePixelCount(frame.SubImage(image.Rect(2, 13, 15, 17)).(*ebiten.Image)))
-	assert.Zero(t, opaquePixelCount(frame.SubImage(image.Rect(0, 0, 18, 12)).(*ebiten.Image)))
-	for _, face := range combatAttackBracketFaces() {
-		assert.LessOrEqual(t, face.Inset(-1).Max.Y, 12, "bracket backing ends before the top outline")
-		assert.False(t, face.Inset(-1).Overlaps(combatHealthFrameBounds()))
+	const border, interior, stripWidth, stripHeight = 42*13 - 36*7, 36 * 7, 34, 5
+	for _, test := range []struct {
+		loyalty game_state.CombatMonsterLoyalty
+		side    ucolor.EGAColor
+		hp      int
+		health  ucolor.EGAColor
+		filled  int
+	}{
+		{game_state.CombatMonsterLoyaltyParty, ucolor.CombatHealthFriend, 100, ucolor.EGALightGreen, stripWidth},
+		{game_state.CombatMonsterLoyaltyMonster, ucolor.CombatAllegianceEnemy, 51, ucolor.EGALightGreen, 18},
+		{game_state.CombatMonsterLoyaltyMonster, ucolor.CombatAllegianceEnemy, 50, ucolor.EGAYellow, 17},
+		{game_state.CombatMonsterLoyaltyParty, ucolor.CombatHealthFriend, 25, ucolor.EGAYellow, 9},
+		{game_state.CombatMonsterLoyaltyParty, ucolor.CombatHealthFriend, 24, ucolor.EGALightRed, 9},
+		{game_state.CombatMonsterLoyaltyParty, ucolor.CombatHealthFriend, 1, ucolor.EGALightRed, 1},
+		{game_state.CombatMonsterLoyaltyParty, ucolor.CombatHealthFriend, 0, ucolor.EGALightRed, 0},
+	} {
+		frame.Clear()
+		drawCombatHealthMark(frame, options, combatHealthBorderColor(test.loyalty), test.hp, 100)
+		assert.Equal(t, border, countExactColor(frame, test.side), "hp %d", test.hp)
+		assert.Equal(t, test.filled*stripHeight, countExactColor(frame, test.health), "hp %d", test.hp)
+		assert.Equal(t, interior-test.filled*stripHeight, countExactColor(frame, ucolor.EGABlack), "hp %d", test.hp)
+		assert.Equal(t, border+interior, opaquePixelCount(frame), "hp %d: nothing outside the mark", test.hp)
+		assert.Zero(t, countExactColor(frame, ucolor.CombatAllegianceAlly), "no cyan on a health mark")
 	}
 }
 
@@ -191,7 +190,7 @@ func TestCombatHealthFrameInsectAggregatePreservesSegmentsAndDisclosure(t *testi
 	t.Cleanup(frame.Dispose)
 	t.Cleanup(segments.Dispose)
 	options := &ebiten.DrawImageOptions{}
-	scene.drawCombatInsectStackHealth(segments, options, indices)
+	scene.drawCombatInsectStackHealth(segments, newCombatHealthMark(options).strip, indices)
 	for slot, index := range indices {
 		frame.Clear()
 		actor, ok := state.ProjectCombatActor(game_state.CombatTurnIdentity{EntityIndex: index}, 0)
@@ -207,7 +206,7 @@ func TestCombatHealthFrameInsectAggregatePreservesSegmentsAndDisclosure(t *testi
 				require.Equal(t, want[pixel:pixel+4], got[pixel:pixel+4], "segment attribution/fill changed at %d", pixel/4)
 			}
 		}
-		assert.Equal(t, 38, countExactColor(frame, ucolor.CombatAllegianceAlly))
+		assert.Equal(t, 13*4-11*2, countExactColor(frame, ucolor.CombatHealthFriend))
 		for member := range indices {
 			x, y := combatInsectStackPipPosition(member, len(indices))
 			assert.GreaterOrEqual(t, y, 2.0, "northern health frame ends before the pip row")
@@ -273,8 +272,7 @@ func TestCombatHealthFrameSignatureOpacityAndHiddenIntervals(t *testing.T) {
 		}
 		options := scene.combatEntityDrawOptions(position, false, index, 0)
 		drawCombatCornerCue(expected, options, 2.5, clr)
-		drawCombatHealthBar(mask, options, 1, monster.MaxHP())
-		drawCombatHealthFrameOutline(mask, options, game_state.CombatMonsterLoyaltyMonster)
+		drawCombatHealthMark(mask, options, ucolor.CombatAllegianceEnemy, 1, monster.MaxHP())
 		options.ColorScale.ScaleAlpha(0.5)
 		// Independent full-frame reference: one application of original fade,
 		// rather than an opaque HP pass or two half-opacity blends.
@@ -306,16 +304,22 @@ func TestCombatHealthFramesSummonSuppressionAndPossessionSwitch(t *testing.T) {
 	state.CombatScene.MonsterManager.Clear()
 	state.CombatScene.TurnQueue.RemoveAllMonsters()
 	setCombatConcealmentTerrain(state, state.CombatScene.GetCombatantPosition(actor), indexes.BrickFloor)
+	character := state.PartyState.GetCharacter(actor.EntityIndex)
+	character.SetHp(character.GetMaxHp())
+	scene.drawCombatHealthFrames(screen)
+	assert.Zero(t, opaquePixelCount(screen), "the battlefield marks only the injured")
+	character.SetHp(character.GetMaxHp() * 3 / 4) // Green, so the strip is neither side's colour.
 	for _, possessed := range []bool{false, true, false} {
 		state.CombatScene.PartyPossessed[actor.EntityIndex] = possessed
 		screen.Clear()
 		scene.drawCombatHealthFrames(screen)
 		assert.Equal(t, possessed, countExactColor(screen, ucolor.CombatAllegianceEnemy) > 0)
-		assert.Equal(t, !possessed, countExactColor(screen, ucolor.CombatAllegianceAlly) > 0)
+		assert.Equal(t, !possessed, countExactColor(screen, ucolor.CombatHealthFriend) > 0)
 	}
 	state.CombatScene.PartyActive[actor.EntityIndex] = false
 	index, monster := signatureMonster(t, scene, references.MonsterRat, references.Position{X: 5, Y: 5})
 	monster.SetLoyalty(game_state.CombatMonsterLoyaltyParty)
+	monster.SetCurrentHP(monster.MaxHP() - 1)
 	scene.combatSummonEffect = &combatSummonSpellEffect{Result: game_state.CombatSummonResult{Created: []game_state.CombatSummonedMonster{{Index: index, CombatantID: monster.CombatantID(), Position: monster.Position()}}}}
 	for _, phase := range []combatSummonEffectPhase{combatSummonInvocation, combatSummonSeal, combatSummonManifestation, combatSummonAllegiance} {
 		scene.combatSummonEffect.Phase = phase

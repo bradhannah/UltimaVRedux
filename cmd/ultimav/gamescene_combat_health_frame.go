@@ -2,6 +2,8 @@ package main
 
 import (
 	"image"
+	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -10,38 +12,96 @@ import (
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
 )
 
-// A one-source-pixel exterior surrounds the unchanged x2/y13/w13/h4 black
-// health frame. Drawing four disjoint strips never paints over its HP interior.
+// The health mark and the feet it covers live in this region of a sprite frame.
+// Signature effects split a frame here so the two layers fade independently.
 func combatHealthFrameBounds() image.Rectangle { return image.Rect(1, 12, 16, 18) }
 
 func (g *GameScene) showCombatHPBars() bool {
 	return g.gameConfig == nil || g.gameConfig.GetShowCombatHPBars()
 }
 
-func drawCombatHealthFrameOutline(screen *ebiten.Image, options *ebiten.DrawImageOptions, loyalty game_state.CombatMonsterLoyalty) {
-	clr := ucolor.CombatAllegianceEnemy
+// The combat health mark is a bordered bar 13 source pixels wide whose bottom
+// edge sits on source row 17: a border one source pixel thick, a black inset a
+// quarter of that, and a health strip one and a half source pixels tall.
+const (
+	combatHealthMarkLeftSourcePixel    = 2
+	combatHealthMarkBottomSourcePixel  = 17
+	combatHealthMarkWidthSourcePixels  = 13
+	combatHealthMarkStripSourcePixels  = 1.5
+	combatHealthMarkInsetSourcePixels  = 0.25
+	combatHealthStackGapStripFraction  = 4
+	combatHealthMarkInsetsPerDimension = 2
+)
+
+type combatHealthMark struct {
+	outer, inner, strip image.Rectangle
+}
+
+// newCombatHealthMark lays the mark out in whole screen pixels, so every figure
+// gets the same border, inset and strip wherever it stands. Below two screen
+// pixels per source pixel the inset rounds away and the strip fills the border.
+func newCombatHealthMark(options *ebiten.DrawImageOptions) combatHealthMark {
+	originX, originY := options.GeoM.Apply(0, 0)
+	unitX, unitY := options.GeoM.Apply(1, 1)
+	scaleX, scaleY := unitX-originX, unitY-originY
+	pixels := func(value float64) int { return int(math.Round(value)) }
+	borderX, borderY := max(1, pixels(scaleX)), max(1, pixels(scaleY))
+	insetX, insetY := pixels(combatHealthMarkInsetSourcePixels*scaleX), pixels(combatHealthMarkInsetSourcePixels*scaleY)
+	height := max(1, pixels(combatHealthMarkStripSourcePixels*scaleY)) + combatHealthMarkInsetsPerDimension*(borderY+insetY)
+	left := pixels(originX + combatHealthMarkLeftSourcePixel*scaleX)
+	bottom := pixels(originY + combatHealthMarkBottomSourcePixel*scaleY)
+	outer := image.Rect(left, bottom-height, left+pixels(combatHealthMarkWidthSourcePixels*scaleX), bottom)
+	inner := image.Rect(outer.Min.X+borderX, outer.Min.Y+borderY, outer.Max.X-borderX, outer.Max.Y-borderY)
+	strip := image.Rect(inner.Min.X+insetX, inner.Min.Y+insetY, inner.Max.X-insetX, inner.Max.Y-insetY)
+
+	return combatHealthMark{outer: outer, inner: inner, strip: strip}
+}
+
+func (mark combatHealthMark) drawFrame(screen *ebiten.Image, border color.Color) {
+	fillCombatHealthRect(screen, mark.outer, border)
+	fillCombatHealthRect(screen, mark.inner, ucolor.EGABlack)
+}
+
+func fillCombatHealthRect(screen *ebiten.Image, rect image.Rectangle, clr color.Color) {
+	vector.FillRect(screen, float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Dx()), float32(rect.Dy()), clr, false)
+}
+
+// drawCombatHealthMark draws the border in the side's colour and the strip in
+// green, yellow or red.
+func drawCombatHealthMark(
+	screen *ebiten.Image, options *ebiten.DrawImageOptions, border color.Color, currentHP, maxHP int,
+) {
+	mark := newCombatHealthMark(options)
+	mark.drawFrame(screen, border)
+	strip := mark.strip
+	strip.Max.X = strip.Min.X + combatHealthFill(currentHP, maxHP, strip.Dx())
+	fillCombatHealthRect(screen, strip, combatHealthTierColor(currentHP, maxHP))
+}
+
+func combatHealthBorderColor(loyalty game_state.CombatMonsterLoyalty) ucolor.EGAColor {
 	if loyalty == game_state.CombatMonsterLoyaltyParty {
-		clr = ucolor.CombatAllegianceAlly
+		return ucolor.CombatHealthFriend
 	}
-	for _, rect := range [4]image.Rectangle{
-		image.Rect(1, 12, 16, 13), image.Rect(1, 17, 16, 18),
-		image.Rect(1, 13, 2, 17), image.Rect(15, 13, 16, 17),
-	} {
-		// Use the HP renderer's transform/raster rules, including noninteger
-		// scaling. Independently rounding these edges could invade its black rim.
-		left, top := options.GeoM.Apply(float64(rect.Min.X), float64(rect.Min.Y))
-		right, bottom := options.GeoM.Apply(float64(rect.Max.X), float64(rect.Max.Y))
-		vector.FillRect(screen, float32(left), float32(top), float32(right-left), float32(bottom-top), clr, false)
+
+	return ucolor.CombatAllegianceEnemy
+}
+
+// The battlefield marks only the injured; Turn Order marks every row.
+func (g *GameScene) drawCombatInjuredHealthMark(
+	screen *ebiten.Image, options *ebiten.DrawImageOptions, border color.Color, currentHP, maxHP int,
+) {
+	if g.showCombatHPBars() && currentHP < maxHP {
+		drawCombatHealthMark(screen, options, border, currentHP, maxHP)
 	}
 }
 
-func (g *GameScene) drawCombatAllegianceHealthOutline(screen *ebiten.Image, options *ebiten.DrawImageOptions, identity game_state.CombatTurnIdentity) {
-	if !g.showCombatHPBars() {
-		return
-	}
+// An actor whose side is not disclosed keeps a black border.
+func (g *GameScene) combatDisclosedHealthBorder(identity game_state.CombatTurnIdentity) ucolor.EGAColor {
 	if actor, disclosed := g.gameState.ProjectCombatActor(identity, 0); disclosed {
-		drawCombatHealthFrameOutline(screen, options, actor.Loyalty)
+		return combatHealthBorderColor(actor.Loyalty)
 	}
+
+	return ucolor.EGABlack
 }
 
 // Draw HP and allegiance together after every actor/status/effect silhouette.
@@ -69,13 +129,10 @@ func (g *GameScene) drawCombatHealthFrames(screen *ebiten.Image) {
 }
 
 func (g *GameScene) drawCombatActorHealthFrame(screen *ebiten.Image, options *ebiten.DrawImageOptions, actor game_state.CombatActorPresentation) {
+	border := combatHealthBorderColor(actor.Loyalty)
 	if actor.Identity.IsPartyMember {
-		if !g.showCombatHPBars() {
-			return
-		}
 		character := g.gameState.PartyState.GetCharacter(actor.Identity.EntityIndex)
-		drawCombatHealthFrameOutline(screen, options, actor.Loyalty)
-		drawCombatHealthBar(screen, options, int(character.GetCurrentHp()), int(character.GetMaxHp()))
+		g.drawCombatInjuredHealthMark(screen, options, border, int(character.GetCurrentHp()), int(character.GetMaxHp()))
 
 		return
 	}
@@ -84,21 +141,17 @@ func (g *GameScene) drawCombatActorHealthFrame(screen *ebiten.Image, options *eb
 		if stack[0] != actor.Identity.EntityIndex {
 			return
 		}
-		if g.showCombatHPBars() {
-			drawCombatHealthFrameOutline(screen, options, actor.Loyalty)
-			drawCombatHealthBar(screen, options, 0, 1) // Black separator around the aggregate's unchanged segments.
-			g.drawCombatInsectStackHealth(screen, options, stack)
+		if g.showCombatHPBars() && g.combatInsectStackInjured(stack) {
+			mark := newCombatHealthMark(options)
+			mark.drawFrame(screen, border)
+			g.drawCombatInsectStackHealth(screen, mark.strip, stack)
 		}
 		g.drawCombatInsectStackIndicators(screen, options, stack)
 
 		return
 	}
-	if !g.showCombatHPBars() {
-		return
-	}
 	monster := g.gameState.CombatScene.MonsterManager.GetMonster(actor.Identity.EntityIndex)
-	drawCombatHealthFrameOutline(screen, options, actor.Loyalty)
-	drawCombatHealthBar(screen, options, monster.CurrentHP(), monster.MaxHP())
+	g.drawCombatInjuredHealthMark(screen, options, border, monster.CurrentHP(), monster.MaxHP())
 }
 
 func (g *GameScene) combatSignatureHealthOptions(effect *combatSignatureEffect) (*ebiten.DrawImageOptions, bool) {

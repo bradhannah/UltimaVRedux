@@ -5,11 +5,14 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
+	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
@@ -20,11 +23,14 @@ import (
 
 const (
 	combatEventHistoryCapacity  = 64
-	combatForecastSize          = 4
+	combatForecastSize          = 12
+	combatLadderSpriteScale     = 0.5
+	combatUnknownTurnLabel      = "???"
+	combatAsleepLabel           = "asleep"
 	combatHUDFontSize           = defaultOutputFontSize // Single visual-review switch for both combat panes.
 	combatHUDOutputLines        = 48
 	combatHUDOutputChars        = 40
-	combatHUDTurnHeightPercent  = 0.45
+	combatHUDTurnHeightPercent  = 0.5
 	combatHUDCenterDivisor      = 2
 	combatHUDLineGapDivisor     = 3
 	combatHUDContentStartInsetX = 0.019
@@ -32,7 +38,6 @@ const (
 	combatHUDContentInsetY      = 0.03
 	combatHUDBorderOverlapY     = 0.015
 	combatHUDDiagnosticParts    = 8
-	combatHUDLabelMaxLength     = 4
 	combatAutoPassOpacity       = 0.5
 	combatPoisonLabel           = "POISON"
 	combatGenericEventLabel     = "EVENT"
@@ -57,10 +62,13 @@ type CombatHUD struct {
 	turnBorder           *widgets.Border
 	eventBorder          *widgets.Border
 	borderBounds         image.Rectangle
+	borderLayout         combatLayout
 	notices              [combatEventHistoryCapacity]combatReportNotice
 	attentionAt          int64
 	identities           [combatEventHistoryCapacity]combatReportIdentities
 	presentingIdentities *combatReportIdentities
+	toMessageWindow      bool
+	readout              []combatReadoutRow
 }
 
 func newCombatHUD() *CombatHUD {
@@ -209,6 +217,9 @@ func (g *GameScene) recordCombatEvent(event game_state.CombatEvent) {
 	}
 	if slot := g.combatHUD.addEvent(event); slot >= 0 {
 		g.combatHUD.identities[slot] = disclosure
+		if g.combatLayout().panels != config.CombatPanelsOrderAndReport {
+			g.writeCombatEventToMessageWindow(slot)
+		}
 	}
 	g.showCombatSignatureEffect(event)
 	if event.SpellTarget != nil {
@@ -235,18 +246,30 @@ func (g *GameScene) drawCombatHUD(screen *ebiten.Image) {
 	}
 
 	g.combatHUD.sync(g.gameState.CombatScene)
-	g.combatHUD.ensureBorders(screen.Bounds())
-	g.combatHUD.eventBorder.Draw(screen)
+	layout := g.combatLayout()
+	turnBounds, eventBounds := layout.turnAndReportRectangles(screen.Bounds())
+	if turnBounds.Empty() {
+		return
+	}
+	g.combatHUD.ensureBorders(screen.Bounds(), layout)
+	if g.combatHUD.eventBorder != nil {
+		g.combatHUD.eventBorder.Draw(screen)
+	}
 	g.combatHUD.turnBorder.Draw(screen)
-	hudBounds := combatHUDRectangle(screen.Bounds())
-	turnBounds, eventBounds := combatHUDStackedRectangles(screen.Bounds(), hudBounds)
+	turnContent := combatHUDContentBounds(screen.Bounds(), turnBounds)
+	eventContent := image.Rectangle{}
+	if !eventBounds.Empty() {
+		eventContent = combatHUDContentBounds(screen.Bounds(), eventBounds)
+	}
 	if g.gameState.IsCombatPartySpellTargeting() {
-		g.drawCombatPartySpellHUD(screen, combatHUDContentBounds(screen.Bounds(), turnBounds), combatHUDContentBounds(screen.Bounds(), eventBounds))
+		g.drawCombatPartySpellHUD(screen, turnContent, eventContent)
 
 		return
 	}
-	g.drawCombatTurnForecast(screen, combatHUDContentBounds(screen.Bounds(), turnBounds))
-	g.drawCombatEventTape(screen, combatHUDContentBounds(screen.Bounds(), eventBounds))
+	g.drawCombatTurnForecast(screen, turnContent)
+	if !eventContent.Empty() {
+		g.drawCombatEventTape(screen, eventContent)
+	}
 }
 
 func combatHUDStackedRectangles(screenBounds, bounds image.Rectangle) (image.Rectangle, image.Rectangle) {
@@ -267,23 +290,25 @@ func combatHUDContentBounds(screenBounds, panelBounds image.Rectangle) image.Rec
 	)
 }
 
-func (hud *CombatHUD) ensureBorders(screenBounds image.Rectangle) {
-	if hud.turnBorder != nil && hud.eventBorder != nil && hud.borderBounds == screenBounds {
+func (hud *CombatHUD) ensureBorders(screenBounds image.Rectangle, layout combatLayout) {
+	if hud.turnBorder != nil && hud.borderBounds == screenBounds && hud.borderLayout == layout {
 		return
 	}
-	hudBounds := combatHUDRectangle(screenBounds)
-	turnBounds, eventBounds := combatHUDStackedRectangles(screenBounds, hudBounds)
+	turnBounds, eventBounds := layout.turnAndReportRectangles(screenBounds)
 	hud.turnBorder = widgets.NewOpaqueBorder(
 		combatHUDPlacement(screenBounds, turnBounds),
 		borderWidthScaling,
 		color.Black,
 	)
-	hud.eventBorder = widgets.NewOpaqueBorder(
-		combatHUDPlacement(screenBounds, eventBounds),
-		borderWidthScaling,
-		color.Black,
-	)
-	hud.borderBounds = screenBounds
+	hud.eventBorder = nil
+	if !eventBounds.Empty() {
+		hud.eventBorder = widgets.NewOpaqueBorder(
+			combatHUDPlacement(screenBounds, eventBounds),
+			borderWidthScaling,
+			color.Black,
+		)
+	}
+	hud.borderBounds, hud.borderLayout = screenBounds, layout
 }
 
 func combatHUDPlacement(screenBounds, bounds image.Rectangle) sprites.PercentBasedPlacement {
@@ -305,23 +330,14 @@ func (g *GameScene) drawCombatTurnForecast(screen *ebiten.Image, bounds image.Re
 	hud.turnOutput.DrawPanelContent(screen, bounds.Min, bounds.Dx(), etext.AlignStart)
 
 	currentBottom := g.drawCombatCurrentTurn(screen, bounds, lineHeight, lineGap)
-	if height := prepareCombatAttackReadout(hud.turnOutput, g.combatAttackPreview(), bounds.Dx()); height > 0 {
-		currentBottom += lineGap
-		hud.turnOutput.DrawPanelContent(screen, image.Pt(bounds.Min.X, currentBottom), bounds.Dx(), etext.AlignStart)
-		currentBottom += height
+	if height := g.drawCombatAttackReadout(screen, image.Pt(bounds.Min.X, currentBottom+lineGap), bounds.Dx()); height > 0 {
+		currentBottom += lineGap + height
 	}
-	g.drawCombatForecastQueue(screen, bounds, currentBottom+lineHeight, lineHeight)
-}
-
-// Full attack identities and their range/distance labels wrap at the normal HUD
-// font's measured pane width. Reserve every physical row before placing NEXT.
-func prepareCombatAttackReadout(output *text.Output, preview game_state.CombatAttackPreview, width int) int {
-	output.Reset()
-	characterWidth, _ := output.Font.MeasureString("M")
-	output.SetMaxCharsPerLine(max(1, int(float64(width)/characterWidth)))
-	appendCombatAttackReadout(output, preview)
-
-	return int(math.Ceil(output.GetTotalHeightForLines(output.GetPanelContentLineCount())))
+	ruleTop := currentBottom + lineGap
+	unit := widgets.ClassicUIPixelUnit(screen.Bounds().Dx(), screen.Bounds().Dy())
+	vector.FillRect(screen, float32(bounds.Min.X), float32(ruleTop), float32(bounds.Dx()), float32(unit),
+		widgets.DialogRuleLightColor, false)
+	g.drawCombatTurnLadder(screen, image.Rect(bounds.Min.X, ruleTop+unit+lineGap, bounds.Max.X, bounds.Max.Y), lineHeight)
 }
 
 func (g *GameScene) drawCombatCurrentTurn(
@@ -340,7 +356,7 @@ func (g *GameScene) drawCombatCurrentTurn(
 		if autoPass {
 			opacity = combatAutoPassOpacity
 		}
-		spriteBounds := g.drawCombatHUDSprite(screen, sprite, bounds.Min.X, currentSpriteTop, opacity)
+		spriteBounds := g.drawCombatHUDSprite(screen, sprite, bounds.Min.X, currentSpriteTop, opacity, 1)
 		currentSpriteBottom = spriteBounds.Max.Y
 		snapshot, ok := g.gameState.CombatScene.TurnQueue.GetEntrySnapshot(current)
 		detail := g.combatCurrentTurnDetail(current, snapshot, ok)
@@ -348,20 +364,13 @@ func (g *GameScene) drawCombatCurrentTurn(
 		hud.turnOutput.Reset()
 		hud.turnOutput.SetMaxCharsPerLine(max(1, hud.turnOutput.Font.CharsForWidth(bounds.Max.X-textX)))
 		if actor, disclosed := g.gameState.ProjectCombatActor(current, 0); disclosed {
+			name := strings.ToUpper(actor.Name)
 			if autoPass {
-				hud.turnOutput.AppendLine().LightGray(strings.ToUpper(actor.Name)).Done()
+				hud.turnOutput.AppendLine().LightGray(name).Done()
 			} else {
-				hud.turnOutput.AppendLine().White(strings.ToUpper(actor.Name)).Done()
+				hud.turnOutput.AppendLine().White(name).Done()
 			}
-			clr := ucolor.CombatAllegianceEnemy
-			if actor.Loyalty == game_state.CombatMonsterLoyaltyParty {
-				clr = ucolor.CombatAllegianceAlly
-			}
-			line := hud.turnOutput.AppendLine().Text(combatAllegianceText(actor), clr)
-			if detail != "" {
-				line.LightGray(" " + detail)
-			}
-			line.Done()
+			g.appendCombatCurrentAllegiance(actor, detail)
 			if actor.Charmed || actor.Summoned {
 				cause := "Summoned"
 				if actor.Charmed {
@@ -402,59 +411,160 @@ func (g *GameScene) drawCombatCurrentTurn(
 	return currentSpriteBottom
 }
 
-func (g *GameScene) drawCombatForecastQueue(
-	screen *ebiten.Image,
-	bounds image.Rectangle,
-	nextLabelY, lineHeight int,
-) {
+// A party member fighting for the party needs no side label. Anyone else does:
+// an enemy, an ally monster, or a possessed party member.
+func (g *GameScene) appendCombatCurrentAllegiance(actor game_state.CombatActorPresentation, detail string) {
+	ownParty := actor.Identity.IsPartyMember && actor.Loyalty == game_state.CombatMonsterLoyaltyParty
+	if ownParty && detail == "" {
+		return
+	}
+	line := g.combatHUD.turnOutput.AppendLine()
+	if !ownParty {
+		clr := ucolor.CombatAllegianceEnemy
+		if actor.Loyalty == game_state.CombatMonsterLoyaltyParty {
+			clr = ucolor.CombatAllegianceAlly
+		}
+		line.Text(combatAllegianceText(actor), clr)
+		if detail != "" {
+			line.LightGray(" ")
+		}
+	}
+	line.LightGray(detail).Done()
+}
+
+// The ladder lists coming turns downward, one actor per row, for as many rows
+// as the pane has room: sprite, full name, then health or the reason a turn is lost.
+func (g *GameScene) drawCombatTurnLadder(screen *ebiten.Image, bounds image.Rectangle, lineHeight int) {
 	hud := g.combatHUD
 	hud.forecastCount = g.gameState.CombatScene.TurnQueue.FillForecast(hud.forecast[:])
 	hud.forecastCount = g.filterConcealedCombatForecast(hud.forecastCount)
-	hud.turnOutput.Reset()
-	hud.turnOutput.AppendLine().Yellow("NEXT").Done()
-	hud.turnOutput.DrawPanelContent(
-		screen,
-		image.Pt(bounds.Min.X, nextLabelY),
-		bounds.Dx(),
-		etext.AlignStart,
-	)
-	queueSpriteTop := nextLabelY + lineHeight
-	slotWidth := bounds.Dx() / combatForecastSize
+	_, spriteHeight := g.combatLadderSpriteSize(screen)
+	rowHeight := max(spriteHeight, lineHeight) + lineHeight/combatHUDLineGapDivisor
 	for index := range hud.forecastCount {
-		forecast := hud.forecast[index]
-		identity := forecast.CombatTurnIdentity
-		sprite := g.combatTurnSprite(identity)
-		autoPass := combatTurnIsAutoPass(g.gameState.CombatScene, identity)
-		// Quickness outcomes are deliberately unknown until the authoritative
-		// monster-loyal boundary draws its independent gate.
-		skipped := autoPass || (!forecast.CanTakeTurn && !forecast.ActionUncertain)
-		opacity := float32(1)
-		if skipped {
-			opacity = combatAutoPassOpacity
+		row := image.Rect(bounds.Min.X, bounds.Min.Y+index*rowHeight, bounds.Max.X, bounds.Min.Y+(index+1)*rowHeight)
+		if row.Max.Y > bounds.Max.Y {
+			break
 		}
-		spriteWidth, _ := g.combatHUDSpriteSize(screen, sprite)
-		slotLeft := bounds.Min.X + index*slotWidth
-		spriteLeft := slotLeft + (slotWidth-spriteWidth)/combatHUDCenterDivisor
-		spriteBounds := g.drawCombatHUDSprite(screen, sprite, spriteLeft, queueSpriteTop, opacity)
-		g.drawCombatQueueLabel(
-			screen,
-			image.Rect(slotLeft, spriteBounds.Max.Y, slotLeft+slotWidth, bounds.Max.Y),
-			identity,
-			skipped,
-		)
-		if index < hud.forecastCount-1 {
-			arrowX := slotLeft + slotWidth - lineHeight/combatHUDCenterDivisor
-			arrowY := queueSpriteTop + (spriteBounds.Dy()-lineHeight)/combatHUDCenterDivisor
-			hud.turnOutput.Reset()
-			hud.turnOutput.AppendLine().LightGray(">").Done()
-			hud.turnOutput.DrawPanelContent(
-				screen,
-				image.Pt(arrowX, arrowY),
-				lineHeight,
-				etext.AlignCenter,
-			)
-		}
+		g.drawCombatLadderRow(screen, row, hud.forecast[index], lineHeight)
 	}
+}
+
+func (g *GameScene) drawCombatLadderRow(
+	screen *ebiten.Image, row image.Rectangle, forecast game_state.CombatTurnForecastEntry, lineHeight int,
+) {
+	hud := g.combatHUD
+	identity := forecast.CombatTurnIdentity
+	// Quickness outcomes are deliberately unknown until the authoritative
+	// monster-loyal boundary draws its independent gate.
+	skipped := combatTurnIsAutoPass(g.gameState.CombatScene, identity) ||
+		(!forecast.CanTakeTurn && !forecast.ActionUncertain)
+	opacity := float32(1)
+	if skipped {
+		opacity = combatAutoPassOpacity
+	}
+	gap := lineHeight / combatHUDLineGapDivisor
+	spriteWidth, _ := g.combatLadderSpriteSize(screen)
+	g.drawCombatHUDSprite(screen, g.combatTurnSprite(identity), row.Min.X, row.Min.Y, opacity, combatLadderSpriteScale)
+	textLeft := row.Min.X + spriteWidth + gap
+	textTop := row.Min.Y + (row.Dy()-gap-lineHeight)/combatHUDCenterDivisor
+
+	actor, disclosed := g.gameState.ProjectCombatActor(identity, 0)
+	name, suffix, nameColor := combatUnknownTurnLabel, "", color.Color(ucolor.EGALightGray)
+	if disclosed {
+		name, nameColor = actor.Name, combatLadderNameColor(actor, skipped)
+	}
+	trailing := ""
+	switch {
+	case !disclosed:
+		trailing = "unseen"
+	case skipped:
+		trailing = g.combatLadderSkipReason(identity)
+	}
+	trailingWidth := 0
+	if trailing != "" {
+		width, _ := hud.turnOutput.Font.MeasureString(trailing)
+		trailingWidth = int(math.Ceil(width))
+		combatSingleLine(hud.turnOutput, trailing, ucolor.EGALightGray)
+		hud.turnOutput.DrawPanelContent(screen, image.Pt(textLeft, textTop), row.Max.X-textLeft, etext.AlignEnd)
+	} else if g.showCombatHPBars() {
+		trailingWidth = g.drawCombatLadderHealth(screen, row, actor, gap)
+	}
+	if forecast.ActionUncertain && disclosed {
+		suffix = "?"
+	}
+	name = widgets.CutDialogLine(hud.turnOutput.Font, name, suffix, row.Max.X-textLeft-trailingWidth-gap)
+	combatSingleLine(hud.turnOutput, name, nameColor)
+	hud.turnOutput.DrawPanelContent(screen, image.Pt(textLeft, textTop), row.Max.X-textLeft, etext.AlignStart)
+}
+
+// combatLadderSpriteSize is a ladder portrait's size: a battlefield sprite, reduced.
+func (g *GameScene) combatLadderSpriteSize(screen *ebiten.Image) (int, int) {
+	scaleX, scaleY := g.combatHUDSpriteScale(screen)
+
+	return int(math.Round(sprites.ExpandedTileSize * scaleX * combatLadderSpriteScale)),
+		int(math.Round(sprites.ExpandedTileSize * scaleY * combatLadderSpriteScale))
+}
+
+// A measured single line must not be rewrapped by an unrelated M-width budget.
+func combatSingleLine(output *text.Output, value string, clr color.Color) {
+	output.Reset()
+	output.SetMaxCharsPerLine(max(1, len(value)))
+	output.AppendLine().Text(value, clr).Done()
+}
+
+func combatLadderNameColor(actor game_state.CombatActorPresentation, skipped bool) color.Color {
+	switch {
+	case skipped:
+		return ucolor.EGALightGray
+	case actor.Loyalty != game_state.CombatMonsterLoyaltyParty:
+		return ucolor.CombatAllegianceEnemy
+	case actor.Identity.IsPartyMember:
+		return ucolor.EGAWhite
+	default:
+		return ucolor.CombatAllegianceAlly
+	}
+}
+
+// combatLadderSkipReason says in a word why a coming turn will be lost.
+func (g *GameScene) combatLadderSkipReason(identity game_state.CombatTurnIdentity) string {
+	combat := g.gameState.CombatScene
+	if identity.IsPartyMember {
+		if combat.IsCombatPCSleeping(identity) {
+			return combatAsleepLabel
+		}
+
+		return "skips"
+	}
+	if monster := combat.MonsterManager.GetMonster(identity.EntityIndex); monster != nil && monster.IsAsleep() {
+		return combatAsleepLabel
+	}
+
+	return "skips"
+}
+
+// drawCombatLadderHealth draws the battlefield's own health mark, at the same
+// size, at the row's right edge and returns the width it used. Every row has one.
+func (g *GameScene) drawCombatLadderHealth(
+	screen *ebiten.Image, row image.Rectangle, actor game_state.CombatActorPresentation, gap int,
+) int {
+	var current, maximum int
+	if actor.Identity.IsPartyMember {
+		character := g.gameState.PartyState.GetCharacter(actor.Identity.EntityIndex)
+		current, maximum = int(character.GetCurrentHp()), int(character.GetMaxHp())
+	} else {
+		monster := g.gameState.CombatScene.MonsterManager.GetMonster(actor.Identity.EntityIndex)
+		current, maximum = monster.CurrentHP(), monster.MaxHP()
+	}
+	scaleX, scaleY := g.combatHUDSpriteScale(screen)
+	options := &ebiten.DrawImageOptions{}
+	options.GeoM.Scale(scaleX, scaleY)
+	// Whole-pixel moves keep the mark's layout, so place it by its own bounds.
+	bounds := newCombatHealthMark(options).outer
+	top := row.Min.Y + (row.Dy()-gap-bounds.Dy())/combatHUDCenterDivisor
+	options.GeoM.Translate(float64(row.Max.X-bounds.Max.X), float64(top-bounds.Min.Y))
+	drawCombatHealthMark(screen, options, combatHealthBorderColor(actor.Loyalty), current, maximum)
+
+	return bounds.Dx()
 }
 
 func (g *GameScene) filterConcealedCombatForecast(count int) int {
@@ -573,50 +683,21 @@ func (g *GameScene) drawCombatHUDSprite(
 	sprite *ebiten.Image,
 	left, top int,
 	opacity float32,
+	scale float64,
 ) image.Rectangle {
 	if sprite == nil {
 		return image.Rect(left, top, left, top)
 	}
 	width, height := g.combatHUDSpriteSize(screen, sprite)
+	width, height = int(math.Round(float64(width)*scale)), int(math.Round(float64(height)*scale))
 	scaleX, scaleY := g.combatHUDSpriteScale(screen)
 	options := &ebiten.DrawImageOptions{}
-	options.GeoM.Scale(scaleX, scaleY)
+	options.GeoM.Scale(scaleX*scale, scaleY*scale)
 	options.GeoM.Translate(float64(left), float64(top))
 	options.ColorScale.ScaleAlpha(opacity)
 	screen.DrawImage(sprite, options)
 
 	return image.Rect(left, top, left+width, top+height)
-}
-
-func (g *GameScene) drawCombatQueueLabel(
-	screen *ebiten.Image,
-	bounds image.Rectangle,
-	identity game_state.CombatTurnIdentity,
-	skipped bool,
-) {
-	if !identity.IsPartyMember {
-		if g.combatTurnIdentityConcealed(identity) {
-			g.combatHUD.turnOutput.Reset()
-			g.combatHUD.turnOutput.AppendLine().LightGray("???").Done()
-			g.combatHUD.turnOutput.DrawPanelContent(screen, bounds.Min, bounds.Dx(), etext.AlignCenter)
-		}
-
-		return
-	}
-	g.combatHUD.turnOutput.Reset()
-	label := g.combatHUD.turnOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	switch {
-	case skipped:
-		label.LightGray(g.combatEntityLabel(identity)).Done()
-	default:
-		label.White(g.combatEntityLabel(identity)).Done()
-	}
-	g.combatHUD.turnOutput.DrawPanelContent(
-		screen,
-		bounds.Min,
-		bounds.Dx(),
-		etext.AlignCenter,
-	)
 }
 
 func combatTurnIsAutoPass(combat *game_state.CombatState, identity game_state.CombatTurnIdentity) bool {
@@ -731,16 +812,32 @@ func (g *GameScene) combatEventCountFromStart(lineBudget int) int {
 func (g *GameScene) appendCombatEvent(event game_state.CombatEvent) {
 	g.appendCombatEventSentence(event)
 	if detail := g.combatEventDetailText(event); detail != "" && g.combatHUD.detail {
-		g.combatHUD.eventOutput.AppendLine().
+		output := g.combatHUD.eventOutput
+		if g.combatHUD.toMessageWindow {
+			output = g.output
+		}
+		output.AppendLine().
 			WithContinuationIndent(1).
 			White(" ").LightGray(detail).Done()
 	}
 }
 
+// Battle lines go to the Battle Report, or to the message window when Combat
+// Panels shows no report. The message window keeps its arrow for commands.
 func (g *GameScene) newCombatEventLine() *text.LineBuilder {
+	if g.combatHUD.toMessageWindow {
+		return g.output.AppendLine().WithContinuationIndent(1)
+	}
+
 	return g.combatHUD.eventOutput.AppendLine().
 		CommandPromptMarker(ucolor.EGALightBlue).
 		WithContinuationIndent(1)
+}
+
+func (g *GameScene) writeCombatEventToMessageWindow(slot int) {
+	g.combatHUD.toMessageWindow = true
+	g.withCombatHistoryEvent(slot, g.appendCombatEvent)
+	g.combatHUD.toMessageWindow = false
 }
 
 func (g *GameScene) appendCombatEventSentence(event game_state.CombatEvent) {
@@ -763,7 +860,7 @@ func (g *GameScene) appendCombatEventSentence(event game_state.CombatEvent) {
 	case game_state.CombatEventVictory:
 		g.newCombatEventLine().LightGreen("Victory!").Done()
 	case game_state.CombatEventDefeat:
-		g.newCombatEventLine().Red("Defeat").Done()
+		g.newCombatEventLine().LightRed("Defeat").Done()
 	case game_state.CombatEventMove:
 		line := g.appendCombatEntitySegment(g.newCombatEventLine(), event.Attacker)
 		line.White(" moves ").LightCyan(strings.ToLower(combatMoveDirection(event))).Done()
@@ -772,7 +869,7 @@ func (g *GameScene) appendCombatEventSentence(event game_state.CombatEvent) {
 		line.White(" flees the battle").Done()
 	case game_state.CombatEventEquipmentShattered:
 		line := g.appendCombatEntitySegment(g.newCombatEventLine(), event.Attacker)
-		line.White("'s ").White(strings.ToLower(event.Diagnostics.Source.String())).Red(" shatters").Done()
+		line.White("'s ").White(strings.ToLower(event.Diagnostics.Source.String())).LightRed(" shatters").Done()
 	case game_state.CombatEventAttack, game_state.CombatEventPoison, game_state.CombatEventRangedAttack:
 		g.appendCombatAttackSentence(event)
 	case game_state.CombatEventPossession:
@@ -787,7 +884,7 @@ func (g *GameScene) appendCombatEventSentence(event game_state.CombatEvent) {
 		line := g.appendCombatEntitySegment(g.newCombatEventLine(), event.Attacker)
 		line.Magenta(" disappears").Done()
 	case game_state.CombatEventVanished:
-		g.newCombatEventLine().Red(g.combatVanishedReportName(event)).Magenta(" vanishes").Done()
+		g.newCombatEventLine().Text(g.combatVanishedReportName(event), ucolor.CombatAllegianceEnemy).Magenta(" vanishes").Done()
 	case game_state.CombatEventVisibility:
 		line := g.appendCombatEntitySegment(g.newCombatEventLine(), event.Attacker)
 		if event.Visibility == game_state.CombatVisibilityHidden {
@@ -843,13 +940,13 @@ func (g *GameScene) appendCombatEventSentence(event game_state.CombatEvent) {
 			return
 		}
 		if event.FieldKind == game_state.CombatFieldFire {
-			line.Redf(" is burned for %d damage", event.HPLost)
+			line.Textf(" is burned for %d", ucolor.CombatDamageText, event.HPLost)
 			g.appendCombatInjurySuffix(line, event).Done()
 
 			return
 		}
 		if event.HPLost > 0 || (event.FieldKind == game_state.CombatFieldPoison && event.Diagnostics.MagicDamage) {
-			line.White(" takes ").Redf("%d damage", event.HPLost).White(" from ").LightGreen(combatFieldName(event.FieldKind))
+			line.White(" takes ").Textf("%d", ucolor.CombatDamageText, event.HPLost).White(" from ").LightGreen(combatFieldName(event.FieldKind))
 			g.appendCombatInjurySuffix(line, event).Done()
 
 			return
@@ -925,42 +1022,75 @@ func (g *GameScene) appendCombatSpellSentence(event game_state.CombatEvent) {
 	g.appendCombatEntitySegment(line, event.Target)
 	switch {
 	case event.Fatal:
-		line.Redf(" for %d fatal damage", event.HPLost).Done()
+		line.Textf(" for %d, slain", ucolor.CombatDamageText, event.HPLost).Done()
 	case event.HPLost == 0:
 		line.LightGray(" but causes no harm").Done()
 	default:
-		line.White(" for ").Redf("%d damage", event.HPLost)
+		line.White(" for ").Textf("%d", ucolor.CombatDamageText, event.HPLost)
 		g.appendCombatInjurySuffix(line, event).Done()
 	}
 }
 
+// Attacks are reported in plain words, with the word that says what happened
+// in that effect's colour. The wound wording follows under its own policy: only
+// while health bars are hidden.
 func (g *GameScene) appendCombatAttackSentence(event game_state.CombatEvent) {
+	parts := combatAttackParts(event)
+	if len(parts) == 0 {
+		return
+	}
 	line := g.appendCombatEntitySegment(g.newCombatEventLine(), event.Attacker)
+	for _, part := range parts {
+		if part.target {
+			name, clr := g.combatEntitySegment(event.Target)
+			line.Text(" "+name+part.text, clr)
+
+			continue
+		}
+		line.Text(part.text, part.color)
+	}
+	g.appendCombatInjurySuffix(line, event).Done()
+}
+
+// combatAttackPart is one run of an attack line after the attacker's name:
+// either words in a colour or the target's name. Rows wrap between runs, so
+// each run opens with its own space and punctuation rides on the run before it.
+type combatAttackPart struct {
+	text   string
+	color  ucolor.EGAColor
+	target bool
+}
+
+func combatAttackParts(event game_state.CombatEvent) []combatAttackPart {
+	target := combatAttackPart{target: true}
+	words := func(text string, clr ucolor.EGAColor) combatAttackPart {
+		return combatAttackPart{text: text, color: clr}
+	}
+	hits, damage := words(" hits", ucolor.EGAWhite), " "+strconv.Itoa(event.HPLost)
+	hit := func(after string) []combatAttackPart {
+		return []combatAttackPart{hits, target, words(" for", ucolor.EGAWhite), words(damage+after, ucolor.CombatDamageText)}
+	}
 	switch {
+	case event.Fatal && event.Target.IsPartyMember:
+		return append(hit("."), target, words(" falls!", ucolor.CombatDamageText))
 	case event.Fatal:
-		line.Red(" slays ")
-		g.appendCombatEntitySegment(line, event.Target).
-			White(" for ").Redf("%d damage", event.HPLost).Done()
+		return []combatAttackPart{words(" slays", ucolor.CombatDamageText), target}
 	case event.Result == game_state.CombatFeedbackMiss:
-		line.White(" attacks ")
-		g.appendCombatEntitySegment(line, event.Target).White(" and ").LightGray("misses").Done()
+		return []combatAttackPart{words(" misses", ucolor.EGALightGray), target}
 	case event.Result == game_state.CombatFeedbackGraze:
-		line.White(" grazes ")
-		g.appendCombatEntitySegment(line, event.Target).Done()
+		return []combatAttackPart{words(" grazes", ucolor.EGALightGray), target}
 	case event.Result == game_state.CombatFeedbackPoison:
-		line.White(" attacks ")
-		g.appendCombatEntitySegment(line, event.Target).White(" and ").LightGreen("poisons").White(" them").Done()
+		return []combatAttackPart{words(" poisons", ucolor.EGALightGreen), target}
 	case event.Result == game_state.CombatFeedbackSleep:
-		line.White(" attacks ")
-		g.appendCombatEntitySegment(line, event.Target).White(" and puts them to ").Magenta("sleep").Done()
+		return []combatAttackPart{
+			hits, {text: ":", target: true}, words(" "+combatAsleepLabel, ucolor.EGALightMagenta),
+		}
 	case event.Result == game_state.CombatFeedbackTheft:
-		line.White(" attacks ")
-		g.appendCombatEntitySegment(line, event.Target).White(" and steals ").Yellowf("%d food", event.Diagnostics.FoodStolen).Done()
+		return []combatAttackPart{words(fmt.Sprintf(" steals %d food", event.Diagnostics.FoodStolen), ucolor.EGAYellow)}
 	case event.Result == game_state.CombatFeedbackDamage:
-		line.White(" hits ")
-		g.appendCombatEntitySegment(line, event.Target).
-			White(" for ").Redf("%d damage", event.HPLost)
-		g.appendCombatInjurySuffix(line, event).Done()
+		return hit("")
+	default:
+		return nil
 	}
 }
 
@@ -968,23 +1098,29 @@ func (g *GameScene) appendCombatEntitySegment(
 	line *text.LineBuilder,
 	entity game_state.CombatFeedbackEntity,
 ) *text.LineBuilder {
+	name, clr := g.combatEntitySegment(entity)
+
+	return line.Text(name, clr)
+}
+
+func (g *GameScene) combatEntitySegment(entity game_state.CombatFeedbackEntity) (string, ucolor.EGAColor) {
 	if g.combatHUD != nil {
 		if snapshot, ok := g.combatHUD.reportIdentity(combatTurnIdentityForFeedback(entity)); ok {
-			return line.Text(snapshot.Name, snapshot.Color)
+			return snapshot.Name, snapshot.Color
 		}
 	}
 	name := g.combatEntityEventName(combatTurnIdentityForFeedback(entity))
 	if entity.IsPartyMember {
-		return line.Yellow(name)
+		return name, ucolor.EGAYellow
 	}
 	if g.gameState.CombatScene != nil {
 		monster := g.gameState.CombatScene.MonsterManager.GetMonster(entity.Index)
 		if monster != nil && monster.IsPartyLoyal() {
-			return line.LightCyan(name)
+			return name, ucolor.EGALightCyan
 		}
 	}
 
-	return line.Red(name)
+	return name, ucolor.CombatAllegianceEnemy
 }
 
 func (g *GameScene) combatEventPlainText(event game_state.CombatEvent) string {
@@ -1079,13 +1215,13 @@ func (g *GameScene) combatEventBasePlainText(event game_state.CombatEvent) strin
 			return fmt.Sprintf("%s casts %s on %s but they resist", actor, spellInfo.Name, target)
 		}
 		if event.Fatal {
-			return fmt.Sprintf("%s casts %s on %s for %d fatal damage", actor, spellInfo.Name, target, event.HPLost)
+			return fmt.Sprintf("%s casts %s on %s for %d, slain", actor, spellInfo.Name, target, event.HPLost)
 		}
 		if event.HPLost == 0 {
 			return fmt.Sprintf("%s casts %s on %s but causes no harm", actor, spellInfo.Name, target)
 		}
 
-		return fmt.Sprintf("%s casts %s on %s for %d damage", actor, spellInfo.Name, target, event.HPLost)
+		return fmt.Sprintf("%s casts %s on %s for %d", actor, spellInfo.Name, target, event.HPLost)
 	case game_state.CombatEventCondition:
 		target := g.combatEntityEventName(combatTurnIdentityForFeedback(event.Target))
 
@@ -1104,10 +1240,10 @@ func (g *GameScene) combatEventBasePlainText(event game_state.CombatEvent) strin
 			return target + " falls asleep"
 		}
 		if event.FieldKind == game_state.CombatFieldFire {
-			return fmt.Sprintf("%s is burned for %d damage", target, event.HPLost)
+			return fmt.Sprintf("%s is burned for %d", target, event.HPLost)
 		}
 		if event.HPLost > 0 || (event.FieldKind == game_state.CombatFieldPoison && event.Diagnostics.MagicDamage) {
-			return fmt.Sprintf("%s takes %d damage from %s", target, event.HPLost, combatFieldName(event.FieldKind))
+			return fmt.Sprintf("%s takes %d from %s", target, event.HPLost, combatFieldName(event.FieldKind))
 		}
 
 		return target + " is affected by " + combatFieldName(event.FieldKind)
@@ -1146,10 +1282,10 @@ func combatAreaSpellTargetSuffix(result game_state.CombatAreaSpellTargetResult) 
 		return " and poisons them", ucolor.EGALightGreen
 	case game_state.CombatSpellDamaged:
 		if result.Fatal {
-			return fmt.Sprintf(" for %d fatal damage", result.HPLost), ucolor.CombatDamageText
+			return fmt.Sprintf(" for %d, slain", result.HPLost), ucolor.CombatDamageText
 		}
 
-		return fmt.Sprintf(" for %d damage", result.HPLost), ucolor.CombatDamageText
+		return fmt.Sprintf(" for %d", result.HPLost), ucolor.CombatDamageText
 	case game_state.CombatSpellUnspecified:
 		panic("area spell report requires a resolved outcome")
 	default:
@@ -1210,24 +1346,20 @@ func combatDivisionPlainText(actor string) string {
 }
 
 func combatAttackPlainText(event game_state.CombatEvent, actor, target string) string {
-	switch {
-	case event.Fatal:
-		return fmt.Sprintf("%s slays %s for %d damage", actor, target, event.HPLost)
-	case event.Result == game_state.CombatFeedbackMiss:
-		return fmt.Sprintf("%s attacks %s and misses", actor, target)
-	case event.Result == game_state.CombatFeedbackGraze:
-		return fmt.Sprintf("%s grazes %s", actor, target)
-	case event.Result == game_state.CombatFeedbackPoison:
-		return fmt.Sprintf("%s attacks %s and poisons them", actor, target)
-	case event.Result == game_state.CombatFeedbackSleep:
-		return fmt.Sprintf("%s attacks %s and puts them to sleep", actor, target)
-	case event.Result == game_state.CombatFeedbackTheft:
-		return fmt.Sprintf("%s attacks %s and steals %d food", actor, target, event.Diagnostics.FoodStolen)
-	case event.Result == game_state.CombatFeedbackDamage:
-		return fmt.Sprintf("%s hits %s for %d damage", actor, target, event.HPLost)
-	default:
+	parts := combatAttackParts(event)
+	if len(parts) == 0 {
 		return combatGenericEventLabel
 	}
+	var sentence strings.Builder
+	sentence.WriteString(actor)
+	for _, part := range parts {
+		if part.target {
+			sentence.WriteString(" " + target)
+		}
+		sentence.WriteString(part.text)
+	}
+
+	return sentence.String()
 }
 
 func (g *GameScene) combatEventDetailText(event game_state.CombatEvent) string {
@@ -1518,35 +1650,6 @@ func formatCombatDamageDiagnostics(diagnostics game_state.CombatDiagnostics) str
 	return result
 }
 
-func (g *GameScene) combatEntityLabel(identity game_state.CombatTurnIdentity) string {
-	if g.gameState.CombatScene.IsPCClone(identity) {
-		return "CLN"
-	}
-
-	return abbreviateCombatLabel(g.combatEntityName(identity))
-}
-
-func (g *GameScene) combatEntityName(identity game_state.CombatTurnIdentity) string {
-	if identity.IsPartyMember {
-		character := g.gameState.PartyState.GetCharacter(identity.EntityIndex)
-		name := strings.ToUpper(character.GetNameAsString())
-		if g.gameState.CombatScene.IsPCClone(identity) {
-			return name + " CLONE"
-		}
-
-		return name
-	}
-	if g.combatTurnIdentityConcealed(identity) {
-		return combatUnknownEntityLabel
-	}
-	monster := g.gameState.CombatScene.MonsterManager.GetMonster(identity.EntityIndex)
-	if monster == nil {
-		return "???"
-	}
-
-	return strings.ToUpper(monster.MonsterType().Name())
-}
-
 func (g *GameScene) combatEntityEventName(identity game_state.CombatTurnIdentity) string {
 	if g.combatHUD != nil {
 		if snapshot, ok := g.combatHUD.reportIdentity(identity); ok {
@@ -1570,15 +1673,6 @@ func (g *GameScene) combatEntityEventName(identity game_state.CombatTurnIdentity
 	}
 
 	return monster.MonsterType().Name()
-}
-
-func abbreviateCombatLabel(label string) string {
-	label = strings.ToUpper(label)
-	if len(label) <= combatHUDLabelMaxLength {
-		return label
-	}
-
-	return label[:combatHUDLabelMaxLength]
 }
 
 func combatTurnIdentityForFeedback(entity game_state.CombatFeedbackEntity) game_state.CombatTurnIdentity {

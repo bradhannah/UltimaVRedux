@@ -642,15 +642,22 @@ PC clones retain their distinct `Slot`. Encounter-only charm and summon flags
 are recorded at successful producers, never inferred from loyalty. A dividing
 monster creates a fresh hostile child without inheriting those flags.
 
-With Show Combat HP Bars enabled (the default), every disclosed battlefield actor
-uses a steady one-source-pixel **cyan Ally /
-red Enemy exterior outline around its black HP frame**, paired with explicit
-Ally/Enemy text. The exterior is `(x=1, y=12, width=15, height=6)` inside the
-18-pixel replacement sprite. The existing black HP frame remains exactly
-`(x=2, y=13, width=13, height=4)`, including its separator, fill dimensions,
-health-threshold colours and opacity. The outline never recolours or covers the
-HP interior. Non-combat world/vehicle callers of `drawCombatHealthBar` receive
-no allegiance outline.
+With Show Combat HP Bars enabled (the default), every injured, disclosed
+battlefield actor carries a health mark: a steady **light blue (friend) or light
+red (enemy) border** around a black inset and a health strip that is green above
+half health, yellow down to a quarter and red below. An actor at full health
+shows no mark; Turn Order shows one on every row. The mark is 13 source pixels
+wide with its bottom edge on source row 17, inside the
+`(x=1, y=12, width=15, height=6)` region of the 18-pixel replacement sprite that
+signature effects split off. `newCombatHealthMark` lays it out in whole screen
+pixels: a border one source pixel thick, an inset a quarter of that and a strip
+one and a half source pixels tall (42 by 13 screen pixels at 1280x720), so every
+actor's mark is identical wherever it stands. At one screen pixel per source
+pixel, as in a signature frame, the inset rounds away and the mark is 13 by 4.
+Side is paired with explicit Ally/Enemy text, which keeps cyan for an allied
+monster. An insect swarm shares one mark, shown when any member is injured, with
+an upright segment per member. Non-combat world/vehicle callers of
+`drawCombatHealthBar` keep the legacy bar.
 
 Disabling Show Combat HP Bars removes the health fill/frame and attached outline,
 not the complete foreground pass. Signature health-region images can contain
@@ -676,7 +683,7 @@ retains final foreground priority.
 
 An encounter-local presentation observer compares only continuously disclosed
 exact identities. A visible side change immediately updates the outline and adds
-concise transcript feedback. The exterior stays cyan/red without a white flash
+concise transcript feedback. The border stays light blue/red without a white flash
 or pulse replacing the side meaning. Newly created or
 newly revealed entries establish silent baselines. Hidden actors, temporary
 hidden signature phases, recycled slots and combat exit cannot produce stale

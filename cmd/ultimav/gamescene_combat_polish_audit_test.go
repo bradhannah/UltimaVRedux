@@ -34,19 +34,11 @@ func TestCombatAllegianceExactCloneConcealmentAndReplacement(t *testing.T) {
 	setCombatConcealmentTerrain(state, combat.GetCombatantPosition(source), indexes.BrickFloor)
 	scene.updateCombatAllegiance()
 	mock.Messages = nil
-	frame := ebiten.NewImage(18, 18)
-	t.Cleanup(frame.Dispose)
-	for _, identity := range []game_state.CombatTurnIdentity{source, clone} {
-		frame.Clear()
-		scene.drawCombatAllegianceHealthOutline(frame, &ebiten.DrawImageOptions{}, identity)
-		assert.Equal(t, identity == clone, countExactColor(frame, ucolor.CombatAllegianceEnemy) > 0)
-		assert.Equal(t, identity == source, countExactColor(frame, ucolor.CombatAllegianceAlly) > 0)
-	}
+	assert.Equal(t, ucolor.CombatHealthFriend, scene.combatDisclosedHealthBorder(source))
+	assert.Equal(t, ucolor.CombatAllegianceEnemy, scene.combatDisclosedHealthBorder(clone))
 	setCombatConcealmentTerrain(state, position, indexes.BlackSquare)
 	scene.updateCombatAllegiance()
-	frame.Clear()
-	scene.drawCombatAllegianceHealthOutline(frame, &ebiten.DrawImageOptions{}, clone)
-	assert.Zero(t, opaquePixelCount(frame))
+	assert.Equal(t, ucolor.EGABlack, scene.combatDisclosedHealthBorder(clone), "a hidden actor discloses no side")
 	assert.NotContains(t, scene.combatAllegiance.actors, combatAllegianceKey{identity: clone})
 	assert.Contains(t, scene.combatAllegiance.actors, combatAllegianceKey{identity: source})
 	setCombatConcealmentTerrain(state, position, indexes.BrickFloor)
@@ -65,9 +57,8 @@ func TestCombatAllegianceExactCloneConcealmentAndReplacement(t *testing.T) {
 	assert.NotContains(t, scene.combatAllegiance.actors, combatAllegianceKey{identity: clone})
 	assert.Equal(t, game_state.CombatMonsterLoyaltyParty, scene.combatAllegiance.actors[combatAllegianceKey{identity: nextClone}].loyalty)
 	assert.Empty(t, mock.Messages, "a replacement is not an allegiance transition of the retired clone")
-	frame.Clear()
-	scene.drawCombatAllegianceHealthOutline(frame, &ebiten.DrawImageOptions{}, clone)
-	assert.Zero(t, opaquePixelCount(frame), "stale identity cannot borrow its source's or successor's health outline")
+	assert.Equal(t, ucolor.EGABlack, scene.combatDisclosedHealthBorder(clone),
+		"stale identity cannot borrow its source's or successor's health border")
 }
 
 func TestCombatGateDrawAfterHitchUsesUpdateOwnedPhases(t *testing.T) {
@@ -201,6 +192,7 @@ func TestCombatFullHUDCombinedComposition(t *testing.T) {
 			state.CombatScene.TurnQueue.RemoveAllMonsters()
 			state.CombatScene.SetPartyMemberPosition(actor.EntityIndex, references.Position{X: 1, Y: 1})
 			character := state.PartyState.GetCharacter(actor.EntityIndex)
+			character.SetHp(character.GetMaxHp() - 1) // The battlefield marks only the injured.
 			clear(character.Name[:])
 			copy(character.Name[:], "Shamino")
 			character.Intelligence = 255
@@ -264,18 +256,18 @@ func TestCombatFullHUDCombinedComposition(t *testing.T) {
 			drawActiveSelectionReference(foreground, activeOptions, state.ElapsedMs, ucolor.CombatActivePCOutline)
 			drawOriginalReticleReference(foreground, scene.combatSquareMarkerDrawOptions(target.Position()))
 			assertCombatHealthSelectionComposition(t, screen.SubImage(sample).(*ebiten.Image), reference, foreground, healthOptions)
-			turn, _ := combatHUDStackedRectangles(screen.Bounds(), combatHUDRectangle(screen.Bounds()))
+			turn, _ := combatLayout{}.turnAndReportRectangles(screen.Bounds())
 			bounds := combatHUDContentBounds(screen.Bounds(), turn)
 			output := scene.combatHUD.turnOutput
-			output.Reset()
-			appendCombatAttackReadout(output, scene.combatAttackPreview())
-			assert.Equal(t, 3, output.GetPanelContentLineCount())
-			assert.Contains(t, output.GetOutputStr(false), "Morning Star (R2)")
-			assert.Contains(t, output.GetOutputStr(false), "Lord British (D7)")
+			readout := appendCombatAttackReadoutRows(nil, scene.combatAttackPreview())
+			readoutRows := len(readout)
+			require.Equal(t, 3, readoutRows, "weapon, target and verdict take one row each")
+			assert.Equal(t, combatReadoutRow{text: "Morning Star", value: "R2"}, readout[0])
+			assert.Equal(t, combatReadoutRow{text: "Lord British", value: "D7"}, readout[1])
 			line := int(math.Ceil(output.GetLineSpacing()))
 			bottom := scene.drawCombatCurrentTurn(screen, bounds, line, line/3)
 			_, spriteHeight := scene.combatHUDSpriteSize(screen, scene.combatTurnSprite(actor))
-			assert.LessOrEqual(t, bottom+line/3+int(math.Ceil(output.GetTotalHeightForLines(3)))+2*line+spriteHeight+line, bounds.Max.Y)
+			assert.LessOrEqual(t, bottom+line/3+int(math.Ceil(output.GetTotalHeightForLines(readoutRows)))+2*line+spriteHeight+line, bounds.Max.Y)
 		})
 	}
 }

@@ -285,7 +285,7 @@ func (g *GameScene) drawActiveProjectile(screen *ebiten.Image) {
 	screenX += fracX * sprites.TileSize
 	screenY += fracY * sprites.TileSize
 	if g.gameState.IsInCombat() {
-		screenX += combatLeftGutterSourcePixels
+		screenX += float64(g.combatLayout().battlefieldLeft())
 	}
 	mapOp := sprites.GetDrawOptionsFromPercentsForWholeScreen(g.mapImage, g.mapScreenPlacement())
 	if g.terrainDither.enabled {

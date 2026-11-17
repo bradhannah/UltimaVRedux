@@ -62,7 +62,7 @@ func TestGameMapPopupViewportOwnership(t *testing.T) {
 		assert.Equal(t, first.viewport, manager.MapPopupViewport(screen))
 		dormant := &GameScene{gameState: &game_state.GameState{}}
 		dormant.gameState.MapState.PlayerLocation.Location = references.CombatLocation
-		assert.Equal(t, combatBattlefieldRectangle(screen), dormant.mapPopupViewport(screen))
+		assert.Equal(t, combatLayout{}.battlefieldRectangle(screen), dormant.mapPopupViewport(screen))
 		assert.Equal(t, first.viewport, manager.MapPopupViewport(screen), "dormant scene does not bind")
 		NewGame(&popupViewportTestScene{viewport: image.Rect(1, 1, 2, 2)})
 		assert.Equal(t, first.viewport, manager.MapPopupViewport(screen), "nested construction restores ownership")
@@ -123,7 +123,7 @@ func TestGameSceneMapPopupViewport(t *testing.T) {
 		image.Rect(100, 200, 2660, 1640),
 	} {
 		viewport := scene.mapPopupViewport(bounds)
-		assert.Equal(t, combatBattlefieldRectangle(bounds), viewport)
+		assert.Equal(t, combatLayout{}.battlefieldRectangle(bounds), viewport)
 		assert.False(t, viewport.Empty())
 		assert.True(t, viewport.In(bounds))
 	}

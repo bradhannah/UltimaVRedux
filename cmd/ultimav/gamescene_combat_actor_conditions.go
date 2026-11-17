@@ -77,11 +77,9 @@ func (g *GameScene) composeCombatSignatureFrame(effect *combatSignatureEffect) *
 	}
 	if effect.Actor.IsPartyMember {
 		g.drawCombatPartyConditions(frame, sprite, options, effect.Actor, elapsedMs)
-		if g.showCombatHPBars() {
-			g.drawCombatAllegianceHealthOutline(frame, options, effect.Actor)
-			character := g.gameState.PartyState.GetCharacter(effect.Actor.EntityIndex)
-			drawCombatHealthBar(frame, options, int(character.GetCurrentHp()), int(character.GetMaxHp()))
-		}
+		character := g.gameState.PartyState.GetCharacter(effect.Actor.EntityIndex)
+		g.drawCombatInjuredHealthMark(frame, options, g.combatDisclosedHealthBorder(effect.Actor),
+			int(character.GetCurrentHp()), int(character.GetMaxHp()))
 	} else {
 		monster := effect.Encounter.MonsterManager.GetMonster(effect.Actor.EntityIndex)
 		g.drawCombatMonsterConditions(frame, outlined, sprite, options, monster, elapsedMs)
@@ -90,10 +88,8 @@ func (g *GameScene) composeCombatSignatureFrame(effect *combatSignatureEffect) *
 			// daemon underneath sparse fragments. Health-frame semantics follow.
 			frame.DrawImage(effect.Dissolve.effect.GetMask(), &ebiten.DrawImageOptions{Blend: ebiten.BlendDestinationIn})
 		}
-		if g.showCombatHPBars() {
-			g.drawCombatAllegianceHealthOutline(frame, options, effect.Actor)
-			drawCombatHealthBar(frame, options, monster.CurrentHP(), monster.MaxHP())
-		}
+		g.drawCombatInjuredHealthMark(frame, options, g.combatDisclosedHealthBorder(effect.Actor),
+			monster.CurrentHP(), monster.MaxHP())
 	}
 
 	return frame

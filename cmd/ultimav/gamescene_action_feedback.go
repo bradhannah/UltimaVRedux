@@ -488,7 +488,7 @@ func (g *GameScene) currentTransientFeedbackLayout() transientFeedbackLayoutCont
 	centerX := screen.Min.X + int(math.Round(float64(screen.Dx())*transientFeedbackMapCenter))
 	if g.gameState != nil && g.gameState.IsInCombat() {
 		mode = transientFeedbackCombat
-		available = combatBattlefieldRectangle(screen)
+		available = g.combatLayout().battlefieldRectangle(screen)
 		centerX = (available.Min.X + available.Max.X) / 2
 	} else if g.gameState != nil &&
 		g.gameState.MapState.PlayerLocation.Location.GetMapType() == references.DungeonMapType {

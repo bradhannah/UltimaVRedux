@@ -60,7 +60,10 @@ func (g *GameScene) renderKapowEffect(screen *ebiten.Image, effect VisualEffect)
 
 	// Convert world position to unscaled source coordinates.
 	playerPos := g.gameState.MapState.PlayerLocation.Position
-	screenX, screenY := visualEffectPositionToSourcePixels(*effect.WorldPos, playerPos, g.gameState.IsInCombat())
+	screenX, screenY := visualEffectPositionToSourcePixels(*effect.WorldPos, playerPos)
+	if g.gameState.IsInCombat() {
+		screenX, screenY = g.combatLayout().positionToSourcePixels(*effect.WorldPos)
+	}
 	if g.terrainDither.enabled {
 		relative := g.ditherRelativePosition(*effect.WorldPos)
 		screenX, screenY = sprites.ConvertPosition16to18(int(relative.X+xCenter), int(relative.Y+yCenter))
@@ -100,10 +103,7 @@ func (g *GameScene) renderKapowEffect(screen *ebiten.Image, effect VisualEffect)
 	screen.DrawImage(sprite, op)
 }
 
-func visualEffectPositionToSourcePixels(worldPos, playerPos references.Position, combat bool) (float64, float64) {
-	if combat {
-		return combatPositionToSourcePixels(worldPos)
-	}
+func visualEffectPositionToSourcePixels(worldPos, playerPos references.Position) (float64, float64) {
 	tileX := int(xCenter) + int(worldPos.X-playerPos.X)
 	tileY := int(yCenter) + int(worldPos.Y-playerPos.Y)
 
