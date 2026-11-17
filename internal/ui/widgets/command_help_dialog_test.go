@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"image/color"
+	"strings"
 	"testing"
 
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
@@ -18,6 +19,8 @@ func TestCommandHelpDialogSpacePagingAndNavigation(t *testing.T) {
 		entries[index] = CommandHelpEntry{Key: "A", Purpose: "Attack", NextInput: "Choose direction."}
 	}
 	dialog := NewCommandHelpDialog(entries, HelpStatusView{}, keyboard, func() { closed++ })
+	require.Equal(t, helpPageNow, dialog.page, "Help opens on the keys that work right now")
+	dialog.showPage(helpPageCommands)
 	press := func(key ebiten.Key) {
 		keyboard.SimulateKeyPress(key)
 		dialog.Update()
@@ -82,13 +85,14 @@ func TestHelpStatusIsDetachedAndPreservesCommandReadingPosition(t *testing.T) {
 	status := HelpStatusView{Food: 96, Effects: []StatusHelpEntry{{Name: "Torch", Description: "Lights nearby ground.",
 		Icon: icon, Tint: [3]float32{1, 1, 1}}}}
 	dialog := NewCommandHelpDialog(entries, status, keyboard, func() {})
+	dialog.showPage(helpPageCommands)
 	status.Effects[0].Name = "Changed externally"
 	keyboard.SimulateKeyPress(ebiten.KeyPageDown)
 	dialog.Update()
 	commandRow := dialog.row
 	keyboard.SimulateKeyPress(ebiten.KeyTab)
 	dialog.Update()
-	require.True(t, dialog.statusMode)
+	require.Equal(t, helpPageStatus, dialog.page)
 	require.Contains(t, dialog.output.GetOutputStr(true), "Torch")
 	require.Contains(t, dialog.output.GetOutputStr(true), "None worn.")
 	require.Contains(t, dialog.output.GetOutputStr(true), "Food remaining: 96")
@@ -96,5 +100,23 @@ func TestHelpStatusIsDetachedAndPreservesCommandReadingPosition(t *testing.T) {
 	require.True(t, dialog.contentBounds().In(dialog.border.GetInteriorBounds()))
 	keyboard.SimulateKeyPress(ebiten.KeyTab)
 	dialog.Update()
+	require.Equal(t, helpPageNow, dialog.page, "Tab wraps from Status to Right now")
+	keyboard.SimulateKeyPress(ebiten.KeyTab)
+	dialog.Update()
 	require.Equal(t, commandRow, dialog.row)
+}
+
+// Help opens on the keys that work now, grouped, and names the rest.
+func TestCommandHelpOpensOnKeysThatWorkRightNow(t *testing.T) {
+	setGuidanceTestResolution(t, 1280, 720)
+	dialog := NewCommandHelpDialog([]CommandHelpEntry{
+		{Key: "A", Purpose: "Attack", Group: "MOVE AND ACT"},
+		{Key: "T", Purpose: "Talk", Group: "SURROUNDINGS", Unavailable: "Not available during combat."},
+		{Key: "F2", Purpose: "Combat details", Group: "BATTLE PANELS"},
+	}, HelpStatusView{}, newWidgetTestKeyboard(0), func() {})
+	page := strings.Join(strings.Fields(dialog.output.GetOutputStr(false)), " ")
+	require.Contains(t, page, "MOVE AND ACT [A] Attack BATTLE PANELS [F2] Combat details")
+	require.Contains(t, page, "Not available here: T.")
+	require.NotContains(t, page, "SURROUNDINGS", "a group with no usable key is not headed")
+	require.Contains(t, dialog.header.GetOutputStr(false), "[Right now]")
 }

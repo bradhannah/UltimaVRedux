@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,6 +16,9 @@ const (
 	commandHelpMapKeys      = "Shift+M or F6"
 	commandHelpRunesKeys    = "Ctrl+R or F7"
 	commandHelpHelpKeys     = "/ or ? or F1"
+	commandHelpHistoryKeys  = "PgUp/PgDn/Home/End"
+	commandHelpFirstKey     = "[F1] Help"
+	commandHelpMarkKey      = "Ctrl+N"
 )
 
 func (g *GameScene) handleCommandHelpShortcut(key ebiten.Key) bool {
@@ -27,7 +31,21 @@ func (g *GameScene) handleCommandHelpShortcut(key ebiten.Key) bool {
 	return true
 }
 
+// offerHelpHint points a new player at Help in the message window as a game
+// begins, until Help has been opened once on this computer.
+func (g *GameScene) offerHelpHint() {
+	if g.gameConfig.GetHelpHintSeen() {
+		return
+	}
+	widgets.AppendControlHints(g.output.AppendLine(), commandHelpFirstKey).Done()
+}
+
 func (g *GameScene) showCommandHelp() {
+	if !g.gameConfig.GetHelpHintSeen() {
+		if err := g.gameConfig.SetHelpHintSeen(); err != nil {
+			logging.Warnf(logging.CategoryUI, "Unable to remember that Help was opened: %v", err)
+		}
+	}
 	var dialog *widgets.CommandHelpDialog
 	dialog = widgets.NewCommandHelpDialog(commandHelpEntries(g.gameState.MapState.PlayerLocation.Location.GetMapType()),
 		g.currentHelpStatus(), g.keyboard, func() { g.dialogStack.MustRemoveWidgetInstance(dialog) })
@@ -71,7 +89,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: commandHelpPartyKeys, Purpose: "Active party member", NextInput: "0 selects all; 1-6 selects a party position."},
 		{Key: commandHelpJournalKeys, Purpose: "Quest journal", NextInput: "Review discovered information; Esc closes."},
 		{Key: commandHelpMapKeys, Purpose: "Traveller's map", NextInput: "Browse places, notes and your position; Esc closes. Time stops while it is open."},
-		{Key: "Ctrl+N", Purpose: "Mark current position", NextInput: "On the surface overworld, open the map note editor at your current sextant fix. Requires a usable sextant; Esc returns to the map."},
+		{Key: commandHelpMarkKey, Purpose: "Mark current position", NextInput: "On the surface overworld, open the map note editor at your current sextant fix. Requires a usable sextant; Esc returns to the map."},
 		{Key: "F4", Purpose: "Last battle summary", NextInput: "Review collected totals from the last completed encounter in this session; Enter/Esc closes. No turn is spent."},
 		{Key: "Ctrl+M", Purpose: "Toggle music", NextInput: "Toggle music from primary input."},
 		{Key: commandHelpRunesKeys, Purpose: "Runic alphabet reference", NextInput: "Toggle the right-side chart during exploration, sign reading or conversation. Translate the runes yourself; no time is spent."},
@@ -81,7 +99,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 	}
 	for index := range entries {
 		entry := &entries[index]
-		if entry.Key == "Ctrl+N" && context != references.LargeMapType {
+		if entry.Key == commandHelpMarkKey && context != references.LargeMapType {
 			entry.Unavailable = "Available on the surface overworld."
 		}
 		switch context {
@@ -166,9 +184,29 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 			widgets.CommandHelpEntry{Key: "Tab", Purpose: "Auto advance / attack", NextInput: "Acts toward a reachable enemy."},
 			widgets.CommandHelpEntry{Key: "F2", Purpose: "Combat details", NextInput: "Toggle the combat detail panel."},
 			widgets.CommandHelpEntry{Key: "F3", Purpose: "Noteworthy combat results", NextInput: "Jump to the oldest pending pickup, discovery, or trap; otherwise review the latest result. No turn is spent."},
-			widgets.CommandHelpEntry{Key: "PgUp/PgDn/Home/End", Purpose: "Combat message history", NextInput: "Review older/newer events; End returns live."},
+			widgets.CommandHelpEntry{Key: commandHelpHistoryKeys, Purpose: "Combat message history", NextInput: "Review older/newer events; End returns live."},
 		)
+	}
+	for index := range entries {
+		entries[index].Group = commandHelpGroup(entries[index].Key)
 	}
 
 	return entries
+}
+
+// commandHelpGroup names the heading a key is listed under on Help's Right now page.
+func commandHelpGroup(key string) string {
+	switch key {
+	case commandHelpMovementKeys, commandKeyLabelSpace, "A", "C", "Tab":
+		return "MOVE AND ACT"
+	case "G", "I", "M", "N", "R", "U", "Z", commandHelpPartyKeys:
+		return "ITEMS AND PARTY"
+	case "F2", "F3", commandHelpHistoryKeys:
+		return "BATTLE PANELS"
+	case commandHelpJournalKeys, commandHelpMapKeys, commandHelpRunesKeys, commandHelpHelpKeys, commandKeyLabelEscape,
+		commandHelpMarkKey, "Ctrl+M", "Ctrl+Q", "Q", "F4":
+		return "BOOKS AND SYSTEM"
+	default:
+		return "SURROUNDINGS"
+	}
 }

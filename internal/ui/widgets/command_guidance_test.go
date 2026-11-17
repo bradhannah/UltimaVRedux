@@ -120,6 +120,7 @@ func TestCommandHelpKeyboardPagingResizeAndClose(t *testing.T) {
 		entries[index] = CommandHelpEntry{Key: "A", Purpose: "Attack", NextInput: "Arrow direction; Space Pass"}
 	}
 	dialog := NewCommandHelpDialog(entries, HelpStatusView{}, keyboard, func() { closed++ })
+	dialog.showPage(helpPageCommands)
 	entries[0].Purpose = "changed externally"
 	require.NotContains(t, dialog.output.GetOutputStr(true), "changed externally")
 	press := func(key ebiten.Key) {

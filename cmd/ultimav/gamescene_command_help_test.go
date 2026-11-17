@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 
+	"github.com/bradhannah/UltimaVRedux/internal/config"
+
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -168,4 +170,25 @@ func TestEscapeMenuHelpRetainsMenuOwner(t *testing.T) {
 	help := requireEscapeMenuDialog[*widgets.CommandHelpDialog](t, scene)
 	pressEscapeMenuWidgetKey(scene, help, ebiten.KeyEscape)
 	require.Same(t, menu, scene.dialogStack.PeekTopModalDialog())
+}
+
+// Every Help entry is grouped for the Right now page, and a new player is
+// pointed at Help until it has been opened once.
+func TestCommandHelpGroupsEveryKeyAndOffersItsHintUntilSeen(t *testing.T) {
+	for _, context := range []references.GeneralMapType{references.LargeMapType, references.CombatMapType} {
+		for _, entry := range commandHelpEntries(context) {
+			require.NotEmpty(t, entry.Group, entry.Key)
+		}
+	}
+	state, _ := newProductionCombatCastState(t)
+	scene := newProductionCastTestScene(state)
+	scene.offerHelpHint()
+	require.NotContains(t, scene.output.GetOutputStr(false), "Help", "a scene without settings is never offered the hint")
+	scene.gameConfig = &config.UltimaVConfiguration{GameplayConfiguration: config.DefaultGameplayConfiguration()}
+	scene.offerHelpHint()
+	require.Contains(t, scene.output.GetOutputStr(false), "[F1] Help")
+	scene.gameConfig.GameplayConfiguration.HelpHintSeen = true
+	before := scene.output.GetOutputStr(false)
+	scene.offerHelpHint()
+	require.Equal(t, before, scene.output.GetOutputStr(false))
 }
