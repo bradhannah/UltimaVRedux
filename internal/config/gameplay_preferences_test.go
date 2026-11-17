@@ -23,8 +23,10 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 		assert.Equal(t, 3, config.GetMaxVisibleActionPopups())
 		assert.False(t, config.GetSimpleNotesMode(), "Simple Notes Mode defaults to Off")
 		assert.Equal(t, CombatKeyRepeatMeasured, config.GetCombatKeyRepeat(), "Combat Key Repeat defaults to Measured")
+		assert.Equal(t, CombatPanelsOrderAndReport, config.GetCombatPanels(), "Combat Panels defaults to both panels")
+		assert.True(t, config.GetHelpHintSeen(), "a fixture without settings is never offered the Help hint")
 	}
-	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
+	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    Panels: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
 	require.NoError(t, configuration.UpdateSaveFile())
 	loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 	require.NoError(t, err)
@@ -34,6 +36,12 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 	assert.Zero(t, loaded.GetMaxVisibleActionPopups())
 	assert.True(t, loaded.GetSimpleNotesMode())
 	assert.Equal(t, 20, loaded.GetCombatKeyRepeat())
+	assert.Equal(t, CombatPanelsOff, loaded.GetCombatPanels())
+	assert.False(t, loaded.GetHelpHintSeen(), "the Help hint is offered until Help is opened")
+	require.NoError(t, loaded.SetHelpHintSeen())
+	reloaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
+	require.NoError(t, err)
+	assert.True(t, reloaded.GetHelpHintSeen(), "opening Help retires the hint for good")
 }
 
 func TestQoLEveryNumericValueRoundTrips(t *testing.T) {
@@ -70,6 +78,7 @@ func TestQoLStrictSourceValidation(t *testing.T) {
 		{gameplayMaxActionPopupsKey, 1.5}, {gameplayMaxActionPopupsKey, 1.0},
 		{gameplayMaxActionPopupsKey, -1}, {gameplayMaxActionPopupsKey, 4},
 		{gameplayCombatKeyRepeatKey, 5}, {gameplayCombatKeyRepeatKey, 31}, {gameplayCombatKeyRepeatKey, 6.0},
+		{gameplayCombatPanelsKey, 3}, {gameplayCombatPanelsKey, -1}, {gameplayCombatPanelsKey, 1.0},
 		{gameplayConfirmQuickSaveKey, "false"}, {gameplayShowCombatHPBarsKey, 0},
 	} {
 		t.Run(fmt.Sprintf("%s=%v", test.key, test.value), func(t *testing.T) {

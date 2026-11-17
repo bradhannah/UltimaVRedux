@@ -101,15 +101,22 @@ type GameplayConfiguration struct {
 	// FlexibleSextantUse opts into daytime and settlement sextant navigation.
 	FlexibleSextantUse bool
 	// AnkhWandererBonus raises the camping Wanderer chance for each living Ankh wearer.
-	AnkhWandererBonus      bool
-	CombatSpeedFactor      float64
-	ConfirmQuickSave       bool
-	ShowCombatHPBars       bool
+	AnkhWandererBonus bool
+	CombatSpeedFactor float64
+	ConfirmQuickSave  bool
+	ShowCombatHPBars  bool
+	// ShowCombatBattleFrame frames the battlefield: red in battle, blue once won.
+	ShowCombatBattleFrame  bool
 	MaxVisibleActionPopups int
 	// SimpleNotesMode shows only My Notes in the Journal; nothing else is lost.
 	SimpleNotesMode bool
 	// CombatKeyRepeat is held-key repeats per second in combat; zero is Off.
 	CombatKeyRepeat int
+	// CombatPanels chooses what is drawn beside the battlefield.
+	CombatPanels int
+	// HelpHintSeen records that Help has been opened once, retiring its hint.
+	// It is remembered state, not a Configuration row.
+	HelpHintSeen bool
 }
 
 // ConfigurationSettings is the complete player-facing Configuration transaction.
@@ -693,9 +700,12 @@ func setGameplayConfiguration(configuration *viper.Viper, gameplay GameplayConfi
 	configuration.Set(gameplayCombatSpeedKey, gameplay.CombatSpeedFactor)
 	configuration.Set(gameplayConfirmQuickSaveKey, gameplay.ConfirmQuickSave)
 	configuration.Set(gameplayShowCombatHPBarsKey, gameplay.ShowCombatHPBars)
+	configuration.Set(gameplayShowCombatBattleFrameKey, gameplay.ShowCombatBattleFrame)
 	configuration.Set(gameplayMaxActionPopupsKey, gameplay.MaxVisibleActionPopups)
 	configuration.Set(gameplaySimpleNotesModeKey, gameplay.SimpleNotesMode)
 	configuration.Set(gameplayCombatKeyRepeatKey, gameplay.CombatKeyRepeat)
+	configuration.Set(gameplayCombatPanelsKey, gameplay.CombatPanels)
+	configuration.Set(gameplayHelpHintSeenKey, gameplay.HelpHintSeen)
 	configuration.Set(gameplayBatchMerchantTheftKey, gameplay.BatchMerchantTheft)
 	configuration.Set(
 		"Gameplay.Combat.AllowRepeatedMonsterDivision",
