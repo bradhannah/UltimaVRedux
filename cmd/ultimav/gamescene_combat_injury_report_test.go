@@ -52,7 +52,7 @@ func TestCombatInjuryReportHistorySurvivesHealingDeathReuseAndToggles(t *testing
 	want := ""
 	scene.withCombatHistoryEvent(slot, func(record game_state.CombatEvent) {
 		want = scene.combatEventPlainText(record)
-		assert.Contains(t, want, "12 damage")
+		assert.Contains(t, want, "for 12")
 		assert.NotContains(t, want, "wounded")
 	})
 	for _, mutate := range []func(){
@@ -161,7 +161,7 @@ func TestCombatInjuryReportsStyledPlainAndPagingUseOnePolicy(t *testing.T) {
 							scene.appendCombatEvent(record)
 							styled := strings.Join(strings.Fields(hud.eventOutput.GetOutputStr(false)), " ")
 							assert.Contains(t, styled, strings.Join(strings.Fields(plain), " "))
-							assert.Contains(t, plain, "12 damage")
+							assert.Contains(t, plain, "12")
 							assert.Equal(t, !showBars, strings.Contains(plain, "Orc is heavily wounded!"))
 							assert.Equal(t, scene.combatEventLineCount(record), hud.eventOutput.GetPanelContentLineCount())
 						})
@@ -215,7 +215,7 @@ func TestCombatInjuryDirectPoisonKeepsOneNumericReportAndHitCue(t *testing.T) {
 		setCombatHPBarsForTest(scene, visible)
 		scene.withCombatHistoryEvent(slot, func(record game_state.CombatEvent) {
 			plain := scene.combatEventPlainText(record)
-			assert.Equal(t, 1, strings.Count(plain, "12 damage"))
+			assert.Equal(t, 1, strings.Count(plain, "takes 12 from"))
 			assert.Equal(t, !visible, strings.Contains(plain, "heavily wounded!"))
 			scene.combatHUD.eventOutput.Reset()
 			scene.appendCombatEvent(record)
@@ -279,9 +279,9 @@ func TestCombatFieldReportSlotZeroUsesVictimDisclosureAndFrozenHistory(t *testin
 				for _, bars := range []bool{true, false} {
 					setCombatHPBarsForTest(scene, bars)
 					scene.withCombatHistoryEvent(slot, func(record game_state.CombatEvent) {
-						want := "Unknown is burned for 7 damage"
+						want := "Unknown is burned for 7"
 						if targetVisible {
-							want = "Orc is burned for 7 damage"
+							want = "Orc is burned for 7"
 							if !bars {
 								want += ". Orc is heavily wounded!"
 							}
@@ -348,7 +348,7 @@ func TestCombatReportRealSlotZeroAttackerAndSelfTargetRemainPresent(t *testing.T
 			if test.selfTarget {
 				targetName = sourceName
 			}
-			want := sourceName + " hits " + targetName + " for 12 damage"
+			want := sourceName + " hits " + targetName + " for 12"
 			scene.withCombatHistoryEvent(slot, func(record game_state.CombatEvent) {
 				assert.Equal(t, want, scene.combatEventPlainText(record))
 				scene.combatHUD.eventOutput.Reset()

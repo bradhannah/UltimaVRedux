@@ -579,7 +579,9 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 		rect := d.layout.tabRects[index]
 		textColor := DialogEmptyColor
 		if index == d.activeTab && !d.searching {
-			textColor = pkgcolor.EGAYellow
+			// The open tab is a filled plate, as in Configure.
+			textColor = DialogSelectedText
+			d.drawActiveTabPlate(screen, rect, d.tabTitle(index))
 		}
 		d.tabOutput.SetMaxCharsPerLine(len(d.tabTitle(index)))
 		d.tabOutput.Reset()
@@ -593,6 +595,18 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 		top := rect.Min.Y + max(0, (rect.Dy()-int(math.Ceil(d.tabOutput.GetFontHeight())))/questJournalCenterDivisor)
 		d.tabOutput.DrawPanelContent(screen, image.Pt(rect.Min.X, top), rect.Dx(), etext.AlignCenter)
 	}
+}
+
+// drawActiveTabPlate fills a rounded plate behind the open tab's title, a
+// little wider than the words and centred in the tab's column.
+func (d *QuestJournalDialog) drawActiveTabPlate(screen *ebiten.Image, column image.Rectangle, title string) {
+	const paddingUnits = 3
+	unit := ClassicUIPixelUnit(d.lastScreenWidth, d.lastScreenHeight)
+	measured, _ := d.font.MeasureString(title)
+	width := min(column.Dx(), int(math.Ceil(measured))) + questJournalCenterDivisor*paddingUnits*unit
+	left := column.Min.X + (column.Dx()-width)/questJournalCenterDivisor
+	plate := image.Rect(left, column.Min.Y, left+width, column.Max.Y)
+	FillClassicPixelRoundedRect(screen, plate, unit, DialogSelectedBackground)
 }
 
 func (d *QuestJournalDialog) drawList(screen *ebiten.Image) {

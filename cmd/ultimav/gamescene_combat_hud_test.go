@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -126,24 +127,41 @@ func TestCombatUtilityEffectGeometryDistinguishesBindingAndRelease(t *testing.T)
 	assert.Equal(t, ucolor.EGALightCyan, combatUtilityEffectColor(references.InExPor, combatUtilityApproach))
 }
 
-// TestCombatHUDLeavesHorizontalBattlefieldGutters prevents the outer and HUD borders
-// from covering terrain or combat overlays at either horizontal battlefield edge.
-func TestCombatHUDLeavesHorizontalBattlefieldGutters(t *testing.T) {
+// TestCombatPanelsMirrorThePartyColumn keeps the left panel column exactly as
+// wide as the party column, with the battlefield centred between them.
+func TestCombatPanelsMirrorThePartyColumn(t *testing.T) {
 	screenBounds := image.Rect(0, 0, 1280, 720)
-	battlefield := combatBattlefieldRectangle(screenBounds)
-	hud := combatHUDRectangle(screenBounds)
+	battlefield := combatLayout{}.battlefieldRectangle(screenBounds)
+	panels := combatLayout{}.panelRectangle(screenBounds)
+	party := calculateRightRailLayout(screenBounds).characterBorder
 
-	assert.Equal(t, image.Rect(26, 55, 589, 665), battlefield)
-	assert.Equal(t, image.Rect(598, 0, 973, 720), hud)
-	assert.Equal(t, 26, battlefield.Min.X, "left gutter must clear the outside border")
-	assert.Equal(t, 9, hud.Min.X-battlefield.Max.X, "right gutter must clear the HUD border")
-	turns, events := combatHUDStackedRectangles(screenBounds, hud)
-	assert.Equal(t, hud.Min.Y, turns.Min.Y)
-	assert.Equal(t, hud.Max.Y, events.Max.Y)
+	assert.Equal(t, image.Rect(358, 55, 922, 665), battlefield)
+	assert.Equal(t, image.Rect(0, 0, 319, 720), panels)
+	assert.Equal(t, party.Dx(), panels.Dx(), "both columns are the same width")
+	assert.Equal(t, party.Min.X-battlefield.Max.X, battlefield.Min.X-panels.Max.X, "the battlefield is centred")
+	turns, events := combatLayout{}.turnAndReportRectangles(screenBounds)
+	assert.Equal(t, party.Max.Y, turns.Max.Y, "Turn Order ends level with the party roster")
+	assert.Equal(t, panels.Max.Y, events.Max.Y)
 	assert.Equal(t, 11, turns.Max.Y-events.Min.Y, "panes use the right-rail border overlap")
-	assert.Equal(t, image.Rect(622, 22, 947, 302), combatHUDContentBounds(screenBounds, turns))
-	assert.Equal(t, image.Rect(622, 335, 947, 698), combatHUDContentBounds(screenBounds, events))
-	assert.Less(t, events.Min.Y, screenBounds.Dy()/2, "Combat Events must begin above the former midpoint split")
+	assert.Equal(t, image.Rect(24, 22, 293, 338), combatHUDContentBounds(screenBounds, turns))
+	assert.Equal(t, image.Rect(24, 371, 293, 698), combatHUDContentBounds(screenBounds, events))
+}
+
+// Turn Order only gives the ladder the whole column; Off removes the column and
+// centres the battlefield.
+func TestCombatPanelsChoiceMovesOnlyWhatItNames(t *testing.T) {
+	screenBounds := image.Rect(0, 0, 1280, 720)
+	rail := combatLayout{panels: config.CombatPanelsTurnOrderOnly}
+	turns, events := rail.turnAndReportRectangles(screenBounds)
+	assert.Equal(t, combatLayout{}.panelRectangle(screenBounds), turns)
+	assert.True(t, events.Empty())
+	assert.Equal(t, combatLayout{}.battlefieldRectangle(screenBounds), rail.battlefieldRectangle(screenBounds))
+
+	off := combatLayout{panels: config.CombatPanelsOff}
+	assert.True(t, off.panelRectangle(screenBounds).Empty())
+	battlefield := off.battlefieldRectangle(screenBounds)
+	viewportRight := combatViewportSourceX(screenBounds, combatViewportWidthSourcePixels)
+	assert.InDelta(t, battlefield.Min.X, viewportRight-battlefield.Max.X, 1, "the battlefield is centred")
 }
 
 func TestCombatHUDDetailDefaultsOff(t *testing.T) {
@@ -168,13 +186,6 @@ func TestCurrentCombatTurnIdentityIsVisibleAfterGameStateStartsTurns(t *testing.
 	assert.Equal(t, state.CombatScene.GetCurrentTurnIdentity(), identity)
 }
 
-func TestCombatForecastLeavesRoomForFourFutureActors(t *testing.T) {
-	hud := newCombatHUD()
-
-	assert.Equal(t, 4, combatForecastSize)
-	assert.Len(t, hud.forecast, 4)
-}
-
 func TestCombatDetailHeaderSuffixHiddenWhenDisabled(t *testing.T) {
 	assert.Empty(t, combatDetailHeaderSuffix(false))
 	assert.Equal(t, " DTL:ON", combatDetailHeaderSuffix(true))
@@ -191,21 +202,21 @@ func TestCombatTurnContentFitsSupportedResolutions(t *testing.T) {
 	for _, resolution := range resolutions {
 		t.Run(fmt.Sprintf("%dx%d", resolution.X, resolution.Y), func(t *testing.T) {
 			screenBounds := image.Rectangle{Max: resolution}
-			hudBounds := combatHUDRectangle(screenBounds)
+			hudBounds := combatLayout{}.panelRectangle(screenBounds)
 			turnBounds, eventBounds := combatHUDStackedRectangles(screenBounds, hudBounds)
 			contentBounds := combatHUDContentBounds(screenBounds, turnBounds)
 			lineHeight := int(math.Ceil(float64(combatHUDFontSize) * float64(resolution.X) / 1920))
 			lineGap := lineHeight / combatHUDLineGapDivisor
 			spriteHeight := int(math.Round(18 * float64(resolution.Y) / 208))
-			requiredHeight := lineHeight + lineGap + spriteHeight + lineHeight +
-				lineHeight + spriteHeight + lineHeight
+			ladderRow := max(spriteHeight/2, lineHeight) + lineGap
+			requiredHeight := lineHeight + lineGap + spriteHeight + 2*lineHeight + 2*lineGap + 4*ladderRow
 
 			assert.Equal(t, 0, hudBounds.Min.Y)
 			assert.Equal(t, resolution.Y, hudBounds.Max.Y)
 			assert.Equal(t, int(math.Round(float64(resolution.Y)*combatHUDBorderOverlapY)),
 				turnBounds.Max.Y-eventBounds.Min.Y)
 			assert.LessOrEqual(t, requiredHeight, contentBounds.Dy(),
-				"turn title, current actor, NEXT queue, and labels must clear both borders")
+				"turn title, current actor, two weapon rows and four ladder rows must clear both borders")
 		})
 	}
 }
@@ -218,23 +229,13 @@ func TestCombatEventLineCapacityFitsCompleteGlyphHeight(t *testing.T) {
 		MaxChars:              combatHUDOutputChars,
 	})
 	screenBounds := image.Rect(0, 0, 1280, 720)
-	_, eventBounds := combatHUDStackedRectangles(screenBounds, combatHUDRectangle(screenBounds))
+	_, eventBounds := combatLayout{}.turnAndReportRectangles(screenBounds)
 	contentBounds := combatHUDContentBounds(screenBounds, eventBounds)
 	eventHeight := contentBounds.Dy()
 	capacity := output.GetLineCapacity(eventHeight)
 	maxChars := output.Font.CharsForWidth(contentBounds.Dx())
-	formerTurnBottom := screenBounds.Min.Y + screenBounds.Dy()/2
-	formerEvents := image.Rect(
-		combatHUDRectangle(screenBounds).Min.X,
-		formerTurnBottom-int(math.Round(float64(screenBounds.Dy())*combatHUDBorderOverlapY)),
-		combatHUDRectangle(screenBounds).Max.X,
-		screenBounds.Max.Y,
-	)
-	formerCapacity := output.GetLineCapacity(combatHUDContentBounds(screenBounds, formerEvents).Dy())
-
 	assert.LessOrEqual(t, output.GetTotalHeightForLines(capacity), float64(eventHeight))
 	assert.Greater(t, output.GetTotalHeightForLines(capacity+1), float64(eventHeight))
-	assert.Greater(t, capacity, formerCapacity, "45%% split must expose more event rows than the former 50%% split")
 	assert.Greater(t, maxChars, maxCharsPerLine, "combat event pane is intentionally wider than the original message pane")
 	t.Logf("combat event pane fits approximately %d conservative characters", maxChars)
 }
@@ -250,7 +251,7 @@ func TestCombatHUDStartsEachEncounterWithBattleMessage(t *testing.T) {
 	assert.Equal(t, 1, hud.historyCount, "repeated sync must not duplicate the opening message")
 }
 
-func TestCombatPositionUsesLeftAlignedBattlefield(t *testing.T) {
+func TestCombatPositionMapsToViewportTiles(t *testing.T) {
 	tileX, tileY := combatPositionToViewportTile(references.Position{X: 0, Y: 0})
 	assert.Equal(t, 0, tileX)
 	assert.Equal(t, 1, tileY)
@@ -260,11 +261,11 @@ func TestCombatPositionUsesLeftAlignedBattlefield(t *testing.T) {
 }
 
 func TestCombatPositionLeavesSourcePixelGutter(t *testing.T) {
-	leftX, _ := combatPositionToSourcePixels(references.Position{X: 0, Y: 0})
-	rightX, _ := combatPositionToSourcePixels(references.Position{X: 10, Y: 0})
+	leftX, _ := combatLayout{}.positionToSourcePixels(references.Position{X: 0, Y: 0})
+	rightX, _ := combatLayout{}.positionToSourcePixels(references.Position{X: 10, Y: 0})
 
-	assert.Equal(t, float64(combatLeftGutterSourcePixels-1), leftX)
-	assert.Equal(t, float64(combatLeftGutterSourcePixels+10*sprites.TileSize-1), rightX)
+	assert.Equal(t, float64(combatLayout{}.battlefieldLeft()-1), leftX)
+	assert.Equal(t, float64(combatLayout{}.battlefieldLeft()+10*sprites.TileSize-1), rightX)
 }
 
 func TestCombatMoveDirectionFormatsCardinalMovement(t *testing.T) {
@@ -275,11 +276,6 @@ func TestCombatMoveDirectionFormatsCardinalMovement(t *testing.T) {
 	assert.Equal(t, "WEST", combatMoveDirection(event))
 	event.To = references.Position{X: 5, Y: 6}
 	assert.Equal(t, "SOUTH", combatMoveDirection(event))
-}
-
-func TestAbbreviateCombatLabelUsesFourCharacters(t *testing.T) {
-	assert.Equal(t, "SHAM", abbreviateCombatLabel("Shamino"))
-	assert.Equal(t, "IOLO", abbreviateCombatLabel("Iolo"))
 }
 
 func TestCombatHUDSpriteSizeUsesMapScale(t *testing.T) {
@@ -383,30 +379,34 @@ func TestFormatCombatDiagnosticsShowsOnlyConsumedRolls(t *testing.T) {
 	)
 }
 
-func TestCombatAttackPlainTextUsesConciseEnglish(t *testing.T) {
+func TestCombatAttackPlainTextUsesPlainWords(t *testing.T) {
 	miss := game_state.CombatEvent{Result: game_state.CombatFeedbackMiss}
-	assert.Equal(t, "Squid attacks Shamino and misses", combatAttackPlainText(miss, "Squid", "Shamino"))
+	assert.Equal(t, "Squid misses Shamino", combatAttackPlainText(miss, "Squid", "Shamino"))
+
+	graze := game_state.CombatEvent{Result: game_state.CombatFeedbackGraze}
+	assert.Equal(t, "Shamino grazes Squid", combatAttackPlainText(graze, "Shamino", "Squid"))
 
 	poison := game_state.CombatEvent{Result: game_state.CombatFeedbackPoison}
-	assert.Equal(t, "Squid attacks Shamino and poisons them",
-		combatAttackPlainText(poison, "Squid", "Shamino"))
+	assert.Equal(t, "Squid poisons Shamino", combatAttackPlainText(poison, "Squid", "Shamino"))
 
 	sleep := game_state.CombatEvent{Result: game_state.CombatFeedbackSleep}
-	assert.Equal(t, "Gazer attacks Shamino and puts them to sleep",
-		combatAttackPlainText(sleep, "Gazer", "Shamino"))
+	assert.Equal(t, "Gazer hits Shamino: asleep", combatAttackPlainText(sleep, "Gazer", "Shamino"))
 
 	theft := game_state.CombatEvent{
 		Result:      game_state.CombatFeedbackTheft,
 		Diagnostics: game_state.CombatDiagnostics{FoodStolen: 5},
 	}
-	assert.Equal(t, "Gremlin attacks Shamino and steals 5 food",
-		combatAttackPlainText(theft, "Gremlin", "Shamino"))
+	assert.Equal(t, "Gremlin steals 5 food", combatAttackPlainText(theft, "Gremlin", "Shamino"))
 
 	damage := game_state.CombatEvent{Result: game_state.CombatFeedbackDamage, HPLost: 7}
-	assert.Equal(t, "Avatar hits Orc for 7 damage", combatAttackPlainText(damage, "Avatar", "Orc"))
+	assert.Equal(t, "Avatar hits Orc for 7", combatAttackPlainText(damage, "Avatar", "Orc"))
 
-	fatal := game_state.CombatEvent{Result: game_state.CombatFeedbackDamage, HPLost: 12, Fatal: true}
-	assert.Equal(t, "Avatar slays Orc for 12 damage", combatAttackPlainText(fatal, "Avatar", "Orc"))
+	slain := game_state.CombatEvent{Result: game_state.CombatFeedbackDamage, HPLost: 12, Fatal: true}
+	assert.Equal(t, "Avatar slays Orc", combatAttackPlainText(slain, "Avatar", "Orc"))
+
+	fallen := slain
+	fallen.Target.IsPartyMember = true
+	assert.Equal(t, "Orc hits Julia for 12. Julia falls!", combatAttackPlainText(fallen, "Orc", "Julia"))
 }
 
 func TestCombatConditionPlainTextDescribesSkippedTurn(t *testing.T) {

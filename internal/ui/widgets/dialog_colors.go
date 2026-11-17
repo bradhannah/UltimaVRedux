@@ -183,3 +183,9 @@ var (
 	// Visual role: Lighter separation, less prominent than main rules
 	DialogRuleLightColor stdcolor.Color = color.EGALightGray
 )
+
+// atlasNoteColor marks the player's own map notes: their flags, their tab and
+// their action keys. No place family shares this ink.
+func atlasNoteColor() stdcolor.Color {
+	return color.EGALightMagenta
+}

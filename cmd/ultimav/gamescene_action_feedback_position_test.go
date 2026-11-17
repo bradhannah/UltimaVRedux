@@ -57,7 +57,7 @@ func TestCombatSearchFeedbackRenderedPosition(t *testing.T) {
 				searchBounds = renderedSpellFeedbackBounds(t, search, size)
 				actionBounds = renderedSpellFeedbackBounds(t, action, size)
 			}
-			battlefield := combatBattlefieldRectangle(image.Rectangle{Max: size})
+			battlefield := combatLayout{}.battlefieldRectangle(image.Rectangle{Max: size})
 			for _, bounds := range []image.Rectangle{actionBounds, searchBounds} {
 				assert.GreaterOrEqual(t, bounds.Min.X, battlefield.Min.X-1)
 				assert.LessOrEqual(t, bounds.Max.X, battlefield.Max.X+1)
@@ -106,7 +106,7 @@ func TestCombatTimedCastFailureRenderedPosition(t *testing.T) {
 			if size.X == 1280 {
 				bounds = renderedSpellFeedbackBounds(t, overlay, size)
 			}
-			battlefield := combatBattlefieldRectangle(image.Rectangle{Max: size})
+			battlefield := combatLayout{}.battlefieldRectangle(image.Rectangle{Max: size})
 			assert.GreaterOrEqual(t, bounds.Min.X, battlefield.Min.X-1)
 			assert.LessOrEqual(t, bounds.Max.X, battlefield.Max.X+1)
 			assert.InDelta(t, float64(battlefield.Min.X+battlefield.Max.X)/2,

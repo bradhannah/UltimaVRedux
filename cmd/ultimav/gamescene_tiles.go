@@ -326,7 +326,7 @@ func (g *GameScene) refreshAllMapLayerTiles() {
 			// Offset by -1 pixel to account for 18x18 sprites with 1-pixel border
 			x, y = sprites.ConvertPosition16to18(int(tileX+margin), int(tileY+margin))
 			if mapType == references.CombatMapType && g.gameState.IsInCombat() {
-				x += combatLeftGutterSourcePixels
+				x += float64(g.combatLayout().battlefieldLeft())
 			}
 			drawImageOptions.GeoM.Translate(x, y)
 

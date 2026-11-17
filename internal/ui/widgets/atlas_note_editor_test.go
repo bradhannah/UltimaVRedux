@@ -139,9 +139,11 @@ func TestAtlasNoteIntentsOnlyRealNoteRowsAndNoCameraMutation(t *testing.T) {
 	dialog := NewAtlasDialog(dossier, nil, newWidgetTestKeyboard(0), &view, func() {})
 	var intents []AtlasNoteIntent
 	dialog.SetNoteIntentHandler(func(intent AtlasNoteIntent) { intents = append(intents, intent) })
+	require.Equal(t, journal.AtlasNoteKey(7), view.SelectedKey, "notes lead the complete list")
+	dialog.navigate(ebiten.KeyDown)
 	dialog.handleKey(ebiten.KeyE)
 	dialog.handleKey(ebiten.KeyD)
-	require.Empty(t, intents)
+	require.Empty(t, intents, "a place row offers no note edit or delete")
 	dialog.handleKey(ebiten.KeyN)
 	require.Equal(t, []AtlasNoteIntent{{Action: AtlasNoteMark}}, intents)
 	dialog.NoteCommitted(dossier, 7)

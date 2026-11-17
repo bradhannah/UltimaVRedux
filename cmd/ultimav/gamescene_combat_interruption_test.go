@@ -124,7 +124,7 @@ func TestCombatInterruptionProductionKeyboardRoutesOnceToBothReportsAndAudio(t *
 			beforeSounds, beforeEvents := len(callbacks.SoundEffectsPlayed), len(callbacks.CombatEvents)
 			for _, size := range []image.Point{{1280, 720}, {1920, 1080}} {
 				screen := newPresentationRaster(size.X, size.Y)
-				_, report := combatHUDStackedRectangles(screen.Bounds(), combatHUDRectangle(screen.Bounds()))
+				_, report := combatLayout{}.turnAndReportRectangles(screen.Bounds())
 				scene.combatHUD.detail = true
 				scene.drawCombatEventTape(screen, combatHUDContentBounds(screen.Bounds(), report))
 				scene.handleCombatHUDInput(ebiten.KeyPageUp)

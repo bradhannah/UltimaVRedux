@@ -71,27 +71,38 @@ func drawCombatHealthBar(
 }
 
 func combatHealthBarFillPixels(currentHP, maxHP int) int {
+	return combatHealthFill(currentHP, maxHP, combatHealthBarInnerSourcePixels)
+}
+
+// combatHealthFill maps health onto width cells; any health left shows one.
+func combatHealthFill(currentHP, maxHP, width int) int {
 	if currentHP <= 0 || maxHP <= 0 {
 		return 0
 	}
 
 	currentHP = min(currentHP, maxHP)
 
-	return max(1, (currentHP*combatHealthBarInnerSourcePixels+maxHP-1)/maxHP)
+	return max(1, (currentHP*width+maxHP-1)/maxHP)
 }
 
 func combatHealthBarColor(currentHP, maxHP int) color.Color {
+	return ucolor.From(combatHealthTierColor(currentHP, maxHP)).Alpha(combatHealthBarAlpha).RGBA()
+}
+
+// combatHealthTierColor is green above half health, yellow down to a quarter
+// and red below.
+func combatHealthTierColor(currentHP, maxHP int) ucolor.EGAColor {
 	if maxHP <= 0 {
-		return ucolor.From(ucolor.EGALightRed).Alpha(combatHealthBarAlpha).RGBA()
+		return ucolor.EGALightRed
 	}
 
 	scaledHealth := min(max(currentHP, 0), maxHP) * combatHealthPercentScale
 	switch {
 	case scaledHealth > maxHP*combatHealthHealthyPercent:
-		return ucolor.From(ucolor.EGALightGreen).Alpha(combatHealthBarAlpha).RGBA()
+		return ucolor.EGALightGreen
 	case scaledHealth >= maxHP*combatHealthCriticalPercent:
-		return ucolor.From(ucolor.EGAYellow).Alpha(combatHealthBarAlpha).RGBA()
+		return ucolor.EGAYellow
 	default:
-		return ucolor.From(ucolor.EGALightRed).Alpha(combatHealthBarAlpha).RGBA()
+		return ucolor.EGALightRed
 	}
 }

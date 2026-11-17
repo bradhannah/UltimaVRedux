@@ -197,6 +197,24 @@ nameplate deterministically, using bounded collision search and a crowded fallba
 rather than silently dropping labels. Offscreen, empty and unmapped states are
 explained in text. Selecting an ordinary row restores the single-place label.
 
+The player's own notes are presented so they are hard to miss. Tabs are offered
+as All, My Notes, then the place families (`atlasTabOrder`); this is display
+order only and filter values keep their meaning. The My Notes tab carries its
+count in parentheses, as `My Notes (4)`, and uses the note ink (`atlasNoteColor`, light magenta), which no
+place family shares. A note is a pennant flag in that ink on the map and in the
+list, and notes lead the All list. On the My Notes tab, while labels are shown,
+each unselected note in view also carries a short name tag beside its flag; on
+every other tab a note is named only when it is selected. A tag is framed like a place's
+nameplate but in the note ink and cut plainly, with no ellipsis, when long; a tag yields to any nameplate and to the pane
+edge. A framed notes bar at the foot of the right-hand
+pane holds `[N] New here`, `[E] Edit` and `[D] Delete`. A key that cannot be
+used is dimmed and the bar's second row says why in words: the sextant reason
+for N, or that no note is selected for E and D. With nothing to explain, the
+keys sit centred in the bar. An empty My Notes tab names the
+two ways to plant a flag (N on the Map, Ctrl+N while exploring), that both need
+a sextant reading, and, when only daylight is in the way, the Flexible Sextant
+Use setting.
+
 The one acquisition exception is a real absent-to-owned sextant grant inside a
 valid Greyhaven floor, after its entry has legitimately supplied the name. It
 records only Greyhaven's canonical exterior, including daytime/strict mode,
@@ -1044,7 +1062,14 @@ does not by itself invalidate the parent. All content is still composed through
 ## Commands And Status Help
 
 `CommandHelpDialog` accepts detached command entries and a `HelpStatusView`.
-Tab/Shift+Tab switches Commands/Status while retaining independent scroll positions.
+It opens on **Right now**: the keys usable at this moment, gathered under each
+entry's `Group` heading with several keys to a row, followed by the keys that
+are not available here. Commands remains the full reference that explains each
+key and why one is unavailable. Tab/Shift+Tab cycles Right now, Commands and
+Status while retaining independent scroll positions. As a game begins, the
+message window shows `[F1] Help` once, until Help has been opened once on that
+computer (`Gameplay.Presentation.HelpHintSeen`, remembered state with no
+Configuration row).
 Status identifies only currently displayed worn items/effects using the same
 artwork and tints as the rail, includes explicit empty states and current food,
 and exposes no countdowns, undiscovered artifacts, or hidden actor identities.

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -263,7 +264,7 @@ func TestCombatInvisibleTurnHUDDoesNotDiscloseNewIdentity(t *testing.T) {
 	scene.combatHUD.detail = true
 	assert.True(t, scene.combatTurnIdentityConcealed(identity))
 	assert.Nil(t, scene.combatTurnSprite(identity))
-	assert.Equal(t, combatUnknownEntityLabel, scene.combatEntityName(identity))
+	assert.Equal(t, combatUnknownEntityLabel, scene.combatEntityEventName(identity))
 	assert.Empty(t, scene.combatCurrentTurnDetail(identity, game_state.CombatTurnForecastEntry{Dexterity: 30}, true))
 	scene.combatHUD.forecast[0] = game_state.CombatTurnForecastEntry{CombatTurnIdentity: identity}
 	scene.gameConfig.GameplayConfiguration.ShowConcealedTurnOrderSlots = false
@@ -287,7 +288,9 @@ func TestCombatReportIdentitySurvivesSlotReuseAndDoesNotLeakInvisibleArrival(t *
 	scene.gameState.CombatScene.MonsterManager.RemoveMonster(index)
 	scene.combatHUD.eventOutput.Reset()
 	scene.withCombatHistoryEvent(slot, scene.appendCombatEvent)
-	assert.Contains(t, scene.combatHUD.eventOutput.GetOutputStr(false), references.MonsterDevil.Name()+" disappears")
+	// The narrow report column may wrap the sentence.
+	assert.Contains(t, strings.Join(strings.Fields(scene.combatHUD.eventOutput.GetOutputStr(false)), " "),
+		references.MonsterDevil.Name()+" disappears")
 	assert.NotContains(t, scene.combatHUD.eventOutput.GetOutputStr(false), "Rat")
 	replacement.SetInvisible(true)
 	scene.gameState.SystemCallbacks.Combat.PublishEvent(event)

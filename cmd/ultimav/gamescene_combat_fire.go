@@ -132,7 +132,7 @@ func (g *GameScene) combatImpactLabelPosition(effect CombatImpactEffect) (float6
 			position = current
 		}
 	}
-	x, y := combatPositionToSourcePixels(position)
+	x, y := g.combatLayout().positionToSourcePixels(position)
 	if effect.FireInjury == nil || effect.FireInjury.Fatal {
 		return x, y
 	}

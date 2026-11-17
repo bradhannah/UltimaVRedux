@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"math"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
@@ -80,16 +83,24 @@ func drawCombatAttackBrackets(screen *ebiten.Image, options *ebiten.DrawImageOpt
 	}
 }
 
-func appendCombatAttackReadout(output *text.Output, preview game_state.CombatAttackPreview) {
+// combatReadoutRow is one row of the Turn Order attack readout. Text sits at
+// the left; a weapon's reach or a target's distance sits at the right edge.
+type combatReadoutRow struct {
+	label string // The verdict's label, in the label colour.
+	text  string // Cut plainly when the row is too narrow.
+	value string // Reach (R) or distance (D).
+}
+
+// appendCombatAttackReadoutRows lists each attack source with its own reach
+// and, while aiming, the target with its distance and then a verdict.
+func appendCombatAttackReadoutRows(rows []combatReadoutRow, preview game_state.CombatAttackPreview) []combatReadoutRow {
 	for _, source := range preview.Sources {
-		name := source.Equipment.String()
-		if source.Equipment == references.NoEquipment {
-			name = "Bare Hands"
-		}
-		output.AppendLine().White(name).LightGrayf(" (R%d)", source.MaxRange).Done()
+		rows = append(rows, combatReadoutRow{
+			label: "", text: combatReadoutEquipmentName(source.Equipment), value: fmt.Sprintf("R%d", source.MaxRange),
+		})
 	}
 	if preview.Aim == nil {
-		return
+		return rows
 	}
 	target := preview.Aim.Name
 	if target == "" {
@@ -98,20 +109,67 @@ func appendCombatAttackReadout(output *text.Output, preview game_state.CombatAtt
 	if preview.Aim.Status == game_state.CombatShotChooseTarget {
 		target = "Choose target"
 	}
-	distanceSeparator := " "
-	if preview.Aim.Actor != nil && preview.Aim.Actor.Identity.Slot != 0 {
-		// Keep the full nine-character PC name plus Clone and distance in the
-		// fixed pane. The differently coloured parenthesis remains a separator.
-		distanceSeparator = ""
-	}
-	output.AppendLine().White(target).LightGrayf("%s(D%d)", distanceSeparator, preview.Aim.Distance).Done()
+	rows = append(rows, combatReadoutRow{label: "", text: target, value: fmt.Sprintf("D%d", preview.Aim.Distance)})
 	label := combatAttackActionLabel
-	separator := ": "
 	if preview.Aim.Actor != nil {
-		label += " " + combatAllegianceText(*preview.Aim.Actor)
-		separator = ":"
+		label = combatAllegianceText(*preview.Aim.Actor)
 	}
-	output.AppendLine().Text(label+separator, widgets.DialogLabelColor).Text(combatShotStatusText(preview.Aim.Status), widgets.DialogValueColor).Done()
+
+	return append(rows, combatReadoutRow{label: label + ": ", text: combatShotStatusText(preview.Aim.Status), value: ""})
+}
+
+// combatReadoutEquipmentName is a weapon's name as the narrow readout shows it:
+// "Two-Handed" becomes "2H", so those weapons fit their row whole.
+func combatReadoutEquipmentName(equipment references.Equipment) string {
+	if equipment == references.NoEquipment {
+		return "Bare Hands"
+	}
+	if name, twoHanded := strings.CutPrefix(equipment.String(), "Two-Handed "); twoHanded {
+		return "2H " + name
+	}
+
+	return equipment.String()
+}
+
+// combatReadoutRowText is a row's left-hand text, cut so the row fits width
+// with its value at the right edge.
+func combatReadoutRowText(font *text.UltimaFont, row combatReadoutRow, width int) string {
+	reserved := row.label
+	if row.value != "" {
+		reserved += " " + row.value
+	}
+	reservedWidth, _ := font.MeasureString(reserved)
+
+	return widgets.CutDialogLine(font, row.text, "", width-int(math.Ceil(reservedWidth)))
+}
+
+// drawCombatAttackReadout draws the readout rows from origin and returns the
+// height they used: text from the left, then reach and distance from the right.
+func (g *GameScene) drawCombatAttackReadout(screen *ebiten.Image, origin image.Point, width int) int {
+	hud := g.combatHUD
+	hud.readout = appendCombatAttackReadoutRows(hud.readout[:0], g.combatAttackPreview())
+	if len(hud.readout) == 0 {
+		return 0
+	}
+	output := hud.turnOutput
+	output.Reset()
+	output.SetMaxCharsPerLine(combatHUDOutputChars)
+	for _, row := range hud.readout {
+		line := output.AppendLine()
+		if row.label != "" {
+			line.Text(row.label, widgets.DialogLabelColor)
+		}
+		line.Text(combatReadoutRowText(output.Font, row, width), widgets.DialogValueColor).Done()
+	}
+	output.DrawPanelContent(screen, origin, width, etext.AlignStart)
+	height := int(math.Ceil(output.GetTotalHeightForLines(output.GetPanelContentLineCount())))
+	output.Reset()
+	for _, row := range hud.readout {
+		output.AppendLine().LightGray(row.value).Done()
+	}
+	output.DrawPanelContent(screen, origin, width, etext.AlignEnd)
+
+	return height
 }
 
 func combatShotStatusText(status game_state.CombatShotStatus) string {

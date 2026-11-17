@@ -293,10 +293,12 @@ func TestConfigurationDialogSelectionsUseNaturalTextHeight(t *testing.T) {
 			setting.label,
 			dialog.gameplayOutput.Font,
 			dialog.gameplayOutput.GetLineSpacing(),
-			dialog.gameplayOutput.Font.CharsForWidth(textWidth),
+			dialog.gameplayLabelChars(textWidth),
 		)
+		// A value too wide to sit beside its label adds a line of its own.
 		expectedHeight := int(math.Ceil(measurement.TotalHeight)) +
-			dialog.layout.pixelUnit*audioSettingsGameplayRowPaddingUnits
+			dialog.layout.pixelUnit*audioSettingsGameplayRowPaddingUnits +
+			dialog.gameplayValueLineHeight(dialog.layout.gameplayListRect.Dx(), dialog.layout.pixelUnit, setting)
 		assert.Equal(t, expectedHeight, dialog.layout.gameplayRows[index].Dy())
 	}
 	assert.Greater(t, dialog.layout.gameplayRows[0].Min.Y, dialog.layout.gameplayListRect.Min.Y+dialog.layout.pixelUnit)

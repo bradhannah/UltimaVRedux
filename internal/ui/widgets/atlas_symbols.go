@@ -21,7 +21,8 @@ func atlasMarkerStamp(kind string) [atlasStampSize]string {
 	case "skiff":
 		return [atlasStampSize]string{"     ", "   # ", "  #  ", "#####", " ### "}
 	case "note":
-		return [atlasStampSize]string{"#### ", "#  ##", "# # #", "#   #", "#####"}
+		// A pennant: the player's own flag, unlike any place family.
+		return [atlasStampSize]string{"###  ", "#####", "###  ", "#    ", "#    "}
 	case "towne", "village":
 		return [atlasStampSize]string{
 			"  #  ",

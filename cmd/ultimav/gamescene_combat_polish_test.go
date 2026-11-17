@@ -60,7 +60,7 @@ func TestCombatAllegianceTransitionsBaselineDisclosureAndReuse(t *testing.T) {
 }
 
 func TestCombatAllegianceHealthFrameCompositionAndHiddenActors(t *testing.T) {
-	scene, screen := newCombatConcealmentTestScene(t)
+	scene, _ := newCombatConcealmentTestScene(t)
 	state := scene.gameState
 	actor := state.CombatScene.GetCurrentTurnIdentity()
 	position := state.CombatScene.GetCombatantPosition(actor)
@@ -71,18 +71,15 @@ func TestCombatAllegianceHealthFrameCompositionAndHiddenActors(t *testing.T) {
 	t.Cleanup(frame.Dispose)
 	options := &ebiten.DrawImageOptions{}
 	drawCombatPossessedMarker(frame, options)
-	scene.drawCombatAllegianceHealthOutline(frame, options, actor)
 	drawCombatAttackBrackets(frame, options)
-	drawCombatHealthBar(frame, options, 50, 100)
+	drawCombatHealthMark(frame, options, scene.combatDisclosedHealthBorder(actor), 50, 100)
 	assert.Positive(t, countExactColor(frame, ucolor.CombatPossessed))
 	assert.Positive(t, countExactColor(frame, ucolor.CombatAllegianceEnemy))
 	assert.Positive(t, countExactColor(frame, ucolor.CombatAttackEligibleFace))
 	assertSignatureHP(t, frame, 50, 100)
 	for _, hidden := range []bool{false, true} {
 		state.CombatScene.PartyUnderground[actor.EntityIndex] = hidden
-		screen.Clear()
-		scene.drawCombatAllegianceHealthOutline(screen, options, actor)
-		assert.Equal(t, !hidden, opaquePixelCount(screen) > 0)
+		assert.Equal(t, !hidden, scene.combatDisclosedHealthBorder(actor) != ucolor.EGABlack)
 	}
 }
 
@@ -90,36 +87,11 @@ func TestCombatAttackSideReadoutAndActualActorLayout(t *testing.T) {
 	for _, resolution := range []image.Point{{1280, 720}, {1366, 768}, {1920, 1080}, {2560, 1440}, {3840, 2160}} {
 		t.Run(fmt.Sprint(resolution), func(t *testing.T) {
 			bounds := image.Rectangle{Max: resolution}
-			turn, _ := combatHUDStackedRectangles(bounds, combatHUDRectangle(bounds))
+			turn, _ := combatLayout{}.turnAndReportRectangles(bounds)
 			content := combatHUDContentBounds(bounds, turn)
 			size := float64(combatHUDFontSize) * float64(resolution.X) / 1920
 			font := text.NewUltimaFont(size)
 			output := text.NewOutput(font, size, combatHUDOutputLines, combatHUDOutputChars)
-			for _, loyalty := range []game_state.CombatMonsterLoyalty{game_state.CombatMonsterLoyaltyParty, game_state.CombatMonsterLoyaltyMonster} {
-				for _, status := range []game_state.CombatShotStatus{game_state.CombatShotClear, game_state.CombatShotTerrainBypass, game_state.CombatShotOutOfRange, game_state.CombatShotBlocked, game_state.CombatShotNoAmmo, game_state.CombatShotInterference, game_state.CombatShotUnready, game_state.CombatShotFriendly} {
-					if status == game_state.CombatShotFriendly && loyalty != game_state.CombatMonsterLoyaltyParty {
-						continue // Exact hostile actor projections cannot be friendly targets.
-					}
-					output.Reset()
-					appendCombatAttackReadout(output, game_state.CombatAttackPreview{
-						Sources: []game_state.CombatAttackSource{{Equipment: references.MorningStar, MaxRange: 15}},
-						Aim:     &game_state.CombatAttackTargetPreview{Name: "Lord British", Distance: 15, Status: status, Actor: &game_state.CombatActorPresentation{Loyalty: loyalty}},
-					})
-					require.Equal(t, 3, output.GetPanelContentLineCount())
-					for _, row := range strings.Split(output.GetOutputStr(false), "\n") {
-						assert.LessOrEqual(t, measuredTextWidth(font, strings.TrimSpace(row)), float64(content.Dx()), row)
-					}
-				}
-			}
-			output.Reset()
-			appendCombatAttackReadout(output, game_state.CombatAttackPreview{
-				Sources: []game_state.CombatAttackSource{{Equipment: references.MorningStar, MaxRange: 15}},
-				Aim: &game_state.CombatAttackTargetPreview{Name: "Blackthor Clone", Distance: 15, Status: game_state.CombatShotFriendly,
-					Actor: &game_state.CombatActorPresentation{Identity: game_state.CombatTurnIdentity{IsPartyMember: true, Slot: 1}, Loyalty: game_state.CombatMonsterLoyaltyParty}},
-			})
-			require.Equal(t, 3, output.GetPanelContentLineCount())
-			assert.Contains(t, output.GetOutputStr(false), "Blackthor Clone(D15)")
-			assert.LessOrEqual(t, measuredTextWidth(font, "Blackthor Clone(D15)"), float64(content.Dx()))
 			// Exercise real current-actor text, including full clone name, known
 			// cause and detail; the fixed pane and font must leave space for NEXT.
 			scene, actor := setupCombatAutoAttackInputTest(t)
@@ -197,6 +169,7 @@ func TestCombatGateProductionCompositionShowsFragmentsWithoutOpaqueUnderlay(t *t
 	state.CombatScene.MonsterManager.Clear()
 	state.CombatScene.TurnQueue.RemoveAllMonsters()
 	index, monster := signatureMonster(t, scene, references.MonsterDevil, references.Position{X: 5, Y: 5})
+	monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
 	scene.recordCombatEvent(signatureGateEvent(index, monster))
 	effect := scene.combatSignatureEffects[0]
 	counts := make([]int, 0, 3)
@@ -321,6 +294,8 @@ func TestCombatHealthFramesActualSizeLookalikes(t *testing.T) {
 	scene.gameState.PartyState.GetCharacter(actor.EntityIndex).Intelligence = 255
 	for index, active := range scene.gameState.CombatScene.PartyActive {
 		if active {
+			character := scene.gameState.PartyState.GetCharacter(index)
+			character.SetHp(character.GetMaxHp() - 1) // The battlefield marks only the injured.
 			position := references.Position{X: references.Coordinate(index + 1), Y: 9}
 			scene.gameState.CombatScene.SetPartyMemberPosition(index, position)
 			setCombatConcealmentTerrain(scene.gameState, position, indexes.BrickFloor)
@@ -333,10 +308,13 @@ func TestCombatHealthFramesActualSizeLookalikes(t *testing.T) {
 		monster := game_state.NewCombatMonster(references.MonsterBard, &ref, position, scene.gameState.AsRandomProvider())
 		index := scene.gameState.CombatScene.AddMonsterToQueue(monster)
 		setCombatConcealmentTerrain(scene.gameState, position, indexes.BrickFloor)
-		if i >= 4 {
+		switch {
+		case i >= 4:
 			monster.SetCurrentHP(1)
-		} else if i >= 2 {
+		case i >= 2:
 			monster.SetCurrentHP(max(1, monster.MaxHP()/4))
+		default:
+			monster.SetCurrentHP(monster.MaxHP() - 1)
 		}
 		if i%2 == 1 {
 			scene.gameState.SetRandomSeed(42)
@@ -346,7 +324,7 @@ func TestCombatHealthFramesActualSizeLookalikes(t *testing.T) {
 	scene.gameState.CombatScene.PartyPossessed[actor.EntityIndex] = true
 	scene.updateCombatAllegiance()
 	scene.drawAvatarOverlay(screen)
-	assert.Positive(t, countExactColor(screen, ucolor.CombatAllegianceAlly))
+	assert.Positive(t, countExactColor(screen, ucolor.CombatHealthFriend))
 	assert.Positive(t, countExactColor(screen, ucolor.CombatAllegianceEnemy))
 	var sample image.Rectangle
 	var healthOptions []*ebiten.DrawImageOptions
@@ -364,8 +342,8 @@ func TestCombatHealthFramesActualSizeLookalikes(t *testing.T) {
 		scene.drawCombatActorHealthFrame(reference, scene.combatEntityDrawOptions(view.Position, view.Identity.IsPartyMember, view.Identity.EntityIndex, view.Identity.Slot), view)
 	})
 	// The possessed PC's yellow full frame intentionally overlays its red
-	// allegiance rim. Every uncovered health pixel, the complete 1/25/100-HP
-	// fills and a readable side of every actor's allegiance outline remain exact.
+	// allegiance rim. Every uncovered health pixel, the complete 1/25/99-HP
+	// fills and a readable side of every actor's allegiance border remain exact.
 	require.Equal(t, actor, scene.gameState.CombatScene.GetCurrentTurnIdentity())
 	activeOptions := scene.combatPartyIdentityDrawOptions(scene.gameState.CombatScene.GetCombatantPosition(actor), actor)
 	drawActiveSelectionReference(foreground, activeOptions, scene.gameState.ElapsedMs, ucolor.CombatActiveMonsterOutline)

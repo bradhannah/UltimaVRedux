@@ -92,6 +92,8 @@ func testProductionGateTimingAtRate(t *testing.T, kind references.MonsterType, r
 	oracleRNG.Intn(8) // Creation DEX draw after successful placement (ref:ENEMY-0003).
 	require.Len(t, scene.combatSignatureEffects, 1)
 	effect := scene.combatSignatureEffects[0]
+	gated := state.CombatScene.MonsterManager.GetMonster(effect.Actor.EntityIndex)
+	gated.SetCurrentHP(gated.MaxHP() - 1) // The battlefield marks only the injured.
 	assert.Equal(t, duration, effect.DurationMs)
 	require.Equal(t, game_state.CombatEventGating, effect.Kind)
 	assert.Equal(t, gatePosition, effect.To)

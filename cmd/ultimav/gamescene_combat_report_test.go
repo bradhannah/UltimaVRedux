@@ -105,7 +105,7 @@ func TestCombatReportEmphasisPreservesHiddenReadingTimeAndDrawIsPure(t *testing.
 	state.CancelCombatSpellTargeting()
 	before := hud.notices
 	screen := newPresentationRaster(1280, 720)
-	_, bounds := combatHUDStackedRectangles(screen.Bounds(), combatHUDRectangle(screen.Bounds()))
+	_, bounds := combatLayout{}.turnAndReportRectangles(screen.Bounds())
 	for range 3 {
 		scene.drawCombatEventTape(screen, combatHUDContentBounds(screen.Bounds(), bounds))
 	}
@@ -154,7 +154,7 @@ func TestCombatReportWrappedLabelsFitAndAreRecoverable(t *testing.T) {
 		entry.Pickup.Result.ItemName = "Sandalwood box"
 		scene.recordCombatEvent(entry)
 		screenBounds := image.Rectangle{Max: size}
-		_, panel := combatHUDStackedRectangles(screenBounds, combatHUDRectangle(screenBounds))
+		_, panel := combatLayout{}.turnAndReportRectangles(screenBounds)
 		bounds := combatHUDContentBounds(screenBounds, panel)
 		spans := scene.prepareCombatEventTape(bounds)
 		if size.X == 1280 {
@@ -210,7 +210,7 @@ func TestCombatReportDiscoveryRemainsAcknowledgedAndFitsBattlefield(t *testing.T
 	screen := newPresentationRaster(1280, 720)
 	t.Cleanup(screen.Deallocate)
 	dialog.Draw(screen)
-	assert.True(t, dialog.GetBounds().In(combatBattlefieldRectangle(screen.Bounds())))
+	assert.True(t, dialog.GetBounds().In(combatLayout{}.battlefieldRectangle(screen.Bounds())))
 	state.EventQueueManager.Shutdown()
 	assert.Zero(t, scene.dialogStack.Count())
 	assert.Nil(t, scene.combatLootPreview)

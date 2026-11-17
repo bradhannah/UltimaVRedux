@@ -103,6 +103,7 @@ func newGameScene(
 	gameScene.keyboard = input.NewKeyboard(keyPressDelay)
 	gameScene.initializeTransientCommandInput()
 	gameScene.initializeResizeableVisualElements()
+	gameScene.offerHelpHint()
 
 	gameScene.autoOpenDoorState = &AutoOpenDoorState{}
 

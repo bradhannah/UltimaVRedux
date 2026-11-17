@@ -272,7 +272,7 @@ func TestCombatAreaSpellResultHasOneAccurateLocalImpact(t *testing.T) {
 		{name: "Vortex save", spell: references.InVasGravCorp, kind: references.MonsterSnake, outcome: game_state.CombatSpellResisted, label: "RESIST", report: "resist"},
 		{name: "Vortex immunity", spell: references.InVasGravCorp, kind: references.MonsterBlackthorn, outcome: game_state.CombatSpellImmune, label: "IMMUNE", report: "immune"},
 		{name: "Flame zero", spell: references.InFlamHur, kind: references.MonsterSnake, outcome: game_state.CombatSpellZeroDamage, label: "NO DAMAGE", report: "no damage"},
-		{name: "Flame damage", spell: references.InFlamHur, kind: references.MonsterSnake, outcome: game_state.CombatSpellDamaged, label: "-1", report: "1 damage"},
+		{name: "Flame damage", spell: references.InFlamHur, kind: references.MonsterSnake, outcome: game_state.CombatSpellDamaged, label: "-1", report: "for 1"},
 		{name: "Poison zero", spell: references.InNoxHur, kind: references.MonsterSnake, outcome: game_state.CombatSpellZeroDamage, label: "NO DAMAGE", report: "no damage"},
 		{name: "Poison avoid", spell: references.InNoxHur, kind: references.MonsterSnake, outcome: game_state.CombatSpellAvoided, label: "AVOIDED", report: "avoid"},
 	} {

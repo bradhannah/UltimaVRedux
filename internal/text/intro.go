@@ -53,8 +53,8 @@ type IntroMenuState struct {
 
 // Intro menu layout constants
 const (
-	introMenuTextStartY      = 0.63
-	introMenuTextEndY        = 0.96
+	introMenuTextStartY      = 0.65
+	introMenuTextEndY        = 0.94
 	introMenuFrameStartX     = 0.02
 	introMenuFrameEndX       = 0.98
 	introMenuFrameStartY     = 0.595

@@ -305,10 +305,13 @@ var (
 	CombatUndergroundText          = EGAYellow
 	CombatMaterialization          = EGALightMagenta
 	CombatMaterializationHighlight = EGAWhite
-	// Live combat side belongs to the exterior HP-frame outline and explicit
-	// Ally/Enemy text, never to the HP fill or an upper-left actor symbol.
+	// Live combat side belongs to the health mark's border and explicit
+	// Ally/Enemy text, never to the health strip or an upper-left actor symbol.
+	// The enemy border and enemy text share one colour; a friend's border has
+	// its own, because light blue text on black is too dim to read.
 	CombatAllegianceAlly       = EGALightCyan
 	CombatAllegianceEnemy      = EGALightRed
+	CombatHealthFriend         = EGALightBlue
 	CombatTeleportArrival      = EGALightCyan
 	CombatAttackEligibleFace   = EGALightBlue
 	CombatAttackEligibleBorder = EGABlack

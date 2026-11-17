@@ -40,7 +40,7 @@ func TestCombatPartySpellHUDMeasuredReadout(t *testing.T) {
 		scene.combatHUD.turnOutput = text.NewOutput(font, font.TextFace.Size, combatHUDOutputLines, 80)
 		scene.combatHUD.eventOutput = text.NewOutput(font, font.TextFace.Size, combatHUDOutputLines, 80)
 		bounds := image.Rectangle{Max: size}
-		turn, event := combatHUDStackedRectangles(bounds, combatHUDRectangle(bounds))
+		turn, event := combatLayout{}.turnAndReportRectangles(bounds)
 		turn = combatHUDContentBounds(bounds, turn)
 		event = combatHUDContentBounds(bounds, event)
 		scene.drawCombatPartySpellHUD(target, turn, event)

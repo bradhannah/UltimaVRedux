@@ -88,9 +88,14 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 			"Q saves to the last slot you loaded or saved.", "", "Default: On",
 		},
 		gameplayShowCombatHPBarsIndex: {
-			"Show health bars during combat.", "",
+			"Show a health bar under each injured figure in combat.", "",
 			"Off hides the bars and adds injury descriptions to the battle report.", "",
 			"Damage numbers and fleeing indicators remain visible.", "", "Default: On",
+		},
+		gameplayBattleFrameIndex: {
+			"Frame the battlefield.", "",
+			"Red while the battle is undecided.", "Blue once it is won.", "",
+			"Off: no frame.", "", "Default: On",
 		},
 	}
 	placement := gameScreenPercents

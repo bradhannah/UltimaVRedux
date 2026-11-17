@@ -52,6 +52,7 @@ func (d *AtlasDialog) drawGeography(screen *ebiten.Image) {
 	for _, callout := range callouts {
 		d.drawMapCallout(screen, callout)
 	}
+	d.drawNoteTags(screen, plates)
 	d.drawSuppliedSymbols(screen)
 	// Unselected symbols first so the selected outline remains visible at overlaps.
 	for _, e := range d.entries {
@@ -134,7 +135,7 @@ func (d *AtlasDialog) drawPoint(screen *ebiten.Image, e journal.AtlasEntry, sele
 	colour := atlasPlaceColor(e)
 	if e.Note.ID != 0 {
 		// Personal-note map ink is independent of discovery and Places-row text.
-		colour = DialogAtlasDiscoveredColor
+		colour = atlasNoteColor()
 	}
 	d.drawAtlasMarker(mapScreen, e, center, colour, true)
 }
@@ -562,4 +563,49 @@ func atlasSubImage(source *ebiten.Image, rect image.Rectangle) *ebiten.Image {
 	}
 
 	return result
+}
+
+// drawNoteTags names each of the player's flags beside it on the My Notes tab
+// while labels are shown, so a note is readable there without being selected.
+// Every other tab names a note only when it is selected. A tag is a nameplate in
+// the note ink: the same rounded frame and padding as a place's nameplate. The
+// selected note and every overview entry already carry a full nameplate, which a
+// tag never covers.
+func (d *AtlasDialog) drawNoteTags(screen *ebiten.Image, plates []image.Rectangle) {
+	const (
+		paddingUnits    = 3 // The nameplate padding.
+		paneShareTop    = 2 // A tag is at most two fifths of the pane wide.
+		paneShareBottom = 5
+		half            = 2
+	)
+	if d.view.Overview || d.view.Labels != AtlasLabelsSelected || d.view.Filters.Places != journal.AtlasNotePlaces {
+		return
+	}
+	unit := ClassicUIPixelUnit(d.width, d.height)
+	padding := paddingUnits * unit
+	for _, entry := range d.entries {
+		if entry.Note.ID == 0 || entry.Key == d.view.SelectedKey {
+			continue
+		}
+		marker, ok := d.atlasMarkerCenter(entry)
+		if !ok {
+			continue
+		}
+		name := CutDialogLine(d.font, entry.Name, "", d.mapRect.Dx()*paneShareTop/paneShareBottom)
+		width, height := d.font.MeasureString(name)
+		size := image.Pt(int(math.Ceil(width))+half*padding, int(math.Ceil(height))+half*padding)
+		clearance := (d.atlasSymbolCell()+1)/half + unit
+		left, top := marker.X+clearance, marker.Y-size.Y/half
+		if left+size.X > d.mapRect.Max.X {
+			left = marker.X - clearance - size.X // No room to the right of the flag.
+		}
+		tag := image.Rect(left, top, left+size.X, top+size.Y)
+		if !tag.In(d.mapRect) || atlasCalloutOverlap(tag, plates, unit) > 0 {
+			continue
+		}
+		FillClassicPixelRoundedRect(screen, tag, unit, ucolor.DialogBackground.RGBA())
+		DrawClassicPixelRoundedFrame(screen, tag, unit, atlasNoteColor())
+		atlasSingleLine(d.label, name, atlasNoteColor())
+		d.label.DrawPanelContent(screen, tag.Min.Add(image.Pt(padding, padding)), tag.Dx()-half*padding, etext.AlignStart)
+	}
 }

@@ -309,8 +309,10 @@ The additional Gameplay preferences are:
 |---|---|---|---|
 | Combat Speed | `Gameplay.Combat.SpeedFactor` | 0.5x, 1x, 1.5x, 2x, 3x, 4x, 6x, 8x, 12x, 16x, 20x, Ludicrous (stored as 100) | 1x |
 | Combat Key Repeat | `Gameplay.Combat.KeyRepeat` | Off, Measured, Fast 10, Fast 20, Fast 30 (stored as 0, 6, 10, 20, 30 per second) | Measured |
+| Combat Panels | `Gameplay.Combat.Panels` | Order + Report, Turn Order only, Off (stored as 0, 1, 2) | Order + Report |
 | Confirm Quick Save | `Gameplay.Saves.ConfirmQuickSave` | On / Off | On |
 | Show Combat HP Bars | `Gameplay.Combat.ShowHealthBars` | On / Off | On |
+| Battle Frame | `Gameplay.Combat.BattleFrame` | On / Off | On |
 | Maximum Action Popups | `Gameplay.Presentation.MaxVisibleActionPopups` | integer 0–3; 0 is Off | 3 |
 | Simple Notes Mode | `Gameplay.Presentation.SimpleNotesMode` | On / Off | Off |
 
@@ -350,6 +352,15 @@ clamped to the list; exact midpoints resolve upward (0.25→0.5, 0.75→1, 1.25�
 next successful save. F2 detail persistence and full saves never write the old
 speed authority. Immediate Workbench gameplay preference setters reject writes
 while this dialog owns a staged transaction; Apply/Cancel releases that reservation.
+
+All three Configure tabs share one look: framed boxes, headings, and the white
+plate for whatever has the cursor. Sound frames its three volumes under a VOLUME
+heading as rows of ten blocks, one block per step of the 0 to 10 scale, with the
+figure at the right and a line saying where the selected channel is heard.
+Display shows every mode at once as three cards (`displayModeCards`), each with a
+small picture of the game on a display; the chosen mode's card is framed in
+white, or filled while the cards have the cursor, and the others are dim. The
+size row sits under its own heading and the help text in a framed box.
 
 Display offers Windowed, Maximized Window, and Borderless Fullscreen. Windowed
 mode offers output-pixel presets (including 1600×900), quantized to the nearest

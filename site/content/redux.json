@@ -75,6 +75,16 @@
       "effect": "Change how quickly combat actions and animations play. 1x is normal speed; higher values make combat faster."
     },
     {
+      "label": "Combat Key Repeat",
+      "tag": "helper",
+      "effect": "Hold a key in combat to repeat it, for every party member in turn. Measured repeats arrows and Tab about 6 times a second; Fast also repeats A, up to 10, 20 or 30 times a second. Default: Measured."
+    },
+    {
+      "label": "Combat Panels",
+      "tag": "look",
+      "effect": "Choose what is drawn left of the battlefield. Order + Report shows Turn Order above the Battle Report. Turn Order only and Off send battle messages to the message window. Default: Order + Report."
+    },
+    {
       "label": "Confirm Quick Save",
       "tag": "helper",
       "effect": "Ask before saving with Q. On asks first; Off saves immediately. Q saves to the last slot you loaded or saved. Default: On."
@@ -82,12 +92,22 @@
     {
       "label": "Show Combat HP Bars",
       "tag": "look",
-      "effect": "Show health bars during combat. Off hides the bars and adds injury descriptions to the battle report. Default: On."
+      "effect": "Show a health bar under each injured figure in combat. Off hides the bars and adds injury descriptions to the battle report. Default: On."
+    },
+    {
+      "label": "Battle Frame",
+      "tag": "look",
+      "effect": "Frame the battlefield: red while the battle is undecided, blue once it is won. Off draws no frame. Default: On."
     },
     {
       "label": "Maximum Action Popups",
       "tag": "look",
       "effect": "Choose how many action messages can appear over the map at once. Off hides them; messages still appear in the lower-right text area."
+    },
+    {
+      "label": "Simple Notes Mode",
+      "tag": "look",
+      "effect": "Journal shows only My Notes. On shows My Notes only; Off shows all tabs. Nothing is deleted. Default: Off."
     }
   ],
   "option_tags": {

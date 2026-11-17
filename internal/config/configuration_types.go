@@ -30,7 +30,8 @@ func validateConfigurationTypes(source *viper.Viper) error {
 			}},
 		{"integer", []string{"Resolution", "Audio.MusicVolume", "Audio.SoundEffectVolume", "Audio.AmbientVolume",
 			"Display.WindowWidth", "Display.WindowHeight", "Display.TargetFPS", "Lighting.AmbientLightRadius",
-			"Debug.SurfaceMovementDurationMs", gameplayMaxActionPopupsKey, gameplayCombatKeyRepeatKey},
+			"Debug.SurfaceMovementDurationMs", gameplayMaxActionPopupsKey, gameplayCombatKeyRepeatKey,
+			gameplayCombatPanelsKey},
 			func(value any) bool {
 				_, ok := value.(int)
 
@@ -41,7 +42,8 @@ func validateConfigurationTypes(source *viper.Viper) error {
 			gameplayShowConcealedTurnOrderSlotsKey, gameplayPersistHiddenDungeonDiscoveriesKey,
 			gameplayShowSubduedUnlitDungeonsKey, gameplaySmoothSurfaceMovementKey, gameplayFlexibleSextantUseKey,
 			gameplayAnkhWandererBonusKey, gameplayConfirmQuickSaveKey, gameplayShowCombatHPBarsKey,
-			gameplaySimpleNotesModeKey},
+			gameplayShowCombatBattleFrameKey,
+			gameplaySimpleNotesModeKey, gameplayHelpHintSeenKey},
 			func(value any) bool {
 				_, ok := value.(bool)
 
@@ -85,6 +87,11 @@ func validateGameplaySourceNumbers(source *viper.Viper) error {
 	if source.IsSet(gameplayCombatKeyRepeatKey) {
 		if err := CombatKeyRepeatSpec().Validate(source.GetFloat64(gameplayCombatKeyRepeatKey)); err != nil {
 			return fmt.Errorf("%s: %w", gameplayCombatKeyRepeatKey, err)
+		}
+	}
+	if source.IsSet(gameplayCombatPanelsKey) {
+		if err := CombatPanelsSpec().Validate(source.GetFloat64(gameplayCombatPanelsKey)); err != nil {
+			return fmt.Errorf("%s: %w", gameplayCombatPanelsKey, err)
 		}
 	}
 

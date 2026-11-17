@@ -61,6 +61,7 @@ func TestCombatFleeChevronPreservesActorTransformOptionsAndAlpha(t *testing.T) {
 func TestCombatFleeChevronSignatureBoundsAndState(t *testing.T) {
 	scene, screen := newCombatConcealmentTestScene(t)
 	index, monster := signatureMonster(t, scene, references.MonsterDevil, references.Position{X: 5, Y: 5})
+	monster.SetCurrentHP(monster.MaxHP() - 1) // The battlefield marks only the injured.
 	monster.SetFleeing(true)
 	scene.recordCombatEvent(game_state.CombatEvent{Kind: game_state.CombatEventTeleport,
 		From: monster.Position(), To: monster.Position(),

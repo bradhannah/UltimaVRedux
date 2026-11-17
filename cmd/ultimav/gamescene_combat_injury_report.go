@@ -68,7 +68,8 @@ func (g *GameScene) combatInjurySuffix(event game_state.CombatEvent) string {
 func (g *GameScene) appendCombatInjurySuffix(line *text.LineBuilder, event game_state.CombatEvent) *text.LineBuilder {
 	identity, wording := g.combatInjuryReport(event)
 	if wording != "" {
-		line.White(". ").Text(identity.Name, identity.Color).White(" is ").Text(wording, ucolor.CombatDamageText)
+		// The full stop is its own run so a row that has room for it keeps it.
+		line.White(".").White(" ").Text(identity.Name, identity.Color).White(" is ").Text(wording, ucolor.CombatDamageText)
 	}
 
 	return line

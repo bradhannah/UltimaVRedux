@@ -19,7 +19,7 @@ func TestAtlasNoteMapInkPreservesSelectionAndDirectoryColours(t *testing.T) {
 		screen.Clear()
 		dialog.drawPoint(screen, entry, selected)
 		pixels := atlasMarkerPixels(screen)
-		require.Positive(t, atlasExactInkCount(pixels, ucolor.EGALightGreen))
+		require.Positive(t, atlasExactInkCount(pixels, ucolor.EGALightMagenta), "a note is a flag in its own ink")
 		require.Positive(t, atlasExactInkCount(pixels, ucolor.EGABlack))
 		require.Zero(t, atlasExactInkCount(pixels, ucolor.EGAWhite))
 		if selected {

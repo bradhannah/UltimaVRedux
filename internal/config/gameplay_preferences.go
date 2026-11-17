@@ -20,14 +20,17 @@ var (
 )
 
 const (
-	gameplayCombatSpeedKey      = "Gameplay.Combat.SpeedFactor"
-	gameplayCombatKeyRepeatKey  = "Gameplay.Combat.KeyRepeat"
-	gameplayConfirmQuickSaveKey = "Gameplay.Saves.ConfirmQuickSave"
-	gameplayShowCombatHPBarsKey = "Gameplay.Combat.ShowHealthBars"
-	gameplayMaxActionPopupsKey  = "Gameplay.Presentation.MaxVisibleActionPopups"
-	gameplaySimpleNotesModeKey  = "Gameplay.Presentation.SimpleNotesMode"
-	legacyCombatSpeedKey        = "Debug.CombatMovementSpeedFactor"
-	numericGridTolerance        = 1e-9 // In step-index units; half-steps remain exactly representable.
+	gameplayCombatSpeedKey           = "Gameplay.Combat.SpeedFactor"
+	gameplayCombatKeyRepeatKey       = "Gameplay.Combat.KeyRepeat"
+	gameplayCombatPanelsKey          = "Gameplay.Combat.Panels"
+	gameplayConfirmQuickSaveKey      = "Gameplay.Saves.ConfirmQuickSave"
+	gameplayShowCombatHPBarsKey      = "Gameplay.Combat.ShowHealthBars"
+	gameplayShowCombatBattleFrameKey = "Gameplay.Combat.BattleFrame"
+	gameplayMaxActionPopupsKey       = "Gameplay.Presentation.MaxVisibleActionPopups"
+	gameplaySimpleNotesModeKey       = "Gameplay.Presentation.SimpleNotesMode"
+	gameplayHelpHintSeenKey          = "Gameplay.Presentation.HelpHintSeen"
+	legacyCombatSpeedKey             = "Debug.CombatMovementSpeedFactor"
+	numericGridTolerance             = 1e-9 // In step-index units; half-steps remain exactly representable.
 )
 
 // NumericSettingSpec defines a bounded discrete preference. Values are derived
@@ -84,6 +87,36 @@ func CombatKeyRepeatSpec() NumericSettingSpec {
 	return NumericSettingSpec{
 		Min: 0, Max: combatKeyRepeatFastest, Step: 1, Default: CombatKeyRepeatMeasured,
 		Values: []float64{0, CombatKeyRepeatMeasured, combatKeyRepeatFast10, combatKeyRepeatFast20, combatKeyRepeatFastest},
+	}
+}
+
+// Combat Panels choices: what is drawn beside the battlefield.
+const (
+	// CombatPanelsOrderAndReport shows Turn Order above the Battle Report (the default).
+	CombatPanelsOrderAndReport = iota
+	// CombatPanelsTurnOrderOnly shows a full-height Turn Order; battle messages
+	// go to the message window.
+	CombatPanelsTurnOrderOnly
+	// CombatPanelsOff shows no panels; battle messages go to the message window.
+	CombatPanelsOff
+)
+
+// CombatPanelsSpec returns the Combat Panels choices.
+func CombatPanelsSpec() NumericSettingSpec {
+	return NumericSettingSpec{
+		Min: CombatPanelsOrderAndReport, Max: CombatPanelsOff, Step: 1, Default: CombatPanelsOrderAndReport, Values: nil,
+	}
+}
+
+// FormatCombatPanels names a Combat Panels choice for players.
+func FormatCombatPanels(value float64) string {
+	switch int(value) {
+	case CombatPanelsTurnOrderOnly:
+		return "Turn Order only"
+	case CombatPanelsOff:
+		return "Off"
+	default:
+		return "Order + Report"
 	}
 }
 
@@ -203,6 +236,9 @@ func ValidateGameplayConfiguration(settings GameplayConfiguration) error {
 	if err := CombatKeyRepeatSpec().Validate(float64(settings.CombatKeyRepeat)); err != nil {
 		return fmt.Errorf("%s: %w", gameplayCombatKeyRepeatKey, err)
 	}
+	if err := CombatPanelsSpec().Validate(float64(settings.CombatPanels)); err != nil {
+		return fmt.Errorf("%s: %w", gameplayCombatPanelsKey, err)
+	}
 
 	return nil
 }
@@ -224,8 +260,11 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		CombatSpeedFactor:               CombatSpeedSpec().Default,
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
+		ShowCombatBattleFrame:           true,
 		MaxVisibleActionPopups:          int(ActionPopupsSpec().Default),
 		CombatKeyRepeat:                 int(CombatKeyRepeatSpec().Default),
+		CombatPanels:                    CombatPanelsOrderAndReport,
+		HelpHintSeen:                    false,
 		SimpleNotesMode:                 false,
 	}
 }
@@ -245,7 +284,9 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	uc.configuredBoolean(&settings.ShowSubduedUnlitDungeons, gameplayShowSubduedUnlitDungeonsKey)
 	uc.configuredBoolean(&settings.ConfirmQuickSave, gameplayConfirmQuickSaveKey)
 	uc.configuredBoolean(&settings.ShowCombatHPBars, gameplayShowCombatHPBarsKey)
+	uc.configuredBoolean(&settings.ShowCombatBattleFrame, gameplayShowCombatBattleFrameKey)
 	uc.configuredBoolean(&settings.SimpleNotesMode, gameplaySimpleNotesModeKey)
+	uc.configuredBoolean(&settings.HelpHintSeen, gameplayHelpHintSeenKey)
 	if uc.source.IsSet(gameplayCombatSpeedKey) {
 		settings.CombatSpeedFactor = uc.normalizedCombatSpeed(uc.source.GetFloat64(gameplayCombatSpeedKey), "combat speed")
 	} else if uc.source.IsSet(legacyCombatSpeedKey) {
@@ -257,6 +298,9 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	}
 	if uc.source.IsSet(gameplayCombatKeyRepeatKey) {
 		settings.CombatKeyRepeat = uc.source.GetInt(gameplayCombatKeyRepeatKey)
+	}
+	if uc.source.IsSet(gameplayCombatPanelsKey) {
+		settings.CombatPanels = uc.source.GetInt(gameplayCombatPanelsKey)
 	}
 }
 
@@ -292,6 +336,11 @@ func (uc *UltimaVConfiguration) GetSimpleNotesMode() bool {
 	return uc != nil && uc.GameplayConfiguration != nil && uc.GameplayConfiguration.SimpleNotesMode
 }
 
+// GetShowCombatBattleFrame defaults to framed when a fixture has no settings.
+func (uc *UltimaVConfiguration) GetShowCombatBattleFrame() bool {
+	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ShowCombatBattleFrame
+}
+
 // GetShowCombatHPBars defaults to visible when a fixture has no settings.
 func (uc *UltimaVConfiguration) GetShowCombatHPBars() bool {
 	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ShowCombatHPBars
@@ -304,6 +353,26 @@ func (uc *UltimaVConfiguration) GetCombatKeyRepeat() int {
 	}
 
 	return uc.GameplayConfiguration.CombatKeyRepeat
+}
+
+// GetHelpHintSeen reports that Help has been opened once. A fixture without
+// settings counts as seen, so it never receives the hint.
+func (uc *UltimaVConfiguration) GetHelpHintSeen() bool {
+	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.HelpHintSeen
+}
+
+// SetHelpHintSeen remembers that Help has been opened.
+func (uc *UltimaVConfiguration) SetHelpHintSeen() error {
+	return uc.saveGameplayPreference(func(settings *GameplayConfiguration) { settings.HelpHintSeen = true })
+}
+
+// GetCombatPanels returns the Combat Panels choice; fixtures get the default.
+func (uc *UltimaVConfiguration) GetCombatPanels() int {
+	if uc == nil || uc.GameplayConfiguration == nil {
+		return CombatPanelsOrderAndReport
+	}
+
+	return uc.GameplayConfiguration.CombatPanels
 }
 
 // GetMaxVisibleActionPopups preserves explicit zero (Off).

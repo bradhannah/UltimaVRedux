@@ -112,16 +112,23 @@ func (d *QuestJournalDialog) calculateTabs() {
 		// The second header row names the mode, so the missing tabs are explained in words.
 		rows = [][]QuestJournalTab{{QuestJournalNotesTab}, {QuestJournalChronicleTab}}
 	}
-	for row, tabs := range rows {
-		total := 0
-		widths := make([]int, len(tabs))
+	// Both rows share one set of columns, each as wide as its widest title, so
+	// the tabs line up as a grid instead of each row spacing itself.
+	widths := make([]int, len(rows[0]))
+	for _, tabs := range rows {
 		for i, tab := range tabs {
 			width, _ := d.font.MeasureString(d.tabTitle(tab))
-			widths[i] = int(math.Ceil(width))
-			total += widths[i]
+			widths[i] = max(widths[i], int(math.Ceil(width)))
 		}
-		gap := max(0, (d.layout.tabsRect.Dx()-total)/len(tabs))
-		left := d.layout.tabsRect.Min.X + (d.layout.tabsRect.Dx()-total-gap*(len(tabs)-1))/questJournalCenterDivisor
+	}
+	total := 0
+	for _, width := range widths {
+		total += width
+	}
+	gap := max(0, (d.layout.tabsRect.Dx()-total)/len(widths))
+	first := d.layout.tabsRect.Min.X + (d.layout.tabsRect.Dx()-total-gap*(len(widths)-1))/questJournalCenterDivisor
+	for row, tabs := range rows {
+		left := first
 		top := d.layout.tabsRect.Min.Y + row*d.layout.tabsRect.Dy()/headerRows
 		for i, tab := range tabs {
 			d.layout.tabRects[tab] = image.Rect(left, top, left+widths[i], top+d.layout.tabsRect.Dy()/headerRows)

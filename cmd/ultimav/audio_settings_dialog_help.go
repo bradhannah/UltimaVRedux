@@ -56,6 +56,16 @@ func combatKeyRepeatHelpLines() []string {
 	}
 }
 
+func combatPanelsHelpLines() []string {
+	return []string{
+		"Chooses what is drawn left of the battlefield.", "",
+		"Order + Report: Turn Order above the Battle Report.",
+		"Turn Order only: battle messages go to the message window.",
+		"Off: no panels; battle messages go to the message window.", "",
+		"Default: " + config.FormatCombatPanels(config.CombatPanelsSpec().Default),
+	}
+}
+
 func actionPopupsHelpLines(spec config.NumericSettingSpec) []string {
 	choices := make([]string, 0, len(spec.Choices()))
 	for _, value := range spec.Choices() {

@@ -3,6 +3,7 @@ package widgets
 import (
 	"image"
 	"strconv"
+	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/display"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
@@ -24,13 +25,23 @@ const (
 	commandHelpSides        = 2
 )
 
-// CommandHelpEntry is detached guidance, never an executable command.
+// CommandHelpEntry is detached guidance, never an executable command. Group
+// gathers related keys on the Right now page.
 type CommandHelpEntry struct {
 	Key         string
 	Purpose     string
 	NextInput   string
 	Unavailable string
+	Group       string
 }
+
+// Help opens on Right now: the keys that work at this moment.
+const (
+	helpPageNow = iota
+	helpPageCommands
+	helpPageStatus
+	helpPageCount
+)
 
 // StatusHelpEntry describes an already visible status-rail icon.
 type StatusHelpEntry struct {
@@ -55,21 +66,21 @@ type statusHelpIcon struct {
 // CommandHelpDialog is a keyboard-only, transient command reference.
 type CommandHelpDialog struct {
 	navigation
-	entries    []CommandHelpEntry
-	keyboard   *input.Keyboard
-	onClose    func()
-	output     *text.Output
-	footer     *text.Output
-	border     *Border
-	row        int
-	width      int
-	height     int
-	title      *text.Output
-	header     *text.Output
-	status     HelpStatusView
-	statusMode bool
-	pageRows   [2]int
-	icons      []statusHelpIcon
+	entries  []CommandHelpEntry
+	keyboard *input.Keyboard
+	onClose  func()
+	output   *text.Output
+	footer   *text.Output
+	border   *Border
+	row      int
+	width    int
+	height   int
+	title    *text.Output
+	header   *text.Output
+	status   HelpStatusView
+	page     int
+	pageRows [helpPageCount]int
+	icons    []statusHelpIcon
 }
 
 // NewCommandHelpDialog creates a detached, paged command reference.
@@ -85,7 +96,7 @@ func NewCommandHelpDialog(
 		output: nil, footer: nil, border: nil, row: 0, width: 0, height: 0,
 		title: nil, header: nil, status: HelpStatusView{Worn: append([]StatusHelpEntry(nil), status.Worn...),
 			Effects: append([]StatusHelpEntry(nil), status.Effects...), Food: status.Food},
-		statusMode: false, pageRows: [2]int{}, icons: nil,
+		page: helpPageNow, pageRows: [helpPageCount]int{}, icons: nil,
 	}
 	dialog.ensureLayout()
 	keyboard.PrepareForTransition(KeyboardTransitionDelayMs)
@@ -124,38 +135,77 @@ func (d *CommandHelpDialog) populatePage() {
 	d.output.Reset()
 	d.icons = nil
 	d.header.Reset()
-	commandsColor, statusColor := DialogHeaderColor, DialogControlHintColor
-	commandsLabel, statusLabel := "[Commands]", "Status"
-	if d.statusMode {
-		commandsColor, statusColor = statusColor, commandsColor
-		commandsLabel, statusLabel = "Commands", "[Status]"
+	tabs := d.header.AppendLine()
+	for page, label := range [helpPageCount]string{"Right now", "Commands", "Status"} {
+		colour := DialogControlHintColor
+		if page == d.page {
+			label, colour = "["+label+"]", DialogHeaderColor
+		}
+		if page > 0 {
+			tabs.Text("    ", colour)
+		}
+		tabs.Text(label, colour)
 	}
-	d.header.AppendLine().Text(commandsLabel, commandsColor).Text("    "+statusLabel, statusColor).Done()
+	tabs.Done()
 	width := d.border.GetInteriorBounds().Dx() - commandHelpSides*commandHelpPadding
-	if d.statusMode {
+	if d.page == helpPageStatus {
 		width -= d.iconColumnWidth()
 	}
 	d.output.SetMaxCharsPerLine(max(1, d.output.Font.CharsForWidth(width)))
-	if d.statusMode {
+	switch d.page {
+	case helpPageStatus:
 		d.populateStatus()
-	} else {
+	case helpPageCommands:
 		d.populateCommands()
+	default:
+		d.populateNow(width)
 	}
 	d.footer.Reset()
-	title := "COMMAND HELP"
-	if d.statusMode {
-		title = "STATUS HELP"
-	}
+	title := [helpPageCount]string{"KEYS THAT WORK RIGHT NOW", "COMMAND HELP", "STATUS HELP"}[d.page]
 	d.footer.AppendLine().Text(title, DialogHeaderColor).
 		Text("   No time or resources spent", DialogControlHintColor).WordWrap().Done()
 	d.footer.AppendLine().Text("[Tab/Shift+Tab]", DialogControlKeyColor).
-		Text(" Commands/Status  ", DialogControlHintColor).
+		Text(" Page of Help  ", DialogControlHintColor).
 		Text("[Up/Down]", DialogControlKeyColor).Text(" Scroll  ", DialogControlHintColor).
 		Text("[Shift+Up/Down/PgUp/PgDn]", DialogControlKeyColor).Text(" Page  ", DialogControlHintColor).
 		Text("[Space]", DialogControlKeyColor).Text(" Next  ", DialogControlHintColor).
 		Text("[Home/End]", DialogControlKeyColor).Text(" First/Last  ", DialogControlHintColor).
 		Text("[Esc]", DialogControlKeyColor).Text(" Close", DialogControlHintColor).WordWrap().Done()
 	d.row = min(d.row, d.lastRow())
+}
+
+// populateNow lists the keys usable at this moment, one group to a heading and
+// several keys to a row, so the whole answer normally fits one screen. Keys that
+// cannot be used here are named last; Commands explains each one.
+func (d *CommandHelpDialog) populateNow(width int) {
+	var groups, unavailable []string
+	hints := map[string][]ControlHint{}
+	for _, entry := range d.entries {
+		if entry.Unavailable != "" {
+			unavailable = append(unavailable, entry.Key)
+
+			continue
+		}
+		if _, known := hints[entry.Group]; !known {
+			groups = append(groups, entry.Group)
+		}
+		hints[entry.Group] = append(hints[entry.Group], ControlHint{Key: entry.Key, Action: entry.Purpose})
+	}
+	chars := max(1, d.output.Font.CharsForWidth(width))
+	for _, group := range groups {
+		d.output.SetMaxCharsPerLine(chars)
+		d.output.AppendLine().Text(group, DialogLabelColor).Done()
+		PackControlHints(d.output, hints[group], width, etext.AlignStart)
+		d.output.AppendLine().White("").Done()
+	}
+	d.output.SetMaxCharsPerLine(chars)
+	if len(groups) == 0 {
+		d.output.AppendLine().Text("No command key works at this moment.", DialogValueColor).WordWrap().Done()
+	}
+	if len(unavailable) > 0 {
+		d.output.AppendLine().Text("Not available here: "+strings.Join(unavailable, ", ")+".",
+			DialogControlHintColor).WordWrap().Done()
+	}
 }
 
 func (d *CommandHelpDialog) populateCommands() {
@@ -223,15 +273,11 @@ func (d *CommandHelpDialog) Update() {
 		return
 	}
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyTab) {
-		index := 0
-		if d.statusMode {
-			index = 1
+		step := 1
+		if d.keyboard.IsModifierPressed(input.ModifierShift) {
+			step = helpPageCount - 1
 		}
-		d.pageRows[index] = d.row
-		d.statusMode = !d.statusMode
-		d.row = d.pageRows[1-index]
-		d.Reset()
-		d.populatePage()
+		d.showPage((d.page + step) % helpPageCount)
 
 		return
 	}
@@ -252,6 +298,15 @@ func (d *CommandHelpDialog) Update() {
 	}
 }
 
+// showPage changes page and restores the reading position last left on it.
+func (d *CommandHelpDialog) showPage(page int) {
+	d.pageRows[d.page] = d.row
+	d.page = page
+	d.row = d.pageRows[page]
+	d.Reset()
+	d.populatePage()
+}
+
 // Draw renders the visible command page through Output.
 func (d *CommandHelpDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
@@ -263,7 +318,7 @@ func (d *CommandHelpDialog) Draw(screen *ebiten.Image) {
 	bounds.Min.Y += int(d.title.GetTotalHeightForLines(1))
 	d.header.DrawPanelContent(screen, bounds.Min, bounds.Dx(), etext.AlignCenter)
 	content := d.contentBounds()
-	if d.statusMode {
+	if d.page == helpPageStatus {
 		d.drawStatusIcons(screen, content)
 		content.Min.X += d.iconColumnWidth()
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -33,6 +34,7 @@ type AtlasDialog struct {
 	width, height, rowHeight                   int
 	mapRect, listRect, detailRect, footerRect  image.Rectangle
 	placesHeaderRect, positionRect, statusRect image.Rectangle
+	notesRect                                  image.Rectangle
 	font                                       *text.UltimaFont
 	header, row, details, footer, label        *text.Output
 	panelHeader, position, zoom                *text.Output
@@ -75,6 +77,19 @@ func (d *AtlasDialog) Refresh(dossier journal.AtlasDossier) {
 func (d *AtlasDialog) refilter() {
 	oldSelection := d.selection
 	d.entries = journal.FilterAtlasEntries(d.dossier.Entries, d.view.Filters)
+	if d.view.Filters.Places == journal.AtlasAllPlaces {
+		// The player's own notes lead the complete list instead of trailing every place.
+		slices.SortStableFunc(d.entries, func(a, b journal.AtlasEntry) int {
+			switch {
+			case a.Note.ID != 0 && b.Note.ID == 0:
+				return -1
+			case a.Note.ID == 0 && b.Note.ID != 0:
+				return 1
+			default:
+				return 0
+			}
+		})
+	}
 	d.selection = max(0, min(oldSelection, len(d.entries)-1))
 	if (d.view.Overview || len(d.entries) == 0) && d.offersOverview() {
 		d.view.Overview = true
@@ -275,9 +290,9 @@ func (d *AtlasDialog) cycleCategory() {
 	if d.keyboard.IsModifierPressed(input.ModifierShift) {
 		direction = -1
 	}
-	count := int(journal.AtlasPlaceFilterCount)
-	//nolint:gosec // Positive modulo bounds the selected category to 0..7.
-	d.view.Filters.Places = journal.AtlasPlaceFilter((int(d.view.Filters.Places) + direction + count) % count)
+	order := atlasTabOrder()
+	current := slices.Index(order[:], d.view.Filters.Places)
+	d.view.Filters.Places = order[(max(current, 0)+direction+len(order))%len(order)]
 	d.view.Overview = false
 	d.selection = 0
 	d.refilter()
@@ -350,6 +365,7 @@ func (d *AtlasDialog) Draw(screen *ebiten.Image) {
 	d.drawDirectory(screen)
 	d.drawDetails(screen)
 	d.drawPositionStatus(screen)
+	d.drawNotesBar(screen)
 	d.drawFooter(screen)
 }
 
@@ -460,6 +476,9 @@ func (d *AtlasDialog) mappedCount() int {
 	return count
 }
 func (d *AtlasDialog) overviewFields() [][2]string {
+	if d.view.Filters.Places == journal.AtlasNotePlaces && len(d.entries) == 0 {
+		return d.noNotesFields()
+	}
 	mapped, visible := d.mappedCount(), 0
 	for _, entry := range d.entries {
 		if _, ok := d.atlasMarkerCenter(entry); ok {
@@ -496,11 +515,26 @@ func (d *AtlasDialog) emptyCategoryText() string {
 		}
 
 		return "No boarded boats parked on Britannia. Recording begins when you use boats with a sextant."
-	case journal.AtlasNotePlaces:
-		return "No personal notes yet."
 	default:
 		return "No known places in this category."
 	}
+}
+
+// noNotesFields teaches how to plant a first flag where the player went looking
+// for one. The notes bar below says why N cannot be used at this moment; these
+// rows stay short enough to read without paging.
+func (d *AtlasDialog) noNotesFields() [][2]string {
+	fields := [][2]string{
+		{"", "No notes yet. To plant a flag here:"},
+		{"N", "on this Map."},
+		{"Ctrl+N", "while exploring."},
+		{"", "Both need a sextant reading."},
+	}
+	if d.dossier.FixNeedsNight {
+		fields = append(fields, [2]string{"By day", "Configure, Flexible Sextant Use."})
+	}
+
+	return append(fields, [2]string{"", "Flags also appear in the Journal."})
 }
 
 func (d *AtlasDialog) drawDetails(screen *ebiten.Image) {

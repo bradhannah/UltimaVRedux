@@ -309,6 +309,7 @@ func (g *GameState) CurrentAtlasDossier() journal.AtlasDossier {
 		}
 	} else {
 		dossier.FixUnavailable = g.sextantUnavailableReason()
+		dossier.FixNeedsNight = g.CurrentSextantEligibility() == SextantDaylight
 	}
 
 	return dossier

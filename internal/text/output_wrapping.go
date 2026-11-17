@@ -231,21 +231,22 @@ func (o *Output) wrapSingleLogicalLineWithContinuationIndent(
 		// Try to find last space in the part that would fit
 		remainingSpace := o.maxCharsPerLine - currentLength
 
+		wrapPoint := 0
 		if remainingSpace > 0 {
 			// Find last word boundary before max length
-			wrapPoint := findLastSpace(segText, remainingSpace)
-
-			if wrapPoint > 0 {
-				// Split at word boundary
-				partSegment := seg
-				partSegment.Text = segText[:wrapPoint]
-				currentLine.Segments = append(currentLine.Segments, partSegment)
-				segText = strings.TrimLeft(segText[wrapPoint:], " ")
-			} else if currentLength > 0 {
-				// Move the whole incoming word to the continuation row instead of
-				// splitting it merely to fill the remaining columns.
-				segText = strings.TrimLeft(segText, " ")
-			}
+			wrapPoint = findLastSpace(segText, remainingSpace)
+		}
+		if wrapPoint > 0 {
+			// Split at word boundary
+			partSegment := seg
+			partSegment.Text = segText[:wrapPoint]
+			currentLine.Segments = append(currentLine.Segments, partSegment)
+			segText = strings.TrimLeft(segText[wrapPoint:], " ")
+		} else if currentLength > 0 {
+			// Move the whole incoming word to the continuation row instead of
+			// splitting it merely to fill the remaining columns. A full row
+			// moves it too, so no continuation row starts with its space.
+			segText = strings.TrimLeft(segText, " ")
 		}
 
 		// Flush current line and continue with remainder
@@ -384,6 +385,11 @@ func findLastSpace(text string, maxLen int) int {
 	runeCount := 0
 	for byteIndex, char := range text {
 		if runeCount >= maxLen {
+			// A word that ends exactly at the limit fills the row.
+			if char == ' ' {
+				return byteIndex
+			}
+
 			break
 		}
 		if char == ' ' {

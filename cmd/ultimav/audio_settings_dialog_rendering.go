@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"math"
 	"strconv"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/display"
@@ -33,6 +36,7 @@ type gameplayNumericSetting struct {
 
 const (
 	gameplaySettingOffLabel = "Off"
+	gameplayDefaultOnLine   = "Default: On"
 )
 
 const (
@@ -46,8 +50,10 @@ const (
 	gameplayAnkhWandererBonusIndex
 	gameplayCombatSpeedIndex
 	gameplayCombatKeyRepeatIndex
+	gameplayCombatPanelsIndex
 	gameplayConfirmQuickSaveIndex
 	gameplayShowCombatHPBarsIndex
+	gameplayBattleFrameIndex
 	gameplayMaxActionPopupsIndex
 	gameplaySimpleNotesModeIndex
 )
@@ -118,21 +124,40 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 			},
 		},
 		{
+			label:     "Combat Panels",
+			helpLines: combatPanelsHelpLines(),
+			numeric: &gameplayNumericSetting{
+				spec:   config.CombatPanelsSpec(),
+				get:    func(s config.GameplayConfiguration) float64 { return float64(s.CombatPanels) },
+				set:    func(s *config.GameplayConfiguration, value float64) { s.CombatPanels = int(value) },
+				format: config.FormatCombatPanels,
+			},
+		},
+		{
 			label: "Confirm Quick Save",
 			helpLines: []string{
 				"Ask before saving with Q.", "",
 				"On: Ask before saving.", "Off: Save immediately.", "",
 				"Q saves to the last slot you loaded or saved.", "",
-				"Default: On",
+				gameplayDefaultOnLine,
 			},
 		},
 		{
 			label: "Show Combat HP Bars",
 			helpLines: []string{
-				"Show health bars during combat.", "",
+				"Show a health bar under each injured figure in combat.", "",
 				"Off hides the bars and adds injury descriptions to the battle report.", "",
 				"Damage numbers and fleeing indicators remain visible.", "",
-				"Default: On",
+				gameplayDefaultOnLine,
+			},
+		},
+		{
+			label: "Battle Frame",
+			helpLines: []string{
+				"Frame the battlefield.", "",
+				"Red while the battle is undecided.", "Blue once it is won.", "",
+				"Off: no frame.", "",
+				gameplayDefaultOnLine,
 			},
 		},
 		{
@@ -385,42 +410,130 @@ func (d *ConfigurationDialog) Draw(screen *ebiten.Image) {
 }
 
 func (d *ConfigurationDialog) drawDisplayContent(screen *ebiten.Image) {
-	d.presetOutput.Reset()
-	d.presetOutput.AppendLine().Text("WINDOW", widgets.DialogHeaderColor).Done()
-	d.presetOutput.DrawPanelContent(screen, d.layout.displayHeading.Min, d.layout.displayHeading.Dx(), etext.AlignStart)
 	labels, values := d.displayContentRows()
-	for index := range d.layout.displayRows {
-		selected := index == d.focusedDisplayIndex &&
-			(index == configurationDisplayModeRow || d.stagedDisplay.Mode == config.ModeWindowed)
-		textColor := widgets.DialogValueColor
-		labelColor := widgets.DialogLabelColor
-		if selected {
-			widgets.FillClassicPixelRoundedRect(
-				screen, d.layout.displaySelections[index], d.layout.pixelUnit, widgets.DialogSelectedBackground,
-			)
-			textColor = widgets.DialogSelectedText
-			labelColor = widgets.DialogSelectedLabelColor
-		}
-		labelRect := d.layout.displayLabels[index]
-		d.labelOutput.Reset()
-		d.labelOutput.AppendLine().Text(labels[index], labelColor).Done()
-		d.labelOutput.DrawPanelContent(
-			screen,
-			image.Pt(labelRect.Min.X, centeredAudioOutputY(labelRect, d.labelOutput)),
-			labelRect.Dx(),
-			etext.AlignStart,
+	d.drawDisplayHeading(screen, d.layout.displayHeading, "DISPLAY MODE")
+	d.drawDisplayModeCards(screen)
+	d.drawDisplayHeading(screen, d.layout.displaySizeHeading, strings.ToUpper(labels[configurationDisplaySizeRow]))
+	index := configurationDisplaySizeRow
+	textColor := widgets.DialogValueColor
+	labelColor := widgets.DialogLabelColor
+	if index == d.focusedDisplayIndex && d.stagedDisplay.Mode == config.ModeWindowed {
+		widgets.FillClassicPixelRoundedRect(
+			screen, d.layout.displaySelections[index], d.layout.pixelUnit, widgets.DialogSelectedBackground,
 		)
-		valueRect := d.layout.displayValues[index]
-		d.valueOutput.Reset()
-		d.valueOutput.AppendLine().Text(values[index], textColor).Done()
-		d.valueOutput.DrawPanelContent(
-			screen,
-			image.Pt(valueRect.Min.X, centeredAudioOutputY(valueRect, d.valueOutput)),
-			valueRect.Dx(),
-			etext.AlignStart,
-		)
+		textColor = widgets.DialogSelectedText
+		labelColor = widgets.DialogSelectedLabelColor
 	}
+	labelRect := d.layout.displayLabels[index]
+	d.labelOutput.Reset()
+	d.labelOutput.AppendLine().Text(labels[index], labelColor).Done()
+	d.labelOutput.DrawPanelContent(
+		screen, image.Pt(labelRect.Min.X, centeredAudioOutputY(labelRect, d.labelOutput)), labelRect.Dx(), etext.AlignStart,
+	)
+	valueRect := d.layout.displayValues[index]
+	d.valueOutput.Reset()
+	d.valueOutput.AppendLine().Text(values[index], textColor).Done()
+	d.valueOutput.DrawPanelContent(
+		screen, image.Pt(valueRect.Min.X, centeredAudioOutputY(valueRect, d.valueOutput)), valueRect.Dx(), etext.AlignStart,
+	)
 	d.drawDisplayHelp(screen)
+}
+
+func (d *ConfigurationDialog) drawDisplayHeading(screen *ebiten.Image, rect image.Rectangle, heading string) {
+	d.presetOutput.Reset()
+	d.presetOutput.AppendLine().Text(heading, widgets.DialogHeaderColor).Done()
+	d.presetOutput.DrawPanelContent(screen, rect.Min, rect.Dx(), etext.AlignStart)
+}
+
+// displayModeCard is one display mode as a card: a small picture of the game
+// on a display, its name and what it does.
+type displayModeCard struct {
+	mode config.Mode
+	name string
+	note string
+	// gapEighths is how far the game's box stands in from the display's edge,
+	// in eighths of the picture's height; zero fills the display.
+	gapEighths int
+}
+
+func displayModeCards() [3]displayModeCard {
+	const windowedGap, maximizedGap = 2, 1
+
+	return [...]displayModeCard{
+		{mode: config.ModeWindowed, name: "Windowed", note: "Pick a size", gapEighths: windowedGap},
+		{mode: config.ModeMaximized, name: "Maximized", note: "Fill the desktop", gapEighths: maximizedGap},
+		{mode: config.ModeFullscreen, name: "Fullscreen", note: "Fill the display", gapEighths: 0},
+	}
+}
+
+// drawDisplayModeCards shows every display mode at once. The chosen mode's
+// card is framed in white, or filled while the cards have the cursor; the
+// others are dim.
+func (d *ConfigurationDialog) drawDisplayModeCards(screen *ebiten.Image) {
+	row := d.layout.displayRows[configurationDisplayModeRow]
+	unit := d.layout.pixelUnit
+	gap := unit * audioSettingsPaddingUnits
+	cards := displayModeCards()
+	width := (row.Dx() - gap*(len(cards)-1)) / len(cards)
+	for index, card := range cards {
+		left := row.Min.X + index*(width+gap)
+		rect := image.Rect(left, row.Min.Y, left+width, row.Max.Y)
+		ink, noteInk := widgets.DialogEmptyColor, widgets.DialogEmptyColor
+		switch {
+		case card.mode != d.stagedDisplay.Mode:
+			widgets.DrawClassicPixelRoundedFrame(screen, rect, unit, widgets.DialogEmptyColor)
+		case d.focusedDisplayIndex == configurationDisplayModeRow:
+			widgets.FillClassicPixelRoundedRect(screen, rect, unit, widgets.DialogSelectedBackground)
+			ink, noteInk = widgets.DialogSelectedText, widgets.DialogSelectedText
+		default:
+			widgets.DrawClassicPixelRoundedFrame(screen, rect, unit, widgets.DialogRuleColor)
+			ink, noteInk = widgets.DialogValueColor, widgets.DialogControlHintColor
+		}
+		d.drawDisplayModeCard(screen, rect, card, ink, noteInk)
+	}
+}
+
+func (d *ConfigurationDialog) drawDisplayModeCard(
+	screen *ebiten.Image, rect image.Rectangle, card displayModeCard, ink, noteInk color.Color,
+) {
+	unit := d.layout.pixelUnit
+	inset := unit * audioSettingsPaddingUnits
+	line := int(math.Ceil(d.detailOutput.GetTotalHeightForLines(1)))
+	// The picture: a display's outline with the game's box inside it.
+	const pictureWidthLines, pictureHeightLines = 3, 2
+	picture := image.Rect(0, 0, line*pictureWidthLines, line*pictureHeightLines).
+		Add(image.Pt(rect.Min.X+(rect.Dx()-line*pictureWidthLines)/audioSettingsCenterDivisor, rect.Min.Y+inset))
+	fillAudioRect(screen, picture, ink)
+	fillAudioRect(screen, picture.Inset(unit), ucolor.EGABlack)
+	if d.cardIsFilled(card) {
+		fillAudioRect(screen, picture.Inset(unit), widgets.DialogSelectedBackground)
+	}
+	const pictureGapDivisor = 8
+	gameGap := card.gapEighths * picture.Dy() / pictureGapDivisor
+	if gameGap > 0 {
+		gameGap += unit // Clear of the display's outline.
+	}
+	fillAudioRect(screen, picture.Inset(gameGap), ink)
+	textWidth := rect.Dx() - inset*audioSettingsCenterDivisor
+	d.detailOutput.SetMaxCharsPerLine(max(1, d.detailOutput.Font.CharsForWidth(textWidth)))
+	d.detailOutput.Reset()
+	d.detailOutput.AppendLine().WithAlignment(etext.AlignCenter).Text(card.name, ink).Done()
+	d.detailOutput.AppendLine().WithAlignment(etext.AlignCenter).Text(card.note, noteInk).WordWrap().Done()
+	d.detailOutput.DrawPanelContent(
+		screen, image.Pt(rect.Min.X+inset, picture.Max.Y+inset), textWidth, etext.AlignCenter,
+	)
+}
+
+// cardIsFilled reports the chosen mode's card while the cards have the cursor.
+func (d *ConfigurationDialog) cardIsFilled(card displayModeCard) bool {
+	return card.mode == d.stagedDisplay.Mode && d.focusedDisplayIndex == configurationDisplayModeRow
+}
+
+func fillAudioRect(screen *ebiten.Image, rect image.Rectangle, clr color.Color) {
+	if rect.Empty() {
+		return
+	}
+	vector.FillRect(screen, float32(rect.Min.X), float32(rect.Min.Y), float32(rect.Dx()), float32(rect.Dy()), clr, false)
 }
 
 func (d *ConfigurationDialog) displayContentRows() ([2]string, [2]string) {
@@ -438,7 +551,10 @@ func (d *ConfigurationDialog) displayContentRows() ([2]string, [2]string) {
 }
 
 func (d *ConfigurationDialog) drawDisplayHelp(screen *ebiten.Image) {
-	rect := d.layout.displayHelp
+	// The help sits in a framed box, like the explanation on the Gameplay tab.
+	inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor) * audioSettingsCenterDivisor
+	frame := d.layout.displayHelp
+	rect := frame.Inset(inset)
 	d.detailOutput.SetMaxCharsPerLine(max(1, d.detailOutput.Font.CharsForWidth(rect.Dx())))
 	d.detailOutput.Reset()
 	lines := make([]string, 0, audioSettingsDetailLines)
@@ -459,6 +575,9 @@ func (d *ConfigurationDialog) drawDisplayHelp(screen *ebiten.Image) {
 		}
 		d.detailOutput.AppendLine().Text(line, color).WordWrap().Done()
 	}
+	written := int(math.Ceil(d.detailOutput.GetTotalHeightForLines(d.detailOutput.GetPanelContentLineCount())))
+	frame.Max.Y = min(frame.Max.Y, rect.Min.Y+written+inset)
+	widgets.DrawClassicPixelRoundedFrame(screen, frame, d.layout.pixelUnit, widgets.DialogRuleColor)
 	d.detailOutput.DrawPanelContent(screen, rect.Min, rect.Dx(), etext.AlignStart)
 }
 
@@ -573,17 +692,20 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 			markColor = widgets.DialogSelectedCheckedMarkColor
 		}
 		labelWidth := d.gameplayLabelWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit, settings[index])
-		d.gameplayOutput.SetMaxCharsPerLine(max(1, d.gameplayOutput.Font.CharsForWidth(labelWidth)))
+		d.gameplayOutput.SetMaxCharsPerLine(d.gameplayLabelChars(labelWidth))
 		d.gameplayOutput.Reset()
 		d.gameplayOutput.AppendLine().Text(settings[index].label, textColor).WordWrap().Done()
 		inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
-		top := centeredAudioOutputY(rect, d.gameplayOutput)
+		// A value too wide to sit beside the label takes the line under it.
+		valueLine := d.gameplayValueLineHeight(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit, settings[index])
+		top := centeredAudioOutputY(rect, d.gameplayOutput) - valueLine/audioSettingsCenterDivisor
 		d.labelOutput.Reset()
-		if numeric := settings[index].numeric; numeric != nil {
-			// Numeric values sit at the row's right edge, after the label.
-			valueWidth := d.gameplayValueWidth(settings[index])
-			d.labelOutput.AppendLine().Text(numeric.format(numeric.get(d.stagedGameplay)), textColor).Done()
-			d.labelOutput.DrawPanelContent(clipped, image.Pt(rect.Max.X-inset-valueWidth, top), valueWidth, etext.AlignEnd)
+		if settings[index].numeric != nil {
+			valueTop := top
+			if valueLine > 0 {
+				valueTop += int(math.Ceil(d.gameplayOutput.GetTotalHeightForLines(d.gameplayOutput.GetPanelContentLineCount())))
+			}
+			d.drawGameplayValue(clipped, image.Pt(rect.Max.X-inset, valueTop), settings[index], textColor)
 		} else {
 			d.labelOutput.AppendLine().Text("[", textColor).
 				Text(d.gameplayCheckmark(index), markColor).Text("]", textColor).Done()
@@ -609,6 +731,15 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 	widgets.DrawClassicPixelRoundedFrame(
 		screen, d.layout.gameplayDetail, d.layout.pixelUnit, widgets.DialogRuleColor,
 	)
+}
+
+// drawGameplayValue draws a numeric row's value ending at the row's right edge.
+func (d *ConfigurationDialog) drawGameplayValue(
+	target *ebiten.Image, topRight image.Point, setting gameplaySettingDefinition, textColor color.Color,
+) {
+	valueWidth := d.gameplayValueWidth(setting)
+	d.labelOutput.AppendLine().Text(setting.numeric.format(setting.numeric.get(d.stagedGameplay)), textColor).Done()
+	d.labelOutput.DrawPanelContent(target, image.Pt(topRight.X-valueWidth, topRight.Y), valueWidth, etext.AlignEnd)
 }
 
 // prepareGameplayDetail uses the measured layout's wrapping capacity without
@@ -647,28 +778,88 @@ func (d *ConfigurationDialog) drawGameplayScrollIndicator(screen *ebiten.Image) 
 		image.Rect(viewport.Max.X, top, viewport.Max.X+width, top+height), 1, widgets.DialogRuleColor)
 }
 
+// audioVolumes names each volume row and says where that channel is heard.
+func audioVolumes() [audioSettingsSliderCount][2]string {
+	return [...][2]string{
+		{"Music", "Music: town, travel and battle music."},
+		{"Effects", "Effects: blows, spells, doors and other actions."},
+		{"Ambient", "Ambient: the background sounds of a place."},
+	}
+}
+
+// drawAudioContent frames the three volumes as rows of ten blocks under a
+// VOLUME heading, with a line saying where the selected channel is heard.
 func (d *ConfigurationDialog) drawAudioContent(screen *ebiten.Image) {
 	sliders := []*widgets.Slider{d.musicSlider, d.sfxSlider, d.ambientSlider}
-	labels := []string{"Music Volume", "SFX Volume", "Ambient Volume"}
+	unit := d.layout.pixelUnit
+	inset := max(1, unit*audioSettingsCenterDivisor)
+	body := d.layout.bodyRect
+	line := int(math.Ceil(d.detailOutput.GetTotalHeightForLines(1)))
+	last := d.layout.sliderRects[len(sliders)-1]
+	ruleTop := last.Max.Y + inset*audioSettingsCenterDivisor
+	frame := image.Rect(body.Min.X, body.Min.Y, body.Max.X, ruleTop+inset+line*audioSettingsCenterDivisor+inset)
+	widgets.DrawClassicPixelRoundedFrame(screen, frame, unit, widgets.DialogRuleColor)
+	heading := image.Rect(body.Min.X+inset*audioSettingsCenterDivisor, body.Min.Y+inset, body.Max.X, body.Max.Y)
+	d.drawDisplayHeading(screen, heading, "VOLUME")
+	volumes := audioVolumes()
 	for index, slider := range sliders {
-		d.labelOutput.Reset()
-		d.labelOutput.AppendLine().Text(labels[index], widgets.DialogLabelColor).Done()
-		d.labelOutput.DrawPanelContent(
-			screen,
-			d.layout.sliderLabelRects[index].Min,
-			d.layout.sliderLabelRects[index].Dx(),
-			etext.AlignStart,
-		)
+		row := image.Rect(d.layout.sliderLabelRects[index].Min.X, d.layout.sliderLabelRects[index].Min.Y,
+			d.layout.sliderLabelRects[index].Max.X, d.layout.sliderRects[index].Max.Y)
+		d.drawVolumeRow(screen, row, volumes[index][0], slider.GetValue(), index == d.focusedSliderIndex)
+	}
+	left, right := d.layout.sliderLabelRects[0].Min.X, d.layout.sliderLabelRects[0].Max.X
+	rule := image.Rect(left, ruleTop, right, ruleTop+max(1, unit/audioSettingsCenterDivisor))
+	fillAudioRect(screen, rule, widgets.DialogEmptyColor)
+	d.detailOutput.SetMaxCharsPerLine(max(1, d.detailOutput.Font.CharsForWidth(right-left)))
+	d.detailOutput.Reset()
+	d.detailOutput.AppendLine().Text(volumes[d.focusedSliderIndex][1], widgets.DialogControlHintColor).WordWrap().Done()
+	d.detailOutput.DrawPanelContent(screen, image.Pt(left, ruleTop+inset), right-left, etext.AlignStart)
+}
 
-		d.valueOutput.Reset()
-		d.valueOutput.AppendLine().Text(strconv.Itoa(slider.GetValue()), widgets.DialogValueColor).Done()
-		d.valueOutput.DrawPanelContent(
-			screen,
-			d.layout.sliderValueRects[index].Min,
-			d.layout.sliderValueRects[index].Dx(),
-			etext.AlignEnd,
-		)
-		slider.Draw(screen)
+// drawVolumeRow draws one volume: its name, ten blocks and its figure. The
+// selected row is a filled plate, like a selected row on the other tabs.
+func (d *ConfigurationDialog) drawVolumeRow(
+	screen *ebiten.Image, row image.Rectangle, name string, value int, selected bool,
+) {
+	unit := d.layout.pixelUnit
+	inset := max(1, unit*audioSettingsCenterDivisor)
+	textColor, labelColor := widgets.DialogValueColor, widgets.DialogLabelColor
+	var filled, empty color.Color = ucolor.EGALightCyan, ucolor.EGADarkGray
+	if selected {
+		widgets.FillClassicPixelRoundedRect(screen, row, unit, widgets.DialogSelectedBackground)
+		textColor, labelColor = widgets.DialogSelectedText, widgets.DialogSelectedLabelColor
+		filled, empty = ucolor.EGABlue, ucolor.EGALightGray
+	}
+	d.labelOutput.Reset()
+	d.labelOutput.AppendLine().Text(name, labelColor).Done()
+	d.labelOutput.DrawPanelContent(
+		screen, image.Pt(row.Min.X+inset, centeredAudioOutputY(row, d.labelOutput)), row.Dx(), etext.AlignStart,
+	)
+	valueWidth, _ := d.valueOutput.Font.MeasureString(strconv.Itoa(audioSettingsVolumeSteps))
+	d.valueOutput.Reset()
+	d.valueOutput.AppendLine().Text(strconv.Itoa(value), textColor).Done()
+	d.valueOutput.DrawPanelContent(
+		screen, image.Pt(row.Max.X-inset-int(math.Ceil(valueWidth)), centeredAudioOutputY(row, d.valueOutput)),
+		int(math.Ceil(valueWidth)), etext.AlignEnd,
+	)
+	// The blocks fill the space between the widest name and the figure.
+	nameWidth := 0.0
+	for _, volume := range audioVolumes() {
+		width, _ := d.labelOutput.Font.MeasureString(volume[0] + " ")
+		nameWidth = max(nameWidth, width)
+	}
+	blocksLeft := row.Min.X + inset + int(math.Ceil(nameWidth))
+	blocksRight := row.Max.X - inset*audioSettingsCenterDivisor - int(math.Ceil(valueWidth))
+	blockWidth := (blocksRight - blocksLeft - unit*(audioSettingsVolumeSteps-1)) / audioSettingsVolumeSteps
+	blockHeight := row.Dy() / audioSettingsCenterDivisor
+	top := row.Min.Y + (row.Dy()-blockHeight)/audioSettingsCenterDivisor
+	for step := range audioSettingsVolumeSteps {
+		clr := empty
+		if step < value {
+			clr = filled
+		}
+		left := blocksLeft + step*(blockWidth+unit)
+		fillAudioRect(screen, image.Rect(left, top, left+blockWidth, top+blockHeight), clr)
 	}
 }
 
@@ -766,6 +957,8 @@ func (d *ConfigurationDialog) gameplaySettingValue(index int) bool {
 		return d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:
 		return d.stagedGameplay.ShowCombatHPBars
+	case gameplayBattleFrameIndex:
+		return d.stagedGameplay.ShowCombatBattleFrame
 	case gameplaySimpleNotesModeIndex:
 		return d.stagedGameplay.SimpleNotesMode
 	default:
@@ -795,9 +988,12 @@ func (d *ConfigurationDialog) toggleFocusedGameplaySetting() {
 		d.stagedGameplay.ConfirmQuickSave = !d.stagedGameplay.ConfirmQuickSave
 	case gameplayShowCombatHPBarsIndex:
 		d.stagedGameplay.ShowCombatHPBars = !d.stagedGameplay.ShowCombatHPBars
+	case gameplayBattleFrameIndex:
+		d.stagedGameplay.ShowCombatBattleFrame = !d.stagedGameplay.ShowCombatBattleFrame
 	case gameplaySimpleNotesModeIndex:
 		d.stagedGameplay.SimpleNotesMode = !d.stagedGameplay.SimpleNotesMode
-	case gameplayCombatSpeedIndex, gameplayCombatKeyRepeatIndex, gameplayMaxActionPopupsIndex:
+	case gameplayCombatSpeedIndex, gameplayCombatKeyRepeatIndex, gameplayCombatPanelsIndex,
+		gameplayMaxActionPopupsIndex:
 		return
 	default:
 		panic("unsupported Gameplay setting index")

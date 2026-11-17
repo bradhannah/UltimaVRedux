@@ -278,7 +278,9 @@ type AtlasDossier struct {
 	VesselsUnlocked bool
 	CurrentFix      SurveyedLocation
 	FixUnavailable  string
-	FixContext      string
+	// FixNeedsNight reports that a carried sextant is only waiting for night.
+	FixNeedsNight bool
+	FixContext    string
 }
 
 // AtlasPlaceFilter chooses one place category without hiding its known sources.

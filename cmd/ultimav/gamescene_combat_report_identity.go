@@ -27,7 +27,7 @@ type combatReportIdentities struct {
 // even after revelation. The live turn HUD independently hides invisible actors.
 func (g *GameScene) captureCombatReportIdentity(entity game_state.CombatFeedbackEntity) combatReportIdentity {
 	identity := combatTurnIdentityForFeedback(entity)
-	result := combatReportIdentity{Identity: identity, Color: ucolor.EGARed}
+	result := combatReportIdentity{Identity: identity, Color: ucolor.CombatAllegianceEnemy}
 	if entity.IsPartyMember {
 		if entity.Index >= 0 && entity.Index < g.gameState.PartyState.GetCharacterCount() {
 			result.Name = g.combatEntityEventName(identity)
@@ -40,7 +40,7 @@ func (g *GameScene) captureCombatReportIdentity(entity game_state.CombatFeedback
 			result.Name = monster.MonsterType().Name()
 			result.Disclosed = true
 			if monster.IsPartyLoyal() {
-				result.Color = ucolor.EGALightCyan
+				result.Color = ucolor.CombatAllegianceAlly
 			}
 		}
 	}
@@ -78,11 +78,11 @@ func (g *GameScene) captureCombatReportIdentities(event game_state.CombatEvent) 
 	if event.MonsterInjury.Severity != game_state.CombatInjuryNone && !event.Target.IsPartyMember {
 		snapshot.Target.Name = combatUnknownEntityLabel
 		snapshot.Target.Disclosed = event.MonsterInjury.Disclosed
-		snapshot.Target.Color = ucolor.EGARed
+		snapshot.Target.Color = ucolor.CombatAllegianceEnemy
 		if event.MonsterInjury.Disclosed {
 			snapshot.Target.Name = event.MonsterInjury.MonsterType.Name()
 			if event.MonsterInjury.Loyalty == game_state.CombatMonsterLoyaltyParty {
-				snapshot.Target.Color = ucolor.EGALightCyan
+				snapshot.Target.Color = ucolor.CombatAllegianceAlly
 			}
 		}
 	}
