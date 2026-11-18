@@ -53,7 +53,7 @@ func (g *GameState) FinishTurn() {
 	if !g.completingSurfaceCycle && (mapType == references.SmallMapType || mapType == references.LargeMapType) {
 		largeMapMinutes := DefaultLargeMapMinutesPerTurn
 		if mapType == references.LargeMapType {
-			largeMapMinutes = g.calculateMovementTimeCost(g.GetCurrentLayeredMapAvatarTopTile())
+			largeMapMinutes = g.calculateMovementTimeCost(g.GetCurrentAvatarGroundTile())
 		}
 		g.completeSurfaceCycle(mapType, largeMapMinutes)
 
@@ -127,7 +127,7 @@ func (g *GameState) CompleteSurfaceMovementCycle(originMapType references.Genera
 		if !moved {
 			return
 		}
-		largeMapMinutes = g.calculateMovementTimeCost(g.GetCurrentLayeredMapAvatarTopTile())
+		largeMapMinutes = g.calculateMovementTimeCost(g.GetCurrentAvatarGroundTile())
 		// Terrain slowdown runs extra monster phases before its calendar advancement,
 		// then the ordinary endplayer tail advances another two minutes.
 		// See ref:TIME-0002.
@@ -561,7 +561,7 @@ func (g *GameState) largeMapProcessTurnEffects() {
 // advanceTimeLargeMap advances game time for large map movement.
 // Uses movement-based time cost calculation (vehicle type, wind conditions).
 func (g *GameState) advanceTimeLargeMap() {
-	topTile := g.GetCurrentLayeredMapAvatarTopTile()
+	topTile := g.GetCurrentAvatarGroundTile()
 
 	// Calculate movement time cost based on vehicle type and wind conditions
 	timeCost := g.calculateMovementTimeCost(topTile)

@@ -164,7 +164,7 @@ func (g *GameState) ProcessEnvironmentalHazardsOnTurnAdvancement() {
 	if g.CombatScene != nil || mapType == references.CombatMapType {
 		return // Combat terrain hazards resolve against the acting local combatant.
 	}
-	currentTile := g.GetCurrentLayeredMapAvatarTopTile()
+	currentTile := g.GetCurrentAvatarGroundTile()
 	// Original town rules and original outdoor rules require the foot-player shape
 	// for swamp exposure only. Lava and existing poison still affect riders.
 	// See ref:ENV-0002.

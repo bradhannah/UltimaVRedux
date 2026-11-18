@@ -43,10 +43,12 @@ on available source/object slots, not historical manager length.
 **REDUX DEVIATION: COMBAT-0001:** To locate the acting party character on Arch,
 Redux adds only that exact current entry's hollow silhouette contour and existing
 active square/upper accents. The underlying arch remains visible through the
-contour; ordinary body, HP/status/allegiance artwork, HUD identity and targeting
+contour; ordinary body, battlefield HP/status/allegiance artwork and targeting
 assistance remain concealed. Other party entries and monsters receive no
-exception. Nothing/BlackSquare, underground/captive state, retired identities
-and hidden teleport phases remain concealing. This changes presentation, not
+battlefield exception. Nothing/BlackSquare, underground/captive state, retired
+identities and hidden teleport phases remain concealing. The Turn Order panel,
+which the original lacks, always names party entries, concealed or not: the
+roster identifies them already. This changes presentation, not
 terrain, occupancy, turn scheduling or effect eligibility; COMBAT-0012 owns the
 corresponding cue contract.
 

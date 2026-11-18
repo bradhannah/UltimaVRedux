@@ -90,18 +90,18 @@ func TestCastGuidanceUsesResolvedTargetAndScope(t *testing.T) {
 			catalog := testMixCatalog()
 			entry := &catalog[test.spell]
 			profile := references.GetSpellTargetingProfile(test.spell, test.context)
-			entry.Targeting, entry.Scope = profile.Selection.String(), profile.Scope
-			entry.Contexts = references.GetSpellInfo(test.spell).Context.String()
+			entry.Targeting, entry.Scope = profile.Selection.PlayerLabel(), profile.Scope
+			entry.Contexts = references.GetSpellInfo(test.spell).Context.PlayerLabel()
 			dialog := NewSpellCastingDialog(newWidgetTestKeyboard(-1), &state.PartyState, test.context, catalog, state.ValidateSpellTargetingPrerequisites)
 			dialog.browser.selectID(test.spell.ID())
 			dialog.ensureLayout()
 			content := strings.Join(strings.Fields(dialog.view.body.GetOutputStr(true)), " ")
 			require.Contains(t, content, "Circle:")
 			require.Contains(t, content, "MP cost:")
-			require.Contains(t, content, test.choice.String())
+			require.Contains(t, content, test.choice.PlayerLabel())
 			require.Contains(t, content, spellScopeLabel(test.scope))
 			require.Contains(t, content, strings.Join(strings.Fields(entry.Description), " "))
-			require.Contains(t, content, "When: "+entry.Contexts)
+			require.Contains(t, content, "Where: "+entry.Contexts)
 			require.Positive(t, dialog.browser.pages, "overflow is accessible through detail paging")
 			if test.choice == references.TargetPartyMember || test.choice == references.TargetCombatPartyMember {
 				require.Contains(t, content, "Final confirmation spends MP and one mixture; cancelling beforehand is free.")

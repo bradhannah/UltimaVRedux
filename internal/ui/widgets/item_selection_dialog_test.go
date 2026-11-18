@@ -110,6 +110,37 @@ func TestItemSelectionDialogNavigationPreservesPerTabSelectionAndScroll(t *testi
 	assert.Equal(t, 1, itemDialogCategoryDelta(false))
 }
 
+// A name too long for the list wraps whole onto further lines. It used to show
+// only its last word, so every Crown Jewel read "British".
+func TestItemSelectionLongNamesWrapWholeAndStayOnScreen(t *testing.T) {
+	setItemDialogTestResolution(t, 1280, 720)
+	items := make([]game_state.UseableItemInfo, 0, 40)
+	for range 20 {
+		items = append(items,
+			testUseItem("Amulet of Lord British", game_state.UseItemCategoryQuest, references.Amulet),
+			testUseItem("Crown", game_state.UseItemCategoryQuest, references.Crown))
+	}
+	dialog := NewItemSelectionDialog(testItemSelectionConfig(newWidgetTestKeyboard(0), items))
+	line := dialog.rowLineHeight()
+	require.Equal(t, line, dialog.rowHeight(items[1]), "a short name keeps one line")
+	require.Greater(t, dialog.rowHeight(items[0]), line, "the long name wraps")
+	require.Equal(t, strings.Fields(items[0].Name), strings.Fields(dialog.rowOutput.GetOutputStr(false)),
+		"the whole name is shown")
+
+	room := dialog.listContentRect().Dy()
+	for range len(items) - 1 {
+		dialog.moveSelection(1)
+		start, selection := dialog.scrollStarts[ItemCategoryAll], dialog.GetSelectedItemIndex()
+		require.LessOrEqual(t, start, selection)
+		height := 0
+		for index := start; index <= selection; index++ {
+			height += dialog.rowHeight(items[index])
+		}
+		require.LessOrEqual(t, height, room, "the selected row is wholly on screen")
+	}
+	require.Positive(t, dialog.scrollStarts[ItemCategoryAll], "tall rows scroll the list")
+}
+
 func TestItemSelectionDialogLongLoreSharesNormalDetailsAndPagesWithoutLoss(t *testing.T) {
 	setItemDialogTestResolution(t, 320, 200)
 	item := testUseItem("Shard", game_state.UseItemCategoryQuest, references.ShardOfFalsehood)

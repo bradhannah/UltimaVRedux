@@ -90,7 +90,7 @@ type GameplayConfiguration struct {
 	BatchMerchantTheft bool
 	// AllowRepeatedMonsterDivision restores original SPLITS behavior when true.
 	AllowRepeatedMonsterDivision bool
-	// ShowConcealedTurnOrderSlots reserves blank forecast slots for concealed enemies.
+	// ShowConcealedTurnOrderSlots lists a hidden enemy's coming turn as an unnamed Turn Order row.
 	ShowConcealedTurnOrderSlots bool
 	// PersistHiddenDungeonDiscoveries retains revealed hidden doors and pits between visits.
 	PersistHiddenDungeonDiscoveries bool

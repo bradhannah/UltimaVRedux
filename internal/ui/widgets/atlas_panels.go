@@ -98,12 +98,15 @@ func (d *AtlasDialog) layoutCategoryTabs(margin int) int {
 func (d *AtlasDialog) drawCategoryTabs(screen *ebiten.Image) {
 	for _, choice := range atlasTabOrder() {
 		rect := d.tabs[choice]
-		colour := DialogEmptyColor
+		colour := DialogTabColor
 		if choice == journal.AtlasNotePlaces {
 			colour = atlasNoteColor()
 		}
 		if choice == d.view.Filters.Places {
-			colour = DialogLabelColor
+			colour = DialogActiveTabText
+			width, _ := d.font.MeasureString(d.atlasTabLabel(choice))
+			DrawActiveTabPlate(screen, rect, width, rect.Min.Y, int(math.Ceil(d.tabText.GetFontHeight())),
+				getClassicUIPixelUnit(d.width, d.height))
 		}
 		atlasSingleLine(d.tabText, d.atlasTabLabel(choice), colour)
 		d.tabText.DrawPanelContent(screen, rect.Min, rect.Dx(), etext.AlignCenter)

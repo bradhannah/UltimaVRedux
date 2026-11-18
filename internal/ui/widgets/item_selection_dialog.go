@@ -3,6 +3,7 @@ package widgets
 import (
 	"fmt"
 	"image"
+	stdcolor "image/color"
 	"math"
 	"strconv"
 	"strings"
@@ -34,6 +35,7 @@ const (
 	itemDialogHalfPageDivisor        = 2
 	itemDialogTitleMaxLines          = 2
 	itemDialogDetailHeaderLines      = 2
+	itemDialogRowMaxLines            = 3
 )
 
 var _ Widget = (*ItemSelectionDialog)(nil)
@@ -323,17 +325,39 @@ func (d *ItemSelectionDialog) ensureCurrentSelectionVisible() {
 		return
 	}
 	category := d.currentCategory()
-	count := len(d.currentItems())
-	visibleRows := d.visibleRowCount()
-	maxStart := max(0, count-visibleRows)
-	start := max(0, min(d.scrollStarts[category], maxStart))
-	selection := d.selections[category]
-	if selection < start {
-		start = selection
-	} else if selection >= start+visibleRows {
-		start = selection - visibleRows + 1
+	items := d.currentItems()
+	if len(items) == 0 {
+		d.scrollStarts[category] = 0
+
+		return
 	}
-	d.scrollStarts[category] = max(0, min(start, maxStart))
+	heights := make([]int, len(items))
+	for index, item := range items {
+		heights[index] = d.rowHeight(item)
+	}
+	room := d.listContentRect().Dy()
+	selection := d.selections[category]
+	start := max(0, min(d.scrollStarts[category], selection))
+	for visibleRowEnd(heights, start, room) <= selection {
+		start++
+	}
+	// Leave no empty space under the last row while rows are hidden above.
+	for start > 0 && visibleRowEnd(heights, start-1, room) == len(heights) {
+		start--
+	}
+	d.scrollStarts[category] = start
+}
+
+// visibleRowEnd returns the index after the last whole row that fits in room
+// when the list is drawn from start. The first row always shows.
+func visibleRowEnd(heights []int, start, room int) int {
+	end := start
+	for end < len(heights) && (end == start || heights[end] <= room) {
+		room -= heights[end]
+		end++
+	}
+
+	return end
 }
 
 func (d *ItemSelectionDialog) currentCategory() ItemCategory {
@@ -457,6 +481,7 @@ func (d *ItemSelectionDialog) rebuildOutputs() {
 	_, d.titleOutput = GetScaledFontWithOutput(config)
 	config.Size = FontSizeBody
 	d.font, d.tabOutput = GetScaledFontWithOutput(config)
+	config.MaxLines = itemDialogRowMaxLines
 	_, d.rowOutput = GetScaledFontWithOutput(config)
 	config.MaxLines = itemDialogTitleMaxLines
 	_, d.itemOutput = GetScaledFontWithOutput(config)
@@ -628,17 +653,21 @@ func (d *ItemSelectionDialog) drawHeader(screen *ebiten.Image) {
 		Done()
 	d.titleOutput.DrawPanelContent(screen, d.layout.titleRect.Min, d.layout.titleRect.Dx(), etext.AlignCenter)
 
+	fontHeight := int(math.Ceil(d.tabOutput.GetFontHeight()))
 	for index, rect := range d.layout.tabRects {
-		textColor := DialogItemNameColor
+		title := d.categories[index].String()
+		top := rect.Min.Y + max(0, (rect.Dy()-fontHeight)/itemDialogCenterDivisor)
+		textColor := DialogTabColor
 		if index == d.activeCategory {
-			textColor = pkgcolor.EGAYellow
+			textColor = DialogActiveTabText
+			width, _ := d.tabOutput.Font.MeasureString(title)
+			DrawActiveTabPlate(screen, rect, width, top, fontHeight, d.pixelUnit())
 		}
 		d.tabOutput.Reset()
 		d.tabOutput.AppendLine().
 			WithAlignment(etext.AlignCenter).
-			Text(d.categories[index].String(), textColor).
+			Text(title, textColor).
 			Done()
-		top := rect.Min.Y + max(0, (rect.Dy()-int(math.Ceil(d.tabOutput.GetFontHeight())))/itemDialogCenterDivisor)
 		d.tabOutput.DrawPanelContent(screen, image.Pt(rect.Min.X, top), rect.Dx(), etext.AlignCenter)
 	}
 }
@@ -654,17 +683,57 @@ func (d *ItemSelectionDialog) drawList(screen *ebiten.Image) {
 		return
 	}
 
-	rowHeight := max(1, int(math.Ceil(d.rowOutput.GetLineSpacing())))
 	category := d.currentCategory()
 	start := d.scrollStarts[category]
-	end := min(len(items), start+d.visibleRowCount())
 	selection := d.selections[category]
-	for index := start; index < end; index++ {
-		rowTop := content.Min.Y + (index-start)*rowHeight
-		rowRect := image.Rect(content.Min.X, rowTop, content.Max.X, min(content.Max.Y, rowTop+rowHeight))
-		d.drawListRow(screen, rowRect, items[index], index == selection)
+	rowTop, end := content.Min.Y, start
+	var first, last image.Rectangle
+	for ; end < len(items); end++ {
+		height := d.rowHeight(items[end])
+		if end > start && rowTop+height > content.Max.Y {
+			break
+		}
+		last = image.Rect(content.Min.X, rowTop, content.Max.X, min(content.Max.Y, rowTop+height))
+		if end == start {
+			first = last
+		}
+		d.drawListRow(screen, last, items[end], end == selection)
+		rowTop = last.Max.Y
 	}
-	d.drawScrollIndicators(screen, content, start, end, len(items), rowHeight)
+	drawMasterDetailScrollMarks(screen, first, last, start > 0, end < len(items),
+		d.listIndicatorWidth(), d.font, d.rowOutput)
+}
+
+// rowHeight is the height of one row. A name too long for the list wraps onto
+// further lines, and only that row grows: its neighbours keep one-line density.
+func (d *ItemSelectionDialog) rowHeight(item game_state.UseableItemInfo) int {
+	if d.rowOutput == nil {
+		return 1
+	}
+	d.prepareRowName(item, d.listContentRect().Dx(), DialogItemNameColor)
+
+	return d.rowLineHeight() * max(1, d.rowOutput.GetPanelContentLineCount())
+}
+
+func (d *ItemSelectionDialog) rowLineHeight() int {
+	return max(1, int(math.Ceil(d.rowOutput.GetLineSpacing())))
+}
+
+// prepareRowName lays the row's name out in rowOutput, wrapped to the width left
+// beside its quantity in a row rowWidth wide. It returns that name width and the
+// width the name and quantity share.
+func (d *ItemSelectionDialog) prepareRowName(
+	item game_state.UseableItemInfo, rowWidth int, textColor stdcolor.Color,
+) (int, int) {
+	padding := d.layout.padding
+	contentWidth := max(1, rowWidth-padding*2-d.listIndicatorWidth())
+	quantityWidth, _ := d.font.MeasureString(strconv.Itoa(item.Quantity))
+	nameWidth := max(1, contentWidth-max(itemDialogQuantityMinimumColumns, int(math.Ceil(quantityWidth))+padding))
+	d.rowOutput.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(nameWidth)))
+	d.rowOutput.Reset()
+	d.rowOutput.AppendLine().Text(unavailableRowLabel(item.Name, item.UnavailableReason == ""), textColor).Done()
+
+	return nameWidth, contentWidth
 }
 
 func (d *ItemSelectionDialog) drawListRow(
@@ -686,14 +755,7 @@ func (d *ItemSelectionDialog) drawListRow(
 	}
 
 	padding := d.layout.padding
-	contentWidth := max(1, rect.Dx()-padding*2-d.listIndicatorWidth())
-	quantity := strconv.Itoa(item.Quantity)
-	quantityWidth, _ := d.font.MeasureString(quantity)
-	nameWidth := max(1, contentWidth-max(itemDialogQuantityMinimumColumns, int(math.Ceil(quantityWidth))+padding))
-
-	d.rowOutput.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(nameWidth)))
-	d.rowOutput.Reset()
-	d.rowOutput.AppendLine().Text(unavailableRowLabel(item.Name, item.UnavailableReason == ""), textColor).Done()
+	nameWidth, contentWidth := d.prepareRowName(item, rect.Dx(), textColor)
 	d.rowOutput.DrawPanelContent(
 		screen,
 		image.Pt(rect.Min.X+padding, rect.Min.Y),
@@ -702,25 +764,12 @@ func (d *ItemSelectionDialog) drawListRow(
 	)
 	d.rowOutput.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(contentWidth)))
 	d.rowOutput.Reset()
-	d.rowOutput.AppendLine().WithAlignment(etext.AlignEnd).Text(quantity, quantityColor).Done()
+	d.rowOutput.AppendLine().WithAlignment(etext.AlignEnd).Text(strconv.Itoa(item.Quantity), quantityColor).Done()
 	d.rowOutput.DrawPanelContent(
 		screen,
 		image.Pt(rect.Min.X+padding, rect.Min.Y),
 		contentWidth,
 		etext.AlignEnd,
-	)
-}
-
-func (d *ItemSelectionDialog) drawScrollIndicators(
-	screen *ebiten.Image,
-	content image.Rectangle,
-	start int,
-	end int,
-	count int,
-	rowHeight int,
-) {
-	drawMasterDetailScrollIndicators(
-		screen, content, start, end, count, rowHeight, d.listIndicatorWidth(), d.font, d.rowOutput,
 	)
 }
 
@@ -967,9 +1016,8 @@ func (d *ItemSelectionDialog) visibleRowCount() int {
 	if d.rowOutput == nil {
 		return 1
 	}
-	rowHeight := max(1, int(math.Ceil(d.rowOutput.GetLineSpacing())))
 
-	return max(1, d.listContentRect().Dy()/rowHeight)
+	return max(1, d.listContentRect().Dy()/d.rowLineHeight())
 }
 
 func (d *ItemSelectionDialog) pixelUnit() int {

@@ -448,15 +448,12 @@ func (g *GameState) GetCurrentLayeredMap() *map_state.LayeredMap {
 		g.MapState.PlayerLocation.Floor)
 }
 
-// GetCurrentLayeredMapAvatarTopTile returns the party's topmost tile, if loaded.
-func (g *GameState) GetCurrentLayeredMapAvatarTopTile() *references.Tile {
-	theMap := g.GetCurrentLayeredMap()
-	topTile := theMap.GetTopTile(&g.MapState.PlayerLocation.Position)
-	if topTile == nil {
-		return nil
-	}
-
-	return topTile
+// GetCurrentAvatarGroundTile returns the terrain the party stands on, if loaded.
+// It ignores map units: a carpet, horse or skiff lying on the square does not
+// change the ground under a party on foot, as the original's terrain lookup
+// does not. See ref:ENV-0002.
+func (g *GameState) GetCurrentAvatarGroundTile() *references.Tile {
+	return g.GetCurrentLayeredMap().GetTileTopMapOnlyTile(&g.MapState.PlayerLocation.Position)
 }
 
 // IsPassable checks terrain, occupancy and boarding rules for the party.

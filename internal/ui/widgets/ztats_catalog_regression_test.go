@@ -144,17 +144,22 @@ func assertZStatsCatalogRows(t *testing.T, dialog *ZStatsDossierDialog, quantity
 	}
 }
 
-func TestZStatsLongCatalogNameRetainsQuantityWithoutWrapping(t *testing.T) {
+// A catalog name too long for the list wraps whole: nothing is cut, the quantity
+// stays on the first line, and only that row grows.
+func TestZStatsLongCatalogNameWrapsWholeAndKeepsItsQuantity(t *testing.T) {
 	setZStatsTestResolution(t, 1280, 720)
 	dossier := testZStatsDossier()
-	dossier.Provisions[0].Name = strings.Repeat("Long provision name ", 20)
+	dossier.Provisions[0].Name = "Provision with an exceedingly lengthy name"
 	dialog := newTestZStatsDossierDialog(dossier, newWidgetTestKeyboard(0))
 	dialog.switchTab(ZStatsDossierProvisionsTab)
-	dialog.prepareListRow(dialog.panelBodyRect(dialog.layout.globalListRect), 0, false)
+	list := dialog.layout.globalListRect
+	require.Greater(t, dialog.listRowHeight(list, 0), dialog.listRowHeight(list, 1), "only the long row is tall")
+	dialog.prepareListRow(dialog.panelBodyRect(list), 0, false)
 	row := dialog.rowOutput.GetOutputStr(false)
-	require.Contains(t, row, "Long")
-	require.Contains(t, row, "(123)")
-	require.Equal(t, 1, dialog.rowOutput.GetPanelContentLineCount())
+	first, _, _ := strings.Cut(row, "\n")
+	require.True(t, strings.HasSuffix(strings.TrimSpace(first), "(123)"), "quantity stays on the first line: %q", row)
+	require.Equal(t, strings.Fields(dossier.Provisions[0].Name),
+		strings.Fields(strings.Replace(row, "(123)", "", 1)), "the whole name is shown")
 }
 
 func TestZStatsArmoryNamesUseNormalFontAndFitActualCatalogWidth(t *testing.T) {
@@ -230,12 +235,13 @@ func TestZStatsAllMoonstoneGlyphsFollowRenamedReorderedFilteredRows(t *testing.T
 	dialog.switchTab(ZStatsDossierItemsTab)
 	require.Equal(t, 9, dialog.currentItemCount())
 	row := dialog.panelBodyRect(dialog.layout.globalListRect)
-	row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect)
+	row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect, 0)
 	dialog.prepareListRow(row, 0, false)
 	require.Empty(t, dialog.rowIconOutput.GetOutputStr(false), "phase zero is not inferred from name, sprite or ID")
 	for position := 1; position < dialog.currentItemCount(); position++ {
 		item := dossier.Items[position+1]
 		dialog.setCurrentSelection(position)
+		row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect, position)
 		for _, selected := range []bool{false, true} {
 			dialog.prepareListRow(row, position, selected)
 			requireZStatsCountedPhaseRow(t, dialog, row, item)
@@ -281,9 +287,9 @@ func TestZStatsFullEquipmentRowsWrapWithMeasuredIconsAndNoClipping(t *testing.T)
 				dialog.switchTab(tab)
 				list := dialog.activeListRect()
 				row := dialog.panelBodyRect(list)
-				pitch := dialog.listRowHeight(list)
-				row.Max.Y = row.Min.Y + pitch
 				for index, item := range dossier.Armory {
+					pitch := dialog.listRowHeight(list, index)
+					row.Max.Y = row.Min.Y + pitch
 					for _, selected := range []bool{false, true} {
 						dialog.prepareListRow(row, index, selected)
 						label := dialog.rowOutput.GetOutputStr(false)
@@ -320,7 +326,7 @@ func TestZStatsMoonstoneLongRowsReserveBitmapQuantityAndGutter(t *testing.T) {
 			t.Cleanup(dialog.outerBorder.Dispose)
 			dialog.switchTab(ZStatsDossierItemsTab)
 			row := dialog.panelBodyRect(dialog.layout.globalListRect)
-			row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect)
+			row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect, 1)
 			for _, selected := range []bool{false, true} {
 				dialog.prepareListRow(row, 1, selected)
 				requireZStatsCountedPhaseRow(t, dialog, row, dossier.Items[1])
@@ -366,4 +372,28 @@ func requireZStatsCountedPhaseRow(
 	require.True(t, glyph.In(viewport), "phase glyph %v must fit the actual row viewport %v", glyph, viewport)
 	require.True(t, nameRect.In(viewport), "complete name/count block %v must fit the actual row viewport %v", nameRect, viewport)
 	require.False(t, glyph.Overlaps(nameRect), "glyph and name/count block must remain separate")
+}
+
+// One name too long for the list makes only its own row tall.
+func TestZStatsOnlyTheWrappedRowIsTall(t *testing.T) {
+	setZStatsTestResolution(t, 1280, 720)
+	dossier := testZStatsDossier()
+	dossier.Characters[0].Equipped[1].Name = "Ring of Exceedingly Lengthy Protection"
+	dialog := newTestZStatsDossierDialog(dossier, newWidgetTestKeyboard(0))
+	t.Cleanup(dialog.outerBorder.Dispose)
+	list := dialog.layout.characterListRect
+	line := dialog.listRowHeight(list, 0)
+	require.Greater(t, dialog.listRowHeight(list, 1), line, "the long name wraps")
+	for index := 2; index < dialog.currentItemCount(); index++ {
+		require.Equal(t, line, dialog.listRowHeight(list, index), "its neighbours keep one line")
+	}
+	// Every row is shown, each at its own height, within the list.
+	start, end := dialog.visibleListRange(list)
+	require.Equal(t, []int{0, dialog.currentItemCount()}, []int{start, end})
+	height := 0
+	for index := start; index < end; index++ {
+		height += dialog.listRowHeight(list, index)
+	}
+	require.LessOrEqual(t, height, dialog.panelBodyRect(list).Dy())
+	require.Greater(t, dialog.visibleListRows(list), dialog.currentItemCount(), "room is left under the short list")
 }

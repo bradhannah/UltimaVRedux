@@ -16,7 +16,6 @@ func (g *GameState) newUseableItemInfo(
 		AvailableNow: true, Category: category, UsageContext: usage, Quantity: quantity,
 		SpriteIndex: itemRef.ItemSprite, ItemRef: itemRef, ItemType: item,
 	}
-	setUseItemLore(&info)
 
 	return g.withUseItemGuidance(info, UsageField)
 }
@@ -46,15 +45,12 @@ func (g *GameState) withUseItemGuidance(info UseableItemInfo, context UsageConte
 	return info
 }
 
+// Potions and scrolls describe themselves in the shared catalog, which Z-stats
+// shows too. Use adds only what is true right now: the cost, and any reason the
+// attempt would be refused or wasted here.
 func (g *GameState) addPotionUseGuidance(info *UseableItemInfo, potion references.Potion, context UsageContext) {
-	review := g.ReviewPotionUse(potion, context)
-	info.EffectSummary = "Choose who will drink it."
-	if context == UsageCombat {
-		info.EffectSummary = "Drink."
-	}
 	info.Consumption = "Single use."
-	info.Warning = "Its colour is no promise of its effect."
-	if !review.EffectAvailable {
+	if !g.ReviewPotionUse(potion, context).EffectAvailable {
 		warnUseItemIneffective(info, "It may have no effect here, but will still be consumed.")
 	}
 }
@@ -62,33 +58,22 @@ func (g *GameState) addPotionUseGuidance(info *UseableItemInfo, potion reference
 func (g *GameState) addScrollUseGuidance(info *UseableItemInfo, scroll references.Scroll) {
 	info.Consumption = "Single use."
 	switch scroll {
-	case references.ScrollVasLor:
-		info.EffectSummary = "Read to summon light."
 	case references.ScrollRelHur:
-		info.EffectSummary = "Read, then choose a wind."
 		if !g.isScrollLocationValid(scroll) {
 			markUseItemUnavailable(info, "You cannot change the wind here.")
 		}
-	case references.ScrollInSanct:
-		info.EffectSummary = "Read for protection."
-	case references.ScrollInAn:
-		info.EffectSummary = "Read to still magic."
-		info.Warning = "Your own magic is stilled too."
-	case references.ScrollInQuasWis:
-		info.EffectSummary = "Read to view your surroundings."
-	case references.ScrollKalXenCorp:
-		info.EffectSummary = "Read to summon a daemon."
 	case references.ScrollInManiCorp:
-		info.EffectSummary = "Choose someone to resurrect."
 		if !g.PartyState.HasDeadMembers() {
 			warnUseItemIneffective(info, "No companion is dead. An attempt still consumes the scroll.")
 		}
 	case references.ScrollAnTym:
-		info.EffectSummary = "Read to still time."
 		location := g.MapState.PlayerLocation.Location
 		if location == references.Stonegate || location == references.Doom {
 			warnUseItemIneffective(info, "It has no effect here, but will still be consumed.")
 		}
+	case references.ScrollVasLor, references.ScrollInSanct, references.ScrollInAn,
+		references.ScrollInQuasWis, references.ScrollKalXenCorp:
+		// Nothing situational to add.
 	default:
 		panic("use item projection received an unknown scroll")
 	}

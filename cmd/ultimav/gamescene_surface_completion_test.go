@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/ai"
+	"github.com/bradhannah/UltimaVRedux/internal/display"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
@@ -220,7 +222,7 @@ func TestSurfaceMovementCompletionSeparatesBlockedAndMovedOverworldSteps(t *test
 
 		scene.largeMapInputHandler(ebiten.KeyRight)
 
-		movementCost := state.GetCurrentLayeredMapAvatarTopTile().GetSpeedFactor()
+		movementCost := state.GetCurrentAvatarGroundTile().GetSpeedFactor()
 		elapsed := 0
 		for _, minutes := range callbacks.TimeAdvanced() {
 			elapsed += minutes
@@ -569,6 +571,47 @@ func drainSurfaceCompletionWorkflow(t *testing.T, state *game_state.GameState, w
 		}
 	}
 	t.Fatalf("workflow %q did not complete", workflowName)
+}
+
+// A party lost in darkness spends its turn and goes nowhere, and its view is
+// blank. Wearing the Amulet lets it see and walk on. See ref:QUEST-0004.
+func TestLostPartySeesNothingAndSpendsItsTurnWithoutMoving(t *testing.T) {
+	manager := display.GetManager()
+	saved := *manager
+	t.Cleanup(func() { *manager = saved })
+	manager.PublishLogicalSize(320, 200)
+	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+		WithFloor(references.FloorNumber(references.UNDERWORLD)).WithPlayerAt(123, 126).
+		WithSystemCallbacks().WithRandomSeed(42).Build()
+	state.DebugOptions.MonsterGen = false
+	state.CurrentNPCAIController.GetNpcs().ReplaceWith(nil)
+	scene := newSurfaceCompletionTestScene(state)
+	origin := state.MapState.PlayerLocation.Position
+	require.True(t, state.IsLostInDarkness())
+	viewCentre := func() color.Color {
+		canvas := ebiten.NewImage(320, 200)
+		t.Cleanup(canvas.Deallocate)
+		canvas.Fill(color.White)
+		scene.drawMapFadeEffect(canvas)
+		viewport := scene.mapViewportRectangle()
+
+		return color.RGBAModel.Convert(canvas.At(viewport.Min.X+viewport.Dx()/2, viewport.Min.Y+viewport.Dy()/2))
+	}
+	require.Equal(t, color.RGBA{A: 255}, viewCentre(), "the view is blank")
+
+	for _, key := range []ebiten.Key{ebiten.KeyRight, ebiten.KeyLeft, ebiten.KeyUp, ebiten.KeyDown} {
+		result := scene.handleMovement("East", key)
+		require.Equal(t, surfaceCommandCompleted, result.State)
+		require.True(t, result.ConsumesNormalCycle, "the move takes its turn")
+		require.False(t, result.MovementOccurred)
+		require.Equal(t, origin, state.MapState.PlayerLocation.Position)
+	}
+	require.Contains(t, scene.output.GetOutputStr(true), game_state.LostInDarknessMessage)
+
+	require.True(t, state.ToggleAmulet())
+	require.Equal(t, color.RGBA{R: 255, G: 255, B: 255, A: 255}, viewCentre(), "the Amulet restores the view")
+	require.True(t, scene.handleMovement("East", ebiten.KeyRight).MovementOccurred)
+	require.Equal(t, references.Position{X: 124, Y: 126}, state.MapState.PlayerLocation.Position)
 }
 
 func newSurfaceCompletionTestScene(state *game_state.GameState) *GameScene {

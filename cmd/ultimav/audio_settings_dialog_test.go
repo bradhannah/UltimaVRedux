@@ -177,8 +177,15 @@ func TestConfigurationDialogDrawsClassicCardAndTopTabs(t *testing.T) {
 		color.RGBAModel.Convert(ucolor.DialogBackground.RGBA()),
 		color.RGBAModel.Convert(screen.At(card.Min.X+dialog.layout.pixelUnit*3, dialog.layout.titleRect.Min.Y)),
 	)
+	// The open tab's plate reaches just past its title, not across the whole tab.
+	title, _ := dialog.tabOutput.Font.MeasureString("Gameplay")
+	beside := activeTab.Min.X + (activeTab.Dx()-int(title))/2 - dialog.layout.pixelUnit
 	assert.Equal(t,
-		color.RGBAModel.Convert(widgets.DialogSelectedBackground),
+		color.RGBAModel.Convert(widgets.DialogActiveTabBackground),
+		color.RGBAModel.Convert(screen.At(beside, activeTab.Min.Y+activeTab.Dy()/2)),
+	)
+	assert.Equal(t,
+		color.RGBAModel.Convert(ucolor.DialogBackground.RGBA()),
 		color.RGBAModel.Convert(screen.At(activeTab.Min.X+dialog.layout.pixelUnit, activeTab.Min.Y+activeTab.Dy()/2)),
 	)
 	assert.Less(t, activeTab.Max.Y, dialog.layout.bodyRect.Min.Y)

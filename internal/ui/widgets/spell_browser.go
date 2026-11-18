@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -36,6 +37,9 @@ const (
 	spellFilterAll spellBrowserFilter = iota
 	spellFilterPrepared
 	spellFilterMixable
+	// spellFilterReady lists what the chosen caster can cast right now. It exists
+	// only where that can be judged: the Cast list.
+	spellFilterReady
 )
 
 func (filter spellBrowserFilter) label() string {
@@ -46,6 +50,8 @@ func (filter spellBrowserFilter) label() string {
 		return "Prepared"
 	case spellFilterMixable:
 		return "Mixable"
+	case spellFilterReady:
+		return "Ready"
 	default:
 		panic("invalid spell browser filter")
 	}
@@ -90,6 +96,7 @@ type spellBrowser struct {
 	query       string
 	searching   bool
 	filterMode  spellBrowserFilter
+	ready       func(game_state.ZStatsSpell) bool // Nil where no caster is chosen.
 	searchInput *TextInput
 	page        int
 	pages       int
@@ -122,6 +129,27 @@ func (b *spellBrowser) refresh(catalog []game_state.ZStatsSpell) {
 	b.selectID(spellID)
 }
 
+// refilter applies the filter again and keeps the selected spell when it is
+// still listed, for when the filter or what it depends on has changed.
+func (b *spellBrowser) refilter() {
+	spellID := -1
+	if spell := b.current(); spell != nil {
+		spellID = spell.ID
+	}
+	b.filter()
+	b.selectID(spellID)
+}
+
+// nextFilter is where Ctrl+O goes from the current filter.
+func (b *spellBrowser) nextFilter() spellBrowserFilter {
+	order := []spellBrowserFilter{spellFilterAll, spellFilterPrepared, spellFilterMixable}
+	if b.ready != nil {
+		order = []spellBrowserFilter{spellFilterReady, spellFilterPrepared, spellFilterAll, spellFilterMixable}
+	}
+
+	return order[(slices.Index(order, b.filterMode)+1)%len(order)]
+}
+
 func (b *spellBrowser) selectID(id int) {
 	for position, index := range b.filtered {
 		if b.catalog[index].ID == id {
@@ -135,11 +163,39 @@ func (b *spellBrowser) selectID(id int) {
 	}
 }
 
+// filteredOut reports whether the current filter leaves the spell off the list.
+func (b *spellBrowser) filteredOut(spell game_state.ZStatsSpell) bool {
+	switch b.filterMode {
+	case spellFilterAll:
+		return false
+	case spellFilterPrepared:
+		return spell.Prepared == 0
+	case spellFilterMixable:
+		return !spellMixable(spell)
+	case spellFilterReady:
+		return !b.ready(spell)
+	default:
+		panic("invalid spell browser filter")
+	}
+}
+
+// filter lists the spells the filter and the typed words allow. Ready is a
+// convenience, not a wall: when the words match none of the ready spells, the
+// list widens to every known spell, so a spell the caster knows can always be
+// found by name and its row says why it cannot be cast.
 func (b *spellBrowser) filter() {
+	b.applyFilter()
+	typed := b.syllables != "" || (b.searching && b.query != "")
+	if b.filterMode == spellFilterReady && typed && len(b.filtered) == 0 {
+		b.filterMode = spellFilterAll
+		b.applyFilter()
+	}
+}
+
+func (b *spellBrowser) applyFilter() {
 	b.filtered = b.filtered[:0]
 	for index, spell := range b.catalog {
-		if b.filterMode == spellFilterPrepared && spell.Prepared == 0 ||
-			b.filterMode == spellFilterMixable && !spellMixable(spell) {
+		if b.filteredOut(spell) {
 			continue
 		}
 		matches := true
@@ -203,13 +259,8 @@ func (b *spellBrowser) handleSearchControls(keyboard *input.Keyboard, font *text
 		return true
 	}
 	if keyboard.IsModifierPressed(input.ModifierCtrl) && keyboard.IsTextKeyPressedAndRegister(ebiten.KeyO) {
-		spellID := -1
-		if spell := b.current(); spell != nil {
-			spellID = spell.ID
-		}
-		b.filterMode = (b.filterMode + 1) % (spellFilterMixable + 1)
-		b.filter()
-		b.selectID(spellID)
+		b.filterMode = b.nextFilter()
+		b.refilter()
 
 		return true
 	}
@@ -511,6 +562,10 @@ func drawSpellCatalogRow(screen *ebiten.Image, rowOutput, countOutput *text.Outp
 	drawSpellOutput(screen, countOutput, countRect, 0, 1)
 }
 
+// prepareSpellCatalogRow lays out a spell's two lines and its prepared count. The
+// count sits at the right of the first line only, so the name stops short of the
+// number and the meaning below has the whole row: neither gives up room to the
+// width of the column heading. Text that still cannot fit is cut plainly.
 func prepareSpellCatalogRow(rowOutput, countOutput *text.Output,
 	rect image.Rectangle, spell game_state.ZStatsSpell, selected, available bool,
 ) (image.Rectangle, image.Rectangle) {
@@ -521,33 +576,22 @@ func prepareSpellCatalogRow(rowOutput, countOutput *text.Output,
 	if spell.Unread {
 		effect = "New: " + effect
 	}
-
-	return prepareSpellTextRow(rowOutput, countOutput, rect,
-		spell.Name, effect, strconv.Itoa(int(spell.Prepared)), selected, available)
-}
-
-func prepareSpellTextRow(rowOutput, countOutput *text.Output,
-	rect image.Rectangle, name, effect, count string, selected, available bool,
-) (image.Rectangle, image.Rectangle) {
+	count := strconv.Itoa(int(spell.Prepared))
+	font := rowOutput.Font
 	nameColor, effectColor := spellRowColours(selected, available)
 	rect = spellRowContentRect(rowOutput, rect)
-	countWidth, _ := rowOutput.Font.MeasureString("Prepared")
-	nameRect := rect
-	if count != "" {
-		nameRect.Max.X -= int(math.Ceil(countWidth)) + spellBrowserCountGap
-	}
-	prepareSpellOutput(rowOutput, nameRect)
-	name = unavailableRowLabel(name, available)
-	rowOutput.AppendLine().Text(FitDialogLine(name, rowOutput.Font, nameRect.Dx()), nameColor).Done()
-	rowOutput.AppendLine().Text(FitDialogLine(rowDetailIndent+effect, rowOutput.Font, nameRect.Dx()), effectColor).Done()
-	if count == "" {
-		return nameRect, image.Rect(0, 0, 0, 0)
-	}
-	countRect := image.Rect(nameRect.Max.X+spellBrowserCountGap, rect.Min.Y, rect.Max.X, rect.Max.Y)
+	countWidth, _ := font.MeasureString(count)
+	nameWidth := rect.Dx() - int(math.Ceil(countWidth)) - spellBrowserCountGap
+	prepareSpellOutput(rowOutput, rect)
+	rowOutput.AppendLine().Text(
+		CutDialogLine(font, unavailableRowLabel(spell.Name, available), "", nameWidth), nameColor).Done()
+	rowOutput.AppendLine().Text(CutDialogLine(font, rowDetailIndent+effect, "", rect.Dx()), effectColor).Done()
+	headingWidth, _ := font.MeasureString("Prepared")
+	countRect := image.Rect(rect.Max.X-int(math.Ceil(headingWidth)), rect.Min.Y, rect.Max.X, rect.Max.Y)
 	prepareSpellOutput(countOutput, countRect)
 	countOutput.AppendLine().WithAlignment(etext.AlignEnd).Text(count, nameColor).Done()
 
-	return nameRect, countRect
+	return rect, countRect
 }
 
 func appendSpellDetails(output *text.Output, spell game_state.ZStatsSpell) {
@@ -597,7 +641,7 @@ func appendSpellFormula(output *text.Output, spell game_state.ZStatsSpell) {
 	}
 	appendSpellField(output.AppendLine(), "Target", spell.Targeting).WordWrap().Done()
 	appendSpellField(output.AppendLine(), "Affects", spellScopeLabel(spell.Scope)).WordWrap().Done()
-	appendSpellField(output.AppendLine(), "When", spell.Contexts).WordWrap().Done()
+	appendSpellField(output.AppendLine(), "Where", spell.Contexts).WordWrap().Done()
 }
 
 func appendSpellIngredient(line *text.LineBuilder, ingredient game_state.SpellReagentStock) *text.LineBuilder {
@@ -618,17 +662,17 @@ func spellScopeLabel(scope references.SpellEffectScope) string {
 	case references.ScopeSingleCharacter:
 		return "One character"
 	case references.ScopeSingleCombatant:
-		return "One combatant"
+		return "One creature"
 	case references.ScopeSingleTile:
-		return "One tile"
+		return "One square"
 	case references.ScopeCone:
-		return "Directional cone"
+		return "All before you"
 	case references.ScopeGlobal:
-		return "Global"
+		return "Everyone"
 	case references.ScopeRandomPlacement:
-		return "Random placement"
+		return "Somewhere nearby"
 	case references.ScopeWorldTransition:
-		return "World travel"
+		return "The party"
 	default:
 		return "Unknown"
 	}

@@ -52,6 +52,27 @@ func (t TargetingType) String() string {
 	}
 }
 
+// PlayerLabel says how the caster aims the spell, in a player's words. String
+// keeps the plain names that logs and the Workbench use.
+func (t TargetingType) PlayerLabel() string {
+	switch t {
+	case TargetAutomatic:
+		return "No aim needed"
+	case TargetCombatPartyMember:
+		return "A companion in the fight"
+	case TargetAdjacentTile:
+		return "A square beside you"
+	case TargetCombatantCrosshair:
+		return "A creature you pick"
+	case TargetTileCrosshair:
+		return "A square you pick"
+	case TargetPartyMember, TargetDirection, TargetMoonPhase:
+		return t.String() // Already a player's word.
+	default:
+		return t.String()
+	}
+}
+
 // SpellEffectScope describes what a spell can affect after targeting resolves.
 type SpellEffectScope int
 
@@ -168,6 +189,19 @@ func (c SpellContext) String() string {
 	return result
 }
 
+// PlayerLabel says where the spell may be cast, in a player's words. String keeps
+// the plain names that logs and the Workbench use.
+func (c SpellContext) PlayerLabel() string {
+	if c == ContextAll {
+		return "Anywhere"
+	}
+	if c == ContextNonCombat {
+		return "Outside battle"
+	}
+
+	return c.String()
+}
+
 // HasContext returns true if the spell context includes the specified context
 func (c SpellContext) HasContext(ctx SpellContext) bool {
 	return c&ctx != 0
@@ -204,13 +238,13 @@ var spellMetadata = [TotalSpellCount]SpellInfo{ //nolint:gochecknoglobals // Imm
 	{AnZu, "An Zu", 1, TargetPartyMember, ScopeSingleCharacter, ContextAll, "Awakens sleeping character"},
 	{AnNox, "An Nox", 1, TargetPartyMember, ScopeSingleCharacter, ContextAll, "Cures poison"},
 	{Mani, "Mani", 1, TargetPartyMember, ScopeSingleCharacter, ContextAll, "Heals minor wounds"},
-	{AnYlem, "An Ylem", 1, TargetDirection, ScopeSingleTile, ContextTown | ContextCombat, "Destroys matter"},
+	{AnYlem, "An Ylem", 1, TargetDirection, ScopeSingleTile, ContextTown | ContextCombat, "Destroys a movable obstacle beside you, such as furniture"},
 
 	// Circle 2 (Spells 6-11)
 	{AnSanct, "An Sanct", 2, TargetDirection, ScopeSingleTile, ContextAll, "Unlocks mundane doors and disarms chests"},
 	{AnXenCorp, "An Xen Corp", 2, TargetAutomatic, ScopeGlobal, ContextCombat, "Repels undead"},
 	{RelHur, "Rel Hur", 2, TargetDirection, ScopeGlobal, ContextOverworld, "Changes wind direction"},
-	{InWis, "In Wis", 2, TargetAutomatic, ScopeCaster, ContextOverworld, "Grants magical vision"},
+	{InWis, "In Wis", 2, TargetAutomatic, ScopeCaster, ContextOverworld, "Reveals where in the world you stand"},
 	{KalXen, "Kal Xen", 2, TargetAutomatic, ScopeRandomPlacement, ContextCombat, "Summons creature"},
 	{InXenMani, "In Xen Mani", 2, TargetAutomatic, ScopeParty, ContextAll, "Creates food"},
 
@@ -220,46 +254,46 @@ var spellMetadata = [TotalSpellCount]SpellInfo{ //nolint:gochecknoglobals // Imm
 	{InFlamGrav, "In Flam Grav", 3, TargetDirection, ScopeSingleTile, ContextDungeon | ContextCombat, "Creates fire field"},
 	{InNoxGrav, "In Nox Grav", 3, TargetDirection, ScopeSingleTile, ContextDungeon | ContextCombat, "Creates poison field"},
 	{InZuGrav, "In Zu Grav", 3, TargetDirection, ScopeSingleTile, ContextDungeon | ContextCombat, "Creates sleep field"},
-	{InPor, "In Por", 3, TargetDirection, ScopeWorldTransition, ContextOverworld | ContextCombat, "Blink teleport"},
+	{InPor, "In Por", 3, TargetDirection, ScopeWorldTransition, ContextOverworld | ContextCombat, "Whisks you a short way from where you stand"},
 
 	// Circle 4 (Spells 18-23)
 	{AnGrav, "An Grav", 4, TargetDirection, ScopeSingleTile, ContextDungeon | ContextCombat, "Dispels magic field"},
 	{InSanct, "In Sanct", 4, TargetAutomatic, ScopeParty, ContextAll, "Grants party protection"},
 	{InSanctGrav, "In Sanct Grav", 4, TargetDirection, ScopeSingleTile, ContextDungeon | ContextCombat, "Creates protection field"},
-	{UusPor, "Uus Por", 4, TargetAutomatic, ScopeWorldTransition, ContextDungeon, "Ascend dungeon level"},
-	{DesPor, "Des Por", 4, TargetAutomatic, ScopeWorldTransition, ContextDungeon, "Descend dungeon level"},
+	{UusPor, "Uus Por", 4, TargetAutomatic, ScopeWorldTransition, ContextDungeon, "Carries the party up one level of a dungeon"},
+	{DesPor, "Des Por", 4, TargetAutomatic, ScopeWorldTransition, ContextDungeon, "Carries the party down one level of a dungeon"},
 	{WisQuas, "Wis Quas", 4, TargetAutomatic, ScopeGlobal, ContextCombat, "Reveals hidden things"},
 
 	// Circle 5 (Spells 24-29)
-	{InBetXen, "In Bet Xen", 5, TargetAutomatic, ScopeRandomPlacement, ContextCombat, "Insect swarm attack"},
+	{InBetXen, "In Bet Xen", 5, TargetAutomatic, ScopeRandomPlacement, ContextCombat, "Calls swarms of insects to fight beside you"},
 	{AnExPor, "An Ex Por", 5, TargetDirection, ScopeSingleTile, ContextTown | ContextCombat, "Magically locks door"},
 	{InExPor, "In Ex Por", 5, TargetDirection, ScopeSingleTile, ContextTown | ContextCombat, "Unlocks magically locked door"},
 	{VasMani, "Vas Mani", 5, TargetPartyMember, ScopeSingleCharacter, ContextAll, "Heals major wounds"},
-	{InZu, "In Zu", 5, TargetDirection, ScopeCone, ContextCombat, "Directional mass sleep cone"},
-	{RelTym, "Rel Tym", 5, TargetAutomatic, ScopeGlobal, ContextAll, "Grants quickness"},
+	{InZu, "In Zu", 5, TargetDirection, ScopeCone, ContextCombat, "Casts sleep over the foes before you"},
+	{RelTym, "Rel Tym", 5, TargetAutomatic, ScopeGlobal, ContextAll, "Quickens the party, so it acts more often for a while"},
 
 	// Circle 6 (Spells 30-35)
 	{InVasPorYlem, "In Vas Por Ylem", 6, TargetAutomatic, ScopeGlobal, ContextCombat, "Earthquake attack"},
 	{QuasAnWis, "Quas An Wis", 6, TargetAutomatic, ScopeGlobal, ContextCombat, "Confuses enemies"},
 	{InAn, "In An", 6, TargetAutomatic, ScopeGlobal, ContextAll, "Negates magic"},
-	{WisAnYlem, "Wis An Ylem", 6, TargetAutomatic, ScopeCaster, ContextOverworld | ContextTown, "Grants temporary X-ray vision"},
+	{WisAnYlem, "Wis An Ylem", 6, TargetAutomatic, ScopeCaster, ContextOverworld | ContextTown, "Lets you see through walls for a short while"},
 	{AnXenEx, "An Xen Ex", 6, TargetCombatantCrosshair, ScopeSingleCombatant, ContextCombat, "Charms creature"},
-	{RelXenBet, "Rel Xen Bet", 6, TargetCombatantCrosshair, ScopeSingleCombatant, ContextCombat, "Transforms to rat"},
+	{RelXenBet, "Rel Xen Bet", 6, TargetCombatantCrosshair, ScopeSingleCombatant, ContextCombat, "Turns one creature into a rat, if it cannot resist"},
 
 	// Circle 7 (Spells 36-41)
 	{SanctLor, "Sanct Lor", 7, TargetAutomatic, ScopeCaster, ContextCombat, "Grants invisibility"},
-	{XenCorp, "Xen Corp", 7, TargetTileCrosshair, ScopeSingleCombatant, ContextCombat, "Death spell"},
-	{InQuasXen, "In Quas Xen", 7, TargetCombatantCrosshair, ScopeSingleCombatant, ContextCombat, "Clones creature"},
+	{XenCorp, "Xen Corp", 7, TargetTileCrosshair, ScopeSingleCombatant, ContextCombat, "Strikes one foe dead, if it cannot resist"},
+	{InQuasXen, "In Quas Xen", 7, TargetCombatantCrosshair, ScopeSingleCombatant, ContextCombat, "Makes a living double of one creature"},
 	{InQuasWis, "In Quas Wis", 7, TargetAutomatic, ScopeCaster, ContextNonCombat, "Views the surrounding area"},
-	{InNoxHur, "In Nox Hur", 7, TargetDirection, ScopeCone, ContextCombat, "Poison wind"},
-	{InQuasCorp, "In Quas Corp", 7, TargetAutomatic, ScopeGlobal, ContextCombat, "Fear spell"},
+	{InNoxHur, "In Nox Hur", 7, TargetDirection, ScopeCone, ContextCombat, "Blows poison across the foes before you"},
+	{InQuasCorp, "In Quas Corp", 7, TargetAutomatic, ScopeGlobal, ContextCombat, "Fills your foes with fear"},
 
 	// Circle 8 (Spells 42-47)
 	{InManiCorp, "In Mani Corp", 8, TargetPartyMember, ScopeSingleCharacter, ContextNonCombat, "Resurrects dead"},
 	{KalXenCorp, "Kal Xen Corp", 8, TargetAutomatic, ScopeRandomPlacement, ContextCombat, "Summons daemon"},
-	{InVasGravCorp, "In Vas Grav Corp", 8, TargetDirection, ScopeCone, ContextCombat, "Energy vortex"},
-	{InFlamHur, "In Flam Hur", 8, TargetDirection, ScopeCone, ContextCombat, "Flame wind"},
-	{VasRelPor, "Vas Rel Por", 8, TargetMoonPhase, ScopeWorldTransition, ContextNonCombat, "Moongate travel"},
+	{InVasGravCorp, "In Vas Grav Corp", 8, TargetDirection, ScopeCone, ContextCombat, "Blows raw energy across the foes before you"},
+	{InFlamHur, "In Flam Hur", 8, TargetDirection, ScopeCone, ContextCombat, "Blows flame across the foes before you"},
+	{VasRelPor, "Vas Rel Por", 8, TargetMoonPhase, ScopeWorldTransition, ContextNonCombat, "Carries the party to the place of the moon you name"},
 	{AnTym, "An Tym", 8, TargetAutomatic, ScopeGlobal, ContextAll, "Stops time"},
 }
 

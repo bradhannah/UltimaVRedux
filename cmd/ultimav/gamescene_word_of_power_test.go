@@ -265,7 +265,7 @@ func TestCodexFinalPageInterruptionRetainsOnlyWordUntilRevisit(t *testing.T) {
 	require.Equal(t, word, after)
 	require.True(t, revisit.journalVisits.IsNew(journal.ChronicleTab, 1))
 	entry := revisit.gameState.CurrentQuestJournalDossier().Chronicle[0]
-	require.Equal(t, "Codex revelation: VERAMOCOR", entry.Title)
+	require.Equal(t, "Codex revelation", entry.Title)
 	require.Equal(t, "Codex of Ultimate Wisdom", entry.Source)
 	require.Equal(t, before[0].OccurredOn, entry.OccurredOn)
 	for _, clue := range []string{"Shame's egress", "Underworld", "darkness", "gate", "VERAMOCOR", "ethereal wards", "stealers of souls", "awaits thy coming"} {

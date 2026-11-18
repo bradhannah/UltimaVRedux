@@ -26,13 +26,26 @@ type CombatActorPresentation struct {
 // actor. A nonzero expectedID also rejects a recycled monster slot. Invisible
 // PCs retain their established visible shimmer; invisible monsters do not.
 func (g *GameState) ProjectCombatActor(identity CombatTurnIdentity, expectedID CombatantID) (CombatActorPresentation, bool) {
+	return g.projectCombatActor(identity, expectedID, false)
+}
+
+// ProjectCombatTurnActor is ProjectCombatActor for the turn panel, where the
+// party is never concealed: the player knows who stands under an arch or was
+// dragged under by a Corpser, and the party roster names them regardless.
+func (g *GameState) ProjectCombatTurnActor(identity CombatTurnIdentity) (CombatActorPresentation, bool) {
+	return g.projectCombatActor(identity, 0, identity.IsPartyMember)
+}
+
+func (g *GameState) projectCombatActor(
+	identity CombatTurnIdentity, expectedID CombatantID, known bool,
+) (CombatActorPresentation, bool) {
 	combat := g.CombatScene
 	if combat == nil || identity.EntityIndex < 0 || (identity.IsPartyMember && identity.EntityIndex >= len(combat.PartyActive)) {
 		return CombatActorPresentation{}, false
 	}
 	view := CombatActorPresentation{Identity: identity}
 	if identity.IsPartyMember {
-		if expectedID != 0 || !combat.IsCombatPCActive(identity) || combat.IsCombatPCUnderground(identity) {
+		if expectedID != 0 || !combat.IsCombatPCActive(identity) || (!known && combat.IsCombatPCUnderground(identity)) {
 			return CombatActorPresentation{}, false
 		}
 		character := g.PartyState.GetCharacter(identity.EntityIndex)
@@ -55,7 +68,7 @@ func (g *GameState) ProjectCombatActor(identity CombatTurnIdentity, expectedID C
 		view.Name, view.Position, view.CombatantID = monster.MonsterType().Name(), monster.Position(), monster.CombatantID()
 		view.Charmed, view.Summoned = monster.charmed, monster.summoned
 	}
-	if !g.CombatTerrainAllowsObjectDisplay(view.Position) {
+	if !known && !g.CombatTerrainAllowsObjectDisplay(view.Position) {
 		return CombatActorPresentation{}, false
 	}
 	view.Loyalty = g.combatIdentityLoyalty(identity)

@@ -6,7 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
 
 func TestToggleItemType_FriendlyName(t *testing.T) {
@@ -332,4 +334,26 @@ func createMockSystemCallbacksForToggleTests() *SystemCallbacks {
 			},
 		},
 	}
+}
+
+// A party on a darkness square is lost unless it wears the Amulet. See ref:QUEST-0004.
+func TestPartyIsLostOnDarknessUnlessWearingTheAmulet(t *testing.T) {
+	gs, _ := NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+		WithFloor(references.FloorNumber(references.UNDERWORLD)).WithPlayerAt(122, 126).WithSystemCallbacks().Build()
+	require.False(t, gs.IsLostInDarkness(), "the lava beside the darkness is ordinary ground")
+
+	gs.MapState.PlayerLocation.Position = references.Position{X: 123, Y: 126}
+	require.True(t, gs.GetCurrentAvatarGroundTile().Is(indexes.BlackSquare), "fixture: a darkness square")
+	require.True(t, gs.IsLostInDarkness())
+
+	require.True(t, gs.ToggleAmulet())
+	require.False(t, gs.IsLostInDarkness(), "the Amulet shows the way")
+	require.True(t, gs.ToggleAmulet())
+	require.True(t, gs.IsLostInDarkness(), "taking it off loses the way again")
+
+	// The rule belongs to the large map: the same tile in a towne is only a tile.
+	towne, _ := NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	position := towne.MapState.PlayerLocation.Position
+	towne.GetCurrentLayeredMap().SetTileByLayer(map_state.MapLayer, &position, indexes.BlackSquare)
+	require.False(t, towne.IsLostInDarkness())
 }

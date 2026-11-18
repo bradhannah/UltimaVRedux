@@ -1,6 +1,9 @@
 package game_state
 
-import "github.com/bradhannah/UltimaVRedux/internal/references"
+import (
+	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+)
 
 // ToggleItemDuration is the permanent sentinel for normally donned artifacts.
 const ToggleItemDuration = 255
@@ -89,6 +92,25 @@ func (gs *GameState) triggerToggleItemFlash(itemType ToggleItemType) {
 // IsAmuletActive checks if the Amulet effect is active.
 func (gs *GameState) IsAmuletActive() bool {
 	return gs.AmuletState.IsActive
+}
+
+// LostInDarknessMessage tells the player why a move went nowhere.
+// REDUX DEVIATION: QUEST-0004: the original prints only the direction and gives
+// no reason; Redux adds this line so a blank view and a party that will not move
+// do not read as a fault.
+const LostInDarknessMessage = "Lost in darkness!"
+
+// IsLostInDarkness reports whether the party stands on a darkness square of the
+// large map without the Amulet of Lord British worn. While lost the party sees
+// nothing and cannot walk: a move is accepted and takes its turn, but the party
+// stays where it is. Wearing the Amulet lifts both. See ref:QUEST-0004.
+func (gs *GameState) IsLostInDarkness() bool {
+	if gs.MapState.PlayerLocation.Location.GetMapType() != references.LargeMapType || gs.IsAmuletActive() {
+		return false
+	}
+	ground := gs.GetCurrentAvatarGroundTile()
+
+	return ground != nil && ground.Index == indexes.BlackSquare
 }
 
 // IsCrownActive checks if the Crown effect is active.

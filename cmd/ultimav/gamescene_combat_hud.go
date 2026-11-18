@@ -363,7 +363,7 @@ func (g *GameScene) drawCombatCurrentTurn(
 		textX := spriteBounds.Max.X + lineGap
 		hud.turnOutput.Reset()
 		hud.turnOutput.SetMaxCharsPerLine(max(1, hud.turnOutput.Font.CharsForWidth(bounds.Max.X-textX)))
-		if actor, disclosed := g.gameState.ProjectCombatActor(current, 0); disclosed {
+		if actor, disclosed := g.gameState.ProjectCombatTurnActor(current); disclosed {
 			name := strings.ToUpper(actor.Name)
 			if autoPass {
 				hud.turnOutput.AppendLine().LightGray(name).Done()
@@ -468,7 +468,7 @@ func (g *GameScene) drawCombatLadderRow(
 	textLeft := row.Min.X + spriteWidth + gap
 	textTop := row.Min.Y + (row.Dy()-gap-lineHeight)/combatHUDCenterDivisor
 
-	actor, disclosed := g.gameState.ProjectCombatActor(identity, 0)
+	actor, disclosed := g.gameState.ProjectCombatTurnActor(identity)
 	name, suffix, nameColor := combatUnknownTurnLabel, "", color.Color(ucolor.EGALightGray)
 	if disclosed {
 		name, nameColor = actor.Name, combatLadderNameColor(actor, skipped)
@@ -585,8 +585,11 @@ func (g *GameScene) filterConcealedCombatForecast(count int) int {
 	return visibleCount
 }
 
+// combatTurnIdentityConcealed says whether the Turn Order panel must withhold an
+// actor's name and portrait. That is only ever a monster: a party member in the
+// fight is always named.
 func (g *GameScene) combatTurnIdentityConcealed(identity game_state.CombatTurnIdentity) bool {
-	_, disclosed := g.gameState.ProjectCombatActor(identity, 0)
+	_, disclosed := g.gameState.ProjectCombatTurnActor(identity)
 
 	return !disclosed
 }
@@ -616,9 +619,6 @@ func (g *GameScene) combatTurnSprite(
 	}
 	monster := g.gameState.CombatScene.MonsterManager.GetMonster(identity.EntityIndex)
 	if monster == nil || monster.EnemyRef() == nil || monster.EnemyRef().KeyFrameTile == nil {
-		return nil
-	}
-	if g.combatTurnIdentityConcealed(identity) {
 		return nil
 	}
 

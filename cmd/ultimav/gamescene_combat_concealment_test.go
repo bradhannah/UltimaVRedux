@@ -159,6 +159,30 @@ func TestCombatForecastCanOmitConcealedMonsterSlotsWithoutChangingQueue(t *testi
 	assert.Equal(t, monstersBefore, monstersAfter)
 }
 
+// The party roster names every member, so the Turn Order panel hides none of them.
+func TestCombatTurnPanelAlwaysNamesTheParty(t *testing.T) {
+	scene := newCombatConcealmentTestState(t)
+	state := scene.gameState
+	underArch := game_state.CombatTurnIdentity{IsPartyMember: true, EntityIndex: 0}
+	captive := game_state.CombatTurnIdentity{IsPartyMember: true, EntityIndex: 1}
+	setCombatConcealmentTerrain(state, state.CombatScene.GetCombatantPosition(underArch), indexes.BrickWallArchway)
+	state.CombatScene.PartyUnderground[captive.EntityIndex] = true
+
+	for _, identity := range []game_state.CombatTurnIdentity{underArch, captive} {
+		_, onBattlefield := state.ProjectCombatActor(identity, 0)
+		assert.False(t, onBattlefield, "the battlefield still conceals the body")
+		actor, named := state.ProjectCombatTurnActor(identity)
+		require.True(t, named)
+		assert.Equal(t, state.PartyState.GetCharacter(identity.EntityIndex).GetNameAsString(), actor.Name)
+		assert.NotNil(t, scene.combatTurnSprite(identity))
+	}
+
+	scene.gameConfig.GameplayConfiguration.ShowConcealedTurnOrderSlots = false
+	scene.combatHUD.forecast[0] = game_state.CombatTurnForecastEntry{CombatTurnIdentity: underArch}
+	scene.combatHUD.forecast[1] = game_state.CombatTurnForecastEntry{CombatTurnIdentity: captive}
+	assert.Equal(t, 2, scene.filterConcealedCombatForecast(2), "Off drops hidden monsters, never the party")
+}
+
 func newCombatConcealmentTestScene(t *testing.T) (*GameScene, *ebiten.Image) {
 	t.Helper()
 	scene := newCombatConcealmentTestState(t)

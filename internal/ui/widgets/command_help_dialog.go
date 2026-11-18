@@ -2,6 +2,7 @@ package widgets
 
 import (
 	"image"
+	"math"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 const (
 	commandHelpMargin       = 0.08
 	commandHelpPadding      = 12
+	commandHelpTabGap       = 6 // Room for the open tab's plate under the title.
 	commandHelpEntryRows    = 20
 	commandHelpFooterRows   = 8
 	commandHelpInitialChars = 80
@@ -136,13 +138,13 @@ func (d *CommandHelpDialog) populatePage() {
 	d.icons = nil
 	d.header.Reset()
 	tabs := d.header.AppendLine()
-	for page, label := range [helpPageCount]string{"Right now", "Commands", "Status"} {
-		colour := DialogControlHintColor
+	for page, label := range helpPageTitles() {
+		colour := DialogTabColor
 		if page == d.page {
-			label, colour = "["+label+"]", DialogHeaderColor
+			colour = DialogActiveTabText
 		}
 		if page > 0 {
-			tabs.Text("    ", colour)
+			tabs.Text(helpTabGap, colour)
 		}
 		tabs.Text(label, colour)
 	}
@@ -245,7 +247,8 @@ func (d *CommandHelpDialog) appendStatusGroup(title, empty string, entries []Sta
 
 func (d *CommandHelpDialog) contentBounds() image.Rectangle {
 	bounds := d.border.GetInteriorBounds().Inset(commandHelpPadding)
-	bounds.Min.Y += int(d.title.GetTotalHeightForLines(1)+d.header.GetTotalHeightForLines(1)) + commandHelpPadding
+	bounds.Min.Y += int(d.title.GetTotalHeightForLines(1)+d.header.GetTotalHeightForLines(1)) +
+		commandHelpTabGap + commandHelpPadding
 	bounds.Max.Y -= int(d.footer.GetTotalHeightForLines(d.footer.GetPanelContentLineCount())) + commandHelpPadding
 
 	return bounds
@@ -298,6 +301,24 @@ func (d *CommandHelpDialog) Update() {
 	}
 }
 
+// helpTabGap separates the page titles on the one centred tab line.
+const helpTabGap = "    "
+
+func helpPageTitles() [helpPageCount]string {
+	return [helpPageCount]string{"Right now", "Commands", "Status"}
+}
+
+// The tab line is one centred row of text, so the open page's place on it is measured.
+func (d *CommandHelpDialog) drawActiveTabPlate(screen *ebiten.Image, bounds image.Rectangle, pixelUnit int) {
+	titles := helpPageTitles()
+	line, _ := d.header.Font.MeasureString(strings.Join(titles[:], helpTabGap))
+	before, _ := d.header.Font.MeasureString(strings.Join(titles[:d.page+1], helpTabGap))
+	width, _ := d.header.Font.MeasureString(titles[d.page])
+	left := bounds.Min.X + (bounds.Dx()-int(math.Ceil(line)))/commandHelpSides + int(math.Round(before-width))
+	cell := image.Rect(left, bounds.Min.Y, left+int(math.Ceil(width)), bounds.Max.Y)
+	DrawActiveTabPlate(screen, cell, width, bounds.Min.Y, int(math.Ceil(d.header.GetFontHeight())), pixelUnit)
+}
+
 // showPage changes page and restores the reading position last left on it.
 func (d *CommandHelpDialog) showPage(page int) {
 	d.pageRows[d.page] = d.row
@@ -315,7 +336,8 @@ func (d *CommandHelpDialog) Draw(screen *ebiten.Image) {
 	DrawClassicPixelRoundedFrame(screen, d.border.GetBounds(), pixelUnit, DialogRuleColor)
 	bounds := d.border.GetInteriorBounds().Inset(commandHelpPadding)
 	d.title.DrawPanelContent(screen, bounds.Min, bounds.Dx(), etext.AlignCenter)
-	bounds.Min.Y += int(d.title.GetTotalHeightForLines(1))
+	bounds.Min.Y += int(d.title.GetTotalHeightForLines(1)) + commandHelpTabGap
+	d.drawActiveTabPlate(screen, bounds, pixelUnit)
 	d.header.DrawPanelContent(screen, bounds.Min, bounds.Dx(), etext.AlignCenter)
 	content := d.contentBounds()
 	if d.page == helpPageStatus {

@@ -47,6 +47,7 @@ func NewSpellCastingDialog(keyboard *input.Keyboard, party *party_state.PartySta
 	//nolint:exhaustruct_v5 // Optional intents and selection state start empty; layout initializes presentation.
 	d := &SpellCastingDialog{keyboard: keyboard, partyState: party, currentContext: context,
 		browser: newSpellBrowser(catalog), validate: validate}
+	d.browser.ready = d.spellAvailable
 	d.ensureLayout()
 
 	return d
@@ -287,18 +288,33 @@ func (d *SpellCastingDialog) selectCaster(index int) {
 	if caster.IsInParty() && caster.IsAlive() {
 		d.selectedCasterIdx = index
 		d.notice = ""
+		d.browser.refilter() // Ready depends on who is casting.
 	}
 }
 
 // SetInitialCaster restores the workflow's previously selected caster.
 func (d *SpellCastingDialog) SetInitialCaster(index int) { d.selectCaster(index) }
 
-// LockCasterSelection restricts combat casting to the active actor.
+// LockCasterSelection restricts combat casting to the active actor. In battle the
+// list then opens on what that actor can cast right now, so spells that are
+// mixed but beyond them are out of the way; with nothing ready it opens on every
+// known spell rather than an empty list.
 func (d *SpellCastingDialog) LockCasterSelection(index int) {
 	if index < 0 || index >= 6 {
 		panic("SpellCastingDialog: invalid caster index")
 	}
 	d.selectedCasterIdx, d.casterSelectionLocked = index, true
+	if d.currentContext != references.ContextCombat {
+		d.browser.refilter()
+
+		return
+	}
+	d.browser.filterMode = spellFilterReady
+	d.browser.refilter()
+	if len(d.browser.filtered) == 0 {
+		d.browser.filterMode = spellFilterAll
+		d.browser.refilter()
+	}
 }
 func (d *SpellCastingDialog) cycleCaster(direction int) {
 	if d.casterSelectionLocked {
@@ -311,6 +327,7 @@ func (d *SpellCastingDialog) cycleCaster(direction int) {
 			if caster.IsInParty() && caster.IsAlive() {
 				d.selectedCasterIdx = index
 				d.notice = ""
+				d.browser.refilter() // Ready depends on who is casting.
 
 				return
 			}

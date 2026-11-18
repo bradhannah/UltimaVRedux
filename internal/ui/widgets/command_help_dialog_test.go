@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"image"
 	"image/color"
 	"strings"
 	"testing"
@@ -118,5 +119,20 @@ func TestCommandHelpOpensOnKeysThatWorkRightNow(t *testing.T) {
 	require.Contains(t, page, "MOVE AND ACT [A] Attack BATTLE PANELS [F2] Combat details")
 	require.Contains(t, page, "Not available here: T.")
 	require.NotContains(t, page, "SURROUNDINGS", "a group with no usable key is not headed")
-	require.Contains(t, dialog.header.GetOutputStr(false), "[Right now]")
+	require.Equal(t, "Right now    Commands    Status", dialog.header.GetOutputStr(false))
+	screen := ebiten.NewImage(1280, 720)
+	t.Cleanup(screen.Deallocate)
+	dialog.Draw(screen)
+	// The open page is marked by the shared plate, which lies under its own title only.
+	bounds := dialog.border.GetInteriorBounds()
+	plate := image.Rectangle{Min: image.Pt(bounds.Max.X, bounds.Max.Y), Max: bounds.Min}
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			if color.RGBAModel.Convert(screen.At(x, y)) == color.RGBAModel.Convert(DialogActiveTabBackground) {
+				plate = plate.Union(image.Rect(x, y, x+1, y+1))
+			}
+		}
+	}
+	require.Less(t, plate.Max.X, bounds.Min.X+bounds.Dx()/2, "Right now is the first title on the centred line")
+	require.Greater(t, plate.Dx(), plate.Dy())
 }

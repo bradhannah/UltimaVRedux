@@ -261,7 +261,7 @@ func TestStonegateKeepsAlreadyLiveDeathWorkflow(t *testing.T) {
 		WithPlayerAt(15, 16).
 		WithSystemCallbacks().
 		Build()
-	require.True(t, state.GetCurrentLayeredMapAvatarTopTile().Is(indexes.BrickFloorHole))
+	require.True(t, state.GetCurrentAvatarGroundTile().Is(indexes.BrickFloorHole))
 	scene := &GameScene{
 		gameState: state,
 		keyboard:  input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld),

@@ -109,8 +109,8 @@ func (g *GameScene) layoutProvisionChanges(screen image.Rectangle) {
 
 // provisionChangesAboveDialogs admits feedback above the active modal only when
 // its measured bounds prove there is room. Merchant parents expose their shell;
-// nested transaction dialogs expose their own bounds. Unknown modal layouts
-// (including Dungeon View) conservatively render over the feedback instead.
+// nested transaction dialogs and Dungeon View expose their own bounds. Unknown
+// modal layouts conservatively render over the feedback instead.
 func (g *GameScene) provisionChangesAboveDialogs() bool {
 	modal := g.dialogStack.PeekTopModalDialog()
 	if modal == nil {

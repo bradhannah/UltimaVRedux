@@ -48,12 +48,20 @@ remain the invoking workflow's responsibility.
 
 ### Solid-wall presentation (A)
 
+- The window is only as large as the view needs, centred in the room the scene
+  allows, so the game stays in view around it. The view is laid out in that room
+  first, which settles the map's scale; the window then shrinks to the map, key,
+  heading and footer plus a margin, and never below what that layout used.
 - The map is one north-up 8×8 floor with dungeon name, level, party position and
-  authoritative facing. The **22×22 display-space reveal model remains intact**;
+  authoritative facing. A small `N` above the map marks north; the heading gives
+  only the dungeon and level. The **22×22 display-space reveal model remains intact**;
   the renderer collapses its visible occurrences by wrapped source coordinate.
   [VIEW-0003](../gamefacts/VIEW_SYSTEM.md#view-0003) owns that flood geometry.
-- Solid filled blocks are walls, dark dotted cells are passages, and diagonal
-  hatching means **Not revealed** by this observation. Shape/fill supplement colour.
+- Walls are one dark grey mass with no line round each tile, passages are plain
+  dark blue, and diagonal hatching means **Not revealed** by this observation.
+  On the map, a wall shows a light edge on each side known to face a passage, so
+  corridors read at a glance and the symbols are the brightest things in view;
+  key swatches carry no edge. Shape/fill supplement colour.
   This is not an exploration journal, and visible does not mean reachable or safe.
 - Stalactites, skeletons and cave-ins use the ordinary wall artwork, retaining
   their blocked terrain without a decorative special-wall category. Secret doors
@@ -68,10 +76,12 @@ remain the invoking workflow's responsibility.
 - A bright backed party frame and filled facing arrow sit at the cell perimeter.
   They preserve the central feature artwork for all four facings. The key's party
   entry uses the same orientation and explicitly names the facing direction.
-- The consistently ordered key starts with party, solid wall, passage and Not
-  revealed. Additional entries appear only for symbols in the **revealed,
-  collapsed** plan: doorways/secret doors, rooms, ladders, ceiling openings and pit
-  variants, traps, fields, chest, fountain and writing. Its rows, columns and
+- The consistently ordered key starts with the party and Not revealed. Walls
+  and passages have no entry: dark stone and the lit edge show them. Features
+  follow under three cyan group titles, `WAYS` (doorways, secret doors, rooms,
+  ladders, ceiling openings), `DANGERS` (pit variants, traps, fields) and `FINDS`
+  (chest, fountain, writing). An entry appears only for a symbol in the
+  **revealed, collapsed** plan, and a group with none is left out. Its rows, columns and
   measured label space depend on that list and the available interior; it does
   not reserve a fixed eighteen-entry legend. Key icons scale with key typography
   rather than map cells, with compact row spacing so a dense key does not force
@@ -81,8 +91,9 @@ remain the invoking workflow's responsibility.
   A pair requires adjacent revealed display occurrences with the expected wrapped
   coordinates and non-wall endpoints; seeing endpoints separately is insufficient.
   Hidden endpoints never supply labels. These are neither ladders nor exits, and
-  a labelled seam can still contain a hazard. The footer explains same-level
-  wrapping and makes no safe-route promise. The ordinary edge-label font is
+  a labelled seam can still contain a hazard. When there are such labels the
+  footer explains same-level wrapping; otherwise it holds only the close hint.
+  The ordinary edge-label font is
   independently scaled and measured; north/south tags are centered within their
   own column, with separation even when all eight columns have known seams.
 
@@ -157,7 +168,7 @@ First opening per scene is whole-world, All selected, selected-place callout on,
 grid off. Manually chosen camera, zoom, category and selection survive reopening
 within the scene. Selection/category changes do not move the camera. Current
 Avatar visibility is automatic and independent of categories. The selected tab
-uses the shared yellow text highlight, matching Journal and Z-stats. The All list
+sits on the shared light blue tab plate (see [one tab style](#one-tab-style)). The All list
 is stably grouped in tab order, with Buccaneer's Den beside the other townes.
 Principle
 strongholds and discovered keeps are in Keeps; discovered huts and villages are
@@ -461,6 +472,15 @@ result, and workflow state. There is no generic flex/grid or resolution-scaler
 framework. Focus helpers are owner-driven presentation, not an alternative input
 router or a claim of accessibility compliance.
 
+### One Tab Style
+
+Z-stats, the Journal, the Map, Help, Configure and Use mark the open tab the same way.
+`DrawActiveTabPlate` fills a light blue plate (`DialogActiveTabBackground`) a
+little larger than the title, which is drawn in white (`DialogActiveTabText`);
+the other tabs use `DialogTabColor`. White plates stay reserved for the row or
+control under the cursor, so a tab never looks like a selected row. The Map's My
+Notes tab keeps its note colour while it is not open.
+
 ## Shared List Navigation
 
 Player-facing lists use `pkg/input.ListNavigation`. Widgets embed the local
@@ -617,7 +637,9 @@ not establish native OS runtime acceptance.
 
 The Journal is a modal over a detached opening snapshot, with Chronicle, Virtues,
 Shadowlords, Dungeons, Last Conversation, Excerpts, Moonstones and My Notes tabs,
-in two header rows of four. The scene owns the
+in two header rows of four. The window spans nearly the whole screen width and
+the list takes about half of it (about 31 letters at 720p), so entry titles are
+rarely cut. The scene owns the
 [Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal, visit
 acknowledgements, and excerpt and note persistence. Browsing never mutates gameplay.
 
@@ -666,7 +688,7 @@ knowledge and completion state, so searches for the word, source or clue text
 legitimately reach both tabs.
 
 After the final Codex page is acknowledged, the existing word-only Chronicle
-entry becomes **Codex revelation: VERAMOCOR**, containing all four clue paragraphs
+entry becomes **Codex revelation**, a title short enough for the Chronicle list, containing all four clue paragraphs
 through the ordinary measured detail paging and visible-text search. Word
 knowledge still records after the preceding word-bearing page; interruption before
 final acknowledgement leaves that word-only entry intact. The first completion
@@ -976,7 +998,10 @@ workflow revalidates inventory/context and exact combat ownership at commitment.
 All owned Use-category items appear even when none can be activated. An explicit
 `UnavailableReason` blocks activation independently of `AvailableNow` effect
 applicability. Such rows are muted and marked `[No]` with an `Unavailable` legend;
-selection keeps readable contrast. Enter retains the picker/selection and returns
+selection keeps readable contrast. A name too long for the list wraps whole onto
+further lines, and only that row grows: the quantity stays on its first line, the
+highlight covers every line, and no name is cut short. The list scrolls by whole
+rows so the selected row is always fully shown. Enter retains the picker/selection and returns
 to the first detail page's concrete restriction. Likely no-effect but permitted
 items remain selectable with explicit warnings and expenditure text. The ordinary
 view combines concise handling/current state with atmospheric lore. Long lore
@@ -988,12 +1013,23 @@ labelled Artifacts.
 
 Owning/highlighting an item grants no knowledge of hidden powers, rituals, required
 quest locations/objects or conversation-earned clues. This applies to lore,
-restrictions, warnings and pre-use prompts. Without reliable earned-knowledge
-tracking, Use-specific copy is conservative; no knowledge flags are added.
-Technical catalog descriptions stay separate. Retained borrowed lore keeps its
-attribution; rewritten original descriptions are not presented as quotations.
-Actual deliberate-use feedback may describe what happened. Potion colour promises
-no particular effect, and warning-only attempts retain their availability/costs.
+restrictions, warnings and pre-use prompts. A quest item's description therefore
+says what the thing is and leaves how, where and why to use it for the player to
+learn from the people of Britannia; no knowledge flags are added. Every detail in
+a quest item or moonstone description comes from Ultima Codex, The Book of Lore,
+Paths of Destiny, the Ultima VI Compendium, or behaviour the game implements.
+None is invented. The wording is ours, credited in a `Source` line and not
+presented as quotation.
+
+**Every item shows one description in Use and in Z-stats.** It comes from the
+shared catalog. For a potion, scroll or supply it says what the item is for and
+where it is useless, in a sentence or two, with no figures: durations are "a
+short while" or "several hours", never minutes. Every potion's text ends with
+the same line, that a potion does not always do what its colour promises. Use
+adds beneath it only what is true right now: the cost (`Single use.`) and any reason the attempt
+would be refused or wasted here. It does not repeat the purpose as an action
+line. Actual deliberate-use feedback may describe what happened, and
+warning-only attempts retain their availability/costs.
 Nonempty categories retain independent selection/scroll; item/category changes
 reset details. Tabs/Left/Right wrap categories, arrows browse, page keys move half
 a viewport, Space pages details, Enter selects, and Escape cancels. There are no
@@ -1111,9 +1147,30 @@ spells remain absent until learned; uncertain formulas retain their candidates.
 Manual syllable experimentation in Mix does not reveal an undiscovered formula.
 
 `internal/ui/widgets/spell_browser.go` owns shared filtering, two-line rows,
-recipe vocabulary and measured/clipped rendering. Spell names and short effect
+recipe vocabulary and measured/clipped rendering. The detail's `Target`,
+`Affects` and `Where` lines use a player's words ("No aim needed", "A creature
+you pick", "All before you", "Outside battle"), from `PlayerLabel` on the
+targeting and context types; logs and the Workbench keep the short names. A
+spell's one-line description says what it does for the caster, and says so when
+a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
-Prepared counts occupy a separate labelled column. Cast adds current-caster
+Cast has a fourth filter, `Ready`: what the chosen caster can cast right now
+(mixed, within their level, enough MP, allowed here), judged by the same
+validation that guards the cast. In battle the list opens on it, so spells that
+are mixed but beyond the acting character are out of the way; with nothing ready
+it opens on `All known` rather than an empty list. Outside battle it opens on
+`All known` as before. In Cast, Ctrl+O steps Ready, Prepared, All known, Mixable;
+Z-stats and Mix, which have no caster, keep All known, Prepared, Mixable. Ready
+follows a change of caster. It is a convenience, not a wall: when typed initials
+or search words match none of the ready spells, the list widens to `All known`,
+so a known spell is always found by name and its row and status say why it
+cannot be cast.
+Prepared counts sit under a labelled heading at the right of a row's first line.
+The name stops short of the number, not of the heading's width, and the meaning
+on the second line has the whole row, so every spell's name and meaning is shown
+whole at every supported size, including a name marked `[No]` and a newly learned
+spell's `New:` meaning. Text that could not fit would be cut plainly, never with
+an ellipsis. Cast adds current-caster
 validation and a fixed action-status area; Z-stats retains portraits and
 discovery provenance. Overflow details page instead of reducing font size.
 Two-line rows centre their measured text block; rendering, paging and visible
@@ -1132,8 +1189,17 @@ capacity at every supported resolution. Explicit caller placement remains bindin
 Its outer dimensions stay stable across sections and input modes; other sections
 use the additional body space. Cast and Mix retain their own original placement.
 
-Z-stats equipment and owned-item rows use full catalog identities with measured
-wrapping. Bitmap-icon advances, first-line quantities and the scroll gutter are
+The Z-stats Character section has two columns: the readied list, and the stats
+box above the selected item's box. The stats box opens with a small framed
+portrait beside the name, class, status and level, as an item's box opens with
+its picture; short figures share lines (HP with MP, the three attributes, Attack
+with Defense), and the party numbers take its last line.
+
+Every Z-stats list except Spells (equipment, supplies, reagents, potions, scrolls
+and owned items) shows full names with measured wrapping; no name is cut short.
+Each row is as tall as its own name needs, so one wrapped name does not
+make every row tall; traversal, paging and drawing share one window grown around
+the selection. Bitmap-icon advances, first-line quantities and the scroll gutter are
 reserved before name layout; subsequent physical lines retain the rest of the
 name. Equipment rows are uncounted, with armory available/readied counts in details.
 Refreshing a reordered owned-item projection retains selection by typed identity.

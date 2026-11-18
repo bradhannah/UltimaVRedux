@@ -65,8 +65,19 @@ type dungeonViewRenderPlan struct {
 }
 
 type dungeonViewLegendEntry struct {
-	label string
-	plan  dungeonViewCellPlan
+	label   string
+	heading bool // A group title: drawn as text, with no symbol.
+	plan    dungeonViewCellPlan
+}
+
+// dungeonViewKeyGroup gathers features under what a player looks for.
+type dungeonViewKeyGroup struct {
+	title   string
+	entries []dungeonViewLegendEntry
+}
+
+func dungeonViewKeyFeature(label string, cell references.DungeonCell) dungeonViewLegendEntry {
+	return dungeonViewLegendEntry{label: label, heading: false, plan: dungeonViewCellPlanFor(cell)}
 }
 
 //nolint:cyclop,funlen,mnd,exhaustruct_v5 // Packed cell variants are presentation input, not new disclosure authority.
@@ -127,39 +138,47 @@ func dungeonViewCellPlanFor(cell references.DungeonCell) dungeonViewCellPlan {
 // select entries; raw contents of unknown cells never participate.
 //
 //nolint:mnd // Representative packed cells identify the shared symbol definitions.
-func dungeonViewFeatureKey() []dungeonViewLegendEntry {
-	return []dungeonViewLegendEntry{
-		{label: "Doorway", plan: dungeonViewCellPlanFor(0xe0)},
-		{label: "Secret door (wall)", plan: dungeonViewCellPlanFor(0xd0)},
-		{label: "Room entrance", plan: dungeonViewCellPlanFor(0xa0)},
-		{label: "Ladder up", plan: dungeonViewCellPlanFor(0x10)},
-		{label: "Ladder down", plan: dungeonViewCellPlanFor(0x20)},
-		{label: "Ladder both ways", plan: dungeonViewCellPlanFor(0x30)},
-		{label: "Ceiling opening", plan: dungeonViewCellPlanFor(0x08)},
-		{label: "Open pit", plan: dungeonViewCellPlanFor(0x60)},
-		{label: "Hidden pit", plan: dungeonViewCellPlanFor(0x61)},
-		{label: "Pit + ceiling opening", plan: dungeonViewCellPlanFor(0x68)},
-		{label: "Hidden pit + ceiling", plan: dungeonViewCellPlanFor(0x69)},
-		{label: "Trap / bomb", plan: dungeonViewCellPlanFor(0x62)},
-		{label: "Energy field", plan: dungeonViewCellPlanFor(0x80)},
-		{label: "Chest", plan: dungeonViewCellPlanFor(0x4f)},
-		{label: "Fountain", plan: dungeonViewCellPlanFor(0x50)},
-		{label: "Wall writing", plan: dungeonViewCellPlanFor(0xb1)},
+func dungeonViewFeatureGroups() []dungeonViewKeyGroup {
+	return []dungeonViewKeyGroup{
+		{title: "WAYS", entries: []dungeonViewLegendEntry{
+			dungeonViewKeyFeature("Doorway", 0xe0),
+			dungeonViewKeyFeature("Secret door (wall)", 0xd0),
+			dungeonViewKeyFeature("Room entrance", 0xa0),
+			dungeonViewKeyFeature("Ladder up", 0x10),
+			dungeonViewKeyFeature("Ladder down", 0x20),
+			dungeonViewKeyFeature("Ladder both ways", 0x30),
+			dungeonViewKeyFeature("Ceiling opening", 0x08),
+		}},
+		{title: "DANGERS", entries: []dungeonViewLegendEntry{
+			dungeonViewKeyFeature("Open pit", 0x60),
+			dungeonViewKeyFeature("Hidden pit", 0x61),
+			dungeonViewKeyFeature("Pit + ceiling opening", 0x68),
+			dungeonViewKeyFeature("Hidden pit + ceiling", 0x69),
+			dungeonViewKeyFeature("Trap / bomb", 0x62),
+			dungeonViewKeyFeature("Energy field", 0x80),
+		}},
+		{title: "FINDS", entries: []dungeonViewLegendEntry{
+			dungeonViewKeyFeature("Chest", 0x4f),
+			dungeonViewKeyFeature("Fountain", 0x50),
+			dungeonViewKeyFeature("Wall writing", 0xb1),
+		}},
 	}
 }
 
-//nolint:exhaustruct_v5,mnd // The unknown key has no disclosed surface or contents.
+// The key names the party and the unrevealed hatching, then the features on
+// this floor under their group. Walls and passages need no entry: dark stone
+// and the lit edge show them. A group with nothing revealed is left out.
 func dungeonViewLegendFor(
 	plan dungeonViewRenderPlan,
 	facing references.DungeonFacing,
 ) []dungeonViewLegendEntry {
-	player := dungeonViewCellPlanFor(0x00)
+	var passage references.DungeonCell
+	var unknown dungeonViewCellPlan
+	player := dungeonViewCellPlanFor(passage)
 	player.player = true
 	entries := []dungeonViewLegendEntry{
-		{label: "You: facing " + strings.ToLower(facing.Direction().GetDirectionCompassName()), plan: player},
-		{label: "Solid wall", plan: dungeonViewCellPlanFor(0xb0)},
-		{label: "Passage", plan: dungeonViewCellPlanFor(0x00)},
-		{label: "Not revealed", plan: dungeonViewCellPlan{}},
+		{label: "You: facing " + strings.ToLower(facing.Direction().GetDirectionCompassName()), heading: false, plan: player},
+		{label: "Not revealed", heading: false, plan: unknown},
 	}
 	shown := make(map[dungeonViewIcon]bool)
 	for _, row := range plan.cells {
@@ -169,8 +188,16 @@ func dungeonViewLegendFor(
 			}
 		}
 	}
-	for _, entry := range dungeonViewFeatureKey() {
-		if shown[entry.plan.icon] {
+	for _, group := range dungeonViewFeatureGroups() {
+		titled := false
+		for _, entry := range group.entries {
+			if !shown[entry.plan.icon] {
+				continue
+			}
+			if !titled {
+				entries = append(entries, dungeonViewLegendEntry{label: group.title, heading: true, plan: unknown})
+				titled = true
+			}
 			entries = append(entries, entry)
 		}
 	}

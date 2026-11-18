@@ -81,8 +81,8 @@ coordinates. Not every such coordinate necessarily lies outside storage.
 **REDUX DEVIATION: QUEST-0003:** Redux keeps Badge/Amulet independent for concurrent
 artifact use; Palace guards use Badge state. Crown competes with Protection,
 Quickness, Confusion, Negate Magic, and Time Stop; recast refreshes, removal/expiry
-never resumes a replaced effect. Independent native artifact fields remain; this
-does not implement any missing Amulet effect. Redux suppresses unsafe surface
+never resumes a replaced effect. Independent native artifact fields remain; the
+Amulet's own effect is QUEST-0004. Redux suppresses unsafe surface
 Sceptre fallback and reports no effect; dungeon/combat removal stays context-owned.
 Shard consumption is SHADOW-0005; Carpet, plans, instruments, Watch use their owning
 rules. Box has no operative Use effect in the inspected original handler.
@@ -97,3 +97,43 @@ stale or unavailable selections are free under CONSUME-0001.
 
 **Implementation:** `internal/game_state/duration_effect.go`, `internal/game_state/action_use.go`, `cmd/ultimav/gamescene_use.go`
 **Tests:** `internal/game_state/combat_artifact_use_test.go`, `cmd/ultimav/gamescene_combat_artifact_use_test.go`
+
+### QUEST-0004
+
+**Darkness and the Amulet of Lord British**
+
+**Kind:** rule
+**Uses:** QUEST-0003
+**Original:** Established
+**Redux:** Intentional deviation
+
+The Underworld holds 106 darkness squares (terrain FF hex): a disc eleven squares
+across, centred on the cave entrance at 128,128. The surface has none. At the start
+of each outdoor turn the original tests the terrain under the party. On a darkness
+square, unless the Amulet holds the active-effect slot, sight becomes zero and the
+party is lost. With zero sight the view fill leaves every cell at the darkness
+value, and no object standing on such a cell is drawn, the party's own icon
+included, so the view is blank.
+
+A direction command while lost still prints its direction and tests the target.
+Darkness is legal ground on foot and the blank view makes every neighbour darkness,
+so only an object can block, with the usual free "Blocked!". Otherwise the command
+completes its turn, but the step itself is skipped: the party stays where it is.
+No other command is gated. Once the Amulet is worn the test fails on the next turn,
+and sight and movement return. A party without the Amulet cannot walk out.
+
+Redux derives the same state from the party's large-map terrain and its independent
+Amulet state (QUEST-0003). While lost, the map view is blank and a direction command
+completes its turn without moving the party. Small maps, dungeons, combat and camping
+are unaffected.
+
+**REDUX DEVIATION: QUEST-0004:** the original gives no reason; Redux adds "Lost in
+darkness!" so a blank view and a party that will not move do not read as a fault.
+Redux charges the turn for every direction while lost, without the free "Blocked!"
+for an object in the way, so bumping cannot be used to feel for neighbours. With the
+Amulet worn, Redux keeps drawing the party on a darkness square, where the original
+hides any object standing on one, so the player can see where the party stands. The
+original's redraw timing between turns is not reproduced.
+
+**Implementation:** `internal/game_state/toggle_item_state.go`, `cmd/ultimav/gamescene_movement.go`, `cmd/ultimav/gamescene_draw_effects.go`
+**Tests:** `internal/game_state/toggle_item_state_test.go`, `cmd/ultimav/gamescene_surface_completion_test.go`

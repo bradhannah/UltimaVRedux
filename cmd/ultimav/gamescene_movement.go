@@ -94,7 +94,7 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 
 	// Block movement during TRAP fall sequences
 	if g.gameState.IsFalling() {
-		currentTile := g.gameState.GetCurrentLayeredMapAvatarTopTile()
+		currentTile := g.gameState.GetCurrentAvatarGroundTile()
 		if currentTile.Is(indexes.BrickFloorHole) {
 			// Block movement silently during fall sequence
 			return newSurfaceCommandResult(surfaceCommandStillActive, originMapType)
@@ -116,6 +116,14 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 	newPosition := direction.GetNewPositionInDirection(&g.gameState.MapState.PlayerLocation.Position)
 	mapType := originMapType
 	moved := false
+
+	if mapType == references.LargeMapType && g.gameState.IsLostInDarkness() && !g.gameState.DebugOptions.FreeMove {
+		// The move is accepted and takes its turn, but the party goes nowhere.
+		// See ref:QUEST-0004.
+		g.addRowStr(game_state.LostInDarknessMessage)
+
+		return newSurfaceCommandResult(surfaceCommandCompleted, originMapType)
+	}
 
 	if mapType == references.LargeMapType {
 		if g.gameState.PartyVehicle.GetVehicleDetails().VehicleType == references.FrigateVehicle && !g.gameState.PartyVehicle.GetVehicleDetails().DoesMoveResultInMovement(direction) {
@@ -179,7 +187,7 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 	if g.gameState.IsPassable(newPosition) || g.gameState.DebugOptions.FreeMove {
 		g.moveToNewPositionByDirection(direction)
 		moved = true
-		avatarTopTile := g.gameState.GetCurrentLayeredMapAvatarTopTile()
+		avatarTopTile := g.gameState.GetCurrentAvatarGroundTile()
 		extraMovementStr := avatarTopTile.GetExtraMovementString()
 
 		// Play movement sound based on vehicle type or walking surface

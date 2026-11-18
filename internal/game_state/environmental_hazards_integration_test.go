@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/map_state"
+	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
@@ -56,6 +58,28 @@ func TestEnvironmentalHazardsIntegrationSwamp(t *testing.T) {
 	assert.True(t, foundPoisonMessage, "Should show poison message with character name")
 	assert.Equal(t, party_state.Poisoned, gameState.PartyState.GetCharacter(0).GetStatus(), "Character should be poisoned")
 	assert.Equal(t, []TransientIconKind{TransientIconPoisonOnset}, mockCallbacks.TransientIconCalls)
+}
+
+// A carpet lying on a swamp square is not ridden, so it does not keep a party on
+// foot out of the swamp. See ref:ENV-0002.
+func TestSwampPoisonsAFootPartyStandingOnAParkedCarpet(t *testing.T) {
+	for _, location := range []references.Location{references.Britain, references.BritanniaUnderworld} {
+		gameState, _ := NewIntegrationTestBuilder(t).WithLocation(location).WithFloor(0).WithPlayerAt(10, 10).
+			WithSystemCallbacks().WithRandomSeed(12345).Build()
+		character := gameState.PartyState.GetCharacter(0)
+		character.Dexterity = 0 // Every swamp roll fails.
+		character.SetStatus(party_state.Good)
+		character.PartyMap = party_state.PartyMapActive
+		position := gameState.MapState.PlayerLocation.Position
+		gameState.GetCurrentLayeredMap().SetTileByLayer(map_state.MapLayer, &position, indexes.Swamp)
+		carpet := map_units.NewNPCFriendlyVehiceNewRef(references.CarpetVehicle, position, 0)
+		require.True(t, gameState.CurrentNPCAIController.GetNpcs().AddVehicle(*carpet))
+		gameState.CurrentNPCAIController.FreshenExistingNPCsOnMap()
+
+		gameState.ProcessEnvironmentalHazardsOnTurnAdvancement()
+
+		assert.Equal(t, party_state.Poisoned, character.GetStatus(), "%s", location)
+	}
 }
 
 // Lava, and a fireplace on a small map, burn whoever stands on them.

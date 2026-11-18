@@ -198,7 +198,7 @@ func TestWorldSlowTerrainExtraPhasesPrecedeTimeAndPlayerUpdate(t *testing.T) {
 	state.PartyVehicle = *map_units.NewNPCFriendlyVehiceNewRef(references.HorseVehicle, references.Position{}, 0)
 	position := state.MapState.PlayerLocation.Position
 	state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapOverrideLayer, &position, indexes.Swamp)
-	require.Equal(t, 4, state.calculateMovementTimeCost(state.GetCurrentLayeredMapAvatarTopTile()))
+	require.Equal(t, 4, state.calculateMovementTimeCost(state.GetCurrentAvatarGroundTile()))
 	state.DateTime = datetime.UltimaDate{Year: 1, Month: 1, Day: 1, Hour: 8}
 	state.DebugOptions.MonsterGen = true
 	state.ActiveDurationEffect = DurationEffect{EffectType: DurationEffectQuickness, TurnsRemaining: 1}
