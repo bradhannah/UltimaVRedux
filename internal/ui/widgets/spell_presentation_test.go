@@ -117,6 +117,47 @@ func TestSpellHintsFieldsAndSelectionMarksHaveDistinctColours(t *testing.T) {
 	}
 }
 
+// Every spell's name and meaning is shown whole in the Cast and Z-stats lists at
+// every supported size: no dots and nothing cut. The tightest cases are a long
+// name marked unavailable in Cast and a newly learned spell's "New:" meaning.
+func TestSpellRowsShowEveryNameAndMeaningWhole(t *testing.T) {
+	state, cast, _ := newCastBrowserTest(t)
+	requireWhole := func(output, count *text.Output, rect image.Rectangle, spell game_state.ZStatsSpell, available bool) {
+		t.Helper()
+		effect := spell.EffectLabel
+		if spell.Unread {
+			effect = "New: " + effect
+		}
+		prepareSpellCatalogRow(output, count, rect, spell, false, available)
+		lines := strings.Split(output.GetOutputStr(false), "\n")
+		require.Len(t, lines, 2)
+		require.Equal(t, unavailableRowLabel(spell.Name, available), strings.TrimRight(lines[0], " "))
+		require.Equal(t, rowDetailIndent+effect, strings.TrimRight(lines[1], " "))
+	}
+	for _, size := range config.SupportedWindowResolutions() {
+		setResponsiveDialogTestResolution(t, size.X, size.Y)
+		cast.ensureLayout()
+		castRow := cast.view.listRect.Inset(cast.view.padding)
+		castRow.Max.X -= cast.view.scrollGutter()
+		zstats := newTestZStatsDossierDialog(testZStatsDossier(), newWidgetTestKeyboard(0))
+		zstats.switchTab(ZStatsDossierSpellsTab)
+		zstatsRow := zstats.panelBodyRect(zstats.layout.globalListRect)
+		zstatsRow.Min.X += zstats.layout.padding
+		zstatsRow.Max.X -= zstats.scrollIndicatorWidth()
+		for _, spell := range state.CurrentSpellCatalog() {
+			spell.Prepared = 99
+			id := references.Spell(spell.ID)
+			// Only the three spells learned in play can be newly learned.
+			spell.Unread = id == references.AnYlem || id == references.InXenMani || id == references.RelXenBet
+			requireWhole(cast.view.row, cast.view.count, castRow, spell, true)
+			requireWhole(cast.view.row, cast.view.count, castRow, spell, false)
+			// Z-stats never marks a spell unavailable.
+			requireWhole(zstats.rowOutput, zstats.spellView.count, zstatsRow, spell, true)
+		}
+		zstats.outerBorder.Dispose()
+	}
+}
+
 func TestSpellRowsCenterBothLinesAndCountsTogether(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 1280, 720)
 	var view spellPresentation

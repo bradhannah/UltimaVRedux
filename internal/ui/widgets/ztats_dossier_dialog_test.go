@@ -436,7 +436,7 @@ func TestZStatsDossierDialogDetailsUseCatalogPortraitsAndExcludeReadiness(t *tes
 	dialog := newTestZStatsDossierDialog(testZStatsDossier(), newWidgetTestKeyboard(0))
 	dialog.prepareCharacterStats()
 	characterText := dialog.detailOutput.GetOutputStr(false)
-	require.Contains(t, characterText, "Avatar")
+	require.Contains(t, dialog.summaryOutput.GetOutputStr(false), "Avatar")
 	require.Contains(t, characterText, "READY TO ADVANCE")
 	require.Contains(t, characterText, "HP:")
 	require.Contains(t, characterText, "MP:")
@@ -449,8 +449,6 @@ func TestZStatsDossierDialogDetailsUseCatalogPortraitsAndExcludeReadiness(t *tes
 	require.NotContains(t, characterText, "STR / DEX / INT")
 	require.NotContains(t, characterText, "Gear ATK / DEF")
 	require.NotContains(t, characterText, "Highest spell")
-	dialog.preparePanelHeader(dialog.layout.characterPortraitRect, dialog.selectedCharacterModel().Name)
-	require.Contains(t, dialog.titleOutput.GetOutputStr(false), "Avatar")
 	dialog.prepareCharacterItemDetail()
 	require.Contains(t, dialog.summaryOutput.GetOutputStr(false), "Leather Helm")
 	characterItemBody := dialog.detailOutput.GetOutputStr(false)
@@ -591,15 +589,13 @@ func TestZStatsDossierDialogArmoryNamesAndSpellCounts(t *testing.T) {
 func requireZStatsWideLayout(t *testing.T, layout zStatsDossierLayout) {
 	t.Helper()
 	require.Positive(t, layout.tabsRect.Dx())
-	require.Positive(t, layout.characterPortraitRect.Dx())
 	require.Positive(t, layout.characterListRect.Dx())
 	require.Positive(t, layout.characterStatsRect.Dx())
 	require.Positive(t, layout.characterItemRect.Dx())
 	require.Positive(t, layout.globalListRect.Dx())
 	require.Positive(t, layout.globalDetailRect.Dx())
 	require.Positive(t, layout.footerRect.Dy())
-	require.Equal(t, layout.characterPortraitRect.Min.Y, layout.characterListRect.Min.Y)
-	require.LessOrEqual(t, layout.characterListRect.Min.X, layout.characterPortraitRect.Max.X)
+	require.Equal(t, layout.characterStatsRect.Min.Y, layout.characterListRect.Min.Y)
 	require.LessOrEqual(t, layout.characterStatsRect.Min.X, layout.characterListRect.Max.X)
 }
 
@@ -747,7 +743,7 @@ func TestZStatsMoonstonePixelsUseIntegerPhaseArtAndSelectionContrast(t *testing.
 			t.Cleanup(dialog.outerBorder.Dispose)
 			dialog.switchTab(ZStatsDossierItemsTab)
 			row := dialog.panelBodyRect(dialog.layout.globalListRect)
-			row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect)
+			row.Max.Y = row.Min.Y + dialog.listRowHeight(dialog.layout.globalListRect, 0)
 			for _, selected := range []bool{false, true} {
 				foreground := DialogItemNameColor
 				var background stdcolor.Color = pkgcolor.DialogBackground.RGBA()

@@ -157,7 +157,7 @@ First opening per scene is whole-world, All selected, selected-place callout on,
 grid off. Manually chosen camera, zoom, category and selection survive reopening
 within the scene. Selection/category changes do not move the camera. Current
 Avatar visibility is automatic and independent of categories. The selected tab
-uses the shared yellow text highlight, matching Journal and Z-stats. The All list
+sits on the shared light blue tab plate (see [one tab style](#one-tab-style)). The All list
 is stably grouped in tab order, with Buccaneer's Den beside the other townes.
 Principle
 strongholds and discovered keeps are in Keeps; discovered huts and villages are
@@ -461,6 +461,15 @@ result, and workflow state. There is no generic flex/grid or resolution-scaler
 framework. Focus helpers are owner-driven presentation, not an alternative input
 router or a claim of accessibility compliance.
 
+### One Tab Style
+
+Z-stats, the Journal, the Map, Help, Configure and Use mark the open tab the same way.
+`DrawActiveTabPlate` fills a light blue plate (`DialogActiveTabBackground`) a
+little larger than the title, which is drawn in white (`DialogActiveTabText`);
+the other tabs use `DialogTabColor`. White plates stay reserved for the row or
+control under the cursor, so a tab never looks like a selected row. The Map's My
+Notes tab keeps its note colour while it is not open.
+
 ## Shared List Navigation
 
 Player-facing lists use `pkg/input.ListNavigation`. Widgets embed the local
@@ -617,7 +626,9 @@ not establish native OS runtime acceptance.
 
 The Journal is a modal over a detached opening snapshot, with Chronicle, Virtues,
 Shadowlords, Dungeons, Last Conversation, Excerpts, Moonstones and My Notes tabs,
-in two header rows of four. The scene owns the
+in two header rows of four. The window spans nearly the whole screen width and
+the list takes about half of it (about 31 letters at 720p), so entry titles are
+rarely cut. The scene owns the
 [Journal pause](../systems/TIME_SYSTEM.md#journal-pause), exact removal, visit
 acknowledgements, and excerpt and note persistence. Browsing never mutates gameplay.
 
@@ -666,7 +677,7 @@ knowledge and completion state, so searches for the word, source or clue text
 legitimately reach both tabs.
 
 After the final Codex page is acknowledged, the existing word-only Chronicle
-entry becomes **Codex revelation: VERAMOCOR**, containing all four clue paragraphs
+entry becomes **Codex revelation**, a title short enough for the Chronicle list, containing all four clue paragraphs
 through the ordinary measured detail paging and visible-text search. Word
 knowledge still records after the preceding word-bearing page; interruption before
 final acknowledgement leaves that word-only entry intact. The first completion
@@ -976,7 +987,10 @@ workflow revalidates inventory/context and exact combat ownership at commitment.
 All owned Use-category items appear even when none can be activated. An explicit
 `UnavailableReason` blocks activation independently of `AvailableNow` effect
 applicability. Such rows are muted and marked `[No]` with an `Unavailable` legend;
-selection keeps readable contrast. Enter retains the picker/selection and returns
+selection keeps readable contrast. A name too long for the list wraps whole onto
+further lines, and only that row grows: the quantity stays on its first line, the
+highlight covers every line, and no name is cut short. The list scrolls by whole
+rows so the selected row is always fully shown. Enter retains the picker/selection and returns
 to the first detail page's concrete restriction. Likely no-effect but permitted
 items remain selectable with explicit warnings and expenditure text. The ordinary
 view combines concise handling/current state with atmospheric lore. Long lore
@@ -1132,8 +1146,17 @@ capacity at every supported resolution. Explicit caller placement remains bindin
 Its outer dimensions stay stable across sections and input modes; other sections
 use the additional body space. Cast and Mix retain their own original placement.
 
-Z-stats equipment and owned-item rows use full catalog identities with measured
-wrapping. Bitmap-icon advances, first-line quantities and the scroll gutter are
+The Z-stats Character section has two columns: the readied list, and the stats
+box above the selected item's box. The stats box opens with a small framed
+portrait beside the name, class, status and level, as an item's box opens with
+its picture; short figures share lines (HP with MP, the three attributes, Attack
+with Defense), and the party numbers take its last line.
+
+Every Z-stats list except Spells (equipment, supplies, reagents, potions, scrolls
+and owned items) shows full names with measured wrapping; no name is cut short.
+Each row is as tall as its own name needs, so one wrapped name does not
+make every row tall; traversal, paging and drawing share one window grown around
+the selection. Bitmap-icon advances, first-line quantities and the scroll gutter are
 reserved before name layout; subsequent physical lines retain the rest of the
 name. Equipment rows are uncounted, with armory available/readied counts in details.
 Refreshing a reordered owned-item projection retains selection by typed identity.

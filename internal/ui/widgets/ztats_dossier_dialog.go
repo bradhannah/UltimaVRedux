@@ -27,8 +27,7 @@ const (
 	zStatsDossierTabCount              = 8
 	zStatsDossierDefaultMarginX        = 0.05
 	zStatsDossierDefaultMarginY        = 0.10
-	zStatsDossierCharacterRatio        = 0.22
-	zStatsDossierCharacterListRatio    = 0.30
+	zStatsDossierCharacterListRatio    = 0.40
 	zStatsDossierListRatio             = spellBrowserListRatio
 	zStatsDossierHeaderRatio           = 0.14
 	zStatsDossierFooterRatio           = 0.10
@@ -97,7 +96,6 @@ type zStatsDossierLayout struct {
 	bodyRect               image.Rectangle
 	spellSearchRect        image.Rectangle
 	footerRect             image.Rectangle
-	characterPortraitRect  image.Rectangle
 	characterListRect      image.Rectangle
 	characterStatsRect     image.Rectangle
 	characterItemRect      image.Rectangle
@@ -723,11 +721,8 @@ func (d *ZStatsDossierDialog) calculateLayout() {
 
 func (d *ZStatsDossierDialog) calculateCharacterLayout(overlap int) {
 	body := d.layout.bodyRect
-	portraitEnd := body.Min.X + int(math.Round(float64(body.Dx())*zStatsDossierCharacterRatio))
-	characterContentRatio := zStatsDossierCharacterRatio + zStatsDossierCharacterListRatio
-	listEnd := body.Min.X + int(math.Round(float64(body.Dx())*characterContentRatio))
-	d.layout.characterPortraitRect = image.Rect(body.Min.X, body.Min.Y, portraitEnd, body.Max.Y)
-	d.layout.characterListRect = image.Rect(portraitEnd-overlap, body.Min.Y, listEnd, body.Max.Y)
+	listEnd := body.Min.X + int(math.Round(float64(body.Dx())*zStatsDossierCharacterListRatio))
+	d.layout.characterListRect = image.Rect(body.Min.X, body.Min.Y, listEnd, body.Max.Y)
 	detailRect := image.Rect(listEnd-overlap, body.Min.Y, body.Max.X, body.Max.Y)
 	statsEnd := detailRect.Min.Y + int(math.Round(float64(detailRect.Dy())*zStatsDossierCharacterStatsRatio))
 	d.layout.characterStatsRect = image.Rect(detailRect.Min.X, detailRect.Min.Y, detailRect.Max.X, statsEnd)
@@ -793,16 +788,16 @@ func (d *ZStatsDossierDialog) drawTabTitle(
 	tab ZStatsDossierTab,
 	rect image.Rectangle,
 ) {
-	textColor := DialogEmptyColor
+	fontHeight := int(math.Ceil(d.tabOutput.GetFontHeight()))
+	top := rect.Min.Y + max(0, (rect.Dy()-fontHeight)/zStatsDossierCenterDivisor)
+	textColor := DialogTabColor
 	if tab == d.activeTab {
-		textColor = pkgcolor.EGAYellow
+		textColor = DialogActiveTabText
+		width, _ := d.tabOutput.Font.MeasureString(d.tabTitle(tab))
+		DrawActiveTabPlate(screen, rect, width, top, fontHeight, d.pixelUnit())
 	}
 	prepareSpellOutput(d.tabOutput, rect)
 	d.tabOutput.AppendLine().Text(d.tabTitle(tab), textColor).Done()
-	top := rect.Min.Y + max(
-		0,
-		(rect.Dy()-int(math.Ceil(d.tabOutput.GetFontHeight())))/zStatsDossierCenterDivisor,
-	)
 	d.tabOutput.DrawPanelContent(screen, image.Pt(rect.Min.X, top), rect.Dx(), etext.AlignCenter)
 }
 
@@ -830,46 +825,21 @@ func (d *ZStatsDossierDialog) tabTitle(tab ZStatsDossierTab) string {
 }
 
 func (d *ZStatsDossierDialog) drawCharacterSection(screen *ebiten.Image) {
-	d.drawCharacterPortrait(screen)
 	d.drawListPane(screen, d.layout.characterListRect)
 	d.drawCharacterStats(screen)
 	d.drawCharacterItemDetail(screen)
 }
 
-func (d *ZStatsDossierDialog) drawCharacterPortrait(screen *ebiten.Image) {
-	rect := d.layout.characterPortraitRect
+// The stats box opens with a small portrait beside the name, as an item's box
+// opens with its picture, and closes with the party numbers.
+func (d *ZStatsDossierDialog) drawCharacterStats(screen *ebiten.Image) {
 	character := d.selectedCharacterModel()
-	header := "CHARACTER"
-	if character != nil {
-		header = character.Name
-	}
-	d.drawPanelHeader(screen, rect, header)
-	body := d.panelBodyRect(rect)
 	if character == nil {
-		d.drawOutputLine(screen, body, "No active character", DialogEmptyColor, etext.AlignCenter)
+		d.drawEmptyDetail(screen, d.layout.characterStatsRect, "No active character.")
 
 		return
 	}
-	lineHeight := int(math.Ceil(d.rowOutput.GetLineSpacing()))
-	portraitArea := image.Rect(
-		body.Min.X,
-		body.Min.Y,
-		body.Max.X,
-		max(body.Min.Y, body.Max.Y-lineHeight-d.layout.padding),
-	)
-	portraitSize := min(
-		portraitArea.Dx()-d.layout.padding*zStatsDossierPaneInsetMultiplier,
-		portraitArea.Dy()-d.layout.padding*zStatsDossierPaneInsetMultiplier,
-	)
-	portraitSize = max(1, portraitSize)
-	portraitRect := image.Rect(
-		portraitArea.Min.X+(portraitArea.Dx()-portraitSize)/zStatsDossierCenterDivisor,
-		portraitArea.Min.Y+(portraitArea.Dy()-portraitSize)/zStatsDossierCenterDivisor,
-		portraitArea.Min.X+(portraitArea.Dx()+portraitSize)/zStatsDossierCenterDivisor,
-		portraitArea.Min.Y+(portraitArea.Dy()+portraitSize)/zStatsDossierCenterDivisor,
-	)
-	d.drawFramedSprite(screen, portraitRect, character.SpriteIndex)
-
+	d.drawPreparedCatalogDetail(screen, character.SpriteIndex, d.prepareCharacterStats())
 	for index, selectorRect := range d.layout.characterSelectorRects {
 		if index >= len(d.dossier.Characters) {
 			continue
@@ -878,60 +848,64 @@ func (d *ZStatsDossierDialog) drawCharacterPortrait(screen *ebiten.Image) {
 		if index == d.selectedCharacter {
 			selectorColor = pkgcolor.EGAYellow
 		}
-		d.drawOutputLine(screen, selectorRect, strconv.Itoa(index+1), selectorColor, etext.AlignCenter)
+		d.drawOutputLine(screen, selectorRect, strconv.Itoa(index+1), selectorColor, etext.AlignStart)
 	}
 }
 
+// The party numbers take the last line of the stats box, spaced as text.
 func (d *ZStatsDossierDialog) characterSelectorArea() image.Rectangle {
-	body := d.panelBodyRect(d.layout.characterPortraitRect)
+	content := insetZStatsRect(d.layout.characterStatsRect, d.layout.padding*zStatsDossierPaneInsetMultiplier)
 	lineHeight := max(1, int(math.Ceil(d.rowOutput.GetLineSpacing())))
+	cell, _ := d.bodyFont.MeasureString("0 ")
+	width := min(content.Dx(), int(math.Ceil(cell))*zStatsDossierCharacterSelectors)
 
-	return image.Rect(body.Min.X, max(body.Min.Y, body.Max.Y-lineHeight), body.Max.X, body.Max.Y)
+	return image.Rect(content.Min.X, max(content.Min.Y, content.Max.Y-lineHeight), content.Min.X+width, content.Max.Y)
 }
 
-func (d *ZStatsDossierDialog) drawCharacterStats(screen *ebiten.Image) {
-	content := d.prepareCharacterStats()
-	d.drawPagedPanelOutput(screen, d.detailOutput, content)
-}
-
-func (d *ZStatsDossierDialog) prepareCharacterStats() image.Rectangle {
-	rect := d.layout.characterStatsRect
-	content := insetZStatsRect(rect, d.layout.padding*zStatsDossierPaneInsetMultiplier)
-	d.detailOutput.SetMaxCharsPerLine(max(1, d.bodyFont.CharsForWidth(content.Dx())))
-	d.detailOutput.Reset()
+func (d *ZStatsDossierDialog) prepareCharacterStats() zStatsCatalogDetailLayout {
 	character := d.selectedCharacterModel()
 	if character == nil {
-		d.appendDetailTextTo(d.detailOutput, "No active character.", DialogEmptyColor)
-	} else {
-		d.appendCharacterStats(d.detailOutput, character)
-	}
-	d.preparePanelPage(d.detailOutput, content)
+		d.summaryOutput.Reset()
+		d.detailOutput.Reset()
 
-	return content
+		var empty zStatsCatalogDetailLayout
+
+		return empty
+	}
+	rect := d.layout.characterStatsRect
+	rect.Max.Y = max(rect.Min.Y, rect.Max.Y-d.characterSelectorArea().Dy())
+
+	return d.prepareCatalogDetail(
+		rect,
+		func(output *text.Output) { d.appendCharacterSummary(output, character) },
+		func(output *text.Output) { d.appendCharacterStats(output, character) },
+	)
+}
+
+func (d *ZStatsDossierDialog) appendCharacterSummary(output *text.Output, character *game_state.ZStatsCharacter) {
+	d.appendDetailHeaderTo(output, character.Name)
+	d.appendDetailTextTo(output, strings.TrimSpace(character.Gender+" "+character.Class), DialogValueColor)
+	d.appendDetailPairTo(output, "Status", character.Status, zStatsStatusColor(character.Status))
+	d.appendDetailPairTo(
+		output,
+		"Level / XP",
+		fmt.Sprintf("%d / %d", character.Level, character.Experience),
+		DialogValueColor,
+	)
 }
 
 func (d *ZStatsDossierDialog) appendCharacterStats(
 	output *text.Output,
 	character *game_state.ZStatsCharacter,
 ) {
-	d.appendDetailHeaderTo(output, character.Name)
-	d.appendDetailPairTo(
-		output,
-		"Identity",
-		strings.TrimSpace(character.Gender+" "+character.Class),
-		DialogValueColor,
+	d.appendDetailPairsTo(output,
+		[2]string{"HP", fmt.Sprintf("%d/%d", character.CurrentHP, character.MaximumHP)},
+		[2]string{"MP", fmt.Sprintf("%d/%d", character.CurrentMP, character.MaximumMP)},
 	)
-	d.appendDetailPairTo(output, "Status", character.Status, zStatsStatusColor(character.Status))
-	d.appendDetailPairTo(output, "HP", fmt.Sprintf("%d/%d", character.CurrentHP, character.MaximumHP), DialogValueColor)
-	d.appendDetailPairTo(output, "MP", fmt.Sprintf("%d/%d", character.CurrentMP, character.MaximumMP), DialogValueColor)
-	d.appendDetailPairTo(output, "STR", strconv.Itoa(character.Strength), DialogValueColor)
-	d.appendDetailPairTo(output, "DEX", strconv.Itoa(character.Dexterity), DialogValueColor)
-	d.appendDetailPairTo(output, "INT", strconv.Itoa(character.Intelligence), DialogValueColor)
-	d.appendDetailPairTo(
-		output,
-		"Level / XP",
-		fmt.Sprintf("%d / %d", character.Level, character.Experience),
-		DialogValueColor,
+	d.appendDetailPairsTo(output,
+		[2]string{"STR", strconv.Itoa(character.Strength)},
+		[2]string{"DEX", strconv.Itoa(character.Dexterity)},
+		[2]string{"INT", strconv.Itoa(character.Intelligence)},
 	)
 	if character.ReadyToAdvance {
 		d.appendDetailTextTo(output, "READY TO ADVANCE", DialogStatusOKColor)
@@ -954,8 +928,10 @@ func (d *ZStatsDossierDialog) appendCharacterStats(
 			DialogValueColor,
 		)
 	}
-	d.appendDetailPairTo(output, "Attack", strconv.Itoa(character.EquipmentAttack), DialogValueColor)
-	d.appendDetailPairTo(output, "Defense", strconv.Itoa(character.EquipmentDefense), DialogValueColor)
+	d.appendDetailPairsTo(output,
+		[2]string{"Attack", strconv.Itoa(character.EquipmentAttack)},
+		[2]string{"Defense", strconv.Itoa(character.EquipmentDefense)},
+	)
 }
 
 func (d *ZStatsDossierDialog) drawCharacterItemDetail(screen *ebiten.Image) {
@@ -1021,15 +997,18 @@ func (d *ZStatsDossierDialog) drawListPane(screen *ebiten.Image, rect image.Rect
 	}
 
 	selection := d.currentSelection()
-	rowHeight := d.listRowHeight(rect)
-	visibleRows := max(1, body.Dy()/rowHeight)
-	start, end := zStatsVisibleRange(selection, count, visibleRows)
+	start, end := d.visibleListRange(rect)
+	rowTop := body.Min.Y
+	var first, last image.Rectangle
 	for index := start; index < end; index++ {
-		rowTop := body.Min.Y + (index-start)*rowHeight
-		rowRect := image.Rect(body.Min.X, rowTop, body.Max.X, min(body.Max.Y, rowTop+rowHeight))
-		d.drawListRow(screen, rowRect, index, index == selection)
+		last = image.Rect(body.Min.X, rowTop, body.Max.X, min(body.Max.Y, rowTop+d.listRowHeight(rect, index)))
+		if index == start {
+			first = last
+		}
+		d.drawListRow(screen, last, index, index == selection)
+		rowTop = last.Max.Y
 	}
-	drawMasterDetailScrollIndicators(screen, body, start, end, count, rowHeight,
+	drawMasterDetailScrollMarks(screen, first, last, start > 0, end < count,
 		d.scrollIndicatorWidth(), d.bodyFont, d.rowOutput)
 }
 
@@ -1140,7 +1119,7 @@ func (d *ZStatsDossierDialog) appendProvisionListRow(
 	if item.Quantity == 0 && !selected {
 		textColor = DialogEmptyColor
 	}
-	line.Text(d.countedRowLabel(item.Name, fmt.Sprintf(" (%d)", item.Quantity)), textColor)
+	d.appendFullNameRow(line, item.Name, fmt.Sprintf(" (%d)", item.Quantity), textColor)
 }
 
 func (d *ZStatsDossierDialog) appendCharacterListRow(
@@ -1198,7 +1177,7 @@ func (d *ZStatsDossierDialog) appendMagicInventoryListRow(
 	if item.Quantity == 0 && !selected {
 		textColor = DialogEmptyColor
 	}
-	line.Text(d.countedRowLabel(item.Name, fmt.Sprintf(" (%d)", item.Quantity)), textColor)
+	d.appendFullNameRow(line, item.Name, fmt.Sprintf(" (%d)", item.Quantity), textColor)
 }
 
 func (d *ZStatsDossierDialog) appendItemListRow(
@@ -1239,22 +1218,6 @@ func (d *ZStatsDossierDialog) appendFullNameRow(
 			line.Text(suffix, foreground)
 		}
 	}
-}
-
-// Fit the name before insertion: wrapping a one-row Output overwrites its prefix.
-// Reserve the quantity suffix first. Equipment and Items use full wrapping rows.
-func (d *ZStatsDossierDialog) countedRowLabel(name, suffix string) string {
-	font := d.rowOutput.Font
-	capacity := max(1, font.CharsForWidth(d.rowWidth))
-	reservedWidth, _ := font.MeasureString(suffix)
-	name = FitDialogLine(name, font, max(0, d.rowWidth-int(math.Ceil(reservedWidth))))
-	name = truncateRunes(name, max(0, capacity-utf8.RuneCountInString(suffix)))
-	label := name + suffix
-	if utf8.RuneCountInString(label) > capacity {
-		label = truncateRunes(label, capacity)
-	}
-
-	return label
 }
 
 func (d *ZStatsDossierDialog) scrollIndicatorWidth() int {
@@ -1841,7 +1804,6 @@ func (d *ZStatsDossierDialog) frameRects() []image.Rectangle {
 	switch d.activeTab {
 	case ZStatsDossierCharacterTab:
 		rects = append(rects,
-			d.layout.characterPortraitRect,
 			d.layout.characterListRect,
 			d.layout.characterStatsRect,
 			d.layout.characterItemRect,
@@ -1893,35 +1855,79 @@ func (d *ZStatsDossierDialog) appendDetailPairTo(
 		Done()
 }
 
+// appendDetailPairsTo sets short label and value pairs side by side on one line.
+func (d *ZStatsDossierDialog) appendDetailPairsTo(output *text.Output, pairs ...[2]string) {
+	line := output.AppendLine()
+	for index, pair := range pairs {
+		label := pair[0] + ": "
+		if index > 0 {
+			label = "  " + label
+		}
+		line.Text(label, DialogLabelColor).Text(pair[1], DialogValueColor)
+	}
+	line.WordWrap().Done()
+}
+
 func (d *ZStatsDossierDialog) appendDetailTextTo(output *text.Output, value string, valueColor stdcolor.Color) {
 	output.AppendLine().Text(value, valueColor).WordWrap().Done()
 }
 
+// visibleListRows is the list's capacity: the rows shown, plus the one-line
+// rows that would still fit under a short list.
 func (d *ZStatsDossierDialog) visibleListRows(rect image.Rectangle) int {
-	body := d.panelBodyRect(rect)
+	start, end, room := d.visibleListWindow(rect)
 
-	return max(zStatsDossierMinimumRows, body.Dy()/d.listRowHeight(rect))
+	return max(zStatsDossierMinimumRows, end-start+room/d.listRowHeight(rect, -1))
 }
 
-func (d *ZStatsDossierDialog) listRowHeight(rect image.Rectangle) int {
+func (d *ZStatsDossierDialog) visibleListRange(rect image.Rectangle) (int, int) {
+	start, end, _ := d.visibleListWindow(rect)
+
+	return start, end
+}
+
+// visibleListWindow grows a window around the selection, the row above first,
+// until neither neighbour fits, and reports the height left over. Traversal and
+// drawing share it.
+func (d *ZStatsDossierDialog) visibleListWindow(rect image.Rectangle) (int, int, int) {
+	count, room := d.currentItemCount(), d.panelBodyRect(rect).Dy()
+	if count == 0 {
+		return 0, 0, room
+	}
+	selection := max(0, min(d.currentSelection(), count-1))
+	start, end := selection, selection+1
+	room -= d.listRowHeight(rect, selection)
+	for grew := true; grew; {
+		grew = false
+		if start > 0 && d.listRowHeight(rect, start-1) <= room {
+			start--
+			room -= d.listRowHeight(rect, start)
+			grew = true
+		}
+		if end < count && d.listRowHeight(rect, end) <= room {
+			room -= d.listRowHeight(rect, end)
+			end++
+			grew = true
+		}
+	}
+
+	return start, end, max(0, room)
+}
+
+// listRowHeight is the height of one row. A name too long for the list wraps,
+// and only that row grows: its neighbours keep one-line density.
+func (d *ZStatsDossierDialog) listRowHeight(rect image.Rectangle, index int) int {
 	rowHeight := max(1, int(math.Ceil(d.rowOutput.GetLineSpacing())))
 	if d.activeTab == ZStatsDossierSpellsTab {
 		return spellRowHeight(d.rowOutput)
 	}
-	if d.activeTab != ZStatsDossierCharacterTab && d.activeTab != ZStatsDossierArmoryTab &&
-		d.activeTab != ZStatsDossierItemsTab {
+	if index < 0 || index >= d.currentItemCount() {
 		return rowHeight
 	}
-	// Use the same measured pitch for traversal and drawing. Short catalogs keep
-	// one-line density; full names gain rows only when the actual width needs them.
-	body := d.panelBodyRect(rect)
-	for index := range d.currentItemCount() {
-		d.prepareListRow(body, index, false)
-		height := int(math.Ceil(d.rowOutput.GetTotalHeightForLines(d.rowOutput.GetPanelContentLineCount())))
-		rowHeight = max(rowHeight, height, int(math.Ceil(d.rowIconOutput.GetLineSpacing())))
-	}
+	d.prepareListRow(d.panelBodyRect(rect), index, false)
 
-	return rowHeight
+	// Whole lines keep the rows below on the list's rhythm.
+	return max(rowHeight*d.rowOutput.GetPanelContentLineCount(), int(math.Ceil(d.rowIconOutput.GetLineSpacing())))
 }
 
 func (d *ZStatsDossierDialog) activeListRect() image.Rectangle {

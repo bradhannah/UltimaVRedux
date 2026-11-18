@@ -48,26 +48,42 @@ func drawMasterDetailScrollIndicators(
 	font *text.UltimaFont,
 	output *text.Output,
 ) {
-	indicatorX := content.Max.X - indicatorWidth
-	if start > 0 {
-		drawMasterDetailCenteredLine(
-			screen,
-			image.Rect(indicatorX, content.Min.Y, content.Max.X, content.Min.Y+rowHeight),
-			"^",
-			DialogScrollIndicator,
-			font,
-			output,
-		)
+	top := content.Min.Y + max(0, end-start-1)*rowHeight
+	drawMasterDetailScrollMarks(screen,
+		image.Rect(content.Min.X, content.Min.Y, content.Max.X, content.Min.Y+rowHeight),
+		image.Rect(content.Min.X, top, content.Max.X, min(content.Max.Y, top+rowHeight)),
+		start > 0, end < count, indicatorWidth, font, output)
+}
+
+// drawMasterDetailScrollMarks marks rows hidden above and below at the right of
+// the first and last visible rows, which may differ in height.
+func drawMasterDetailScrollMarks(
+	screen *ebiten.Image, first, last image.Rectangle, above, below bool,
+	indicatorWidth int, font *text.UltimaFont, output *text.Output,
+) {
+	if above {
+		first.Min.X = first.Max.X - indicatorWidth
+		drawMasterDetailCenteredLine(screen, first, "^", DialogScrollIndicator, font, output)
 	}
-	if end < count {
-		top := content.Min.Y + max(0, end-start-1)*rowHeight
-		drawMasterDetailCenteredLine(
-			screen,
-			image.Rect(indicatorX, top, content.Max.X, min(content.Max.Y, top+rowHeight)),
-			"v",
-			DialogScrollIndicator,
-			font,
-			output,
-		)
+	if below {
+		last.Min.X = last.Max.X - indicatorWidth
+		drawMasterDetailCenteredLine(screen, last, "v", DialogScrollIndicator, font, output)
 	}
+}
+
+// DrawActiveTabPlate fills the plate behind the open tab's title. Every tabbed
+// dialog draws its open tab on it in DialogActiveTabText and its other tabs in
+// DialogTabColor, so tabs look the same across the game. The title is titleWidth
+// wide, centred across cell, with its glyphs between textTop and textTop+textHeight.
+func DrawActiveTabPlate(
+	screen *ebiten.Image, cell image.Rectangle, titleWidth float64, textTop, textHeight, pixelUnit int,
+) {
+	const (
+		sideUnits = 3
+		halves    = 2
+	)
+	side, width := sideUnits*pixelUnit, int(math.Ceil(titleWidth))
+	left := cell.Min.X + (cell.Dx()-width)/halves
+	plate := image.Rect(left-side, textTop-pixelUnit, left+width+side, textTop+textHeight+pixelUnit)
+	FillClassicPixelRoundedRect(screen, plate, pixelUnit, DialogActiveTabBackground)
 }

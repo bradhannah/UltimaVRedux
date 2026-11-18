@@ -108,8 +108,8 @@ func TestAtlasTabAndRowSelectionKeepSemanticDiscoveryColours(t *testing.T) {
 	t.Cleanup(screen.Deallocate)
 	dialog.drawCategoryTabs(screen)
 	selected := atlasMarkerPixels(atlasSubImage(screen, dialog.tabs[journal.AtlasAllPlaces]))
-	require.Positive(t, atlasExactInkCount(selected, DialogLabelColor))
-	require.Zero(t, atlasExactInkCount(selected, DialogSelectedBackground), "selected tabs use yellow text, not white fill")
+	require.Positive(t, atlasExactInkCount(selected, DialogActiveTabBackground), "the open tab sits on the shared plate")
+	require.Positive(t, atlasExactInkCount(selected, DialogActiveTabText))
 	rect := image.Rect(20, 20, 620, 20+dialog.directoryRowHeight())
 	for _, entry := range dossier.Entries[:2] {
 		screen.Clear()

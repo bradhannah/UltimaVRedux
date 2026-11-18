@@ -511,6 +511,10 @@ func drawSpellCatalogRow(screen *ebiten.Image, rowOutput, countOutput *text.Outp
 	drawSpellOutput(screen, countOutput, countRect, 0, 1)
 }
 
+// prepareSpellCatalogRow lays out a spell's two lines and its prepared count. The
+// count sits at the right of the first line only, so the name stops short of the
+// number and the meaning below has the whole row: neither gives up room to the
+// width of the column heading. Text that still cannot fit is cut plainly.
 func prepareSpellCatalogRow(rowOutput, countOutput *text.Output,
 	rect image.Rectangle, spell game_state.ZStatsSpell, selected, available bool,
 ) (image.Rectangle, image.Rectangle) {
@@ -521,33 +525,22 @@ func prepareSpellCatalogRow(rowOutput, countOutput *text.Output,
 	if spell.Unread {
 		effect = "New: " + effect
 	}
-
-	return prepareSpellTextRow(rowOutput, countOutput, rect,
-		spell.Name, effect, strconv.Itoa(int(spell.Prepared)), selected, available)
-}
-
-func prepareSpellTextRow(rowOutput, countOutput *text.Output,
-	rect image.Rectangle, name, effect, count string, selected, available bool,
-) (image.Rectangle, image.Rectangle) {
+	count := strconv.Itoa(int(spell.Prepared))
+	font := rowOutput.Font
 	nameColor, effectColor := spellRowColours(selected, available)
 	rect = spellRowContentRect(rowOutput, rect)
-	countWidth, _ := rowOutput.Font.MeasureString("Prepared")
-	nameRect := rect
-	if count != "" {
-		nameRect.Max.X -= int(math.Ceil(countWidth)) + spellBrowserCountGap
-	}
-	prepareSpellOutput(rowOutput, nameRect)
-	name = unavailableRowLabel(name, available)
-	rowOutput.AppendLine().Text(FitDialogLine(name, rowOutput.Font, nameRect.Dx()), nameColor).Done()
-	rowOutput.AppendLine().Text(FitDialogLine(rowDetailIndent+effect, rowOutput.Font, nameRect.Dx()), effectColor).Done()
-	if count == "" {
-		return nameRect, image.Rect(0, 0, 0, 0)
-	}
-	countRect := image.Rect(nameRect.Max.X+spellBrowserCountGap, rect.Min.Y, rect.Max.X, rect.Max.Y)
+	countWidth, _ := font.MeasureString(count)
+	nameWidth := rect.Dx() - int(math.Ceil(countWidth)) - spellBrowserCountGap
+	prepareSpellOutput(rowOutput, rect)
+	rowOutput.AppendLine().Text(
+		CutDialogLine(font, unavailableRowLabel(spell.Name, available), "", nameWidth), nameColor).Done()
+	rowOutput.AppendLine().Text(CutDialogLine(font, rowDetailIndent+effect, "", rect.Dx()), effectColor).Done()
+	headingWidth, _ := font.MeasureString("Prepared")
+	countRect := image.Rect(rect.Max.X-int(math.Ceil(headingWidth)), rect.Min.Y, rect.Max.X, rect.Max.Y)
 	prepareSpellOutput(countOutput, countRect)
 	countOutput.AppendLine().WithAlignment(etext.AlignEnd).Text(count, nameColor).Done()
 
-	return nameRect, countRect
+	return rect, countRect
 }
 
 func appendSpellDetails(output *text.Output, spell game_state.ZStatsSpell) {

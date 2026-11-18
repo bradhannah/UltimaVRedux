@@ -23,10 +23,10 @@ import (
 
 const (
 	questJournalTabCount              = 8
-	questJournalMarginX               = 0.06
+	questJournalMarginX               = 0.02
 	questJournalMarginY               = 0.04
 	questJournalFooterLines           = 2
-	questJournalListRatio             = 0.38
+	questJournalListRatio             = 0.48
 	questJournalMinimumPadding        = 4
 	questJournalPaddingDivisor        = 64
 	questJournalLineSpacingMultiplier = 1.15
@@ -575,13 +575,15 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 		d.drawSingleLine(screen, image.Rect(left, rect.Min.Y, d.layout.tabsRect.Max.X, rect.Max.Y),
 			fitJournalLine(modeLabel, d.font, d.layout.tabsRect.Max.X-left), DialogEmptyColor)
 	}
+	fontHeight := int(math.Ceil(d.tabOutput.GetFontHeight()))
 	for _, index := range d.tabs {
 		rect := d.layout.tabRects[index]
-		textColor := DialogEmptyColor
+		top := rect.Min.Y + max(0, (rect.Dy()-fontHeight)/questJournalCenterDivisor)
+		textColor := DialogTabColor
 		if index == d.activeTab && !d.searching {
-			// The open tab is a filled plate, as in Configure.
-			textColor = DialogSelectedText
-			d.drawActiveTabPlate(screen, rect, d.tabTitle(index))
+			textColor = DialogActiveTabText
+			width, _ := d.font.MeasureString(d.tabTitle(index))
+			DrawActiveTabPlate(screen, rect, width, top, fontHeight, d.pixelUnit())
 		}
 		d.tabOutput.SetMaxCharsPerLine(len(d.tabTitle(index)))
 		d.tabOutput.Reset()
@@ -592,21 +594,8 @@ func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 			builder.Text(" *", DialogLabelColor)
 		}
 		builder.Done()
-		top := rect.Min.Y + max(0, (rect.Dy()-int(math.Ceil(d.tabOutput.GetFontHeight())))/questJournalCenterDivisor)
 		d.tabOutput.DrawPanelContent(screen, image.Pt(rect.Min.X, top), rect.Dx(), etext.AlignCenter)
 	}
-}
-
-// drawActiveTabPlate fills a rounded plate behind the open tab's title, a
-// little wider than the words and centred in the tab's column.
-func (d *QuestJournalDialog) drawActiveTabPlate(screen *ebiten.Image, column image.Rectangle, title string) {
-	const paddingUnits = 3
-	unit := ClassicUIPixelUnit(d.lastScreenWidth, d.lastScreenHeight)
-	measured, _ := d.font.MeasureString(title)
-	width := min(column.Dx(), int(math.Ceil(measured))) + questJournalCenterDivisor*paddingUnits*unit
-	left := column.Min.X + (column.Dx()-width)/questJournalCenterDivisor
-	plate := image.Rect(left, column.Min.Y, left+width, column.Max.Y)
-	FillClassicPixelRoundedRect(screen, plate, unit, DialogSelectedBackground)
 }
 
 func (d *QuestJournalDialog) drawList(screen *ebiten.Image) {

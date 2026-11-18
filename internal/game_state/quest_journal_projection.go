@@ -67,7 +67,8 @@ func (g *GameState) projectKnowledgeNote(subject string) (string, string) {
 		}
 		if candidate.dungeon == references.Doom {
 			if g.CodexRevelationComplete {
-				return "Codex revelation: VERAMOCOR", codexRevelationText
+				// The clues speak the word; a short title fits the Chronicle list.
+				return "Codex revelation", codexRevelationText
 			}
 
 			return "Word of Power: VERAMOCOR", codexWordSummary

@@ -156,6 +156,17 @@ var (
 	// Visual role: Inverted from normal to maintain readability on highlight
 	DialogSelectedText stdcolor.Color = color.EGABlack
 
+	// DialogActiveTabBackground - Plate behind the open tab's title in every tabbed dialog
+	// Examples: Z-Stats, Journal, Map, Help and Configure tabs
+	// Visual role: Inversion in the interface blue, so a tab never looks like a selected row
+	DialogActiveTabBackground stdcolor.Color = color.EGALightBlue
+
+	// DialogActiveTabText - Title of the open tab, drawn on DialogActiveTabBackground
+	DialogActiveTabText stdcolor.Color = color.EGAWhite
+
+	// DialogTabColor - Titles of the tabs that are not open
+	DialogTabColor stdcolor.Color = color.EGADarkGray
+
 	// DialogSelectedLabelColor separates labels from black values on the white selection bar.
 	//nolint:gochecknoglobals // Shared immutable semantic UI colour.
 	DialogSelectedLabelColor stdcolor.Color = color.EGADarkGray
