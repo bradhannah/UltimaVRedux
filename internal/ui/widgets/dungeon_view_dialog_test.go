@@ -91,8 +91,8 @@ func TestDungeonViewAtlasCollapsesVisibleOccurrencesUniquely(t *testing.T) {
 	assert.Equal(t, buildDungeonViewRenderPlan(second).cells, plan.cells)
 	assert.Equal(t, 1, visibleDungeonViewAtlasCells(plan))
 	key := dungeonViewLegendFor(plan, first.Facing)
-	require.Len(t, key, 5)
-	assert.Equal(t, []string{"You: facing north", "Solid wall", "Passage", "Not revealed", "Chest"}, dungeonViewKeyLabels(key))
+	// The party, the hatching, then the one group with something revealed.
+	assert.Equal(t, []string{"You: facing north", "Not revealed", "FINDS", "Chest"}, dungeonViewKeyLabels(key))
 }
 
 func TestDungeonViewUnknownContentsCannotChangeMapKeyOrWrap(t *testing.T) {
@@ -140,7 +140,7 @@ func TestDungeonViewMapAndKeyHaveExactRGBAArtworkAndBackground(t *testing.T) {
 	model := dungeonViewSampleModel("dense")
 	plan := buildDungeonViewRenderPlan(model)
 	key := dungeonViewLegendFor(plan, model.Facing)
-	// Expose each feature independently of the marker, plus all four fixed entries.
+	// Expose each feature independently of the marker, plus the two fixed entries.
 	for row := range plan.cells {
 		for column := range plan.cells[row] {
 			plan.cells[row][column].player = false
@@ -150,13 +150,18 @@ func TestDungeonViewMapAndKeyHaveExactRGBAArtworkAndBackground(t *testing.T) {
 	plan.cells[7][7] = dungeonViewCellPlan{}
 	raster := dungeonViewMapImage(plan, model.Facing)
 	for _, entry := range key {
+		if entry.heading {
+			continue // A group title has no symbol.
+		}
 		symbol := dungeonViewSymbolImage(entry.plan, model.Facing)
 		matched := false
 		for row, cells := range plan.cells {
 			for column, cell := range cells {
 				if cell == entry.plan {
+					// The outer pixel of a map cell may carry a wall's lit edge; the key has none.
+					inner := symbol.Bounds().Inset(1)
 					at := image.Pt(column*dungeonViewCellSize, row*dungeonViewCellSize)
-					assert.Equal(t, symbol.Pix, dungeonViewCropPixels(raster, symbol.Bounds().Add(at)), entry.label)
+					assert.Equal(t, dungeonViewCropPixels(symbol, inner), dungeonViewCropPixels(raster, inner.Add(at)), entry.label)
 					matched = true
 				}
 			}
@@ -166,6 +171,25 @@ func TestDungeonViewMapAndKeyHaveExactRGBAArtworkAndBackground(t *testing.T) {
 			require.Equal(t, byte(255), symbol.Pix[pixel], "key backgrounds must be opaque: %s", entry.label)
 		}
 	}
+}
+
+// Dark stone: a wall is lit only on a side known to face a passage, and only on
+// the map. Wall-to-wall seams and the key's wall swatch stay plain.
+func TestDungeonViewWallsShowALitEdgeOnlyFacingPassages(t *testing.T) {
+	model := dungeonViewSampleModel("simple")
+	plan := buildDungeonViewRenderPlan(model)
+	require.Equal(t, dungeonViewSurfaceWall, plan.cells[1][0].surface, "fixture: outer wall")
+	require.Equal(t, dungeonViewSurfaceFloor, plan.cells[1][1].surface, "fixture: passage beside it")
+	require.True(t, plan.edges.east[1][0], "fixture: the seam between them is known")
+	raster := dungeonViewMapImage(plan, model.Facing)
+	const last, middle = dungeonViewCellSize - 1, dungeonViewCellSize / 2
+	lit, stone := pkgcolor.EGALightGray.ToRGBA(), pkgcolor.EGADarkGray.ToRGBA()
+	assert.Equal(t, lit, raster.RGBAAt(last, dungeonViewCellSize+middle), "the side facing the passage")
+	assert.Equal(t, stone, raster.RGBAAt(last-1, dungeonViewCellSize+middle), "the edge is one pixel deep")
+	assert.Equal(t, stone, raster.RGBAAt(middle, dungeonViewCellSize), "the side facing another wall")
+	assert.NotEqual(t, lit, raster.RGBAAt(dungeonViewCellSize, dungeonViewCellSize+middle), "the passage itself is not edged")
+	swatch := dungeonViewSymbolImage(dungeonViewCellPlanFor(0xb0), model.Facing)
+	assert.Equal(t, stone, swatch.RGBAAt(last, middle), "the key's wall has no edge")
 }
 
 func TestDungeonViewPartyPreservesEveryFeatureInAllFacings(t *testing.T) {
@@ -257,16 +281,19 @@ func TestDungeonViewReducedColourRetainsTerrainAndFeatureDistinctions(t *testing
 	entries := dungeonViewLegendFor(buildDungeonViewRenderPlan(dungeonViewSampleModel("dense")), references.DungeonFacingNorth)
 	seen := make(map[string]string)
 	for _, entry := range entries {
+		if entry.heading {
+			continue // A group title has no symbol.
+		}
 		pixels := dungeonViewSymbolImage(entry.plan, references.DungeonFacingNorth).Pix
 		dungeonViewReduceColour(pixels)
 		previous, duplicate := seen[string(pixels)]
 		assert.False(t, duplicate, "%s collapses to %s in four-level greyscale", entry.label, previous)
 		seen[string(pixels)] = entry.label
 	}
-	// Solid wall coverage, sparse passage dot and patterned unknown remain different shapes.
+	// Solid wall coverage, plain passage and patterned unknown remain different shapes.
 	counts := make([]int, 0, 3)
-	for _, entry := range entries[1:4] {
-		pixels := dungeonViewSymbolImage(entry.plan, references.DungeonFacingNorth).Pix
+	for _, terrain := range []dungeonViewCellPlan{dungeonViewCellPlanFor(0xb0), dungeonViewCellPlanFor(0x00), {}} {
+		pixels := dungeonViewSymbolImage(terrain, references.DungeonFacingNorth).Pix
 		dungeonViewReduceColour(pixels)
 		lit := 0
 		for offset := 0; offset < len(pixels); offset += 4 {
@@ -290,7 +317,7 @@ func TestDungeonViewLayoutFitsRevealedKeyAndPlainEdgeLabels(t *testing.T) {
 				dialog := dungeonViewLayoutFixture(size, dungeonViewSampleModel(sample))
 				layout := dialog.layout
 				bounds := localDungeonViewBounds(dialog.border)
-				regions := []image.Rectangle{layout.header, layout.mapArea, layout.legend, layout.footer}
+				regions := []image.Rectangle{layout.header, layout.north, layout.mapArea, layout.legend, layout.footer}
 				for index, region := range regions {
 					require.True(t, region.In(bounds), "%v outside %v", region, bounds)
 					for _, other := range regions[index+1:] {
@@ -328,7 +355,12 @@ func TestDungeonViewLayoutFitsRevealedKeyAndPlainEdgeLabels(t *testing.T) {
 					}
 				}
 				assertDungeonViewEdgeTextBounds(t, dialog)
-				assert.Contains(t, dialog.footerOutput.GetOutputStr(false), "safe or reachable")
+				assert.Contains(t, dialog.footerOutput.GetOutputStr(false), "[Any key] Close")
+				// The window is only as large as the view needs, inside the room it may take.
+				room := newDialogBorder(dialog.placement).GetBounds()
+				assert.True(t, dialog.bounds.In(room), "%v outside %v", dialog.bounds, room)
+				assert.Less(t, dialog.bounds.Dx(), room.Dx(), "the game stays in view beside the window")
+				assert.LessOrEqual(t, dialog.textWidth, bounds.Dx(), "heading and footer fit on one line")
 			})
 		}
 	}

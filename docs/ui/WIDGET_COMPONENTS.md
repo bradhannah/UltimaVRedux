@@ -48,12 +48,20 @@ remain the invoking workflow's responsibility.
 
 ### Solid-wall presentation (A)
 
+- The window is only as large as the view needs, centred in the room the scene
+  allows, so the game stays in view around it. The view is laid out in that room
+  first, which settles the map's scale; the window then shrinks to the map, key,
+  heading and footer plus a margin, and never below what that layout used.
 - The map is one north-up 8×8 floor with dungeon name, level, party position and
-  authoritative facing. The **22×22 display-space reveal model remains intact**;
+  authoritative facing. A small `N` above the map marks north; the heading gives
+  only the dungeon and level. The **22×22 display-space reveal model remains intact**;
   the renderer collapses its visible occurrences by wrapped source coordinate.
   [VIEW-0003](../gamefacts/VIEW_SYSTEM.md#view-0003) owns that flood geometry.
-- Solid filled blocks are walls, dark dotted cells are passages, and diagonal
-  hatching means **Not revealed** by this observation. Shape/fill supplement colour.
+- Walls are one dark grey mass with no line round each tile, passages are plain
+  dark blue, and diagonal hatching means **Not revealed** by this observation.
+  On the map, a wall shows a light edge on each side known to face a passage, so
+  corridors read at a glance and the symbols are the brightest things in view;
+  key swatches carry no edge. Shape/fill supplement colour.
   This is not an exploration journal, and visible does not mean reachable or safe.
 - Stalactites, skeletons and cave-ins use the ordinary wall artwork, retaining
   their blocked terrain without a decorative special-wall category. Secret doors
@@ -68,10 +76,12 @@ remain the invoking workflow's responsibility.
 - A bright backed party frame and filled facing arrow sit at the cell perimeter.
   They preserve the central feature artwork for all four facings. The key's party
   entry uses the same orientation and explicitly names the facing direction.
-- The consistently ordered key starts with party, solid wall, passage and Not
-  revealed. Additional entries appear only for symbols in the **revealed,
-  collapsed** plan: doorways/secret doors, rooms, ladders, ceiling openings and pit
-  variants, traps, fields, chest, fountain and writing. Its rows, columns and
+- The consistently ordered key starts with the party and Not revealed. Walls
+  and passages have no entry: dark stone and the lit edge show them. Features
+  follow under three cyan group titles, `WAYS` (doorways, secret doors, rooms,
+  ladders, ceiling openings), `DANGERS` (pit variants, traps, fields) and `FINDS`
+  (chest, fountain, writing). An entry appears only for a symbol in the
+  **revealed, collapsed** plan, and a group with none is left out. Its rows, columns and
   measured label space depend on that list and the available interior; it does
   not reserve a fixed eighteen-entry legend. Key icons scale with key typography
   rather than map cells, with compact row spacing so a dense key does not force
@@ -81,8 +91,9 @@ remain the invoking workflow's responsibility.
   A pair requires adjacent revealed display occurrences with the expected wrapped
   coordinates and non-wall endpoints; seeing endpoints separately is insufficient.
   Hidden endpoints never supply labels. These are neither ladders nor exits, and
-  a labelled seam can still contain a hazard. The footer explains same-level
-  wrapping and makes no safe-route promise. The ordinary edge-label font is
+  a labelled seam can still contain a hazard. When there are such labels the
+  footer explains same-level wrapping; otherwise it holds only the close hint.
+  The ordinary edge-label font is
   independently scaled and measured; north/south tags are centered within their
   own column, with separation even when all eight columns have known seams.
 

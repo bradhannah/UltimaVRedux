@@ -6,6 +6,7 @@ type dungeonViewLayout struct {
 	header        image.Rectangle
 	mapArea       image.Rectangle
 	mapGrid       image.Rectangle
+	north         image.Rectangle // The "N" above the map: north is up.
 	legend        image.Rectangle
 	footer        image.Rectangle
 	mapScale      int
@@ -59,16 +60,18 @@ func calculateDungeonViewLayout(
 		gutter.Y = measure.edgeHeight + gap
 	}
 	const nativeGrid = dungeonViewCellSize * dungeonViewFloorCells
-	maximum := max(1, min((body.Dy()-gutter.Y*2)/nativeGrid, (body.Dx()-gutter.X*2)/nativeGrid))
+	// The north marker has its own strip above the map and any edge labels.
+	north := measure.edgeHeight + gap
+	maximum := max(1, min((body.Dy()-north-gutter.Y*2)/nativeGrid, (body.Dx()-gutter.X*2)/nativeGrid))
 	// Key icons follow the key's typography, not the size of the primary map.
 	// Compact row gaps allow a dense revealed key to stay in one readable column.
 	keyScale := measure.legendScale
 	rowHeight := max(dungeonViewCellSize*keyScale, measure.textHeight) + max(2, gap/2)
-	maxRows := max(1, (body.Dy()-measure.textHeight-gap)/rowHeight)
+	maxRows := max(1, body.Dy()/rowHeight)
 	columns := (measure.entryCount + maxRows - 1) / maxRows
 	rows := (measure.entryCount + columns - 1) / columns
 	keyWidth := columns*(dungeonViewCellSize*keyScale+measure.labelWidth+gap*2) - gap
-	keyHeight := measure.textHeight + gap + rows*rowHeight
+	keyHeight := rows * rowHeight
 	for scale := maximum; scale >= 1; scale-- {
 		mapSize := image.Pt(nativeGrid*scale+gutter.X*2, nativeGrid*scale+gutter.Y*2)
 		if columns > 2 || mapSize.X+gap+keyWidth > body.Dx() {
@@ -77,12 +80,13 @@ func calculateDungeonViewLayout(
 		if measure.verticalWrap && measure.edgeWidth+gap > dungeonViewCellSize*scale {
 			continue
 		}
-		origin := image.Pt(body.Min.X+(body.Dx()-mapSize.X-gap-keyWidth)/2, body.Min.Y+(body.Dy()-mapSize.Y)/2)
+		origin := image.Pt(body.Min.X+(body.Dx()-mapSize.X-gap-keyWidth)/2,
+			body.Min.Y+north+(body.Dy()-north-mapSize.Y)/2)
 		mapArea := image.Rectangle{Min: origin, Max: origin.Add(mapSize)}
 		keyOrigin := image.Pt(mapArea.Max.X+gap, body.Min.Y+(body.Dy()-keyHeight)/2)
 
 		return dungeonViewLayout{
-			header: header, mapArea: mapArea, mapGrid: image.Rect(0, 0, 0, 0),
+			header: header, mapArea: mapArea, mapGrid: image.Rect(0, 0, 0, 0), north: image.Rect(0, 0, 0, 0),
 			legend: image.Rectangle{Min: keyOrigin, Max: keyOrigin.Add(image.Pt(keyWidth, keyHeight))},
 			footer: footer, mapScale: scale, legendScale: keyScale,
 			legendColumns: columns, legendRows: rows, rowHeight: rowHeight, textHeight: measure.textHeight,
@@ -103,14 +107,15 @@ func dungeonViewLayoutBelow(
 	const nativeGrid = dungeonViewCellSize * dungeonViewFloorCells
 	rows := (measure.entryCount + columns - 1) / columns
 	rowHeight := max(dungeonViewCellSize, measure.compactLabelHeight)
-	keyHeight := measure.textHeight + gap + rows*rowHeight
-	scale := max(1, min((body.Dy()-keyHeight-gap-gutter.Y*2)/nativeGrid, (body.Dx()-gutter.X*2)/nativeGrid))
+	keyHeight := rows * rowHeight
+	north := measure.edgeHeight + gap
+	scale := max(1, min((body.Dy()-north-keyHeight-gap-gutter.Y*2)/nativeGrid, (body.Dx()-gutter.X*2)/nativeGrid))
 	mapSize := image.Pt(nativeGrid*scale+gutter.X*2, nativeGrid*scale+gutter.Y*2)
-	origin := image.Pt(body.Min.X+(body.Dx()-mapSize.X)/2, body.Min.Y)
+	origin := image.Pt(body.Min.X+(body.Dx()-mapSize.X)/2, body.Min.Y+north)
 	mapArea := image.Rectangle{Min: origin, Max: origin.Add(mapSize)}
 
 	return dungeonViewLayout{
-		header: header, mapArea: mapArea, mapGrid: image.Rect(0, 0, 0, 0),
+		header: header, mapArea: mapArea, mapGrid: image.Rect(0, 0, 0, 0), north: image.Rect(0, 0, 0, 0),
 		legend: image.Rect(body.Min.X, mapArea.Max.Y+gap, body.Max.X, mapArea.Max.Y+gap+keyHeight),
 		footer: footer, mapScale: scale, legendScale: 1,
 		legendColumns: columns, legendRows: rows, rowHeight: rowHeight, textHeight: measure.textHeight,
@@ -120,15 +125,21 @@ func dungeonViewLayoutBelow(
 
 func (layout dungeonViewLayout) withGrid(gutter image.Point) dungeonViewLayout {
 	layout.mapGrid = image.Rectangle{Min: layout.mapArea.Min.Add(gutter), Max: layout.mapArea.Max.Sub(gutter)}
+	layout.north = image.Rect(layout.mapGrid.Min.X, layout.mapArea.Min.Y-layout.edgeHeight-layout.gap,
+		layout.mapGrid.Max.X, layout.mapArea.Min.Y-layout.gap)
 
 	return layout
+}
+
+// used is the area the map, its north marker and the key occupy.
+func (layout dungeonViewLayout) used() image.Rectangle {
+	return layout.mapArea.Union(layout.north).Union(layout.legend)
 }
 
 func (layout dungeonViewLayout) legendRow(index int) image.Rectangle {
 	column, row := index/layout.legendRows, index%layout.legendRows
 	columnWidth := (layout.legend.Dx() + layout.gap) / layout.legendColumns
-	origin := image.Pt(layout.legend.Min.X+column*columnWidth,
-		layout.legend.Min.Y+layout.textHeight+layout.gap+row*layout.rowHeight)
+	origin := image.Pt(layout.legend.Min.X+column*columnWidth, layout.legend.Min.Y+row*layout.rowHeight)
 
 	return image.Rectangle{Min: origin, Max: origin.Add(image.Pt(columnWidth-layout.gap, layout.rowHeight))}
 }

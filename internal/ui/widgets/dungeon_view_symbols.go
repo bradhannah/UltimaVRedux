@@ -38,8 +38,43 @@ func dungeonViewMapImage(plan dungeonViewRenderPlan, facing references.DungeonFa
 			draw.Draw(canvas, symbol.Bounds().Add(at), symbol, image.Pt(0, 0), draw.Src)
 		}
 	}
+	// Dark stone: a wall shows a lit edge on each side known to face a passage, so
+	// corridors read at a glance. Only the map carries it; key swatches do not.
+	for row := range dungeonViewFloorCells {
+		for column := range dungeonViewFloorCells {
+			if plan.edges.east[row][column] {
+				dungeonViewLightWallEdge(canvas, plan, image.Pt(column, row), image.Pt((column+1)%dungeonViewFloorCells, row))
+			}
+			if plan.edges.south[row][column] {
+				dungeonViewLightWallEdge(canvas, plan, image.Pt(column, row), image.Pt(column, (row+1)%dungeonViewFloorCells))
+			}
+		}
+	}
 
 	return canvas
+}
+
+// dungeonViewLightWallEdge lights the side of a wall that faces a passage. The
+// second cell is the first's east or south neighbour, which may be across the
+// floor's wrap.
+func dungeonViewLightWallEdge(canvas *image.RGBA, plan dungeonViewRenderPlan, first, second image.Point) {
+	const last = dungeonViewCellSize - 1
+	near, far := plan.cells[first.Y][first.X], plan.cells[second.Y][second.X]
+	nearIsWall, farIsWall := near.surface == dungeonViewSurfaceWall, far.surface == dungeonViewSurfaceWall
+	if !near.visible || !far.visible || nearIsWall == farIsWall {
+		return
+	}
+	// The line sits just inside the wall: on its far side when the wall comes first.
+	wall, offset := second, 0
+	if nearIsWall {
+		wall, offset = first, last
+	}
+	edge := image.Rect(0, offset, dungeonViewCellSize, offset+1)
+	if first.Y == second.Y {
+		edge = image.Rect(offset, 0, offset+1, dungeonViewCellSize)
+	}
+	at := image.Pt(wall.X*dungeonViewCellSize, wall.Y*dungeonViewCellSize)
+	draw.Draw(canvas, edge.Add(at), image.NewUniform(pkgcolor.EGALightGray), image.Pt(0, 0), draw.Src)
 }
 
 type dungeonViewInk struct {
@@ -50,7 +85,7 @@ func (ink dungeonViewInk) rect(x, y, width, height int, shade color.Color) {
 	draw.Draw(ink.canvas, image.Rect(x, y, x+width, y+height), image.NewUniform(shade), image.Pt(0, 0), draw.Src)
 }
 
-//nolint:mnd // Native pixel geometry: filled walls, dotted passages, diagonal unknown hatching.
+//nolint:mnd // Native pixel geometry: dark stone walls, plain passages, diagonal unknown hatching.
 func (ink dungeonViewInk) surface(plan dungeonViewCellPlan) {
 	ink.rect(0, 0, dungeonViewCellSize, dungeonViewCellSize, pkgcolor.EGABlack)
 	if !plan.visible {
@@ -66,14 +101,11 @@ func (ink dungeonViewInk) surface(plan dungeonViewCellPlan) {
 	}
 	switch plan.surface {
 	case dungeonViewSurfaceWall:
-		ink.rect(0, 0, dungeonViewCellSize, dungeonViewCellSize, pkgcolor.EGALightGray)
-		ink.rect(0, 0, dungeonViewCellSize, 1, pkgcolor.EGADarkGray)
-		ink.rect(0, 0, 1, dungeonViewCellSize, pkgcolor.EGADarkGray)
+		// Walls recede as one dark mass, with no line round each tile, so the
+		// passages and the symbols on them are the brightest things in view.
+		ink.rect(0, 0, dungeonViewCellSize, dungeonViewCellSize, pkgcolor.EGADarkGray)
 	case dungeonViewSurfaceFloor:
 		ink.rect(0, 0, dungeonViewCellSize, dungeonViewCellSize, pkgcolor.From(pkgcolor.EGABlue).Intensity(0.3).RGBA())
-		if plan.icon == dungeonViewIconNone {
-			ink.rect(9, 9, 2, 2, pkgcolor.EGALightGray)
-		}
 	case dungeonViewSurfaceNone:
 	}
 }
@@ -171,7 +203,7 @@ func (ink dungeonViewInk) ceiling() {
 	ink.rect(6, 7, 8, 1, pkgcolor.EGALightCyan)
 }
 
-//nolint:mnd // A low dark opening; hidden pits have a visibly broken cover, never the passage dot.
+//nolint:mnd // A low dark opening; hidden pits have a visibly broken cover, never a bare passage.
 func (ink dungeonViewInk) pit(hidden bool) {
 	ink.rect(6, 9, 8, 7, pkgcolor.EGALightGray)
 	ink.rect(4, 11, 12, 3, pkgcolor.EGALightGray)

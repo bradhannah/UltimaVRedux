@@ -149,6 +149,8 @@ through `thenShowDungeonViewDialog`. The widget consumes a detached current-floo
 observation; its north-up 8×8 solid-wall map and matching feature key share one
 symbol renderer. Not-revealed hatching and known paired same-level wrap labels
 describe the supplied observation, not exploration history or safe routes.
+The scene's placement is the most room the window may take; the widget draws a
+window only as large as the view needs and reports it through `GetBounds`.
 The [Dungeon View widget contract](WIDGET_COMPONENTS.md#dungeon-view) owns the
 artwork, dynamic key, responsive layout and documented inspection alternative.
 
@@ -312,9 +314,11 @@ part of native or legacy saves and must not be used for gameplay decisions.
   the same typography in exploration and combat.
 - A single opaque **Recent provisions** strip is drawn above dialogs only when
   its measured bounds do not overlap the active modal's bounds (merchant parents
-  expose their shell; transaction modals expose their own bounds). With unknown
-  or overlapping modal bounds it draws underneath the dialog stack. This protects
-  tight layouts such as Dungeon View, including its heading near the screen top.
+  expose their shell; transaction modals and Dungeon View expose their own
+  bounds). With unknown or overlapping modal bounds it draws underneath the
+  dialog stack. This protects tight layouts such as Dungeon View, whose fitted
+  window sits near the screen top: a strip clear of the window stays readable
+  above it, and one that reaches down over it is covered by the window.
   Small ordinary grids and a simple food-loss notice fit above the merchant
   shell's 10% top edge at supported logical resolutions, including 1280×720.
   A larger combined food/resource card follows the same measured overlap rule,
@@ -523,7 +527,7 @@ caps/no-ops, all six real pickups, real consumption, Britain ration approval and
 results, modal update ordering, save hydration, expiry/reset/disposal, rapid
 opposing changes, and supported layouts. Rendered composition regressions in
 `cmd/ultimav/gamescene_provision_composition_test.go` cover four ordinary entries
-over Dungeon View's heading, tight measured/unmeasured modals above a merchant,
+over the top of Dungeon View's window, tight measured/unmeasured modals above a merchant,
 and unobstructed merchant feedback. Visual gameplay review should include a
 Britain purchase with its result dialog still open, a pickup, consumption, and
 rapid repeated changes at minimum resolution.

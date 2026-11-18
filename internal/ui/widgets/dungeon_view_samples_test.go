@@ -81,10 +81,15 @@ func dungeonViewLayoutFixture(size image.Point, model game_state.DungeonViewMode
 		model: model, plan: plan, legend: dungeonViewLegendFor(plan, model.Facing),
 		continuations: dungeonViewContinuations(plan), placement: dungeonViewSamplePlacement(),
 	}
-	dialog.border = newDialogBorder(dialog.placement)
-	bounds := localDungeonViewBounds(dialog.border)
-	dialog.prepareOutputs(size.X, bounds.Dx())
-	dialog.layout = calculateDungeonViewLayout(bounds, size.X, size.Y,
-		dialog.measurements(bounds.Dx(), dungeonViewLayoutGap(size.X, size.Y)))
+	dialog.layOut(size.X, size.Y)
 	return dialog
+}
+
+// dungeonViewFeatureKey lists every feature entry of the key, across its groups.
+func dungeonViewFeatureKey() []dungeonViewLegendEntry {
+	var entries []dungeonViewLegendEntry
+	for _, group := range dungeonViewFeatureGroups() {
+		entries = append(entries, group.entries...)
+	}
+	return entries
 }

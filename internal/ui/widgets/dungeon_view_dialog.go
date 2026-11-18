@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"strings"
@@ -22,6 +23,10 @@ const (
 	dungeonViewMinimumTextSpace = 11
 	// Measured exception: four-character axis tags must fit eight adjacent columns.
 	dungeonViewEdgeFontSize StandardFontSize = 16
+	// The window keeps this many layout gaps clear around what it shows.
+	dungeonViewWindowMargin = 2
+	dungeonViewBothSides    = 2
+	dungeonViewPixelCentre  = 0.5
 )
 
 // DungeonViewDialog presents a detached current-floor observation with a matching key.
@@ -39,6 +44,7 @@ type DungeonViewDialog struct {
 	layout        dungeonViewLayout
 	screenWidth   int
 	screenHeight  int
+	textWidth     int // The widest heading or footer line, which the window must hold.
 
 	titleOutput  *utext.Output
 	legendOutput *utext.Output
@@ -56,7 +62,8 @@ type DungeonViewDialogConfig struct {
 	Model     game_state.DungeonViewModel
 }
 
-// NewDungeonViewDialog creates a static north-up map with a revealed-feature key.
+// NewDungeonViewDialog creates a static north-up map with a revealed-feature key,
+// in a window only as large as that needs. Placement is the most room it may take.
 //
 // REDUX DEVIATION: Original dungeon View draws IBM/runic glyphs across display-space
 // copies (ref:VIEW-0003). Redux collapses the same revealed occurrences into an 8x8
@@ -84,17 +91,51 @@ func (d *DungeonViewDialog) rebuildLayout(screenWidth, screenHeight int) {
 	if d.border != nil && screenWidth == d.screenWidth && screenHeight == d.screenHeight {
 		return
 	}
-	d.screenWidth, d.screenHeight = screenWidth, screenHeight
-	d.border = newDialogBorder(d.placement)
-	d.bounds = d.border.GetBounds()
-	bounds := localDungeonViewBounds(d.border)
-	d.prepareOutputs(screenWidth, bounds.Dx())
-	gap := dungeonViewLayoutGap(screenWidth, screenHeight)
-	d.layout = calculateDungeonViewLayout(bounds, screenWidth, screenHeight, d.measurements(bounds.Dx(), gap))
+	d.layOut(screenWidth, screenHeight)
 	d.buffer = ebiten.NewImage(d.bounds.Dx(), d.bounds.Dy())
 	d.drawOptions = &ebiten.DrawImageOptions{}
 	d.drawOptions.GeoM.Translate(float64(d.bounds.Min.X), float64(d.bounds.Min.Y))
 	d.renderToBuffer()
+}
+
+// layOut sizes the window to what it shows. The view is first laid out in all
+// the room the placement allows, which settles the map's scale. The window is
+// then only as large as that needs, so the game stays in view around it.
+func (d *DungeonViewDialog) layOut(screenWidth, screenHeight int) {
+	d.screenWidth, d.screenHeight = screenWidth, screenHeight
+	gap := dungeonViewLayoutGap(screenWidth, screenHeight)
+	room := newDialogBorder(d.placement)
+	d.border = newDialogBorder(d.fittedPlacement(room, d.layoutWithin(room, gap), gap))
+	d.bounds = d.border.GetBounds()
+	d.layout = d.layoutWithin(d.border, gap)
+}
+
+func (d *DungeonViewDialog) layoutWithin(border *Border, gap int) dungeonViewLayout {
+	bounds := localDungeonViewBounds(border)
+	d.prepareOutputs(d.screenWidth, bounds.Dx())
+
+	return calculateDungeonViewLayout(bounds, d.screenWidth, d.screenHeight, d.measurements(bounds.Dx(), gap))
+}
+
+// fittedPlacement shrinks the room to the laid-out view and a margin, centred
+// where the room was. A border's interior is a fixed share of its size, so a
+// window fitted this way always has at least the room the view was laid out in.
+func (d *DungeonViewDialog) fittedPlacement(
+	room *Border, layout dungeonViewLayout, gap int,
+) sprites.PercentBasedPlacement {
+	outer, inner := room.GetBounds(), localDungeonViewBounds(room)
+	margin := gap * dungeonViewWindowMargin
+	used := layout.used()
+	width := max(used.Dx(), d.textWidth) + margin*dungeonViewBothSides
+	height := layout.header.Dy() + used.Dy() + layout.footer.Dy() + (gap+margin)*dungeonViewBothSides
+	spare := image.Pt(max(0, inner.Dx()-width), max(0, inner.Dy()-height)).Div(dungeonViewBothSides)
+	// Aiming at a pixel's centre keeps each edge on that pixel when the border scales it back.
+	share := func(pixel, extent int) float64 { return (float64(pixel) + dungeonViewPixelCentre) / float64(extent) }
+
+	return sprites.PercentBasedPlacement{
+		StartPercentX: share(outer.Min.X+spare.X, d.screenWidth), EndPercentX: share(outer.Max.X-spare.X, d.screenWidth),
+		StartPercentY: share(outer.Min.Y+spare.Y, d.screenHeight), EndPercentY: share(outer.Max.Y-spare.Y, d.screenHeight),
+	}
 }
 
 func newDungeonViewOutput(screenWidth int) *utext.Output {
@@ -124,16 +165,20 @@ func (d *DungeonViewDialog) prepareOutputs(screenWidth, width int) {
 	// axis tags must fit eight adjacent columns without borrowing neighboring cells.
 	d.edgeOutput = newDungeonViewOutputSized(screenWidth, dungeonViewEdgeFontSize)
 	d.footerOutput = newDungeonViewOutput(screenWidth)
-	d.titleOutput.AppendLine().Yellow(strings.ToUpper(d.model.Location.String())).
-		LightGray("   LEVEL ").Whitef("%d OF %d", int(d.model.Floor)+1, references.DungeonFloorCount).
-		LightCyan("   NORTH UP").Done()
+	const wrapNote, closeHint = "Matching W-E / N-S labels join opposite edges on this level.", "[Any key] Close"
+	name := strings.ToUpper(d.model.Location.String())
+	level := fmt.Sprintf("%d OF %d", int(d.model.Floor)+1, references.DungeonFloorCount)
+	d.titleOutput.AppendLine().Yellow(name).LightGray("   LEVEL ").White(level).Done()
+	titleWidth, _ := d.titleOutput.Font.MeasureString(name + "   LEVEL " + level)
+	footerWidth, _ := d.footerOutput.Font.MeasureString(closeHint)
 	d.titleOutput = d.titleOutput.WrappedCopyForWidth(width)
 	if len(d.continuations) > 0 {
-		d.footerOutput.AppendLine().LightCyan("Matching W-E / N-S labels join opposite edges on this level.").Done()
+		d.footerOutput.AppendLine().LightCyan(wrapNote).Done()
+		footerWidth, _ = d.footerOutput.Font.MeasureString(wrapNote)
 	}
-	d.footerOutput.AppendLine().LightGray("Current view only. Visible does not mean safe or reachable.").Done()
-	AppendControlHints(d.footerOutput.AppendLine(), "[Any key] Close").Done()
+	AppendControlHints(d.footerOutput.AppendLine(), closeHint).Done()
 	d.footerOutput = d.footerOutput.WrappedCopyForWidth(width)
+	d.textWidth = int(math.Ceil(max(titleWidth, footerWidth)))
 }
 
 func (d *DungeonViewDialog) measurements(width, gap int) dungeonViewMeasurements {
@@ -174,6 +219,9 @@ func (d *DungeonViewDialog) renderToBuffer() {
 	d.titleOutput.DrawPanelContent(d.buffer, d.layout.header.Min, d.layout.header.Dx(), text.AlignCenter)
 	drawDungeonViewRaster(d.buffer, dungeonViewMapImage(d.plan, d.model.Facing),
 		d.layout.mapGrid.Min, d.layout.mapScale)
+	d.edgeOutput.Reset()
+	d.edgeOutput.AppendLine().LightCyan("N").Done()
+	d.edgeOutput.DrawPanelContent(d.buffer, d.layout.north.Min, d.layout.north.Dx(), text.AlignCenter)
 	d.renderContinuations()
 	d.renderLegend()
 	d.footerOutput.DrawPanelContent(d.buffer, d.layout.footer.Min, d.layout.footer.Dx(), text.AlignCenter)
@@ -198,22 +246,26 @@ func (d *DungeonViewDialog) renderContinuations() {
 }
 
 func (d *DungeonViewDialog) renderLegend() {
-	d.legendOutput.Reset()
-	d.legendOutput.AppendLine().LightCyan("KEY").Done()
-	d.legendOutput.DrawPanelContent(d.buffer, d.layout.legend.Min, d.layout.legend.Dx(), text.AlignStart)
 	iconSize := dungeonViewCellSize * d.layout.legendScale
 	for index, entry := range d.legend {
 		row := d.layout.legendRow(index)
-		origin := image.Pt(row.Min.X, row.Min.Y+(row.Dy()-iconSize)/2)
-		drawDungeonViewRaster(d.buffer, dungeonViewSymbolImage(entry.plan, d.model.Facing), origin, d.layout.legendScale)
+		textX := row.Min.X
 		d.legendOutput.Reset()
-		if entry.plan.player {
-			d.legendOutput.AppendLine().LightGray("You: facing ").
+		line := d.legendOutput.AppendLine()
+		switch {
+		case entry.heading:
+			line.LightCyan(entry.label).Done()
+		case entry.plan.player:
+			line.LightGray("You: facing ").
 				LightGreen(strings.ToLower(d.model.Facing.Direction().GetDirectionCompassName())).Done()
-		} else {
-			d.legendOutput.AppendLine().LightGray(entry.label).Done()
+		default:
+			line.LightGray(entry.label).Done()
 		}
-		textX := row.Min.X + iconSize + d.layout.gap
+		if !entry.heading {
+			origin := image.Pt(row.Min.X, row.Min.Y+(row.Dy()-iconSize)/2)
+			drawDungeonViewRaster(d.buffer, dungeonViewSymbolImage(entry.plan, d.model.Facing), origin, d.layout.legendScale)
+			textX += iconSize + d.layout.gap
+		}
 		label := d.legendOutput.WrappedCopyForWidth(max(1, row.Max.X-textX))
 		height := int(math.Ceil(label.GetTotalHeightForLines(label.GetPanelContentLineCount())))
 		label.DrawPanelContent(d.buffer, image.Pt(textX, row.Min.Y+(row.Dy()-height)/2),
@@ -245,6 +297,12 @@ func (d *DungeonViewDialog) Update() {
 		d.keyboard.ResetReleaseDebouncing()
 		d.dismissed = true
 	}
+}
+
+// GetBounds returns the window's rectangle on screen, so the scene can tell what
+// the fitted window covers and what stays clear around it.
+func (d *DungeonViewDialog) GetBounds() image.Rectangle {
+	return d.bounds
 }
 
 // IsDismissed reports whether the modal may be removed.

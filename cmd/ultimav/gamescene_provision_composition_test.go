@@ -29,15 +29,16 @@ func TestProvisionFeedbackDungeonViewHeadingRemainsUncovered(t *testing.T) {
 	dialog.Draw(baseline)
 	scene.drawDialogs(actual)
 
-	// Four ordinary entries make two rows. The real Dungeon View begins at 4%,
-	// and its dungeon/level title occupies this top band at minimum resolution.
-	heading := image.Rect(1280*3/100, 720*4/100, 1280*97/100, 720*4/100+40)
-	overlap := scene.provisionChanges.panel.Bounds().Intersect(heading)
+	// Four ordinary entries make two rows, which reach down over the top of the
+	// fitted Dungeon View window at minimum resolution.
+	overlap := scene.provisionChanges.panel.Bounds().Intersect(dialog.GetBounds())
+	// The window's rounded corner is cut away, so leave it out of the comparison.
+	overlap.Min.X += overlap.Dy()
 	require.False(t, overlap.Empty(), "fixture must reproduce the reported overlap")
 	require.False(t, scene.provisionChangesAboveDialogs())
 	want := provisionRegionPixels(baseline, overlap)
 	got := provisionRegionPixels(actual, overlap)
-	require.True(t, bytes.Equal(want, got), "provision feedback must not overwrite the dungeon/level heading")
+	require.True(t, bytes.Equal(want, got), "provision feedback must not overwrite the dungeon view window")
 
 	// Verify the old always-on-top order would actually fail this pixel check.
 	scene.provisionChanges.panel.Draw(baseline)
