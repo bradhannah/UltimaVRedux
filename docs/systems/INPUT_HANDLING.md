@@ -771,7 +771,8 @@ Cast and Z-stats Spells reserve `Ctrl+M` locally for preparing the selected spel
 outside those modals the existing music shortcut remains unchanged. Ctrl chords
 are consumed before syllable/free-text input and held keys cannot bleed into the
 next owner. The shared finder also uses `/` search, `Ctrl+O` to cycle All known /
-Prepared / Mixable filtering,
+Prepared / Mixable filtering (Cast adds Ready, the spells its caster can cast
+now, and cycles Ready / Prepared / All known / Mixable),
 and Space detail paging outside search. While searching, Space enters text;
 Escape returns to browse mode for paging while retaining the selected spell.
 An incompatible older syllable prefix is cleared rather than selecting a different

@@ -109,3 +109,66 @@ func TestSpellCastingDialogDebugOverridesUseCoreValidation(t *testing.T) {
 	require.False(t, valid)
 	require.Equal(t, "Level too low!", message)
 }
+
+// In battle the list opens on what the acting caster can cast right now, so
+// spells that are mixed but beyond them are out of the way. Ctrl+O steps on
+// through the other filters, and Ready follows a change of caster.
+func TestCastListOpensOnReadySpellsInBattle(t *testing.T) {
+	state, _, _ := newCastBrowserTest(t)
+	catalog := state.CurrentSpellCatalog()
+	ready := map[references.Spell]bool{references.GravPor: true, references.Mani: true}
+	validate := func(request game_state.CastRequest) game_state.SpellValidationResult {
+		return game_state.SpellValidationResult{
+			Valid: request.CasterIdx == 0 && ready[request.Spell], ErrorMsg: "", SpellInfo: nil, IsAbsorb: false,
+		}
+	}
+	open := func(context references.SpellContext) *SpellCastingDialog {
+		return NewSpellCastingDialog(newWidgetTestKeyboard(0), &state.PartyState, context, catalog, validate)
+	}
+
+	battle := open(references.ContextCombat)
+	battle.LockCasterSelection(0)
+	require.Equal(t, spellFilterReady, battle.browser.filterMode)
+	require.Len(t, battle.browser.filtered, len(ready))
+	require.Equal(t, references.GravPor, battle.GetSelectedSpell())
+	var cycle []spellBrowserFilter
+	for range 4 {
+		battle.browser.filterMode = battle.browser.nextFilter()
+		cycle = append(cycle, battle.browser.filterMode)
+	}
+	require.Equal(t, []spellBrowserFilter{spellFilterPrepared, spellFilterAll, spellFilterMixable, spellFilterReady}, cycle)
+
+	// Words that match no ready spell widen the list, so a known spell is always
+	// found by name and can say why it cannot be cast.
+	battle.browser.syllables = spellInitials("Vas Mani")
+	battle.browser.filter()
+	require.Equal(t, spellFilterAll, battle.browser.filterMode)
+	require.Equal(t, references.VasMani, battle.GetSelectedSpell())
+
+	// Outside battle the list opens as before; Ready is there and follows the caster.
+	towne := open(references.ContextTown)
+	require.Equal(t, spellFilterAll, towne.browser.filterMode)
+	require.Len(t, towne.browser.filtered, len(catalog))
+	towne.browser.filterMode = spellFilterReady
+	towne.browser.refilter()
+	require.Len(t, towne.browser.filtered, len(ready))
+	towne.cycleCaster(1)
+	require.NotZero(t, towne.selectedCasterIdx, "fixture: a second caster")
+	require.Empty(t, towne.browser.filtered, "the new caster can cast none of them")
+
+	// With nothing ready, battle shows every known spell rather than an empty list.
+	clear(ready)
+	nothing := open(references.ContextCombat)
+	nothing.LockCasterSelection(0)
+	require.Equal(t, spellFilterAll, nothing.browser.filterMode)
+	require.Len(t, nothing.browser.filtered, len(catalog))
+
+	// Where no caster is chosen (Z-stats, Mix) the filters are as they were.
+	plain := newSpellBrowser(catalog)
+	cycle = cycle[:0]
+	for range 3 {
+		plain.filterMode = plain.nextFilter()
+		cycle = append(cycle, plain.filterMode)
+	}
+	require.Equal(t, []spellBrowserFilter{spellFilterPrepared, spellFilterMixable, spellFilterAll}, cycle)
+}

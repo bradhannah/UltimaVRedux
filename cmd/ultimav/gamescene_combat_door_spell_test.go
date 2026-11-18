@@ -81,6 +81,9 @@ func TestCombatDoorSpellProductionSyllablesRespectInjectedControlAndRelease(t *t
 				scene, callbacks := newCombatDoorSpellScene(t, test.spell)
 				state := scene.gameState
 				t.Cleanup(state.EventQueueManager.Shutdown)
+				// Battle opens on what the actor can cast now. A second ready spell,
+				// listed first, keeps the opening selection off the one under test.
+				state.PartyState.Inventory.Spells.Set(references.Mani, 1)
 				controlHeld := true
 				scene.keyboard = input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool {
 					return controlHeld && key == control
@@ -88,11 +91,11 @@ func TestCombatDoorSpellProductionSyllablesRespectInjectedControlAndRelease(t *t
 				scene.combatMapInputHandler(ebiten.KeyC)
 				dialog := waitForTopModal[*widgets.SpellCastingDialog](t, scene)
 				initialSpell := dialog.GetSelectedSpell()
-				require.Equal(t, references.InLor, initialSpell)
+				require.Equal(t, references.Mani, initialSpell)
 				commits := state.CastUseCommitSequence()
 				enterSpellSyllables(scene, dialog, test.keys)
 				assert.Equal(t, initialSpell, dialog.GetSelectedSpell(),
-					"a simulated letter does not override a polled Ctrl modifier: reproduce the failed fixture's selection 0")
+					"a simulated letter does not override a polled Ctrl modifier: the opening selection stays")
 				assert.Nil(t, state.CombatScene.AdjacentSpellTargeting)
 				assert.Equal(t, commits, state.CastUseCommitSequence())
 

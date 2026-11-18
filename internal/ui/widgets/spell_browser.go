@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -36,6 +37,9 @@ const (
 	spellFilterAll spellBrowserFilter = iota
 	spellFilterPrepared
 	spellFilterMixable
+	// spellFilterReady lists what the chosen caster can cast right now. It exists
+	// only where that can be judged: the Cast list.
+	spellFilterReady
 )
 
 func (filter spellBrowserFilter) label() string {
@@ -46,6 +50,8 @@ func (filter spellBrowserFilter) label() string {
 		return "Prepared"
 	case spellFilterMixable:
 		return "Mixable"
+	case spellFilterReady:
+		return "Ready"
 	default:
 		panic("invalid spell browser filter")
 	}
@@ -90,6 +96,7 @@ type spellBrowser struct {
 	query       string
 	searching   bool
 	filterMode  spellBrowserFilter
+	ready       func(game_state.ZStatsSpell) bool // Nil where no caster is chosen.
 	searchInput *TextInput
 	page        int
 	pages       int
@@ -122,6 +129,27 @@ func (b *spellBrowser) refresh(catalog []game_state.ZStatsSpell) {
 	b.selectID(spellID)
 }
 
+// refilter applies the filter again and keeps the selected spell when it is
+// still listed, for when the filter or what it depends on has changed.
+func (b *spellBrowser) refilter() {
+	spellID := -1
+	if spell := b.current(); spell != nil {
+		spellID = spell.ID
+	}
+	b.filter()
+	b.selectID(spellID)
+}
+
+// nextFilter is where Ctrl+O goes from the current filter.
+func (b *spellBrowser) nextFilter() spellBrowserFilter {
+	order := []spellBrowserFilter{spellFilterAll, spellFilterPrepared, spellFilterMixable}
+	if b.ready != nil {
+		order = []spellBrowserFilter{spellFilterReady, spellFilterPrepared, spellFilterAll, spellFilterMixable}
+	}
+
+	return order[(slices.Index(order, b.filterMode)+1)%len(order)]
+}
+
 func (b *spellBrowser) selectID(id int) {
 	for position, index := range b.filtered {
 		if b.catalog[index].ID == id {
@@ -135,11 +163,39 @@ func (b *spellBrowser) selectID(id int) {
 	}
 }
 
+// filteredOut reports whether the current filter leaves the spell off the list.
+func (b *spellBrowser) filteredOut(spell game_state.ZStatsSpell) bool {
+	switch b.filterMode {
+	case spellFilterAll:
+		return false
+	case spellFilterPrepared:
+		return spell.Prepared == 0
+	case spellFilterMixable:
+		return !spellMixable(spell)
+	case spellFilterReady:
+		return !b.ready(spell)
+	default:
+		panic("invalid spell browser filter")
+	}
+}
+
+// filter lists the spells the filter and the typed words allow. Ready is a
+// convenience, not a wall: when the words match none of the ready spells, the
+// list widens to every known spell, so a spell the caster knows can always be
+// found by name and its row says why it cannot be cast.
 func (b *spellBrowser) filter() {
+	b.applyFilter()
+	typed := b.syllables != "" || (b.searching && b.query != "")
+	if b.filterMode == spellFilterReady && typed && len(b.filtered) == 0 {
+		b.filterMode = spellFilterAll
+		b.applyFilter()
+	}
+}
+
+func (b *spellBrowser) applyFilter() {
 	b.filtered = b.filtered[:0]
 	for index, spell := range b.catalog {
-		if b.filterMode == spellFilterPrepared && spell.Prepared == 0 ||
-			b.filterMode == spellFilterMixable && !spellMixable(spell) {
+		if b.filteredOut(spell) {
 			continue
 		}
 		matches := true
@@ -203,13 +259,8 @@ func (b *spellBrowser) handleSearchControls(keyboard *input.Keyboard, font *text
 		return true
 	}
 	if keyboard.IsModifierPressed(input.ModifierCtrl) && keyboard.IsTextKeyPressedAndRegister(ebiten.KeyO) {
-		spellID := -1
-		if spell := b.current(); spell != nil {
-			spellID = spell.ID
-		}
-		b.filterMode = (b.filterMode + 1) % (spellFilterMixable + 1)
-		b.filter()
-		b.selectID(spellID)
+		b.filterMode = b.nextFilter()
+		b.refilter()
 
 		return true
 	}

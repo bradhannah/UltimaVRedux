@@ -1154,7 +1154,23 @@ targeting and context types; logs and the Workbench keep the short names. A
 spell's one-line description says what it does for the caster, and says so when
 a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
-Prepared counts occupy a separate labelled column. Cast adds current-caster
+Cast has a fourth filter, `Ready`: what the chosen caster can cast right now
+(mixed, within their level, enough MP, allowed here), judged by the same
+validation that guards the cast. In battle the list opens on it, so spells that
+are mixed but beyond the acting character are out of the way; with nothing ready
+it opens on `All known` rather than an empty list. Outside battle it opens on
+`All known` as before. In Cast, Ctrl+O steps Ready, Prepared, All known, Mixable;
+Z-stats and Mix, which have no caster, keep All known, Prepared, Mixable. Ready
+follows a change of caster. It is a convenience, not a wall: when typed initials
+or search words match none of the ready spells, the list widens to `All known`,
+so a known spell is always found by name and its row and status say why it
+cannot be cast.
+Prepared counts sit under a labelled heading at the right of a row's first line.
+The name stops short of the number, not of the heading's width, and the meaning
+on the second line has the whole row, so every spell's name and meaning is shown
+whole at every supported size, including a name marked `[No]` and a newly learned
+spell's `New:` meaning. Text that could not fit would be cut plainly, never with
+an ellipsis. Cast adds current-caster
 validation and a fixed action-status area; Z-stats retains portraits and
 discovery provenance. Overflow details page instead of reducing font size.
 Two-line rows centre their measured text block; rendering, paging and visible
