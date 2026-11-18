@@ -458,7 +458,7 @@ func TestStonegateTrapRejectsStaleFloorAndCommitsOneAtomicWipe(t *testing.T) {
 		WithPlayerAt(15, 16).
 		WithSystemCallbacks().
 		Build()
-	require.True(t, state.GetCurrentLayeredMapAvatarTopTile().Is(indexes.BrickFloorHole))
+	require.True(t, state.GetCurrentAvatarGroundTile().Is(indexes.BrickFloorHole))
 
 	review, err := state.ReviewStonegateTrap()
 	require.NoError(t, err)

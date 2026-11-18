@@ -27,7 +27,7 @@ func (g *GameState) processTrapFallThrough() {
 	if g.MapState.PlayerLocation.Location == references.Stonegate {
 		return
 	}
-	currentTile := g.GetCurrentLayeredMapAvatarTopTile()
+	currentTile := g.GetCurrentAvatarGroundTile()
 
 	// Only TRAP tiles (BrickFloorHole) trigger automatic fall-through
 	// GRATE tiles require manual Klimb command (already implemented correctly)
@@ -128,7 +128,7 @@ func (g *GameState) StartTrapFallWorkflow() {
 		).ThenSequence(
 
 		func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
-			currentTile := g.GetCurrentLayeredMapAvatarTopTile()
+			currentTile := g.GetCurrentAvatarGroundTile()
 			hazardType := g.detectTileHazardType(currentTile, g.MapState.PlayerLocation.Location.GetMapType())
 
 			g.thenApplyHazardEffects(hazardType)(q)
@@ -159,7 +159,7 @@ func (g *GameState) canContinueFalling() bool {
 	}
 
 	// Check tile at current position
-	currentTile := g.GetCurrentLayeredMapAvatarTopTile()
+	currentTile := g.GetCurrentAvatarGroundTile()
 
 	// Continue falling if on TRAP tile
 	if currentTile.Is(indexes.BrickFloorHole) {

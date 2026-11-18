@@ -94,7 +94,7 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 
 	// Block movement during TRAP fall sequences
 	if g.gameState.IsFalling() {
-		currentTile := g.gameState.GetCurrentLayeredMapAvatarTopTile()
+		currentTile := g.gameState.GetCurrentAvatarGroundTile()
 		if currentTile.Is(indexes.BrickFloorHole) {
 			// Block movement silently during fall sequence
 			return newSurfaceCommandResult(surfaceCommandStillActive, originMapType)
@@ -179,7 +179,7 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 	if g.gameState.IsPassable(newPosition) || g.gameState.DebugOptions.FreeMove {
 		g.moveToNewPositionByDirection(direction)
 		moved = true
-		avatarTopTile := g.gameState.GetCurrentLayeredMapAvatarTopTile()
+		avatarTopTile := g.gameState.GetCurrentAvatarGroundTile()
 		extraMovementStr := avatarTopTile.GetExtraMovementString()
 
 		// Play movement sound based on vehicle type or walking surface

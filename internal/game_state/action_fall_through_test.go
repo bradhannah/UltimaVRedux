@@ -23,7 +23,7 @@ func TestStonegateTrapBehavior_Integration(t *testing.T) {
 	gs.UpdateSmallMap(gs.GameReferences.TileReferences, gs.GameReferences.LocationReferences)
 
 	// Verify we're on a TRAP tile (BrickFloorHole)
-	currentTile := gs.GetCurrentLayeredMapAvatarTopTile()
+	currentTile := gs.GetCurrentAvatarGroundTile()
 	require.True(t, currentTile.Is(indexes.BrickFloorHole))
 
 	// Movement detection leaves Stonegate for the normal turn checkpoint.
@@ -54,7 +54,7 @@ func TestNormalTrapBehavior_Integration(t *testing.T) {
 	currentMap.SetTileByLayer(map_state.MapLayer, &gs.MapState.PlayerLocation.Position, indexes.BrickFloorHole)
 
 	// Verify we're on a TRAP tile
-	currentTile := gs.GetCurrentLayeredMapAvatarTopTile()
+	currentTile := gs.GetCurrentAvatarGroundTile()
 	assert.True(t, currentTile.Is(indexes.BrickFloorHole), "Should be on TRAP tile")
 
 	// Trigger the trap fall-through

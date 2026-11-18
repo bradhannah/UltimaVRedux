@@ -220,7 +220,7 @@ func TestSurfaceMovementCompletionSeparatesBlockedAndMovedOverworldSteps(t *test
 
 		scene.largeMapInputHandler(ebiten.KeyRight)
 
-		movementCost := state.GetCurrentLayeredMapAvatarTopTile().GetSpeedFactor()
+		movementCost := state.GetCurrentAvatarGroundTile().GetSpeedFactor()
 		elapsed := 0
 		for _, minutes := range callbacks.TimeAdvanced() {
 			elapsed += minutes
