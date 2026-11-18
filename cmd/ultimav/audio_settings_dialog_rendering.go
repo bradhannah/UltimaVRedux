@@ -88,10 +88,11 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 				"Gameplay timing, combat and dungeons are unchanged.",
 		},
 		{
-			label: "Concealed Turn Slots",
-			detail: "On reserves blank NEXT slots for concealed enemies. " +
-				"Off compacts the four-action forecast to avoid revealing hidden actors. " +
-				"Scheduling is unchanged.",
+			label: "Hidden Enemy Turns",
+			detail: "An enemy is hidden while invisible, under an arch or in the dark. " +
+				"On lists its coming turn in Turn Order as ??? unseen. " +
+				"Off leaves that turn out of the list. " +
+				"Your party is always named. Turn order itself is unchanged.",
 		},
 		{
 			label: "Flexible Sextant Use",

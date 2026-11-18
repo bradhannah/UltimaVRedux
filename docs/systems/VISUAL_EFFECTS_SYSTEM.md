@@ -765,8 +765,9 @@ Active signature effects are transient and reject scene snapshot capture.
 `cmd/ultimav/gamescene_combat_conditions.go` projects Possessed, Underground and
 Sleep from each active exact combat identity. `internal/ui/mainscreen/combat_conditions.go`
 formats those detached conditions for the combat turn HUD, which shows the
-disclosed acting entry's own combination. Concealed/underground actors use
-`Unknown` rather than leaking their names or clone identity in live readouts.
+disclosed acting entry's own combination. Concealed monsters use `Unknown`
+rather than leaking their names in live readouts; party entries, underground or
+under an arch included, are always named in the Turn Order panel.
 Source and clone conditions remain independent.
 Enemy-possession conditions additionally carry a detached episode ID and completed
 own-turn progress, shown as `Possessed - 8/12 turns`. Chaos-only control has no

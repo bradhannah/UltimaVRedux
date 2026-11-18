@@ -115,8 +115,8 @@ func TestCombatCharacterPanelMatchesExplorationThroughConditionsAndHUDDraw(t *te
 				combat.PartyPossessed[0], combat.PartyUnderground[0], combat.PartySleeping[0] = true, true, true
 				combat.CurrentTurnIdentity = source
 				check("possessed, underground and sleeping source", true)
-				assert.Contains(t, scene.combatHUD.turnOutput.GetOutputStr(false), combatUnknownEntityLabel)
-				assert.NotContains(t, scene.combatHUD.turnOutput.GetOutputStr(false), "PC1", "underground identity stays undisclosed in the live actor HUD")
+				assert.Contains(t, scene.combatHUD.turnOutput.GetOutputStr(false), "PC1", "the party is named even underground")
+				assert.NotContains(t, scene.combatHUD.turnOutput.GetOutputStr(false), combatUnknownEntityLabel)
 				require.True(t, state.CastCombatInQuasXen(0, source))
 				var clone game_state.CombatTurnIdentity
 				combat.ForEachPCClone(func(identity game_state.CombatTurnIdentity, _ references.Position) { clone = identity })
@@ -124,8 +124,8 @@ func TestCombatCharacterPanelMatchesExplorationThroughConditionsAndHUDDraw(t *te
 				combat.PartyPossessed[0], combat.PartyUnderground[0], combat.PartySleeping[0] = false, false, false
 				combat.CurrentTurnIdentity = clone
 				check("recovered source with affected clone", false)
-				assert.Contains(t, scene.combatHUD.turnOutput.GetOutputStr(false), combatUnknownEntityLabel)
-				assert.NotContains(t, scene.combatHUD.turnOutput.GetOutputStr(false), "CLONE")
+				assert.Contains(t, scene.combatHUD.turnOutput.GetOutputStr(false), "CLONE", "a clone is a party entry too")
+				assert.NotContains(t, scene.combatHUD.turnOutput.GetOutputStr(false), combatUnknownEntityLabel)
 				state.TransitionFromCombatMap()
 				check("combat exit", false)
 			}

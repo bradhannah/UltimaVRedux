@@ -666,14 +666,20 @@ field reports do not treat an absent attacker as monster slot zero.
 Combat terrain admission is a presentation filter, not a queue filter. A monster
 on authored `BlackSquare`/`BrickWallArchway` terrain retains its turn forecast
 slot, scheduling, and actions, but the HUD omits its portrait and identifying
-detail. By default, `Gameplay.Combat.ShowConcealedTurnOrderSlots` preserves that
-blank forecast slot. Players may disable the preference to omit and compact
-concealed entries within the same forecast; this does not inspect
-beyond the forecast or mutate scheduling. A concealed player-controlled
+detail. By default, Hidden Enemy Turns (`Gameplay.Combat.ShowConcealedTurnOrderSlots`)
+keeps that turn in the list as an unnamed `??? unseen` row. Players may disable
+the preference to leave concealed turns out, so later rows move up; this does not
+inspect beyond the forecast or mutate scheduling. A concealed player-controlled
 monster's command prompt uses the neutral `Unknown` label. The same admission
-rule suppresses ordinary actor-local battlefield decorations. Only the current
-party entry's [ARCH contour and active frame](../systems/VISUAL_EFFECTS_SYSTEM.md#active-party-entry-on-arch)
-have a narrow presentation exception; it grants no HUD identity, HP or targeting
+rule suppresses ordinary actor-local battlefield decorations.
+
+**The party is never concealed in the Turn Order panel.** A party member under an
+arch, on a dark square or dragged under by a Corpser keeps their name, portrait,
+health mark and conditions there, both as the current actor and in the list,
+whatever the preference says: the party roster names them anyway, so nothing is
+disclosed. On the battlefield their body stays behind the terrain, and only the
+current party entry's [ARCH contour and active frame](../systems/VISUAL_EFFECTS_SYSTEM.md#active-party-entry-on-arch)
+have a narrow presentation exception; it grants no battlefield HP or targeting
 disclosure. A terrain trigger immediately restores the ordinary identity
 presentation without recreating the actor.
 
@@ -700,7 +706,7 @@ name, conditions and attack readout. Below a rule, each coming turn is one row:
 half-size portrait, name, then the battlefield's own health mark at the same
 size, on every row including full health (when Show Combat HP Bars is On). A row whose turn will be lost is dimmed and says
 why (`asleep`, otherwise `skips`); an uncertain quickness outcome appends `?`; a
-concealed slot reads `??? unseen`. Rows are drawn for as many forecast entries
+concealed monster's turn reads `??? unseen` (party members are always named). Rows are drawn for as many forecast entries
 (up to twelve) as the pane has room. A party member fighting for the party shows
 no side label; enemies, allied monsters and possessed members do.
 
