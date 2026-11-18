@@ -33,8 +33,8 @@ func TestCurrentZStatsDossierIncludesCompleteZeroQuantityCatalogs(t *testing.T) 
 	}
 	inLor := requireZStatsSpell(t, dossier.Magic.Spells, references.InLor)
 	assert.Equal(t, state.GameReferences.InventoryItemReferences.GetReferenceByItem(references.InLor).ItemSprite, inLor.SpriteIndex)
-	assert.Equal(t, "Automatic", inLor.Targeting)
-	assert.Equal(t, "Non-Combat", inLor.Contexts)
+	assert.Equal(t, "No aim needed", inLor.Targeting)
+	assert.Equal(t, "Outside battle", inLor.Contexts)
 	assert.Equal(t, string(SpellFormulaConfirmed), inLor.FormulaState)
 	assert.Equal(t, []string{"Sulfurous Ash"}, inLor.Reagents)
 	assertCompleteZeroZStatsInventory(t, dossier.Magic.Reagents)
@@ -42,12 +42,12 @@ func TestCurrentZStatsDossierIncludesCompleteZeroQuantityCatalogs(t *testing.T) 
 	assertCompleteZeroZStatsInventory(t, dossier.Magic.Scrolls)
 	require.Equal(t, []string{"Food", "Gold", "Keys", "Gems", "Torches", "Skull Keys"}, zStatsProvisionNames(dossier.Provisions))
 	expectedDescriptionTerms := map[string][]string{
-		"Food":       {"06:00", "starvation"},
+		"Food":       {"three times a day", "starves"},
 		"Gold":       {"goods", "payments"},
 		"Keys":       {"Jimmy", "failure breaks one"},
-		"Gems":       {"32x32", "reachable area", "dungeon level"},
-		"Torches":    {"240 game minutes", "112-127 minutes", "255-minute cap"},
-		"Skull Keys": {"In Ex Por", "magical doors"},
+		"Gems":       {"from above", "dungeon level", "one gem"},
+		"Torches":    {"Lights the dark", "less time in a dungeon"},
+		"Skull Keys": {"In Ex Por", "magically locked door"},
 	}
 	for _, provision := range dossier.Provisions {
 		assert.Zero(t, provision.Quantity)

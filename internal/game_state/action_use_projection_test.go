@@ -1,6 +1,7 @@
 package game_state
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -131,6 +132,23 @@ func TestUseOwnershipAndCategoryMatrixAcrossContexts(t *testing.T) {
 			require.Equal(t, inventory, state.PartyState.Inventory.LockerSnapshot())
 			require.Equal(t, rngCalls, state.GetRNG().Calls())
 			require.Equal(t, sequence, state.CastUseCommitSequence())
+
+			// Use and Z-stats show one description, and it carries no arithmetic.
+			dossier := state.CurrentZStatsDossier()
+			shared := make(map[string]string)
+			for _, entry := range slices.Concat(dossier.Magic.Potions, dossier.Magic.Scrolls) {
+				shared[entry.Name] = entry.Description
+			}
+			for _, provision := range dossier.Provisions {
+				shared[provision.Name] = provision.Description
+			}
+			for _, owned := range dossier.Items {
+				shared[owned.Name] = owned.Description
+			}
+			for _, item := range items {
+				require.Equal(t, shared[item.FullName], item.Description, "%v", item.ItemType)
+				require.NotRegexp(t, `[0-9]`, item.Description, "%v", item.ItemType)
+			}
 		})
 	}
 }
@@ -144,23 +162,29 @@ func assertUseBrowsingDisclosure(t *testing.T, item UseableItemInfo) {
 		require.NotContains(t, copy, technical, "%v browsing copy", item.ItemType)
 	}
 	require.NotRegexp(t, `\b[a-z]+-[0-9]{4}\b`, copy, "rule identifiers do not belong in browsing copy")
+	// A quest item's copy says what it is. How, where and why to use it is for
+	// the player to learn from the people of Britannia.
 	switch item.ItemType {
 	case references.Crown:
 		require.NotContains(t, copy, "suppress")
+		require.NotContains(t, copy, "magic")
 		require.Contains(t, item.Requirement, "worn")
 	case references.Sceptre:
 		require.NotContains(t, copy, "field")
 		require.NotContains(t, copy, "dispel")
+		require.NotContains(t, copy, "barrier")
 	case references.Amulet:
 		require.NotContains(t, copy, "darkness")
 		require.NotContains(t, copy, "moongate")
 	case references.BlackBadge:
-		require.NotContains(t, copy, "oppression")
+		require.NotContains(t, copy, "palace")
+		require.NotContains(t, copy, "guard")
+		require.NotContains(t, copy, "password")
 	case references.ShardOfFalsehood, references.ShardOfHatred, references.ShardOfCowardice:
 		require.NotContains(t, copy, "ritual")
 		require.NotContains(t, copy, "flame")
 		require.NotContains(t, copy, "shadowlord")
-		require.Equal(t, "The Book of Lore (Ultima V)", item.ItemRef.ItemDescriptionAttribution)
+		require.Equal(t, "The Book of Lore (Ultima V) and UltimaCodex.com", item.ItemRef.ItemDescriptionAttribution)
 	case references.HMSCape:
 		require.Equal(t, "H.M.S. Cape Plans", item.Name)
 	}

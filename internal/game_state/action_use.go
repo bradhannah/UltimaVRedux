@@ -160,7 +160,6 @@ func (g *GameState) GetUsableItems() []UseableItemInfo {
 	if g.PartyState.Inventory.Provisions.SkullKeys.Get() > 0 {
 		itemRef := g.GameReferences.InventoryItemReferences.Provision[references.SkullKeys]
 		itemRef.ItemSprite = indexes.ItemKey
-		itemRef.ItemDescription = "Unlocks magically locked doors."
 		items = append(items, g.newUseableItemInfo(
 			itemRef,
 			UseItemCategoryKeys,

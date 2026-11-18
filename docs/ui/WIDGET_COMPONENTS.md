@@ -1002,12 +1002,23 @@ labelled Artifacts.
 
 Owning/highlighting an item grants no knowledge of hidden powers, rituals, required
 quest locations/objects or conversation-earned clues. This applies to lore,
-restrictions, warnings and pre-use prompts. Without reliable earned-knowledge
-tracking, Use-specific copy is conservative; no knowledge flags are added.
-Technical catalog descriptions stay separate. Retained borrowed lore keeps its
-attribution; rewritten original descriptions are not presented as quotations.
-Actual deliberate-use feedback may describe what happened. Potion colour promises
-no particular effect, and warning-only attempts retain their availability/costs.
+restrictions, warnings and pre-use prompts. A quest item's description therefore
+says what the thing is and leaves how, where and why to use it for the player to
+learn from the people of Britannia; no knowledge flags are added. Every detail in
+a quest item or moonstone description comes from Ultima Codex, The Book of Lore,
+Paths of Destiny, the Ultima VI Compendium, or behaviour the game implements.
+None is invented. The wording is ours, credited in a `Source` line and not
+presented as quotation.
+
+**Every item shows one description in Use and in Z-stats.** It comes from the
+shared catalog. For a potion, scroll or supply it says what the item is for and
+where it is useless, in a sentence or two, with no figures: durations are "a
+short while" or "several hours", never minutes. Every potion's text ends with
+the same line, that a potion does not always do what its colour promises. Use
+adds beneath it only what is true right now: the cost (`Single use.`) and any reason the attempt
+would be refused or wasted here. It does not repeat the purpose as an action
+line. Actual deliberate-use feedback may describe what happened, and
+warning-only attempts retain their availability/costs.
 Nonempty categories retain independent selection/scroll; item/category changes
 reset details. Tabs/Left/Right wrap categories, arrows browse, page keys move half
 a viewport, Space pages details, Enter selects, and Escape cancels. There are no
@@ -1125,7 +1136,12 @@ spells remain absent until learned; uncertain formulas retain their candidates.
 Manual syllable experimentation in Mix does not reveal an undiscovered formula.
 
 `internal/ui/widgets/spell_browser.go` owns shared filtering, two-line rows,
-recipe vocabulary and measured/clipped rendering. Spell names and short effect
+recipe vocabulary and measured/clipped rendering. The detail's `Target`,
+`Affects` and `Where` lines use a player's words ("No aim needed", "A creature
+you pick", "All before you", "Outside battle"), from `PlayerLabel` on the
+targeting and context types; logs and the Workbench keep the short names. A
+spell's one-line description says what it does for the caster, and says so when
+a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
 Prepared counts occupy a separate labelled column. Cast adds current-caster
 validation and a fixed action-status area; Z-stats retains portraits and

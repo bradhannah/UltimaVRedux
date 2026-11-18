@@ -286,8 +286,8 @@ func TestSpellRecipeGroupsIndentedInventoryWithAvailabilityColours(t *testing.T)
 	}
 	require.Contains(t, strings.Join(lines, "\n"), "Recipe:\n  Ginseng (6)\n  Garlic (0)")
 	require.NotContains(t, content, "Have 6")
-	require.Contains(t, content, "When: Combat")
-	require.NotContains(t, content, "Where:")
+	require.Contains(t, content, "Where: Combat")
+	require.NotContains(t, content, "When:")
 	for _, ingredient := range spell.RecipeInventory {
 		segments := appendSpellIngredient(output.AppendLine(), ingredient).GetSegments()
 		require.Equal(t, DialogValueColor, segments[0].Color)

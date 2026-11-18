@@ -590,7 +590,7 @@ func appendSpellFormula(output *text.Output, spell game_state.ZStatsSpell) {
 	}
 	appendSpellField(output.AppendLine(), "Target", spell.Targeting).WordWrap().Done()
 	appendSpellField(output.AppendLine(), "Affects", spellScopeLabel(spell.Scope)).WordWrap().Done()
-	appendSpellField(output.AppendLine(), "When", spell.Contexts).WordWrap().Done()
+	appendSpellField(output.AppendLine(), "Where", spell.Contexts).WordWrap().Done()
 }
 
 func appendSpellIngredient(line *text.LineBuilder, ingredient game_state.SpellReagentStock) *text.LineBuilder {
@@ -611,17 +611,17 @@ func spellScopeLabel(scope references.SpellEffectScope) string {
 	case references.ScopeSingleCharacter:
 		return "One character"
 	case references.ScopeSingleCombatant:
-		return "One combatant"
+		return "One creature"
 	case references.ScopeSingleTile:
-		return "One tile"
+		return "One square"
 	case references.ScopeCone:
-		return "Directional cone"
+		return "All before you"
 	case references.ScopeGlobal:
-		return "Global"
+		return "Everyone"
 	case references.ScopeRandomPlacement:
-		return "Random placement"
+		return "Somewhere nearby"
 	case references.ScopeWorldTransition:
-		return "World travel"
+		return "The party"
 	default:
 		return "Unknown"
 	}

@@ -265,6 +265,20 @@ func TestTargetingTypeString(t *testing.T) {
 	assert.Equal(t, "Unknown", TargetingType(99).String())
 }
 
+// A player reads plain words in the spell details; logs and the Workbench keep
+// the short names.
+func TestSpellPlayerLabelsUsePlainWords(t *testing.T) {
+	assert.Equal(t, "No aim needed", TargetAutomatic.PlayerLabel())
+	assert.Equal(t, "A companion in the fight", TargetCombatPartyMember.PlayerLabel())
+	assert.Equal(t, "A square beside you", TargetAdjacentTile.PlayerLabel())
+	assert.Equal(t, "A creature you pick", TargetCombatantCrosshair.PlayerLabel())
+	assert.Equal(t, "A square you pick", TargetTileCrosshair.PlayerLabel())
+	assert.Equal(t, "Direction", TargetDirection.PlayerLabel())
+	assert.Equal(t, "Anywhere", ContextAll.PlayerLabel())
+	assert.Equal(t, "Outside battle", ContextNonCombat.PlayerLabel())
+	assert.Equal(t, "Overworld, Combat", (ContextOverworld | ContextCombat).PlayerLabel())
+}
+
 func TestSpellTargetingProfilesResolveCombatOverrides(t *testing.T) {
 	assert.Equal(t, SpellTargetingProfile{Selection: TargetTileCrosshair, Scope: ScopeSingleTile}, GetSpellTargetingProfile(InFlamGrav, ContextCombat))
 	assert.Equal(t, SpellTargetingProfile{Selection: TargetAdjacentTile, Scope: ScopeSingleTile}, GetSpellTargetingProfile(AnSanct, ContextCombat))
