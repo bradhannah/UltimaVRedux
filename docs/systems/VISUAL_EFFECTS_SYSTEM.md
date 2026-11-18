@@ -1166,6 +1166,8 @@ for native pacing and text-readability acceptance.
   result feedback. Both concurrent effect slices use `GameState.ElapsedMs`,
   consume no gameplay RNG, add no workflow delay, and clear outside combat.
 - Map fade is a black map-area overlay controlled by `SetMapFadeLevel`.
+  A party lost in darkness (QUEST-0004) draws the same overlay fully opaque, so
+  the map view is blank, the party included, until the Amulet is worn.
 - Moongate renderers project the authoritative `GameState` stage; callbacks
   refresh presentation resources but do not own an independent growth state.
 

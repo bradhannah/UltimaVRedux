@@ -117,6 +117,14 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 	mapType := originMapType
 	moved := false
 
+	if mapType == references.LargeMapType && g.gameState.IsLostInDarkness() && !g.gameState.DebugOptions.FreeMove {
+		// The move is accepted and takes its turn, but the party goes nowhere.
+		// See ref:QUEST-0004.
+		g.addRowStr(game_state.LostInDarknessMessage)
+
+		return newSurfaceCommandResult(surfaceCommandCompleted, originMapType)
+	}
+
 	if mapType == references.LargeMapType {
 		if g.gameState.PartyVehicle.GetVehicleDetails().VehicleType == references.FrigateVehicle && !g.gameState.PartyVehicle.GetVehicleDetails().DoesMoveResultInMovement(direction) {
 			g.gameState.PartyVehicle.GetVehicleDetails().SetPartyVehicleDirection(direction)

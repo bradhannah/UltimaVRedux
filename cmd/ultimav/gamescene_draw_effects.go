@@ -115,12 +115,17 @@ func visualEffectPositionToSourcePixels(worldPos, playerPos references.Position)
 
 // drawMapFadeEffect renders the teleportation map fade overlay
 func (g *GameScene) drawMapFadeEffect(screen *ebiten.Image) {
-	if g.mapFadeLevel <= 0.0 {
+	fadeLevel := g.mapFadeLevel
+	if g.gameState.IsLostInDarkness() {
+		// Lost in darkness: the view is blank, the party included. See ref:QUEST-0004.
+		fadeLevel = 1
+	}
+	if fadeLevel <= 0.0 {
 		return // No fade effect needed
 	}
 
 	// Calculate the fade alpha (0-255)
-	alpha := uint8(255.0 * g.mapFadeLevel)
+	alpha := uint8(255.0 * fadeLevel)
 
 	gameArea := g.mapViewportRectangle()
 
