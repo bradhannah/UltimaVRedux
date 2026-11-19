@@ -157,6 +157,38 @@ func TestCrownCompetesWithEveryDurationSpell(t *testing.T) {
 	}
 }
 
+func TestCrownAndDurationSpellNameWhatTheyDisplace(t *testing.T) {
+	gs := createMinimalGameStateForToggleTests(t)
+	var messages []string
+	gs.SystemCallbacks.UI.ShowActionFeedback = func(message string, _ bool) {
+		messages = append(messages, message)
+	}
+	take := func() []string {
+		got := messages
+		messages = nil
+
+		return got
+	}
+
+	gs.ToggleCrown()
+	gs.ActivateQuicknessEffect(30)
+	assert.Equal(t, []string{"Crown donned!", CrownDisplacedMessage, "Quickness!"}, take())
+
+	gs.ActivateQuicknessEffect(30)
+	assert.Equal(t, []string{"Quickness!"}, take(), "a refresh with no Crown worn reports no loss")
+
+	gs.ToggleCrown()
+	assert.Equal(t, []string{"Quickness ended!", "Crown donned!"}, take())
+
+	gs.ActivateTimeStopEffect(10)
+	assert.Equal(t, []string{CrownDisplacedMessage}, take(), "Time Stop names the Crown before its own popup")
+
+	gs.ClearDurationEffect()
+	gs.ToggleCrown()
+	gs.ToggleCrown()
+	assert.Equal(t, []string{"Crown donned!", "Removed!"}, take(), "taking the Crown off by hand ends no spell")
+}
+
 func TestIndependentArtifactTogglesPreserveSpell(t *testing.T) {
 	gs := createMinimalGameStateForToggleTests(t)
 	gs.ActivateProtectionEffect(9)

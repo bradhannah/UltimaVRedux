@@ -81,7 +81,9 @@ coordinates. Not every such coordinate necessarily lies outside storage.
 **REDUX DEVIATION: QUEST-0003:** Redux keeps Badge/Amulet independent for concurrent
 artifact use; Palace guards use Badge state. Crown competes with Protection,
 Quickness, Confusion, Negate Magic, and Time Stop; recast refreshes, removal/expiry
-never resumes a replaced effect. Independent native artifact fields remain; the
+never resumes a replaced effect. The original replaces silently; Redux reports
+**Crown removed!** when a spell displaces the Crown and **<Spell> ended!** when
+donning the Crown ends a spell. Independent native artifact fields remain; the
 Amulet's own effect is QUEST-0004. Redux suppresses unsafe surface
 Sceptre fallback and reports no effect; dungeon/combat removal stays context-owned.
 Shard consumption is SHADOW-0005; Carpet, plans, instruments, Watch use their owning

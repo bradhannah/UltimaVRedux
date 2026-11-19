@@ -15,7 +15,7 @@ const (
 	audioSettingsPreferredHeightScale    = 1.30
 	audioSettingsCenterDivisor           = 2
 	audioSettingsSliderCount             = 3
-	audioSettingsGameplayCount           = 16
+	audioSettingsGameplayCount           = 19
 	audioSettingsCardSectionGapCount     = 3
 	audioSettingsPaddingUnits            = 2
 	audioSettingsSectionGapUnits         = 2

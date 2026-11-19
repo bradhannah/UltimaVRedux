@@ -48,6 +48,7 @@ type MockSystemCallbacks struct {
 	CombatEvents            []CombatEvent      // Track durable combat event records
 	CombatConclusions       []CombatConclusion // Track completed encounter handoffs
 	TransientIconCalls      []TransientIconKind
+	ExperienceAwards        []DeedExperienceAward
 	DungeonInjuryCalls      []DungeonInjuryKind
 	VisualCallCount         int
 
@@ -433,6 +434,9 @@ func (m *MockSystemCallbacks) ToSystemCallbacks() *SystemCallbacks {
 			m.t.Logf("ShowTransientIcon: kind=%d", kind)
 			m.TransientIconCalls = append(m.TransientIconCalls, kind)
 		},
+		ShowExperienceAward: func(award DeedExperienceAward) {
+			m.ExperienceAwards = append(m.ExperienceAwards, award)
+		},
 		ShowSignDialog: func(sign *references.SignRecord) {
 			m.SignDialogShown = true
 			m.SignDialogSign = sign
@@ -789,6 +793,7 @@ func (m *MockSystemCallbacks) Reset() {
 	m.CombatEvents = m.CombatEvents[:0]
 	m.CombatConclusions = m.CombatConclusions[:0]
 	m.TransientIconCalls = m.TransientIconCalls[:0]
+	m.ExperienceAwards = m.ExperienceAwards[:0]
 	m.DungeonInjuryCalls = m.DungeonInjuryCalls[:0]
 	m.InputBlocked = false
 	m.BlockInputCalls = 0

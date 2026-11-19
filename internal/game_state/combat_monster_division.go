@@ -32,7 +32,7 @@ func (g *GameState) tryDivideCombatMonster(monster *CombatMonster, monsterIdx in
 		}
 
 		child := NewCombatMonster(monster.MonsterType(), monster.EnemyRef(), position, g.AsRandomProvider())
-		if !g.CombatScene.hasFreeOriginalObjectSlot() {
+		if !g.CombatScene.hasActiveObjectSlot() {
 			continue
 		}
 		child.SetCurrentHP(monster.CurrentHP())

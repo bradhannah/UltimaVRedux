@@ -42,6 +42,7 @@ func TestV26NotesPromoteRoundTripAndReject(t *testing.T) {
 	_, err = Decode(missing)
 	require.Error(t, err, "current saves must carry a notes member")
 	require.Error(t, schema.Validate(document))
+	deleteExperienceRecords(body)
 	for _, version := range []int{24, 25} {
 		body["version"] = version
 		if version == 24 {

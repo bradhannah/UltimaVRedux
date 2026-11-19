@@ -64,11 +64,11 @@ func (combatState *CombatState) AddField(field CombatField) bool {
 	if len(combatState.fields) >= maxCombatFields {
 		return false
 	}
-	slot, found := combatState.firstFreeOriginalObjectSlot(0, 1)
+	slot, found := combatState.claimActiveObjectSlot()
 	if !found {
 		return false
 	}
-	field.originalObjectSlot = encodeOriginalObjectSlot(slot)
+	field.originalObjectSlot = slot
 	insertAt := len(combatState.fields)
 	for index, existing := range combatState.fields {
 		if existing.originalObjectSlot > field.originalObjectSlot {

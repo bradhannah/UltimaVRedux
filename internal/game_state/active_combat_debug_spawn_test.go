@@ -83,7 +83,8 @@ func TestSpawnDebugCombatMonstersAfterLifecycleTransitions(t *testing.T) {
 }
 
 func TestSpawnDebugCombatMonstersPreflightsSharedCapacityBeforeRNGOrIDs(t *testing.T) {
-	for _, occupant := range []string{"field", "loot", "PC clone"} {
+	// Loot and corpses no longer count: see the yielded-slot tests below.
+	for _, occupant := range []string{"field", "PC clone"} {
 		for _, freeSlots := range []int{0, 1} {
 			t.Run(occupant+"/free="+strconv.Itoa(freeSlots), func(t *testing.T) {
 				state := newDebugReinforcementLifecycleState(t)
@@ -93,8 +94,6 @@ func TestSpawnDebugCombatMonstersPreflightsSharedCapacityBeforeRNGOrIDs(t *testi
 					switch occupant {
 					case "field":
 						require.True(t, combat.AddField(NewCombatField(CombatFieldFire, position)))
-					case "loot":
-						require.True(t, combat.addLootObject(NewCombatLooseItem(position, references.Food, 1, indexes.ItemFood)))
 					case "PC clone":
 						clone := combat.addPCCloneFromSource(CombatTurnIdentity{IsPartyMember: true}, 0,
 							position, NewCombatPCProvider(state.PartyState.GetAvatar()))
@@ -118,22 +117,51 @@ func TestSpawnDebugCombatMonstersPreflightsSharedCapacityBeforeRNGOrIDs(t *testi
 	}
 }
 
-func TestSpawnDebugCombatMonstersRetainsDeadSourceSlotsAfterCorpseRemoval(t *testing.T) {
+// REDUX DEVIATION: COMBAT-0001. A fight full of the dead has room again: each
+// new monster takes the lowest queue slot held only for a dead monster's remains,
+// and the remains stay on the ground.
+func TestSpawnDebugCombatMonstersReusesSlotsHeldForRemains(t *testing.T) {
 	state := newDebugReinforcementLifecycleState(t)
 	combat := state.CombatScene
 	fillDebugReinforcementMonsterSlots(state)
 	for index := range combat.MonsterManager.Count() {
 		defeatDebugReinforcementMonster(t, state, index)
 	}
-	for combat.ObjectCount() > 0 {
-		_, removed := combat.takeObjectAt(combat.objects[0].Position(), func(CombatObject) bool { return true })
-		require.True(t, removed)
-	}
+	remains := combat.ObjectCount()
+	require.Equal(t, sourceCombatQueueSlots-sourceMonsterSlotStart, remains)
 	require.Zero(t, combat.MonsterManager.CountActive())
-	require.True(t, combat.hasFreeOriginalObjectSlot())
-	require.False(t, combat.TurnQueue.hasFreeSourceSlot(sourceMonsterSlotStart))
+	for slot := sourceMonsterSlotStart; slot < sourceCombatQueueSlots; slot++ {
+		require.NotNil(t, combat.TurnQueue.getRetainedEntryAtSourceSlot(slot), "every monster slot is held for remains")
+	}
 
-	assertDebugReinforcementRejectedWithoutMutation(t, state, debugReinforcementRequest(state, 1), ErrDebugCombatSpawn)
+	result, err := state.SpawnDebugCombatMonsters(debugReinforcementRequest(state, 2))
+
+	require.NoError(t, err)
+	require.Len(t, result.Spawned, 2)
+	for offset, spawned := range result.Spawned {
+		entry := combat.TurnQueue.GetEntry(spawned.ManagerIndex, false)
+		assert.Equal(t, sourceMonsterSlotStart+offset, entry.sourceSlot, "the lowest held slots are reused first")
+		assert.NotZero(t, entry.originalObjectSlot)
+	}
+	assert.Equal(t, remains, combat.ObjectCount(), "no corpse or chest is removed to make room")
+	assert.Equal(t, 2, combat.MonsterManager.CountActive())
+}
+
+func TestSpawnDebugCombatMonstersIgnoresLootHoldingObjectSlots(t *testing.T) {
+	state := newDebugReinforcementLifecycleState(t)
+	combat := state.CombatScene
+	position := references.Position{X: 9, Y: 9}
+	for combat.originalObjectSlotCount() < sourceCombatQueueSlots {
+		require.True(t, combat.addLootObject(NewCombatLooseItem(position, references.Food, 1, indexes.ItemFood)))
+	}
+	loot := combat.ObjectCount()
+
+	result, err := state.SpawnDebugCombatMonsters(debugReinforcementRequest(state, 1))
+
+	require.NoError(t, err)
+	require.Len(t, result.Spawned, 1)
+	assert.Equal(t, loot, combat.ObjectCount())
+	assert.Equal(t, sourceCombatQueueSlots, combat.originalObjectSlotCount(), "the table itself stays full")
 }
 
 func TestSpawnDebugCombatMonstersReusesReleasedSlotsPastHistoricalLimit(t *testing.T) {

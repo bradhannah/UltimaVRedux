@@ -187,7 +187,7 @@ func (q *CombatTurnQueue) AddCombatantAtSlot(combatant CombatantProvider, entity
 	if combatant.IsPC() {
 		start = 0
 	}
-	sourceSlot, found := q.firstFreeSourceSlot(start)
+	sourceSlot, found := q.claimSourceSlot(start)
 	if !found {
 		panic("CombatTurnQueue.AddCombatantAtSlot: source combat queue is full")
 	}
@@ -205,7 +205,7 @@ func (q *CombatTurnQueue) AddClonedCombatant(
 	if sourceEntry == nil {
 		panic("CombatTurnQueue.AddClonedCombatant: missing source entry")
 	}
-	sourceSlot, found := q.firstFreeSourceSlot(0)
+	sourceSlot, found := q.claimSourceSlot(0)
 	if !found {
 		panic("CombatTurnQueue.AddClonedCombatant: source combat queue is full")
 	}
@@ -275,22 +275,47 @@ func (q *CombatTurnQueue) addCombatant(
 		pcLabel, entityIndex, sourceSlot, dex, countdown)
 }
 
+// firstFreeSourceSlot returns the lowest queue slot a new combatant may take.
+//
+// REDUX DEVIATION: COMBAT-0001: the original keeps a dead monster's queue entry
+// as the object for its corpse or chest, so the slot stays taken and a full
+// fight stays full after a kill. Redux counts only the living: once no slot is
+// empty, the lowest slot held only for a dead monster's remains is offered. The
+// remains stay on the battlefield. Slot choice is unchanged while any slot is
+// empty, so ordinary fights keep the original creation order.
 func (q *CombatTurnQueue) firstFreeSourceSlot(start int) (int, bool) {
 	for sourceSlot := start; sourceSlot < sourceCombatQueueSlots; sourceSlot++ {
-		occupied := false
-		for _, entry := range q.entries {
-			if entry.sourceSlot == sourceSlot && !entry.sourceSlotReleased {
-				occupied = true
-
-				break
-			}
+		if q.getRetainedEntryAtSourceSlot(sourceSlot) == nil {
+			return sourceSlot, true
 		}
-		if !occupied {
+	}
+	for sourceSlot := start; sourceSlot < sourceCombatQueueSlots; sourceSlot++ {
+		if q.getRetainedEntryAtSourceSlot(sourceSlot).holdsSlotOnlyForRemains() {
 			return sourceSlot, true
 		}
 	}
 
 	return 0, false
+}
+
+// holdsSlotOnlyForRemains reports a dead monster whose queue slot is kept solely
+// because it left a corpse or chest behind.
+func (entry *TurnQueueEntry) holdsSlotOnlyForRemains() bool {
+	return entry.status == turnQueueDead && !entry.sourceSlotReleased && !entry.Combatant.IsPC()
+}
+
+// claimSourceSlot takes the slot firstFreeSourceSlot offers, releasing it from
+// a dead monster's remains when that is what made it available.
+func (q *CombatTurnQueue) claimSourceSlot(start int) (int, bool) {
+	sourceSlot, found := q.firstFreeSourceSlot(start)
+	if !found {
+		return 0, false
+	}
+	if held := q.getRetainedEntryAtSourceSlot(sourceSlot); held != nil {
+		held.sourceSlotReleased = true
+	}
+
+	return sourceSlot, true
 }
 
 func (q *CombatTurnQueue) hasFreeSourceSlot(start int) bool {

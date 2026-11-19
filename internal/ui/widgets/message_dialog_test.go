@@ -6,6 +6,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
 )
 
 func TestMessageDialogInputDismissalReservesSharedFooterForTinyCapacity(t *testing.T) {
@@ -158,4 +160,24 @@ func TestMessageDialogBuilder_CenteredAlignment(t *testing.T) {
 		dialog := NewMessageDialog("Test").WithContentTextAlignment(alignment).Build()
 		assert.Equal(t, alignment, dialog.config.ContentAlignment)
 	}
+}
+
+// Styled lines count toward auto-sizing, so adding them never pushes the
+// message's first line out of the dialog.
+func TestMessageDialogStyledLinesAreSizedIn(t *testing.T) {
+	setResponsiveDialogTestResolution(t, 1280, 720)
+	const message = "WELL DONE!\n\nThy Honesty hath been rewarded!\n\nIntelligence +1"
+	plain := NewMessageDialog(message).WithAutoSizeDefault().WithEffects(false).Build()
+	styled := NewMessageDialog(message).WithAutoSizeDefault().WithEffects(false).WithStyledLines(
+		StyledDialogLine{Text: "Experience +20 each", Color: ucolor.ExperienceGain},
+		StyledDialogLine{Text: "Jaana is ready for level 5.", Color: ucolor.ExperienceLevelReady},
+	).Build()
+
+	assert.Equal(t, plain.config.TextLines+2, styled.config.TextLines)
+	content := styled.output.GetOutputStr(false)
+	assert.Contains(t, content, "WELL DONE!")
+	assert.Contains(t, content, "Experience +20 each")
+	assert.Contains(t, content, "Jaana is ready for level 5.")
+	_, coloured := styled.output.FirstPanelLineWithColor(0, styled.output.GetPanelContentLineCount(), ucolor.ExperienceGain)
+	assert.True(t, coloured, "the experience line keeps its own colour")
 }

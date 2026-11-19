@@ -39,7 +39,8 @@ func TestShrineQuestCompletionShowsGuidanceOnlyAtAcknowledgement(t *testing.T) {
 	const workflow = "shrine_completion_guidance"
 	scene.gameState.EventQueueManager.Workflow(workflow).
 		Priority(event_queue.PriorityNormal).Sequential().BlockInput().
-		First(func() {}).ThenSequence(scene.thenShowShrineQuestCompletionEffects(message)).Start()
+		First(func() {}).ThenSequence(
+		scene.thenShowShrineQuestCompletionEffects(message, game_state.DeedExperienceAward{})).Start()
 	dialog := waitForTopModalWithin[*widgets.MessageDialog](t, scene, 1000, 200)
 	expected := widgets.NewMessageDialog(message).WithAutoSizeDefault().WithSeparatePromptArea().
 		WithContentTextAlignment(widgets.ContentAlignCenter).WithEffects(false).Build()

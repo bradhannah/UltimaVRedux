@@ -321,6 +321,10 @@ var (
 	CombatGrazeText            = EGAYellow
 	CombatReportLoot           = EGALightGreen
 	CombatReportWarning        = EGALightRed
+	// ExperienceGain marks experience earned, wherever it is shown.
+	ExperienceGain = EGALightMagenta
+	// ExperienceLevelReady marks a level earned but not yet granted.
+	ExperienceLevelReady = EGAYellow
 )
 
 // Debug Overlay Colors - ColorBuilder Variables

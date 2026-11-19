@@ -87,11 +87,15 @@ func TestCombatSummaryBottomAnchorContentHeightAndResize(t *testing.T) {
 							assert.Contains(t, dialog.output.GetOutputStr(false), "Scroll")
 						}
 						if index == 0 {
-							assert.NotContains(t, dialog.output.GetOutputStr(false), "inventory")
+							assert.Nil(t, dialog.summary.notice, "nothing collected needs no notice")
 							assert.Contains(t, dialog.rows[0].GetOutputStr(false), "No items collected")
 							assert.Nil(t, dialog.icons, "measuring text does not initialize raster icons")
 						} else {
-							assert.Contains(t, dialog.output.GetOutputStr(false), "Collected into party inventory")
+							require.NotNil(t, dialog.summary.notice)
+							assert.Contains(t, dialog.summary.notice.GetOutputStr(false), "Collected into party inventory")
+							assert.GreaterOrEqual(t, dialog.summary.footer.Dy(),
+								combatSummaryTextHeight(dialog.summary.notice)+dialog.summary.padding+
+									combatSummaryTextHeight(dialog.output), "the notice and the key hints keep a gap")
 						}
 					}
 				})
@@ -253,4 +257,51 @@ func TestCombatSummaryUsesStandardDialogFrameRatherThanContentPadding(t *testing
 				"text padding remains independent from the frame stroke")
 		})
 	}
+}
+
+// The experience section sits between the heading and the list: every member
+// in two columns, or one line when an even split paid everyone the same.
+func TestCombatSummaryExperienceSectionGridSharedAndAbsent(t *testing.T) {
+	setGuidanceTestResolution(t, 1280, 720)
+	viewport := image.Rect(16, 16, 720, 704)
+	setSummaryViewport(t, viewport)
+	members := []game_state.CombatExperienceShare{
+		{Name: "Berad", Amount: 25}, {Name: "Shamino", Amount: 11}, {Name: "Mariah", Amount: 0},
+		{Name: "Jaana", Amount: 3}, {Name: "Gwenno", Amount: 0},
+	}
+	build := func(experience game_state.CombatExperienceSummary) *CombatLootDialog {
+		dialog := NewCombatSummaryDialog(game_state.CombatConclusion{
+			Reason: game_state.CombatVictory, Collected: summaryItems(1), Experience: experience,
+		}, newWidgetTestKeyboard(0), &sprites.SpriteSheet{}, func() {})
+		dialog.prepareSummary(image.Rect(0, 0, 1280, 720), viewport)
+
+		return dialog
+	}
+
+	plain := build(game_state.CombatExperienceSummary{})
+	assert.Zero(t, plain.summary.experience.height, "a battle that earned nothing shows no experience")
+	assert.Nil(t, plain.summary.experience.heading)
+
+	grid := build(game_state.CombatExperienceSummary{
+		Members: members, Ready: []game_state.ExperienceLevelReady{{Name: "Jaana", Level: 5}},
+	})
+	section := grid.summary.experience
+	require.NotNil(t, section.heading)
+	assert.Contains(t, section.heading.GetOutputStr(false), "Experience", "the purple figures are named in words")
+	require.Len(t, section.names, len(members))
+	assert.Equal(t, 3, section.gridRows(), "five members fill three rows of two")
+	assert.Contains(t, section.amounts[0].GetOutputStr(false), "+25")
+	assert.Contains(t, section.amounts[2].GetOutputStr(false), "-", "a member who earned nothing is still listed")
+	require.Len(t, section.ready, 1)
+	assert.Contains(t, section.ready[0].GetOutputStr(false), "Jaana is ready for level 5.")
+	assert.Nil(t, section.each)
+	assert.Equal(t, plain.bounds.Dy()+section.height, grid.bounds.Dy(), "the section adds exactly its own height")
+	assert.Equal(t, plain.summary.body.Dy(), grid.summary.body.Dy(), "and the collected list keeps its room")
+	assert.True(t, grid.bounds.In(viewport))
+
+	shared := build(game_state.CombatExperienceSummary{Members: members[:2], Shared: true, Each: 4})
+	require.NotNil(t, shared.summary.experience.each)
+	assert.Contains(t, shared.summary.experience.each.GetOutputStr(false), "+4 each")
+	assert.Empty(t, shared.summary.experience.names, "an even split needs one line, not a grid")
+	assert.Less(t, shared.summary.experience.height, section.height)
 }

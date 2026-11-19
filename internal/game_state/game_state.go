@@ -246,13 +246,19 @@ type GameState struct {
 	questJournal *questJournal
 	// CodexRevelationComplete records acknowledgment of the final revelation page.
 	CodexRevelationComplete bool
-	dungeonJournal          [8]journal.DungeonObservation
-	atlasLandmarks          []journal.AtlasLandmarkObservation
-	atlasNotes              journal.AtlasNotesState
-	atlasFleet              journal.AtlasFleetState
-	atlasNoteSession        *atlasNoteSession
-	playerNotes             journal.NotesState
-	moonstoneJournal        [8]journal.MoonstoneObservation
+	// deedExperiencePaid records each quest deed already paid; ref:PROGRESS-0004.
+	deedExperiencePaid map[string]bool
+	// sharedExperienceRemainder carries points an even split could not divide.
+	sharedExperienceRemainder int
+	// lastDungeonOpenExperience is the award from the latest entrance toggle.
+	lastDungeonOpenExperience DeedExperienceAward
+	dungeonJournal            [8]journal.DungeonObservation
+	atlasLandmarks            []journal.AtlasLandmarkObservation
+	atlasNotes                journal.AtlasNotesState
+	atlasFleet                journal.AtlasFleetState
+	atlasNoteSession          *atlasNoteSession
+	playerNotes               journal.NotesState
+	moonstoneJournal          [8]journal.MoonstoneObservation
 
 	// Criminal status tracking - guards arrest criminals instead of extortion
 	// Does NOT persist across map transitions (guards forget when you leave)

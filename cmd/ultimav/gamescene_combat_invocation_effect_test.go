@@ -14,6 +14,11 @@ import (
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
 )
 
+func TestCombatSummonFailureMessageSeparatesFullFightFromBadLuck(t *testing.T) {
+	assert.Equal(t, "No room to summon!", combatSummonFailureMessage(game_state.CombatSummonCapacityFull))
+	assert.Equal(t, "Failed! No open ground.", combatSummonFailureMessage(game_state.CombatSummonNoLegalPosition))
+}
+
 func TestCombatSummonPhasesUseContractingCasterAndBindingColors(t *testing.T) {
 	assert.Less(t, combatSummonCasterInset(0), combatSummonCasterInset(1),
 		"caster corners must contract inward")

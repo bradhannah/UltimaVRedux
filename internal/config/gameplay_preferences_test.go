@@ -25,8 +25,14 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 		assert.Equal(t, CombatKeyRepeatMeasured, config.GetCombatKeyRepeat(), "Combat Key Repeat defaults to Measured")
 		assert.Equal(t, CombatPanelsOrderAndReport, config.GetCombatPanels(), "Combat Panels defaults to both panels")
 		assert.True(t, config.GetHelpHintSeen(), "a fixture without settings is never offered the Help hint")
+		assert.Equal(t, DeedExperienceNone, config.GetDeedExperience(), "a fixture without settings pays as the original does")
+		assert.False(t, config.GetShareKillExperience())
+		assert.True(t, config.GetShowBattleExperience())
 	}
-	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    Panels: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n")
+	assert.Equal(t, DeedExperienceLean, configuration.GetDeedExperience(), "Deed Experience defaults to Lean")
+	assert.False(t, configuration.GetShareKillExperience(), "Share Kill Experience defaults to the original rule")
+	assert.True(t, configuration.GetShowBattleExperience())
+	configuration, file := configurationFixture(t, "Gameplay:\n  Combat:\n    SpeedFactor: 2\n    KeyRepeat: 20\n    Panels: 2\n    ShowHealthBars: false\n  Saves:\n    ConfirmQuickSave: false\n  Presentation:\n    MaxVisibleActionPopups: 0\n    SimpleNotesMode: true\n    BattleExperience: false\n  Progression:\n    DeedExperience: 2\n    ShareKillExperience: true\n")
 	require.NoError(t, configuration.UpdateSaveFile())
 	loaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
 	require.NoError(t, err)
@@ -37,6 +43,13 @@ func TestQoLDefaultsDistinguishAbsentAndExplicitValues(t *testing.T) {
 	assert.True(t, loaded.GetSimpleNotesMode())
 	assert.Equal(t, 20, loaded.GetCombatKeyRepeat())
 	assert.Equal(t, CombatPanelsOff, loaded.GetCombatPanels())
+	assert.Equal(t, DeedExperienceFuller, loaded.GetDeedExperience())
+	assert.True(t, loaded.GetShareKillExperience())
+	assert.False(t, loaded.GetShowBattleExperience())
+	assert.Equal(t, []string{"None", "Lean", "Fuller"}, []string{
+		FormatDeedExperience(DeedExperienceNone), FormatDeedExperience(DeedExperienceLean),
+		FormatDeedExperience(DeedExperienceFuller),
+	})
 	assert.False(t, loaded.GetHelpHintSeen(), "the Help hint is offered until Help is opened")
 	require.NoError(t, loaded.SetHelpHintSeen())
 	reloaded, err := LoadUltimaVConfiguration(file, filepath.Dir(file))
@@ -79,6 +92,8 @@ func TestQoLStrictSourceValidation(t *testing.T) {
 		{gameplayMaxActionPopupsKey, -1}, {gameplayMaxActionPopupsKey, 4},
 		{gameplayCombatKeyRepeatKey, 5}, {gameplayCombatKeyRepeatKey, 31}, {gameplayCombatKeyRepeatKey, 6.0},
 		{gameplayCombatPanelsKey, 3}, {gameplayCombatPanelsKey, -1}, {gameplayCombatPanelsKey, 1.0},
+		{gameplayDeedExperienceKey, 3}, {gameplayDeedExperienceKey, -1}, {gameplayDeedExperienceKey, 1.0},
+		{gameplayShareKillExperienceKey, 1}, {gameplayShowBattleExperienceKey, "true"},
 		{gameplayConfirmQuickSaveKey, "false"}, {gameplayShowCombatHPBarsKey, 0},
 	} {
 		t.Run(fmt.Sprintf("%s=%v", test.key, test.value), func(t *testing.T) {

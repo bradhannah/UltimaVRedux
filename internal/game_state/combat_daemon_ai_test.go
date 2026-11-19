@@ -506,9 +506,7 @@ func TestDaemonGateCanExceedInitialSixteenMonsterGroup(t *testing.T) {
 func TestDaemonGateRequiresFreeOriginalObjectSlot(t *testing.T) {
 	gs, mock, daemon, daemonIndex := setupHostileDaemonTest(t)
 	position := firstLegalDaemonGatePosition(t, gs)
-	for gs.CombatScene.hasFreeOriginalObjectSlot() {
-		gs.CombatScene.AddObject(NewCombatLooseItem(position, references.Food, 1, indexes.ItemFood))
-	}
+	fillCombatObjectTableWithFields(t, gs.CombatScene, references.Position{X: 0, Y: 0})
 	mock.Reset()
 
 	assert.False(t, gs.executeHostileMonsterSpecialMoveWithRNG(daemon, daemonIndex,

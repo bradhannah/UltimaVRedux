@@ -23,6 +23,7 @@ var (
 	errJournalChangedCallbackRequired = errors.New("UICallbacks.JournalChanged is required")
 	errAtlasUpdatedCallbackRequired   = errors.New("UICallbacks.AtlasUpdated is required")
 	errTransientIconCallbackRequired  = errors.New("UICallbacks.ShowTransientIcon is required")
+	errExperienceAwardRequired        = errors.New("UICallbacks.ShowExperienceAward is required")
 	errSignDialogCallbackRequired     = errors.New("UICallbacks.ShowSignDialog is required")
 	errSpellExpiredCallbackRequired   = errors.New("UICallbacks.ShowSpellExpiredPopup is required")
 )
@@ -863,6 +864,9 @@ type UICallbacks struct {
 	// ShowTransientIcon displays bounded semantic feedback without exposing presentation details to gameplay.
 	ShowTransientIcon func(TransientIconKind)
 
+	// ShowExperienceAward announces experience paid to the party for quest deeds.
+	ShowExperienceAward func(DeedExperienceAward)
+
 	// ShowSignDialog displays a sign using runic/normal bitmap fonts.
 	// sign: the SignRecord to display (nil shows default "LIVE BY THE EIGHT LAWS" message)
 	// Called from Look command when looking at a sign tile.
@@ -1013,6 +1017,9 @@ func NewSystemCallbacks(
 	}
 	if uiCallbacks.ShowTransientIcon == nil {
 		return nil, errTransientIconCallbackRequired
+	}
+	if uiCallbacks.ShowExperienceAward == nil {
+		return nil, errExperienceAwardRequired
 	}
 	if uiCallbacks.ShowSignDialog == nil {
 		return nil, errSignDialogCallbackRequired

@@ -47,7 +47,7 @@ func (g *GameState) resolveGazerDeath(gazer *CombatMonster, monsterIdx int) {
 		gazer.Position(),
 		g.AsRandomProvider(),
 	)
-	if !g.CombatScene.hasFreeOriginalObjectSlot() {
+	if !g.CombatScene.hasActiveObjectSlot() {
 		return
 	}
 	g.CombatScene.AddMonsterToQueue(insect)

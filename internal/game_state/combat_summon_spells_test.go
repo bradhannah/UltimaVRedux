@@ -204,6 +204,43 @@ func TestCastCombatKalXenDoesNotMutateAtFullCapacity(t *testing.T) {
 	assert.Equal(t, 3, rng.index, "Placement is attempted before combatant-capacity validation (ref:SPELL-0005)")
 }
 
+// REDUX DEVIATION: COMBAT-0001. A kill makes room: the summon takes the queue and
+// object slots the dead monster's remains were holding, and the remains stay.
+func TestCastCombatKalXenTakesTheSlotsOfADeadMonstersRemains(t *testing.T) {
+	gs, _ := newCombatSummonTestState(t)
+	ref, err := gs.enemyReferenceForCombat(references.MonsterOrc)
+	require.NoError(t, err)
+	for index := range sourceCombatQueueSlots - sourceMonsterSlotStart {
+		gs.CombatScene.AddMonsterToQueue(NewCombatMonster(
+			references.MonsterOrc,
+			ref,
+			references.Position{X: references.Coordinate(index % 11), Y: references.Coordinate(index / 11)},
+			newFixedRNG(1),
+		))
+	}
+	fillCombatObjectTableWithFields(t, gs.CombatScene, references.Position{X: 10, Y: 10})
+	require.Equal(t, CombatSummonCapacityFull, gs.castCombatKalXen(newStrictSummonRNG(t, 15, 5, 5)).Outcome)
+
+	victim := gs.CombatScene.MonsterManager.GetMonster(0)
+	require.True(t, victim.TakeDamage(victim.CurrentHP()))
+	gs.finalizeCombatMonsterDeath(victim, 0, gs.PartyState.GetAvatar(), 0)
+	require.True(t, gs.CombatScene.HasObjectAt(victim.Position()))
+	deadEntry := gs.CombatScene.TurnQueue.GetEntry(0, false)
+	require.False(t, deadEntry.sourceSlotReleased, "remains hold the slot until something living needs it")
+	require.Equal(t, sourceCombatQueueSlots, gs.CombatScene.originalObjectSlotCount())
+
+	result := gs.castCombatKalXen(newStrictSummonRNG(t, 15, 5, 5, 0))
+
+	require.Equal(t, CombatSummonSucceeded, result.Outcome)
+	summoned := gs.CombatScene.TurnQueue.GetEntry(result.Created[0].Index, false)
+	assert.Equal(t, deadEntry.sourceSlot, summoned.sourceSlot)
+	assert.True(t, deadEntry.sourceSlotReleased)
+	assert.NotZero(t, summoned.originalObjectSlot)
+	assert.True(t, gs.CombatScene.HasObjectAt(victim.Position()), "the corpse or chest stays on the ground")
+	assert.Equal(t, CombatSummonCapacityFull, gs.castCombatKalXen(newStrictSummonRNG(t, 15, 6, 6)).Outcome,
+		"the fight is full of the living again")
+}
+
 func TestCombatSummonCapacityFailurePreservesCreateEntryRNGOrder(t *testing.T) {
 	t.Run("queue full skips dex roll", func(t *testing.T) {
 		gs, _ := newCombatSummonTestState(t)
@@ -229,11 +266,7 @@ func TestCombatSummonCapacityFailurePreservesCreateEntryRNGOrder(t *testing.T) {
 
 	t.Run("object full consumes dex roll", func(t *testing.T) {
 		gs, _ := newCombatSummonTestState(t)
-		for gs.CombatScene.hasFreeOriginalObjectSlot() {
-			gs.CombatScene.AddObject(NewCombatLooseItem(
-				references.Position{X: 1, Y: 1}, references.Food, 1, indexes.ItemFood,
-			))
-		}
+		fillCombatObjectTableWithFields(t, gs.CombatScene, references.Position{X: 1, Y: 1})
 		rng := newStrictSummonRNG(t, 5, 5, 0)
 
 		result := gs.summonCombatMonsters(

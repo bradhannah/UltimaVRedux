@@ -70,6 +70,16 @@
       "effect": "A folk tale says an Ankh draws Lord British to your camp. There's no evidence the original did this, but it's here if you enjoy the idea. On: each living party member wearing an Ankh adds 5% to the 25% visit chance. Off: the original 25%."
     },
     {
+      "label": "Deed Experience",
+      "tag": "original",
+      "effect": "Pay the whole party experience for quest deeds, once each. The original pays for kills only. None: no deed experience. Lean: a steady reward along the quest. Fuller: double Lean. Deeds already done are paid when this is turned on. Default: Lean."
+    },
+    {
+      "label": "Share Kill Experience",
+      "tag": "helper",
+      "effect": "The original gives a kill's experience to whoever lands the killing blow. On: every living party member gets an equal share. Off: the original rule. Default: Off."
+    },
+    {
       "label": "Combat Speed",
       "tag": "look",
       "effect": "Change how quickly combat actions and animations play. 1x is normal speed; higher values make combat faster."
@@ -98,6 +108,11 @@
       "label": "Battle Frame",
       "tag": "look",
       "effect": "Frame the battlefield: red while the battle is undecided, blue once it is won. Off draws no frame. Default: On."
+    },
+    {
+      "label": "Battle Experience",
+      "tag": "look",
+      "effect": "List the experience each party member earned in the Battle complete summary. Off: the summary lists only what was collected. Default: On."
     },
     {
       "label": "Maximum Action Popups",

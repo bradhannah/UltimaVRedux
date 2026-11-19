@@ -48,12 +48,15 @@ const (
 	gameplayConcealedTurnSlotsIndex
 	gameplayFlexibleSextantUseIndex
 	gameplayAnkhWandererBonusIndex
+	gameplayDeedExperienceIndex
+	gameplayShareKillExperienceIndex
 	gameplayCombatSpeedIndex
 	gameplayCombatKeyRepeatIndex
 	gameplayCombatPanelsIndex
 	gameplayConfirmQuickSaveIndex
 	gameplayShowCombatHPBarsIndex
 	gameplayBattleFrameIndex
+	gameplayBattleExperienceIndex
 	gameplayMaxActionPopupsIndex
 	gameplaySimpleNotesModeIndex
 )
@@ -103,6 +106,21 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 			label: "Ankh Visit Bonus",
 			detail: "Folk tale: an Ankh draws Lord British to camp. No evidence the original did this. " +
 				"On: each living Ankh wearer adds 5% to the 25% visit chance. Off: the original 25%.",
+		},
+		{
+			label:     "Deed Experience",
+			helpLines: deedExperienceHelpLines(),
+			numeric: &gameplayNumericSetting{
+				spec:   config.DeedExperienceSpec(),
+				get:    func(s config.GameplayConfiguration) float64 { return float64(s.DeedExperience) },
+				set:    func(s *config.GameplayConfiguration, value float64) { s.DeedExperience = int(value) },
+				format: config.FormatDeedExperience,
+			},
+		},
+		{
+			label: "Share Kill Experience",
+			detail: "Original: a kill's experience goes to whoever lands the killing blow. " +
+				"On: every living party member gets an equal share. Off: the original rule.",
 		},
 		{
 			label:     "Combat Speed",
@@ -158,6 +176,15 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 				"Frame the battlefield.", "",
 				"Red while the battle is undecided.", "Blue once it is won.", "",
 				"Off: no frame.", "",
+				gameplayDefaultOnLine,
+			},
+		},
+		{
+			label: "Battle Experience",
+			helpLines: []string{
+				"List experience earned after each battle.", "",
+				"On: Battle complete shows each member's share.",
+				"Off: it lists only what was collected.", "",
 				gameplayDefaultOnLine,
 			},
 		},
@@ -928,69 +955,49 @@ func (d *ConfigurationDialog) gameplayCheckmark(index int) string {
 	return " "
 }
 
+// gameplayCheckbox returns the staged value behind a checkbox row, or nil for a
+// stepped row. One table serves both reading and toggling.
+func (d *ConfigurationDialog) gameplayCheckbox(index int) *bool {
+	staged := &d.stagedGameplay
+
+	return map[int]*bool{
+		gameplayRepeatedDivisionIndex:      &staged.AllowRepeatedMonsterDivision,
+		gameplayHiddenDiscoveriesIndex:     &staged.PersistHiddenDungeonDiscoveries,
+		gameplayUnlitDungeonsIndex:         &staged.ShowSubduedUnlitDungeons,
+		gameplaySmoothSurfaceMovementIndex: &staged.SmoothSurfaceMovement,
+		gameplayBatchMerchantTheftIndex:    &staged.BatchMerchantTheft,
+		gameplayConcealedTurnSlotsIndex:    &staged.ShowConcealedTurnOrderSlots,
+		gameplayFlexibleSextantUseIndex:    &staged.FlexibleSextantUse,
+		gameplayAnkhWandererBonusIndex:     &staged.AnkhWandererBonus,
+		gameplayShareKillExperienceIndex:   &staged.ShareKillExperience,
+		gameplayConfirmQuickSaveIndex:      &staged.ConfirmQuickSave,
+		gameplayShowCombatHPBarsIndex:      &staged.ShowCombatHPBars,
+		gameplayBattleFrameIndex:           &staged.ShowCombatBattleFrame,
+		gameplayBattleExperienceIndex:      &staged.ShowBattleExperience,
+		gameplaySimpleNotesModeIndex:       &staged.SimpleNotesMode,
+	}[index]
+}
+
 func (d *ConfigurationDialog) gameplaySettingValue(index int) bool {
-	switch index {
-	case gameplayRepeatedDivisionIndex:
-		return d.stagedGameplay.AllowRepeatedMonsterDivision
-	case gameplayHiddenDiscoveriesIndex:
-		return d.stagedGameplay.PersistHiddenDungeonDiscoveries
-	case gameplayUnlitDungeonsIndex:
-		return d.stagedGameplay.ShowSubduedUnlitDungeons
-	case gameplaySmoothSurfaceMovementIndex:
-		return d.stagedGameplay.SmoothSurfaceMovement
-	case gameplayBatchMerchantTheftIndex:
-		return d.stagedGameplay.BatchMerchantTheft
-	case gameplayConcealedTurnSlotsIndex:
-		return d.stagedGameplay.ShowConcealedTurnOrderSlots
-	case gameplayFlexibleSextantUseIndex:
-		return d.stagedGameplay.FlexibleSextantUse
-	case gameplayAnkhWandererBonusIndex:
-		return d.stagedGameplay.AnkhWandererBonus
-	case gameplayConfirmQuickSaveIndex:
-		return d.stagedGameplay.ConfirmQuickSave
-	case gameplayShowCombatHPBarsIndex:
-		return d.stagedGameplay.ShowCombatHPBars
-	case gameplayBattleFrameIndex:
-		return d.stagedGameplay.ShowCombatBattleFrame
-	case gameplaySimpleNotesModeIndex:
-		return d.stagedGameplay.SimpleNotesMode
-	default:
+	checkbox := d.gameplayCheckbox(index)
+	if checkbox == nil {
 		panic("unsupported Gameplay setting index")
 	}
+
+	return *checkbox
 }
 
 func (d *ConfigurationDialog) toggleFocusedGameplaySetting() {
-	switch d.focusedGameplayIndex {
-	case gameplayRepeatedDivisionIndex:
-		d.stagedGameplay.AllowRepeatedMonsterDivision = !d.stagedGameplay.AllowRepeatedMonsterDivision
-	case gameplayHiddenDiscoveriesIndex:
-		d.stagedGameplay.PersistHiddenDungeonDiscoveries = !d.stagedGameplay.PersistHiddenDungeonDiscoveries
-	case gameplayUnlitDungeonsIndex:
-		d.stagedGameplay.ShowSubduedUnlitDungeons = !d.stagedGameplay.ShowSubduedUnlitDungeons
-	case gameplaySmoothSurfaceMovementIndex:
-		d.stagedGameplay.SmoothSurfaceMovement = !d.stagedGameplay.SmoothSurfaceMovement
-	case gameplayBatchMerchantTheftIndex:
-		d.stagedGameplay.BatchMerchantTheft = !d.stagedGameplay.BatchMerchantTheft
-	case gameplayConcealedTurnSlotsIndex:
-		d.stagedGameplay.ShowConcealedTurnOrderSlots = !d.stagedGameplay.ShowConcealedTurnOrderSlots
-	case gameplayFlexibleSextantUseIndex:
-		d.stagedGameplay.FlexibleSextantUse = !d.stagedGameplay.FlexibleSextantUse
-	case gameplayAnkhWandererBonusIndex:
-		d.stagedGameplay.AnkhWandererBonus = !d.stagedGameplay.AnkhWandererBonus
-	case gameplayConfirmQuickSaveIndex:
-		d.stagedGameplay.ConfirmQuickSave = !d.stagedGameplay.ConfirmQuickSave
-	case gameplayShowCombatHPBarsIndex:
-		d.stagedGameplay.ShowCombatHPBars = !d.stagedGameplay.ShowCombatHPBars
-	case gameplayBattleFrameIndex:
-		d.stagedGameplay.ShowCombatBattleFrame = !d.stagedGameplay.ShowCombatBattleFrame
-	case gameplaySimpleNotesModeIndex:
-		d.stagedGameplay.SimpleNotesMode = !d.stagedGameplay.SimpleNotesMode
-	case gameplayCombatSpeedIndex, gameplayCombatKeyRepeatIndex, gameplayCombatPanelsIndex,
-		gameplayMaxActionPopupsIndex:
+	checkbox := d.gameplayCheckbox(d.focusedGameplayIndex)
+	if checkbox == nil {
+		if d.focusedGameplayIndex < 0 || d.focusedGameplayIndex >= audioSettingsGameplayCount ||
+			gameplaySettings()[d.focusedGameplayIndex].numeric == nil {
+			panic("unsupported Gameplay setting index")
+		}
+
 		return
-	default:
-		panic("unsupported Gameplay setting index")
 	}
+	*checkbox = !*checkbox
 	d.saveError = ""
 }
 

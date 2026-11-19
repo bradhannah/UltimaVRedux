@@ -231,6 +231,8 @@ type CombatState struct {
 	lastObjectID CombatObjectID
 	// Collection accounting is independent of the presentation's bounded history.
 	collectedItems []CombatCollectedItem
+	// experienceEarned tallies kill experience by active party index.
+	experienceEarned [party_state.MaxActiveParty]int
 	// fields contains encounter-local magical fields in original creation order.
 	fields []CombatField
 
@@ -601,7 +603,7 @@ func (combatState *CombatState) addPCCloneFromSource(
 	position references.Position,
 	provider *CombatPCProvider,
 ) CombatTurnIdentity {
-	if !combatState.TurnQueue.hasFreeSourceSlot(0) || !combatState.hasFreeOriginalObjectSlot() {
+	if !combatState.TurnQueue.hasFreeSourceSlot(0) || !combatState.hasActiveObjectSlot() {
 		return CombatTurnIdentity{}
 	}
 	identity := CombatTurnIdentity{IsPartyMember: true, EntityIndex: partyIndex, Slot: combatState.nextPCCloneSlot}
@@ -839,7 +841,7 @@ func (combatState *CombatState) AddMonsterToQueue(monster *CombatMonster) int {
 		panic("combat monster is already registered")
 	}
 	if combatState.TurnQueue != nil && (!combatState.TurnQueue.hasFreeSourceSlot(sourceMonsterSlotStart) ||
-		!combatState.hasFreeOriginalObjectSlot()) {
+		!combatState.hasActiveObjectSlot()) {
 		panic("cannot register combat monster without queue and object capacity")
 	}
 	monster.combatantID = combatState.nextCombatantID
@@ -862,7 +864,7 @@ func (combatState *CombatState) addClonedMonsterToQueue(
 	if monster == nil || monster.combatantID != 0 {
 		panic("cannot register invalid combat monster clone")
 	}
-	if !combatState.TurnQueue.hasFreeSourceSlot(0) || !combatState.hasFreeOriginalObjectSlot() {
+	if !combatState.TurnQueue.hasFreeSourceSlot(0) || !combatState.hasActiveObjectSlot() {
 		panic("cannot register combat monster clone without queue and object capacity")
 	}
 	monster.combatantID = combatState.nextCombatantID
@@ -1050,7 +1052,8 @@ func (g *GameState) EndCombat(reason CombatEndReason) {
 	exitRoute := g.CombatScene.ExitRoute
 	conclusion := CombatConclusion{
 		Reason: reason, Special: CombatSpecialConclusionNone,
-		Collected: append([]CombatCollectedItem(nil), g.CombatScene.collectedItems...),
+		Collected:  append([]CombatCollectedItem(nil), g.CombatScene.collectedItems...),
+		Experience: g.combatExperienceSummary(),
 	}
 	if reason == CombatVictory && exitRoute == CombatExitDoomMirror && g.CombatScene.isVerifiedDoomFinalRoom() {
 		conclusion.Special = CombatSpecialConclusionDoomMirror

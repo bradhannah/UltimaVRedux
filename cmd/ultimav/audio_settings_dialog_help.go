@@ -56,6 +56,18 @@ func combatKeyRepeatHelpLines() []string {
 	}
 }
 
+func deedExperienceHelpLines() []string {
+	return []string{
+		"Pay the whole party experience for quest deeds.", "",
+		"The original pays for kills only.", "",
+		"None: no deed experience.",
+		"Lean: a steady reward along the quest.",
+		"Fuller: double Lean.", "",
+		"Each deed pays once. Deeds already done are paid when this is turned on.", "",
+		"Default: " + config.FormatDeedExperience(config.DeedExperienceSpec().Default),
+	}
+}
+
 func combatPanelsHelpLines() []string {
 	return []string{
 		"Chooses what is drawn left of the battlefield.", "",

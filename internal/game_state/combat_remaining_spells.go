@@ -124,7 +124,7 @@ func (g *GameState) replaceCombatTargetWithRat(target CombatTurnIdentity, positi
 
 // CastCombatInQuasXen creates an independent encounter-local combat entry.
 func (g *GameState) CastCombatInQuasXen(casterIdx int, target CombatTurnIdentity) bool {
-	if !g.CombatScene.TurnQueue.hasFreeSourceSlot(0) || !g.CombatScene.hasFreeOriginalObjectSlot() {
+	if !g.CombatScene.TurnQueue.hasFreeSourceSlot(0) || !g.CombatScene.hasActiveObjectSlot() {
 		return false
 	}
 	position, found := g.findCombatClonePosition(target)

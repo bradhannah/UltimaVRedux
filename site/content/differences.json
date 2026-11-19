@@ -34,6 +34,15 @@
       "rule": "PROGRESS-0003"
     },
     {
+      "area": "Party",
+      "title": "Experience for quest deeds",
+      "kind": "switchable",
+      "original": "Only kills give experience, so a party that follows the quest without hunting reaches the end several levels short.",
+      "redux": "Every member of the party earns experience for the great deeds of the quest, once each. Lean is the default and Fuller doubles it.",
+      "rule": "PROGRESS-0004",
+      "setting": "Deed Experience"
+    },
+    {
       "area": "Camping",
       "title": "Camp on horseback or a carpet",
       "kind": "always_on",

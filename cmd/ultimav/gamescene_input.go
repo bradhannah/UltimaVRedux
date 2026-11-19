@@ -257,6 +257,7 @@ func (g *GameScene) Update(game *Game) error {
 	if !g.gameState.CanAcceptGameplayCommands() {
 		return nil
 	}
+	g.settlePastDeedExperience()
 	if g.showPendingBattleSummary() {
 		return nil
 	}

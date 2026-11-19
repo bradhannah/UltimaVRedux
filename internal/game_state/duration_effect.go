@@ -88,9 +88,18 @@ type DurationEffectOperationResult struct {
 	After  DurationEffectsStatus
 }
 
+// CrownDisplacedMessage tells the player a duration spell took the Crown off.
+// REDUX DEVIATION: QUEST-0003: the original overwrites the worn Crown silently
+// when a duration spell takes the shared effect slot; Redux keeps the rule and
+// names the loss so the Crown's protection does not vanish unexplained.
+const CrownDisplacedMessage = "Crown removed!"
+
 // setDurationEffect activates or refreshes one effect, replacing any other effect.
 func (gs *GameState) setDurationEffect(effectType DurationEffectType, turns int) bool {
 	wasTimeStopped := gs.HasActiveDurationEffect(DurationEffectTimeStop)
+	if gs.CrownState.IsActive {
+		gs.SystemCallbacks.UI.ShowActionFeedback(CrownDisplacedMessage, true)
+	}
 	gs.CrownState = ToggleItemState{}
 	gs.ActiveDurationEffect = DurationEffect{
 		EffectType:       effectType,

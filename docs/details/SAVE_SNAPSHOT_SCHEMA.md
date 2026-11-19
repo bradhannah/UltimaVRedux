@@ -2,7 +2,7 @@
 
 ## Status
 
-This document describes native envelope version 2 and canonical `SaveSnapshot` version 26 in
+This document describes native envelope version 2 and canonical `SaveSnapshot` version 27 in
 `internal/save_snapshot`, its strict native envelope, and the runtime
 capture/hydration boundary.
 
@@ -12,14 +12,15 @@ Original-save conversion dispositions are recorded in the
 For headless command-line conversion and loading either a standalone snapshot or
 a player slot, follow the [save converter procedure](SAVE_CONVERTER.md).
 The executable Draft 2020-12 contract is
-[`native-save-e2-s26.schema.json`](../schemas/native-save-e2-s26.schema.json), with
-frozen V16–V25 sibling resources loaded locally. Assert its version-aware
+[`native-save-e2-s27.schema.json`](../schemas/native-save-e2-s27.schema.json), with
+frozen V16–V26 sibling resources loaded locally. Assert its version-aware
 `ultima5-world-journal` format as well as structural validation. Go DTOs and the
 strict codec in `internal/save_snapshot` own the current wire contract.
-Versions 24 (first shipped in `v0.1.0-preview.1`) and 25 are the frozen strict
+Versions 24 (first shipped in `v0.1.0-preview.1`), 25 and 26 are the frozen strict
 promotion sources, described by
-[`native-save-e2-s24.schema.json`](../schemas/native-save-e2-s24.schema.json) and
-[`native-save-e2-s25.schema.json`](../schemas/native-save-e2-s25.schema.json).
+[`native-save-e2-s24.schema.json`](../schemas/native-save-e2-s24.schema.json),
+[`native-save-e2-s25.schema.json`](../schemas/native-save-e2-s25.schema.json) and
+[`native-save-e2-s26.schema.json`](../schemas/native-save-e2-s26.schema.json).
 Frozen V16–V23 schemas remain solely because later schemas reuse their
 definitions; they are not decode paths. See
 [Snapshot Version Compatibility](#snapshot-version-compatibility).
@@ -33,6 +34,23 @@ Public availability does not change accepted fields, validation constraints,
 envelope or snapshot versions, or promotion.
 
 ## Principles
+
+### Snapshot 27 Experience Records
+
+Two required members record Redux's optional experience rules
+([PROGRESS-0004](../gamefacts/CHARACTER_PROGRESSION.md#progress-0004),
+[PROGRESS-0002](../gamefacts/CHARACTER_PROGRESSION.md#progress-0002)):
+
+- `deedExperiencePaid` lists each quest deed already paid, as unique keys in
+  ascending order (null or `[]` means none; at most 64). A key is lowercase words
+  joined by dots, such as `codex.honesty` or `item.shard.hatred`. The save package
+  checks only this shape; `GameState` owns the catalog and refuses to hydrate a
+  key it does not know.
+- `sharedExperienceRemainder` is an integer from 0 to 5: the points an even
+  split of kill experience could not divide, carried to the next kill.
+
+Older saves promote with no paid deeds and a zero remainder, so deeds they have
+already finished are paid once when the Deed Experience setting allows.
 
 ### Snapshot 26 Player Notes
 
@@ -108,7 +126,7 @@ for external-notebook saves is retired; embedded persistence remains independent
 
 These additions share **one snapshot version, 24**, within unchanged envelope 2.
 They are checkpoint state, distinct from transient readers; excerpts (V25) and
-player notes (V26) also follow their checkpoint. Root names below are defined in `snapshot.go`;
+player notes (V26) and experience records (V27) also follow their checkpoint. Root names below are defined in `snapshot.go`;
 `validation_v24.go` in `internal/save_snapshot` owns cross-field validation.
 
 | Current wire field | Durable meaning |
@@ -448,8 +466,9 @@ Fixed collection sizes are 16 roster slots, 48 equipment entries, 48 spells, 8 s
 `internal/save_snapshot/snapshot.go` owns field names/types, including the
 checkpoint-local `presentation`, `lastConversation`, `dungeonJournal`,
 `moonstoneJournal`, `atlasLandmarks`, `openDoor`, `basementChestHistory`,
-`atlasNotes`, `atlasFleet`, `notes`, and `codexRevelationComplete` values.
-The current [JSON schema](../schemas/native-save-e2-s26.schema.json) and `codec.go`
+`atlasNotes`, `atlasFleet`, `notes`, `codexRevelationComplete`,
+`deedExperiencePaid`, and `sharedExperienceRemainder` values.
+The current [JSON schema](../schemas/native-save-e2-s27.schema.json) and `codec.go`
 own required/null/unknown-member rules;
 `validation.go` and the version-specific validators own semantic
 constraints. Use those executable definitions when changing the wire shape.
@@ -915,7 +934,7 @@ NPCs, objects, or progression. See [SPELL-0002](../gamefacts/MAGIC_SPELLS.md#spe
 
 ### Implemented Invariants
 
-- Current snapshot version must equal 26; V24 and V25 decode validate their frozen source versions before promotion. A V26 snapshot must also hold a valid `notes` notebook. Vacant roster slots must be zero-valued, occupied names are 1-9 bytes, and character numeric fields fit their runtime ranges. HP cannot exceed maximum HP and MP cannot exceed Intelligence. Occupied records accept only gender `0x0b`/`0x0c`, class `A`/`F`/`B`/`M`, status `G`/`P`/`C`/`S`/`D`, and `partyMap` `0`, `1..40`, `0x7f`, or `0xff`. Slot zero must be occupied, active, and Avatar class without requiring a literal Avatar name. Active characters form a packed prefix of at most six slots.
+- Current snapshot version must equal 27; V24, V25 and V26 decode validate their frozen source versions before promotion. A V26 or later snapshot must also hold a valid `notes` notebook, and a V27 snapshot well-formed experience records. Vacant roster slots must be zero-valued, occupied names are 1-9 bytes, and character numeric fields fit their runtime ranges. HP cannot exceed maximum HP and MP cannot exceed Intelligence. Occupied records accept only gender `0x0b`/`0x0c`, class `A`/`F`/`B`/`M`, status `G`/`P`/`C`/`S`/`D`, and `partyMap` `0`, `1..40`, `0x7f`, or `0xff`. Slot zero must be occupied, active, and Avatar class without requiring a literal Avatar name. Active characters form a packed prefix of at most six slots.
 - Karma is 0-99. NPC flag pairs must be in range and unique within each met/dead collection. Native snapshots retain the original zero-based town index (`0..31`); hydration translates it to canonical runtime location IDs (`1..32`) and capture translates it back. See [SAVE-0005](../gamefacts/SAVED_GAM_STRUCTURE.md#save-0005).
 - `continuation.activePlayerIndex` is `-1` or `0..5` and must identify an eligible active-party character when selected. `continuation.beggarKarmaCounter` is `0..255`; `continuation.combatActionTimeCounter` is `0..9`; all continuation booleans are required.
 - Food/gold are at most 9999; gems, torches, keys, skull keys, equipment, spells, potions, reagents, quest items, and moonstones use their runtime maxima; scrolls are at most 9999.
@@ -1025,11 +1044,11 @@ Quick Save authority over a player slot.
 
 ### Snapshot Version Compatibility
 
-Within a valid envelope 2, strict decode accepts snapshot version 26
-(`CurrentVersion`) and promotes versions 25 and 24 (`MinimumVersion`, first
-shipped in `v0.1.0-preview.1`). Both retain all state; they only receive a
-fresh notebook, and V24 also receives empty excerpts plus the
-application-level notebook import described
+Within a valid envelope 2, strict decode accepts snapshot version 27
+(`CurrentVersion`) and promotes versions 26, 25 and 24 (`MinimumVersion`, first
+shipped in `v0.1.0-preview.1`). All retain all state; they only receive empty
+experience records, V25 and V24 a fresh notebook, and V24 also empty excerpts
+plus the application-level notebook import described
 [above](#snapshot-25-save-owned-excerpts). Promotion consumes no time or RNG and
 never rewrites the source record. Named-record and slot revisions use the
 promoted canonical current-version bytes.
@@ -1038,7 +1057,7 @@ Versions 23 and older, plus future versions, return a typed
 `UnsupportedVersionError`. Player slots holding them list as incompatible with a
 reviewed revision, so they can be overwritten or deleted. Original `SAVED.GAM`
 import is unaffected and always produces the current version. New encoding
-always emits version 26 and rejects the private reconstruction hint.
+always emits version 27 and rejects the private reconstruction hint.
 
 Metadata is not part of gameplay equality comparisons unless explicitly requested.
 

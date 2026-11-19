@@ -30,6 +30,8 @@ type ShardRitualReview struct {
 	Target          references.Position
 	AtMatchingFlame bool
 	Result          ShardUsageResult
+	// Experience is the deed experience a successful ritual paid the party.
+	Experience DeedExperienceAward
 }
 
 // ShardRitualCommit captures the exact gameplay state authorized by Begin.
@@ -173,6 +175,7 @@ func (g *GameState) CommitShardRitual(commit *ShardRitualCommit) ShardRitualRevi
 	// Journal metadata may already contain this event; the authoritative defeat
 	// still commits, while append records it when absent.
 	g.RecordShadowlordDefeatEvent(review.Shadowlord)
+	review.Experience = g.settleDeedExperience(false)
 
 	return review
 }

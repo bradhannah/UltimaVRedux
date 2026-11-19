@@ -3,6 +3,7 @@ package widgets
 import (
 	"image"
 	"image/color"
+	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -177,6 +178,15 @@ type MessageDialogBuilder struct {
 	autoSize         bool    // If true, measure message content and size dialog to fit
 	maxWidthPercent  float64 // Maximum width as percentage of screen (0.0-1.0)
 	maxHeightPercent float64 // Maximum height as percentage of screen (0.0-1.0)
+
+	// styledLines follow the message in their own colours.
+	styledLines []StyledDialogLine
+}
+
+// StyledDialogLine is one extra line shown below a dialog's message.
+type StyledDialogLine struct {
+	Text  string
+	Color color.Color
 }
 
 // fadeState represents the current state of the dissolve animation
@@ -251,6 +261,7 @@ func NewMessageDialog(message string) *MessageDialogBuilder {
 		autoSize:             false,
 		maxWidthPercent:      0,
 		maxHeightPercent:     0,
+		styledLines:          nil,
 	}
 }
 
@@ -387,6 +398,25 @@ func (b *MessageDialogBuilder) WithStaticContent() *MessageDialogBuilder {
 	return b
 }
 
+// WithStyledLines adds lines below the message, each in its own colour. They
+// count toward auto-sizing, so the dialog is built large enough to show them.
+func (b *MessageDialogBuilder) WithStyledLines(lines ...StyledDialogLine) *MessageDialogBuilder {
+	b.styledLines = append(b.styledLines, lines...)
+
+	return b
+}
+
+// measuredMessage is the message plus its styled lines, for auto-sizing.
+func (b *MessageDialogBuilder) measuredMessage() string {
+	lines := make([]string, 0, len(b.styledLines)+1)
+	lines = append(lines, b.message)
+	for _, line := range b.styledLines {
+		lines = append(lines, line.Text)
+	}
+
+	return strings.Join(lines, "\n")
+}
+
 // WithTextHorizontalCenter sets whether text should be centered horizontally within the dialog box.
 // When enabled: Text is horizontally centered (useful for area transitions like "Entering Britain").
 // When disabled: Text is left-aligned (default behavior, suitable for general messages).
@@ -519,7 +549,7 @@ func (b *MessageDialogBuilder) buildAutoSizedConfig() MessageDialogConfig {
 	}
 
 	// Measure text with the calculated chars per line for wrapping
-	measurement := text.MeasureText(b.message, tempFont, scaledLineSpacing, charsPerLine)
+	measurement := text.MeasureText(b.measuredMessage(), tempFont, scaledLineSpacing, charsPerLine)
 
 	// Shrink dialog width to fit content while respecting minimum aesthetic width.
 	targetChars := measurement.MaxLineChars
@@ -576,6 +606,9 @@ func (b *MessageDialogBuilder) Build() *MessageDialog {
 	// Add initial message if provided
 	if b.message != "" {
 		dialog.output.AddText(b.message)
+	}
+	for _, line := range b.styledLines {
+		dialog.output.AddTextWithColor(line.Text, line.Color)
 	}
 	if b.enableInputDismissal {
 		dialog.SetAcknowledgementPrompt(DialogCloseHint)

@@ -313,6 +313,7 @@ bypass a living Shadowlord's absorption; frame-sensitive equivalence is not clai
 
 Redux keeps Crown competing with the five duration spells, but Badge and Amulet
 are independent. Applying a spell removes Crown; donning Crown clears the spell.
+Each replacement is named in the message log (QUEST-0003).
 Removal/expiry never resumes a replaced effect. This hybrid preserves independent
 artifact usability while retaining one competing combat-duration slot; native
 fields remain separate without legacy normalization. Redux also applies effective
@@ -349,7 +350,8 @@ its separate 20-unit duration under CONSUME-0003.
 **Redux:** Known discrepancy
 
 Summon placement tries up to eight random coordinates, subject to terrain,
-occupancy, and free source/object slots. Kal Xen tests Rat terrain even when the
+occupancy, and free source/object slots (COMBAT-0001 defines which slots Redux
+treats as free). Kal Xen tests Rat terrain even when the
 chosen animal is another species; Daemon placement tests Daemon terrain. In Bet
 Xen puts up to four independently created insects on the one admitted square.
 Prepared Daemon binding draws only after successful placement; the scroll bypasses

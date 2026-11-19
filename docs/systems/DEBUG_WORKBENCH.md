@@ -280,8 +280,9 @@ both active and historical monsters; matching population counts alone is not
 enough. Retired, fled and replaced records can remain in history without staying
 in active rotation. Capacity comes from free source slots `6..31`, free slots
 in the shared 32-object table, and distinct unoccupied authored spawn positions,
-with the existing 16-monster per-request bound. Removing a corpse does not free
-its retained dead source slot; released flight/retirement slots can be reused.
+with the existing 16-monster per-request bound. Source slots held only for a
+dead monster's remains and object slots held by ground objects count as free
+(COMBAT-0001); released flight/retirement slots can be reused.
 
 Preflight validates the complete batch before changing the seed, consuming RNG
 or allocating IDs. An over-capacity exact request fails atomically; automatic
