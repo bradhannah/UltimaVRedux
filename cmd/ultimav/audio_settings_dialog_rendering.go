@@ -227,6 +227,11 @@ func (d *ConfigurationDialog) Update() {
 	if d.updateAudioDiagnostics() {
 		return
 	}
+	if d.confirmingDeedExperience {
+		d.updateDeedExperienceConfirmation()
+
+		return
+	}
 	if key, owned := d.navigation.Poll(d.keyboard); owned {
 		if key != nil {
 			d.navigateConfigurationRows(*key)
@@ -768,6 +773,11 @@ func (d *ConfigurationDialog) prepareGameplayDetail() {
 	inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
 	d.detailOutput.SetMaxCharsPerLine(max(1,
 		d.detailOutput.Font.CharsForWidth(d.layout.gameplayDetail.Dx()-inset*audioSettingsCenterDivisor)))
+	if d.confirmingDeedExperience {
+		d.populateDeedExperienceConfirmation(d.detailOutput)
+
+		return
+	}
 	selected := gameplaySettings()[d.focusedGameplayIndex]
 	populateGameplayDetail(d.detailOutput, selected, d.gameplaySettingDisplayValue())
 }
@@ -905,6 +915,8 @@ func (d *ConfigurationDialog) drawFooter(screen *ebiten.Image) {
 			WordWrap().
 			Done()
 		widgets.AppendControlHints(d.footerOutput.AppendLine(), d.configurationErrorGuidance()).Done()
+	case d.confirmingDeedExperience:
+		widgets.AppendControlHints(d.footerOutput.AppendLine(), deedExperienceConfirmHint).Done()
 	default:
 		var adjust string
 		switch d.currentTab {
