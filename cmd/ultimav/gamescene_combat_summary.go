@@ -28,6 +28,9 @@ func (g *GameScene) showBattleSummary(conclusion game_state.CombatConclusion) {
 	if g.battleSummaryDialog != nil {
 		panic("battle summary already owns a dialog")
 	}
+	if !g.gameConfig.GetShowBattleExperience() {
+		conclusion.Experience = game_state.CombatExperienceSummary{}
+	}
 	var dialog *widgets.CombatLootDialog
 	dialog = widgets.NewCombatSummaryDialog(conclusion, g.keyboard, g.spriteSheet, func() {
 		g.dialogStack.MustRemoveWidgetInstance(dialog)

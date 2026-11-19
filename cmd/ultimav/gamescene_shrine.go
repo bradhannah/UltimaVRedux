@@ -255,7 +255,8 @@ func (g *GameScene) addShrineQuestStateBranching(
 			}
 			completeQ.Then(func() {
 				removeTranscript()
-			}).ThenSequence(g.thenShowShrineQuestCompletionEffects(completionMessage))
+				g.showExperienceAward(outcome.Experience, false)
+			}).ThenSequence(g.thenShowShrineQuestCompletionEffects(completionMessage, outcome.Experience))
 		})
 
 	case game_state.QuestStateOffering:
@@ -455,7 +456,8 @@ func (g *GameScene) StartCodexWorkflow() {
 				answerQ.Then(func() {
 					g.gameState.SystemCallbacks.Message.AddRowStr(outcome.Heading)
 					g.gameState.SystemCallbacks.Message.AddRowStr(outcome.AnswerText)
-				}).ThenSequence(g.thenShowShrineDialog(outcome.Heading+"\n"+outcome.AnswerText)).
+					g.showExperienceAward(outcome.Experience, false)
+				}).ThenSequence(g.thenShowShrineExperienceDialog(outcome.Heading+"\n"+outcome.AnswerText, outcome.Experience)).
 					If(func() bool { return outcome.AllQuestsComplete }, func(endQ *event_queue.SequentialEventBuilder) {
 						g.addCodexRevelationSequence(endQ)
 					})
@@ -483,6 +485,14 @@ func (g *GameScene) StartCodexWorkflow() {
 // thenShowShrineDialog creates an auto-fit confirmation dialog for shrine messages.
 // Uses SizingAutoFitDefault instead of SizingCompact to handle multi-line quest text.
 func (g *GameScene) thenShowShrineDialog(message string) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
+	return g.thenShowShrineExperienceDialog(message, game_state.DeedExperienceAward{})
+}
+
+// thenShowShrineExperienceDialog is the shrine dialog with any deed experience
+// the message's deed paid, in the experience colour.
+func (g *GameScene) thenShowShrineExperienceDialog(
+	message string, experience game_state.DeedExperienceAward,
+) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 	return func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 		overlay := widgets.NewOverlayDialog(message).
 			WithSizing(widgets.SizingAutoFitDefault).
@@ -492,6 +502,7 @@ func (g *GameScene) thenShowShrineDialog(message string) func(*event_queue.Seque
 			WithTextAlignment(widgets.TextAlignCenter).
 			WithUserDismissed(g.keyboard).
 			AutoPopFromStack(&g.dialogStack).
+			WithStyledLines(experienceDialogLines(experience)...).
 			Build()
 
 		return q.ThenSequence(g.showOverlayAndWait(overlay))
@@ -527,6 +538,7 @@ func (g *GameScene) addCodexRevelationSequence(q *event_queue.SequentialEventBui
 		g.thenShowShrineDialog(game_state.CodexRevelationMessages[3])).Then(func() {
 		// The word-bearing page has been presented and acknowledged, not merely queued.
 		g.gameState.DiscoverWordOfPowerKnowledge("doom", game_state.RevelationKnowledgeSource("Codex of Ultimate Wisdom"))
+		g.showExperienceAward(g.gameState.SettleDeedExperience(), true)
 	}).ThenSequence(
 
 		g.thenShowShrineDialog(game_state.CodexRevelationMessages[4])).Then(func() {

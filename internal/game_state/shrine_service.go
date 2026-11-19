@@ -42,6 +42,8 @@ type ShrineQuestOutcome struct {
 	KarmaAdded      int
 	PrimaryMessage  string
 	FollowupMessage string
+	// Experience is the deed experience this completion paid the party.
+	Experience DeedExperienceAward
 }
 
 // ShrineOfferingReview is a detached quote for a submitted offering digit.
@@ -81,6 +83,8 @@ type CodexQuestOutcome struct {
 	AnswerText        string
 	AllQuestsComplete bool
 	Heading           string
+	// Experience is the deed experience this answer paid the party.
+	Experience DeedExperienceAward
 }
 
 // CodexMemorial is the roster-ordered source presentation for Blackthorn's victims.
@@ -237,6 +241,7 @@ func (g *GameState) CommitShrineQuestCompletion(
 		KarmaAdded:      karma.After - karma.Before,
 		PrimaryMessage:  "WELL DONE!",
 		FollowupMessage: "",
+		Experience:      g.settleDeedExperience(false),
 	}, nil
 }
 
@@ -349,6 +354,7 @@ func (g *GameState) CommitCodexQuestAnswer(review CodexQuestReview) (CodexQuestO
 		AnswerText:        current.AnswerText,
 		AllQuestsComplete: g.AreAllQuestsComplete(),
 		Heading:           "Thou dost read:",
+		Experience:        g.settleDeedExperience(false),
 	}, nil
 }
 

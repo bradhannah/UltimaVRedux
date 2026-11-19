@@ -23,8 +23,10 @@ const defaultMessageVertical = 0.7
 const (
 	// Dialog fade timing (milliseconds)
 	earthquakeFadeDurationMs = 500
-	earthquakeFadeInMs       = 200
-	earthquakeFadeOutMs      = 500
+	// earthquakeDialogLines holds a blank line, the tremor and the entrance's change.
+	earthquakeDialogLines = 4
+	earthquakeFadeInMs    = 200
+	earthquakeFadeOutMs   = 500
 
 	// Shake parameters (duration in ms and pixel amplitude)
 	earthquakeShakeDurationMs = 2000
@@ -588,9 +590,11 @@ func (g *GameScene) thenShowDungeonEarthquake() func(*event_queue.SequentialEven
 		var dialog *widgets.MessageDialog
 
 		return q.Then(func() {
+			// A first opening adds its experience below the two fixed lines.
+			lines := earthquakeDialogLines + len(experienceDialogLines(g.gameState.LastDungeonOpenExperience()))
 			dialog = widgets.NewMessageDialog("\nThe earth trembles!").
 				WithFadeDurations(earthquakeFadeDurationMs, earthquakeFadeDurationMs).
-				WithTextLines(4).
+				WithTextLines(lines).
 				WithEffects(true).
 				Build()
 			dialog.Show()
@@ -609,6 +613,11 @@ func (g *GameScene) thenShowDungeonEarthquake() func(*event_queue.SequentialEven
 				// Get dungeon toggle state from GameState (stored by ProcessWordOfPower)
 				if g.gameState.WasLastDungeonToggleOpening() {
 					dialog.AppendLine("The sealed entrance opens!")
+					experience := g.gameState.LastDungeonOpenExperience()
+					for _, line := range experienceDialogLines(experience) {
+						dialog.AppendLineWithColor(line.Text, line.Color)
+					}
+					g.showExperienceAward(experience, false)
 				} else {
 					dialog.AppendLine("The entrance seals shut!")
 				}
@@ -769,7 +778,9 @@ func (g *GameScene) thenShowShrineRestoredEarthquake() func(*event_queue.Sequent
 //	    Sequential().
 //	    ThenSequence(g.thenShowShrineQuestCompletionEffects(completionMessage)).
 //	    Start()
-func (g *GameScene) thenShowShrineQuestCompletionEffects(message string) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
+func (g *GameScene) thenShowShrineQuestCompletionEffects(
+	message string, experience game_state.DeedExperienceAward,
+) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 	return func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 		var dialog *widgets.MessageDialog
 
@@ -780,6 +791,7 @@ func (g *GameScene) thenShowShrineQuestCompletionEffects(message string) func(*e
 				WithSeparatePromptArea().
 				WithContentTextAlignment(widgets.ContentAlignCenter).
 				WithEffects(true).
+				WithStyledLines(experienceDialogLines(experience)...).
 				Build()
 			dialog.Show()
 			g.dialogStack.PushModalDialog(dialog)

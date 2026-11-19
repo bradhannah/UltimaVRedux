@@ -31,7 +31,7 @@ func validateConfigurationTypes(source *viper.Viper) error {
 		{"integer", []string{"Resolution", "Audio.MusicVolume", "Audio.SoundEffectVolume", "Audio.AmbientVolume",
 			"Display.WindowWidth", "Display.WindowHeight", "Display.TargetFPS", "Lighting.AmbientLightRadius",
 			"Debug.SurfaceMovementDurationMs", gameplayMaxActionPopupsKey, gameplayCombatKeyRepeatKey,
-			gameplayCombatPanelsKey},
+			gameplayCombatPanelsKey, gameplayDeedExperienceKey},
 			func(value any) bool {
 				_, ok := value.(int)
 
@@ -43,7 +43,8 @@ func validateConfigurationTypes(source *viper.Viper) error {
 			gameplayShowSubduedUnlitDungeonsKey, gameplaySmoothSurfaceMovementKey, gameplayFlexibleSextantUseKey,
 			gameplayAnkhWandererBonusKey, gameplayConfirmQuickSaveKey, gameplayShowCombatHPBarsKey,
 			gameplayShowCombatBattleFrameKey,
-			gameplaySimpleNotesModeKey, gameplayHelpHintSeenKey},
+			gameplaySimpleNotesModeKey, gameplayHelpHintSeenKey,
+			gameplayShareKillExperienceKey, gameplayShowBattleExperienceKey},
 			func(value any) bool {
 				_, ok := value.(bool)
 
@@ -94,6 +95,11 @@ func validateGameplaySourceNumbers(source *viper.Viper) error {
 			return fmt.Errorf("%s: %w", gameplayCombatPanelsKey, err)
 		}
 	}
+	if source.IsSet(gameplayDeedExperienceKey) {
+		if err := DeedExperienceSpec().Validate(source.GetFloat64(gameplayDeedExperienceKey)); err != nil {
+			return fmt.Errorf("%s: %w", gameplayDeedExperienceKey, err)
+		}
+	}
 
 	return nil
 }
@@ -101,7 +107,7 @@ func validateGameplaySourceNumbers(source *viper.Viper) error {
 func validateConfigurationSections(source *viper.Viper) error {
 	for _, key := range []string{"Audio", "Display", "Gameplay", "Gameplay.Merchants", "Gameplay.Combat",
 		"Gameplay.Dungeons", "Gameplay.Presentation", "Gameplay.Navigation", "Logging", "Logging.CategoryStates",
-		"Lighting", "Debug", "Gameplay.Saves"} {
+		"Lighting", "Debug", "Gameplay.Saves", "Gameplay.Progression"} {
 		if configurationKeyPresent(source, key) {
 			if _, ok := source.Get(key).(map[string]any); !ok {
 				return fmt.Errorf("decoding configuration: %w: %s must be a mapping", errConfigurationType, key)

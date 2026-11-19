@@ -52,9 +52,10 @@ type OverlayDialogBuilder struct {
 	keyboard   *input.Keyboard // Set by WithUserDismissed()
 
 	// Optional configuration
-	mirrorToOutput *text.Output // Optional: also write to output
-	dialogStack    *DialogStack // Optional: auto-pop on dismiss
-	onDismiss      func()       // Optional: callback on dismiss
+	mirrorToOutput *text.Output       // Optional: also write to output
+	styledLines    []StyledDialogLine // Optional: coloured lines below the message
+	dialogStack    *DialogStack       // Optional: auto-pop on dismiss
+	onDismiss      func()             // Optional: callback on dismiss
 
 	// Validation tracking - ensures all required config is set
 	sizingSet           bool
@@ -73,6 +74,14 @@ func NewOverlayDialog(message string) *OverlayDialogBuilder {
 	builder.message = message
 
 	return builder
+}
+
+// WithStyledLines adds lines below the message, each in its own colour. The
+// popup is sized to show them.
+func (b *OverlayDialogBuilder) WithStyledLines(lines ...StyledDialogLine) *OverlayDialogBuilder {
+	b.styledLines = append(b.styledLines, lines...)
+
+	return b
 }
 
 // =====================================
@@ -259,7 +268,7 @@ func (b *OverlayDialogBuilder) validate() {
 // build creates the OverlayDialog after validation passes.
 func (b *OverlayDialogBuilder) build() *OverlayDialog {
 	// Convert our config to MessageDialogBuilder settings
-	msgBuilder := NewMessageDialog(b.message)
+	msgBuilder := NewMessageDialog(b.message).WithStyledLines(b.styledLines...)
 
 	// Configure sizing
 	lines, charsPerLine, autoFit := b.sizing.GetConfig()

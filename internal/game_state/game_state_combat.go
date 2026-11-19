@@ -231,6 +231,8 @@ type CombatState struct {
 	lastObjectID CombatObjectID
 	// Collection accounting is independent of the presentation's bounded history.
 	collectedItems []CombatCollectedItem
+	// experienceEarned tallies kill experience by active party index.
+	experienceEarned [party_state.MaxActiveParty]int
 	// fields contains encounter-local magical fields in original creation order.
 	fields []CombatField
 
@@ -1050,7 +1052,8 @@ func (g *GameState) EndCombat(reason CombatEndReason) {
 	exitRoute := g.CombatScene.ExitRoute
 	conclusion := CombatConclusion{
 		Reason: reason, Special: CombatSpecialConclusionNone,
-		Collected: append([]CombatCollectedItem(nil), g.CombatScene.collectedItems...),
+		Collected:  append([]CombatCollectedItem(nil), g.CombatScene.collectedItems...),
+		Experience: g.combatExperienceSummary(),
 	}
 	if reason == CombatVictory && exitRoute == CombatExitDoomMirror && g.CombatScene.isVerifiedDoomFinalRoom() {
 		conclusion.Special = CombatSpecialConclusionDoomMirror

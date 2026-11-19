@@ -102,9 +102,15 @@ type GameplayConfiguration struct {
 	FlexibleSextantUse bool
 	// AnkhWandererBonus raises the camping Wanderer chance for each living Ankh wearer.
 	AnkhWandererBonus bool
-	CombatSpeedFactor float64
-	ConfirmQuickSave  bool
-	ShowCombatHPBars  bool
+	// DeedExperience chooses how much experience quest deeds pay the party.
+	DeedExperience int
+	// ShareKillExperience splits each kill's experience evenly among the living party.
+	ShareKillExperience bool
+	// ShowBattleExperience lists experience earned in the Battle complete summary.
+	ShowBattleExperience bool
+	CombatSpeedFactor    float64
+	ConfirmQuickSave     bool
+	ShowCombatHPBars     bool
 	// ShowCombatBattleFrame frames the battlefield: red in battle, blue once won.
 	ShowCombatBattleFrame  bool
 	MaxVisibleActionPopups int
@@ -720,6 +726,9 @@ func setGameplayConfiguration(configuration *viper.Viper, gameplay GameplayConfi
 	configuration.Set(gameplaySmoothSurfaceMovementKey, gameplay.SmoothSurfaceMovement)
 	configuration.Set(gameplayFlexibleSextantUseKey, gameplay.FlexibleSextantUse)
 	configuration.Set(gameplayAnkhWandererBonusKey, gameplay.AnkhWandererBonus)
+	configuration.Set(gameplayDeedExperienceKey, gameplay.DeedExperience)
+	configuration.Set(gameplayShareKillExperienceKey, gameplay.ShareKillExperience)
+	configuration.Set(gameplayShowBattleExperienceKey, gameplay.ShowBattleExperience)
 }
 
 func writeViperConfigAtomically(configuration *viper.Viper, configPath string) error {

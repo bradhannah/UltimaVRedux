@@ -40,6 +40,8 @@ func oldExcerptSaveData(t *testing.T, envelope save_snapshot.Envelope) []byte {
 	body["version"] = 24
 	delete(body, "excerpts")
 	delete(body, "notes")
+	delete(body, "deedExperiencePaid")
+	delete(body, "sharedExperienceRemainder")
 	data, err = json.Marshal(document)
 	require.NoError(t, err)
 	return data

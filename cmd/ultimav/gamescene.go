@@ -255,8 +255,11 @@ type GameScene struct {
 	combatHUD              *CombatHUD
 	combatConclusion       *game_state.CombatConclusion
 	pendingBattleSummaries []game_state.CombatConclusion
-	lastBattleSummary      *game_state.CombatConclusion
-	battleSummaryDialog    *widgets.CombatLootDialog
+	// deedExperienceSettled and deedExperienceTier remember the last back-pay check.
+	deedExperienceSettled bool
+	deedExperienceTier    int
+	lastBattleSummary     *game_state.CombatConclusion
+	battleSummaryDialog   *widgets.CombatLootDialog
 
 	// Auto-open door animation state
 	autoOpenDoorState *AutoOpenDoorState

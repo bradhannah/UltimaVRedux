@@ -22,5 +22,9 @@ func (g *GameState) recordQuestItemAcquired(item references.QuestItem) {
 	}
 	if key, ok := keys[item]; ok {
 		g.recordItemAcquired(key)
+		// The pickup message is already written, so the award follows it.
+		if award := g.settleDeedExperience(false); award.Paid() {
+			g.SystemCallbacks.UI.ShowExperienceAward(award)
+		}
 	}
 }

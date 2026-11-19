@@ -34,11 +34,14 @@ const (
 // Summary-only geometry keeps discovery's reveal layout independent. Scrolling
 // uses logical pixels so even a single unusually long entry remains readable.
 type combatSummaryLayout struct {
-	outcome                                                      string
-	screenWidth                                                  int
-	padding                                                      int
-	outcomeOutput                                                *text.Output
-	footerSource                                                 *text.Output
+	outcome       string
+	screenWidth   int
+	padding       int
+	outcomeOutput *text.Output
+	footerSource  *text.Output
+	// notice sits above the key hints, a padding apart, so the two never touch.
+	notice                                                       *text.Output
+	experience                                                   combatSummaryExperience
 	values                                                       []*text.Output
 	rowHeights, valueTops                                        []int
 	headingHeight, outcomeTop, contentHeight, scroll, scrollStep int
@@ -105,6 +108,7 @@ func NewCombatSummaryDialog(
 	dialog.title = "Battle complete"
 	dialog.summary = new(combatSummaryLayout)
 	dialog.summary.outcome = combatSummaryOutcome(conclusion.Reason)
+	dialog.summary.experience.summary = conclusion.Experience
 	dialog.notice = ""
 	if len(conclusion.Collected) > 0 {
 		dialog.notice = "Collected into party inventory."
@@ -369,20 +373,32 @@ func (d *CombatLootDialog) initializeSummaryText(width, screenWidth, padding int
 		layout.rowHeights[index] = rowHeight + padding
 		layout.contentHeight += layout.rowHeights[index]
 	}
+	layout.experience.initialize(d.output, innerWidth, padding)
 	layout.screenWidth, layout.padding, d.width = screenWidth, padding, width
 }
 
 func (d *CombatLootDialog) prepareSummaryFooter(width int, scrolling bool) {
 	output := d.summary.footerSource
-	output.Reset()
+	d.summary.notice = nil
 	if d.notice != "" {
-		output.AppendLine().Text(d.notice, DialogLabelColor).Done()
+		d.summary.notice = combatSummaryText(d.notice, DialogLabelColor, output, width)
 	}
+	output.Reset()
 	if scrolling {
 		AppendControlHints(output.AppendLine(), "[Up/Down] Scroll").Done()
 	}
 	AppendControlHints(output.AppendLine(), "[Enter/Esc] Continue").Done()
 	d.output = output.WrappedCopyForWidth(width)
+}
+
+// summaryFooterHeight covers the notice, a padding of space, and the key hints.
+func (d *CombatLootDialog) summaryFooterHeight() int {
+	height := combatSummaryTextHeight(d.output)
+	if notice := d.summary.notice; notice != nil {
+		height += combatSummaryTextHeight(notice) + d.summary.padding
+	}
+
+	return height
 }
 
 func (d *CombatLootDialog) drawSummary(screen *ebiten.Image, viewport image.Rectangle) {
@@ -396,8 +412,14 @@ func (d *CombatLootDialog) drawSummary(screen *ebiten.Image, viewport image.Rect
 	d.heading.DrawPanelContent(screen, d.bounds.Min.Add(image.Pt(padding, padding)), innerWidth, etext.AlignStart)
 	layout.outcomeOutput.DrawPanelContent(screen,
 		d.bounds.Min.Add(image.Pt(padding, padding+layout.outcomeTop)), innerWidth, etext.AlignEnd)
+	layout.experience.draw(screen, d.bounds.Min.Add(image.Pt(padding, padding+layout.headingHeight)), innerWidth, padding)
 	d.drawSummaryRows(screen, padding)
-	d.output.DrawPanelContent(screen, layout.footer.Min, innerWidth, etext.AlignCenter)
+	hints := layout.footer.Min
+	if layout.notice != nil {
+		layout.notice.DrawPanelContent(screen, hints, innerWidth, etext.AlignCenter)
+		hints.Y += combatSummaryTextHeight(layout.notice) + padding
+	}
+	d.output.DrawPanelContent(screen, hints, innerWidth, etext.AlignCenter)
 	DrawClassicPixelRoundedFrame(screen, d.bounds, frameUnit, DialogRuleColor)
 }
 
@@ -411,19 +433,20 @@ func (d *CombatLootDialog) prepareSummary(screenBounds, viewport image.Rectangle
 	}
 	innerWidth := width - padding*lootSides
 	bottom := min(screenBounds.Min.Y+int(float64(screenBounds.Dy())*combatSummaryBottomRatio), viewport.Max.Y-padding)
-	maxHeight := min(viewport.Dy()/lootSides, bottom-viewport.Min.Y-padding)
+	// The experience section adds to the limit, so the list keeps its room.
+	maxHeight := min(viewport.Dy()/lootSides+layout.experience.height, bottom-viewport.Min.Y-padding)
 	d.prepareSummaryFooter(innerWidth, false)
-	fixedHeight := layout.headingHeight + combatSummaryTextHeight(d.output) + padding*lootSides
+	fixedHeight := layout.headingHeight + layout.experience.height + d.summaryFooterHeight() + padding*lootSides
 	if layout.contentHeight > maxHeight-fixedHeight {
 		d.prepareSummaryFooter(innerWidth, true)
-		fixedHeight = layout.headingHeight + combatSummaryTextHeight(d.output) + padding*lootSides
+		fixedHeight = layout.headingHeight + layout.experience.height + d.summaryFooterHeight() + padding*lootSides
 	}
 	bodyHeight := min(layout.contentHeight, max(1, maxHeight-fixedHeight))
 	height := fixedHeight + bodyHeight
 	left := viewport.Min.X + (viewport.Dx()-width)/lootSides
 	d.bounds = image.Rect(left, bottom-height, left+width, bottom)
-	layout.body = image.Rect(left+padding, d.bounds.Min.Y+padding+layout.headingHeight,
-		left+width-padding, bottom-padding-combatSummaryTextHeight(d.output))
+	layout.body = image.Rect(left+padding, d.bounds.Min.Y+padding+layout.headingHeight+layout.experience.height,
+		left+width-padding, bottom-padding-d.summaryFooterHeight())
 	layout.footer = image.Rect(layout.body.Min.X, layout.body.Max.Y, layout.body.Max.X, bottom-padding)
 	layout.scroll = min(layout.scroll, max(0, layout.contentHeight-bodyHeight))
 }

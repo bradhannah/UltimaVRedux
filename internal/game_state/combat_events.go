@@ -290,6 +290,8 @@ type CombatConclusion struct {
 	Reason    CombatEndReason
 	Special   CombatSpecialConclusion
 	Collected []CombatCollectedItem
+	// Experience is what each active member earned from kills in this battle.
+	Experience CombatExperienceSummary
 }
 
 // CombatCallbacks publishes structured combat events to the presentation layer.

@@ -71,6 +71,13 @@ a Look observation at Guardians. Imported `atlasLandmarks` remains empty and
 all unmeasured surveys retain `flexible: false`. These are quiet native defaults,
 not inferred acquisition events or new conversion warnings.
 
+### Snapshot 27 Experience Record Defaults
+
+Original saves record no deed experience. Conversion writes no paid deeds and a
+zero shared remainder, so the deeds an imported game has already finished are
+paid once when the Deed Experience setting allows. See
+[experience records](SAVE_SNAPSHOT_SCHEMA.md#snapshot-27-experience-records).
+
 ### Snapshot 26 Notes Default
 
 Original saves have no player notebook. Conversion writes the zero `notes` value,

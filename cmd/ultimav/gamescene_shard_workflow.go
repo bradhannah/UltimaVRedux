@@ -72,11 +72,12 @@ func (g *GameScene) startShardWorkflow(shard references.QuestItem, complete func
 							review.Shadowlord.String(),
 						)
 
-						return g.thenShowShardConfirmationDialog(message, func() {
+						return g.thenShowShardExperienceDialog(message, review.Experience, func() {
 							g.gameState.DiscoverShadowlordKnowledge(
 								review.Shadowlord, game_state.ShadowlordKnowledgeName,
 								game_state.RevelationKnowledgeSource("Banishment"),
 							)
+							g.showExperienceAward(review.Experience, false)
 						})(innerQ)
 					}).Then(func() {
 						g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundShadowlordVictory)
@@ -102,11 +103,20 @@ func (g *GameScene) startShardWorkflow(shard references.QuestItem, complete func
 }
 
 func (g *GameScene) thenShowShardConfirmationDialog(message string, onPresented func()) event_queue.Sequence {
+	return g.thenShowShardExperienceDialog(message, game_state.DeedExperienceAward{}, onPresented)
+}
+
+// thenShowShardExperienceDialog is the ritual dialog with any deed experience
+// the ritual paid, in the experience colour.
+func (g *GameScene) thenShowShardExperienceDialog(
+	message string, experience game_state.DeedExperienceAward, onPresented func(),
+) event_queue.Sequence {
 	return func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 		dialog := widgets.NewOverlayDialog(message).
 			AsConfirmation().
 			WithUserDismissed(g.keyboard).
 			AutoPopFromStack(&g.dialogStack).
+			WithStyledLines(experienceDialogLines(experience)...).
 			Build()
 
 		return q.Then(func() {

@@ -29,6 +29,9 @@ const (
 	gameplayMaxActionPopupsKey       = "Gameplay.Presentation.MaxVisibleActionPopups"
 	gameplaySimpleNotesModeKey       = "Gameplay.Presentation.SimpleNotesMode"
 	gameplayHelpHintSeenKey          = "Gameplay.Presentation.HelpHintSeen"
+	gameplayDeedExperienceKey        = "Gameplay.Progression.DeedExperience"
+	gameplayShareKillExperienceKey   = "Gameplay.Progression.ShareKillExperience"
+	gameplayShowBattleExperienceKey  = "Gameplay.Presentation.BattleExperience"
 	legacyCombatSpeedKey             = "Debug.CombatMovementSpeedFactor"
 	numericGridTolerance             = 1e-9 // In step-index units; half-steps remain exactly representable.
 )
@@ -117,6 +120,35 @@ func FormatCombatPanels(value float64) string {
 		return "Off"
 	default:
 		return "Order + Report"
+	}
+}
+
+// Deed Experience choices: how much experience quest deeds pay each party member.
+const (
+	// DeedExperienceNone pays nothing, as in the original.
+	DeedExperienceNone = iota
+	// DeedExperienceLean pays the base amounts (the default).
+	DeedExperienceLean
+	// DeedExperienceFuller pays double the base amounts.
+	DeedExperienceFuller
+)
+
+// DeedExperienceSpec returns the Deed Experience choices.
+func DeedExperienceSpec() NumericSettingSpec {
+	return NumericSettingSpec{
+		Min: DeedExperienceNone, Max: DeedExperienceFuller, Step: 1, Default: DeedExperienceLean, Values: nil,
+	}
+}
+
+// FormatDeedExperience names a Deed Experience choice for players.
+func FormatDeedExperience(value float64) string {
+	switch int(value) {
+	case DeedExperienceLean:
+		return "Lean"
+	case DeedExperienceFuller:
+		return "Fuller"
+	default:
+		return "None"
 	}
 }
 
@@ -239,6 +271,9 @@ func ValidateGameplayConfiguration(settings GameplayConfiguration) error {
 	if err := CombatPanelsSpec().Validate(float64(settings.CombatPanels)); err != nil {
 		return fmt.Errorf("%s: %w", gameplayCombatPanelsKey, err)
 	}
+	if err := DeedExperienceSpec().Validate(float64(settings.DeedExperience)); err != nil {
+		return fmt.Errorf("%s: %w", gameplayDeedExperienceKey, err)
+	}
 
 	return nil
 }
@@ -257,6 +292,9 @@ func DefaultGameplayConfiguration() *GameplayConfiguration {
 		SmoothSurfaceMovement:           false,
 		FlexibleSextantUse:              false,
 		AnkhWandererBonus:               false,
+		DeedExperience:                  DeedExperienceLean,
+		ShareKillExperience:             false,
+		ShowBattleExperience:            true,
 		CombatSpeedFactor:               CombatSpeedSpec().Default,
 		ConfirmQuickSave:                true,
 		ShowCombatHPBars:                true,
@@ -278,6 +316,8 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	uc.configuredBoolean(&settings.SmoothSurfaceMovement, gameplaySmoothSurfaceMovementKey)
 	uc.configuredBoolean(&settings.FlexibleSextantUse, gameplayFlexibleSextantUseKey)
 	uc.configuredBoolean(&settings.AnkhWandererBonus, gameplayAnkhWandererBonusKey)
+	uc.configuredBoolean(&settings.ShareKillExperience, gameplayShareKillExperienceKey)
+	uc.configuredBoolean(&settings.ShowBattleExperience, gameplayShowBattleExperienceKey)
 	uc.configuredBoolean(&settings.AllowRepeatedMonsterDivision, "Gameplay.Combat.AllowRepeatedMonsterDivision")
 	uc.configuredBoolean(&settings.ShowConcealedTurnOrderSlots, gameplayShowConcealedTurnOrderSlotsKey)
 	uc.configuredBoolean(&settings.PersistHiddenDungeonDiscoveries, gameplayPersistHiddenDungeonDiscoveriesKey)
@@ -301,6 +341,9 @@ func (uc *UltimaVConfiguration) loadGameplayPreferences() {
 	}
 	if uc.source.IsSet(gameplayCombatPanelsKey) {
 		settings.CombatPanels = uc.source.GetInt(gameplayCombatPanelsKey)
+	}
+	if uc.source.IsSet(gameplayDeedExperienceKey) {
+		settings.DeedExperience = uc.source.GetInt(gameplayDeedExperienceKey)
 	}
 }
 
@@ -334,6 +377,26 @@ func (uc *UltimaVConfiguration) GetConfirmQuickSave() bool {
 // GetSimpleNotesMode defaults to Off, showing every Journal tab.
 func (uc *UltimaVConfiguration) GetSimpleNotesMode() bool {
 	return uc != nil && uc.GameplayConfiguration != nil && uc.GameplayConfiguration.SimpleNotesMode
+}
+
+// GetDeedExperience returns the Deed Experience choice. A fixture without
+// settings pays nothing, as the original does.
+func (uc *UltimaVConfiguration) GetDeedExperience() int {
+	if uc == nil || uc.GameplayConfiguration == nil {
+		return DeedExperienceNone
+	}
+
+	return uc.GameplayConfiguration.DeedExperience
+}
+
+// GetShareKillExperience defaults to the original killer-takes-all rule.
+func (uc *UltimaVConfiguration) GetShareKillExperience() bool {
+	return uc != nil && uc.GameplayConfiguration != nil && uc.GameplayConfiguration.ShareKillExperience
+}
+
+// GetShowBattleExperience defaults to shown when a fixture has no settings.
+func (uc *UltimaVConfiguration) GetShowBattleExperience() bool {
+	return uc == nil || uc.GameplayConfiguration == nil || uc.GameplayConfiguration.ShowBattleExperience
 }
 
 // GetShowCombatBattleFrame defaults to framed when a fixture has no settings.

@@ -578,8 +578,7 @@ func (g *GameState) finalizeCombatMonsterDeathWithPolicy(
 	if awardExperience {
 		// Return the snapshotted kill award only after deletion and post-death
 		// consequences have completed. ref:PROGRESS-0002
-		experienceAwarded = min(nominalExperience, max(0, MaxExperienceValue-int(attacker.Exp)))
-		attacker.Exp += uint16(experienceAwarded)
+		experienceAwarded = g.awardKillExperience(attacker, pcIdx, nominalExperience)
 	}
 
 	logging.Debugf(logging.CategoryGameState,

@@ -139,6 +139,9 @@ func (g *GameScene) wireSystemCallbacks() error {
 			g.activeEffectsOverlay.RegisterTransient(kind, g.gameState.ElapsedMs)
 		},
 		ShowSignDialog: g.ShowSignDialog,
+		ShowExperienceAward: func(award game_state.DeedExperienceAward) {
+			g.showExperienceAward(award, true)
+		},
 	}
 	combatCallbacks := game_state.NewCombatCallbacks(g.recordCombatEvent, g.recordCombatConclusion)
 

@@ -197,6 +197,7 @@ func (g *GameState) ProcessWordOfPower(word string) bool {
 	if g.journalDungeonIdentityKnown(dungeon) {
 		g.observeDungeonEntrance(dungeon, entrance, g.sampleDungeonObservation(), true)
 	}
+	g.lastDungeonOpenExperience = g.settleDeedExperience(false)
 
 	// Return true to trigger earthquake visual sequence
 	return true
@@ -206,6 +207,12 @@ func (g *GameState) ProcessWordOfPower(word string) bool {
 // Used by UI layer to determine earthquake message ("The entrance opens!" vs "The entrance seals!")
 func (g *GameState) WasLastDungeonToggleOpening() bool {
 	return g.lastDungeonToggleOpened
+}
+
+// LastDungeonOpenExperience returns the deed experience the last entrance
+// toggle paid, for the earthquake dialog. ref:PROGRESS-0004
+func (g *GameState) LastDungeonOpenExperience() DeedExperienceAward {
+	return g.lastDungeonOpenExperience
 }
 
 // GetAdjacentRuinedShrine finds an adjacent ruined shrine corresponding
