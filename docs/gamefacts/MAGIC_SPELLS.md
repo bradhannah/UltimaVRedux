@@ -313,6 +313,7 @@ bypass a living Shadowlord's absorption; frame-sensitive equivalence is not clai
 
 Redux keeps Crown competing with the five duration spells, but Badge and Amulet
 are independent. Applying a spell removes Crown; donning Crown clears the spell.
+Each replacement is named in the message log (QUEST-0003).
 Removal/expiry never resumes a replaced effect. This hybrid preserves independent
 artifact usability while retaining one competing combat-duration slot; native
 fields remain separate without legacy normalization. Redux also applies effective

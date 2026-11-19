@@ -43,6 +43,11 @@ func (gs *GameState) ToggleAmulet() bool {
 	return gs.toggleItem(&gs.AmuletState, ToggleItemAmulet)
 }
 
+// spellEndedByCrownMessage tells the player which duration spell the Crown ended.
+func spellEndedByCrownMessage(effect DurationEffectType) string {
+	return effect.DisplayName() + " ended!"
+}
+
 // ToggleCrown toggles the Crown of Lord British.
 func (gs *GameState) ToggleCrown() bool {
 	// REDUX DEVIATION: original item-use rules and original spell-effect rules
@@ -51,6 +56,12 @@ func (gs *GameState) ToggleCrown() bool {
 	// only Crown competes with duration spells, without resuming replaced effects.
 	// See ref:QUEST-0003.
 	if !gs.CrownState.IsActive {
+		// The original ends the spell silently; Redux names it, as it names the
+		// Crown when a spell displaces it. See CrownDisplacedMessage.
+		if gs.HasAnyDurationEffect() {
+			message := spellEndedByCrownMessage(gs.ActiveDurationEffect.EffectType)
+			gs.SystemCallbacks.UI.ShowActionFeedback(message, true)
+		}
 		gs.ClearDurationEffect()
 	}
 
