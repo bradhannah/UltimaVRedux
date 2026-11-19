@@ -78,6 +78,7 @@ type ConfigurationDialog struct {
 	displayManager           configurationDisplayManager
 	saveError                string
 	dismissed                bool
+	confirmingDeedExperience bool
 	releaseConfigurationEdit func()
 
 	// UI components
@@ -321,6 +322,16 @@ func (d *ConfigurationDialog) onOKClicked() {
 
 		return
 	}
+	if d.deedExperienceChanged() {
+		d.beginDeedExperienceConfirmation()
+
+		return
+	}
+	d.applyConfiguration()
+}
+
+// applyConfiguration saves what is staged, trying a display change first.
+func (d *ConfigurationDialog) applyConfiguration() {
 	if d.displayChangeNeedsConfirmation() {
 		d.beginDisplayApply()
 

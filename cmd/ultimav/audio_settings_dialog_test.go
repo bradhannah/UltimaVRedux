@@ -1139,6 +1139,62 @@ func TestConfigurationDialogNonWindowedRowsKeepAspectLockedAndDisableResizing(t 
 	assert.Equal(t, "2560 x 1440 pixels (Auto)", values[configurationDisplaySizeRow])
 }
 
+// Experience already paid for a deed is never topped up or taken back, so a
+// changed level is confirmed before anything is saved. ref:PROGRESS-0004
+func TestConfigurationDialogAsksBeforeApplyingADeedExperienceChange(t *testing.T) {
+	configuration, configPath := initializeDialogConfigFile(t, "deed_experience_confirm")
+	placement := gameScreenPercents
+	dismissed := 0
+	dialog := newConfigurationDialogForTab(&placement, newPresentationTestKeyboard(), func() { dismissed++ },
+		configuration, nil, audioSettingsGameplayTab)
+	for range gameplayDeedExperienceIndex {
+		pressAudioSettingsKey(dialog, ebiten.KeyDown)
+	}
+	pressAudioSettingsKey(dialog, ebiten.KeyRight)
+	pressAudioSettingsKey(dialog, ebiten.KeyTab)
+
+	pressAudioSettingsKey(dialog, ebiten.KeyEnter)
+	require.True(t, dialog.confirmingDeedExperience, "Apply from another section still asks")
+	assert.Equal(t, audioSettingsGameplayTab, dialog.currentTab)
+	assert.Equal(t, gameplayDeedExperienceIndex, dialog.focusedGameplayIndex)
+	assert.Equal(t, config.DeedExperienceLean, configuration.GameplayConfiguration.DeedExperience, "nothing is saved yet")
+	pressAudioSettingsKey(dialog, ebiten.KeyDown)
+	assert.Equal(t, gameplayDeedExperienceIndex, dialog.focusedGameplayIndex, "the question owns the keys")
+
+	for _, resolution := range config.SupportedWindowResolutions() {
+		dialog.ensureLayout(resolution.X, resolution.Y)
+		inset := max(1, dialog.layout.pixelUnit*audioSettingsCenterDivisor)
+		for level, wording := range map[int]string{
+			config.DeedExperienceFuller: "Deed Experience Now: Lean Change to: Fuller Permanent once paid. " +
+				"Deeds not yet paid, including any already done, are paid at Fuller. " +
+				"Deeds already paid do not change, now or later. Apply this change?",
+			config.DeedExperienceNone: "Deed Experience Now: Lean Change to: None Nothing is taken back. " +
+				"Deeds done from now on wait unpaid until this is turned on. Apply this change?",
+		} {
+			dialog.stagedGameplay.DeedExperience = level
+			dialog.prepareGameplayDetail()
+			assert.Equal(t, strings.Fields(wording), strings.Fields(dialog.detailOutput.GetOutputStr(false)))
+			assert.LessOrEqual(t,
+				int(math.Ceil(dialog.detailOutput.GetTotalHeightForLines(dialog.detailOutput.GetPanelContentLineCount()))),
+				dialog.layout.gameplayDetail.Dy()-inset*audioSettingsCenterDivisor,
+				"the question must fit at %dx%d", resolution.X, resolution.Y)
+		}
+	}
+	dialog.stagedGameplay.DeedExperience = config.DeedExperienceFuller
+
+	pressAudioSettingsKey(dialog, ebiten.KeyEscape)
+	assert.False(t, dialog.confirmingDeedExperience)
+	assert.Zero(t, dismissed, "Escape goes back to the settings")
+	assert.Equal(t, config.DeedExperienceFuller, dialog.stagedGameplay.DeedExperience, "and keeps what was chosen")
+
+	pressAudioSettingsKey(dialog, ebiten.KeyEnter)
+	pressAudioSettingsKey(dialog, ebiten.KeyEnter)
+	assert.Equal(t, 1, dismissed)
+	persisted, err := config.LoadUltimaVConfiguration(configPath, filepath.Dir(configPath))
+	require.NoError(t, err)
+	assert.Equal(t, config.DeedExperienceFuller, persisted.GameplayConfiguration.DeedExperience)
+}
+
 func pressAudioSettingsKey(dialog *ConfigurationDialog, key ebiten.Key) {
 	dialog.keyboard.SimulateKeyPress(key)
 	dialog.Update()

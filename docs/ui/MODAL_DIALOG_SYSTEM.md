@@ -296,7 +296,10 @@ off-by-default folk-tale option staging `Gameplay.Camping.AnkhWandererBonus`; se
 Experience** stage `Gameplay.Progression.DeedExperience` and
 `Gameplay.Progression.ShareKillExperience`; see
 [PROGRESS-0004](../gamefacts/CHARACTER_PROGRESSION.md#progress-0004) and
-[PROGRESS-0002](../gamefacts/CHARACTER_PROGRESSION.md#progress-0002). **Battle
+[PROGRESS-0002](../gamefacts/CHARACTER_PROGRESSION.md#progress-0002). Apply
+with a changed Deed Experience level first asks on that row, in whichever section
+it was pressed, because experience already paid is never topped up or taken back:
+Enter applies and Esc returns to the settings with the staged values kept. **Battle
 Experience** shows or hides experience in the Battle complete summary. The measured
 Gameplay rows use a clipped scrolling viewport that keeps the selected row
 visible and reserves top and bottom frame clearance plus a scrollbar gutter. Each checkbox or numeric

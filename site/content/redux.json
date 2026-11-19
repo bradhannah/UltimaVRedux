@@ -72,7 +72,7 @@
     {
       "label": "Deed Experience",
       "tag": "original",
-      "effect": "Pay the whole party experience for quest deeds, once each. The original pays for kills only. None: no deed experience. Lean: a steady reward along the quest. Fuller: double Lean. Deeds already done are paid when this is turned on. Default: Lean."
+      "effect": "Pay the whole party experience for quest deeds, once each. The original pays for kills only. None: no deed experience. Lean: a steady reward along the quest. Fuller: double Lean. Deeds already done are paid when this is turned on. Experience already paid is never topped up or taken back, so the game asks before applying a change. Default: Lean."
     },
     {
       "label": "Share Kill Experience",
