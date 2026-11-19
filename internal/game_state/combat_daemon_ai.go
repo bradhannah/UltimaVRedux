@@ -100,7 +100,7 @@ func (g *GameState) executeHostileMonsterSpecialMoveWithRNG(
 			if isCombatPositionValidForMonster(g, position, probe, -1) {
 				created := NewCombatMonster(references.MonsterDevil, daemonRef, position, rng)
 				created.summoned = true
-				if !g.CombatScene.hasFreeOriginalObjectSlot() {
+				if !g.CombatScene.hasActiveObjectSlot() {
 					// REDUX DEVIATION: Original combatant allocation consumes the DEX roll and leaves
 					// a partial combat queue entry when object slots is full. Redux preserves the RNG
 					// consumption but does not retain an unusable queue entry.

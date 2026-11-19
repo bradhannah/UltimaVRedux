@@ -113,7 +113,8 @@ const (
 	CombatSummonSucceeded CombatSummonOutcome = iota
 	// CombatSummonNoLegalPosition means all eight original placement attempts failed.
 	CombatSummonNoLegalPosition
-	// CombatSummonCapacityFull means the original combat monster slots are exhausted.
+	// CombatSummonCapacityFull means every combat slot is held by the living or by
+	// a field; remains and loot do not count. See ref:COMBAT-0001.
 	CombatSummonCapacityFull
 	// CombatSummonInvalidCaster means the requested daemon caster does not exist.
 	CombatSummonInvalidCaster

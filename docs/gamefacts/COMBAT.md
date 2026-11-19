@@ -35,10 +35,23 @@ update; restoring it conceals again without a discovery flag.
 Redux uses live map-only terrain, including overrides, for this concealment.
 Passive identity, HUD, and targeting assistance respect it; authoritative turns,
 manually selected attack/spell effects, and remembered aim (COMBAT-0004) remain
-available. Its shared-slot
+available. While any slot is empty its shared-slot
 capacity includes fields, loot, corpses, and combatants. Removing loot frees its
 object slot, not a retained dead combat source slot. Summoning capacity depends
 on available source/object slots, not historical manager length.
+
+**REDUX DEVIATION: COMBAT-0001:** The original keeps a dead monster's queue entry
+as the object for its corpse or chest, and shares its 32 object entries with loot,
+so remains can refuse a summon, gate, division, clone, or field in a fight with
+few living creatures. Redux counts only the living and active once a table is
+full: the lowest queue slot held only for a dead monster's remains is reused, and
+the lowest-slotted ground object yields its object slot to a new combatant or
+field. Nothing is removed. A yielded object keeps its position, contents, and
+identity, and keeps the lowest place in pile order that its slot already gave it.
+Ground objects never displace each other, and slot choice is unchanged while any
+slot is empty, so ordinary fights keep the original creation order. A summon that
+finds no legal square in its eight tries reports **Failed! No open ground.**;
+**No room to summon!** now means the fight is full of the living.
 
 **REDUX DEVIATION: COMBAT-0001:** To locate the acting party character on Arch,
 Redux adds only that exact current entry's hollow silhouette contour and existing

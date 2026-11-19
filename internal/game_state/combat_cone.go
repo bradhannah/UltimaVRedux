@@ -169,6 +169,12 @@ func (g *GameState) combatConeProjection() combatConeProjection {
 	for objectSlot := sourceCombatQueueSlots - 1; objectSlot >= 0; objectSlot-- {
 		g.projectCombatConeObjectSlot(&projection, encodeOriginalObjectSlot(objectSlot))
 	}
+	// Objects that yielded their slot rank below slot zero, so they project last.
+	for _, object := range g.CombatScene.objects {
+		if object.originalObjectSlot == 0 {
+			projection.projectObject(object.Position())
+		}
+	}
 
 	return projection
 }

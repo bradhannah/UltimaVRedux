@@ -413,7 +413,7 @@ func (g *GameState) isCombatSpellTargetValid(
 		return g.CombatScene.canReplaceCombatantWithMonster(target) &&
 			(target.IsPartyMember || (monster != nil && monster.IsActive() && !monster.IsDead()))
 	case references.InQuasXen:
-		return g.CombatScene.TurnQueue.hasFreeSourceSlot(0) && g.CombatScene.hasFreeOriginalObjectSlot() &&
+		return g.CombatScene.TurnQueue.hasFreeSourceSlot(0) && g.CombatScene.hasActiveObjectSlot() &&
 			(target.IsPartyMember || (monster != nil && monster.IsActive() && !monster.IsDead()))
 	default:
 		return false

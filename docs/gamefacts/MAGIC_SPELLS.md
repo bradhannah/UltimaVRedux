@@ -350,7 +350,8 @@ its separate 20-unit duration under CONSUME-0003.
 **Redux:** Known discrepancy
 
 Summon placement tries up to eight random coordinates, subject to terrain,
-occupancy, and free source/object slots. Kal Xen tests Rat terrain even when the
+occupancy, and free source/object slots (COMBAT-0001 defines which slots Redux
+treats as free). Kal Xen tests Rat terrain even when the
 chosen animal is another species; Daemon placement tests Daemon terrain. In Bet
 Xen puts up to four independently created insects on the one admitted square.
 Prepared Daemon binding draws only after successful placement; the scroll bypasses

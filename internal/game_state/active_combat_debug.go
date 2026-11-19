@@ -602,18 +602,26 @@ func assertDebugCombatMonsterPopulation(combat *CombatState) {
 	}
 }
 
-// Source combat queue slots and shared object slots have independent lifetimes. In
-// particular, a corpse can retain a dead source slot while flight releases it.
-// See ref:CMD-0001.
+// Source combat queue slots and shared object slots have independent lifetimes.
+// Only the living and active count: slots held for a dead monster's remains and
+// by objects on the ground are given up when a new combatant needs them.
+// See ref:CMD-0001 and ref:COMBAT-0001.
 func debugCombatReinforcementCapacity(combat *CombatState) int {
 	freeSourceSlots := 0
 	for slot := sourceMonsterSlotStart; slot < sourceCombatQueueSlots; slot++ {
-		if combat.TurnQueue.getRetainedEntryAtSourceSlot(slot) == nil {
+		entry := combat.TurnQueue.getRetainedEntryAtSourceSlot(slot)
+		if entry == nil || entry.holdsSlotOnlyForRemains() {
 			freeSourceSlots++
 		}
 	}
+	slottedObjects := 0
+	for _, object := range combat.objects {
+		if object.originalObjectSlot != 0 {
+			slottedObjects++
+		}
+	}
 
-	return min(freeSourceSlots, sourceCombatQueueSlots-combat.originalObjectSlotCount())
+	return min(freeSourceSlots, sourceCombatQueueSlots-combat.originalObjectSlotCount()+slottedObjects)
 }
 
 func (g *GameState) validateDebugCombatBoundary(encounterID CombatEncounterID) error {

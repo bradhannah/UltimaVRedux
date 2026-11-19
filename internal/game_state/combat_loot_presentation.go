@@ -81,7 +81,8 @@ func (s *CombatState) combatGroundDisplayAt(position references.Position) (index
 		if !isCombatCorpseMarker(object.Sprite()) {
 			return object.Sprite(), object.originalObjectSlot, false
 		}
-		if object.originalObjectSlot > fallbackSlot {
+		// A marker that yielded its slot ranks lowest but still shows when alone.
+		if object.originalObjectSlot > fallbackSlot || fallback == indexes.NoSprites {
 			fallback, fallbackSlot = object.Sprite(), object.originalObjectSlot
 		}
 	}

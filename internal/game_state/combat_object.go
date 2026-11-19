@@ -29,7 +29,9 @@ type CombatObject struct {
 	item           references.Item
 	quantity       uint16
 	searchable     bool
-	// originalObjectSlot is one-based; zero means the object has not been admitted.
+	// originalObjectSlot is one-based. Zero means the object holds no table slot:
+	// it is not yet admitted, or it yielded its slot (see claimActiveObjectSlot)
+	// and now orders below every slotted object.
 	originalObjectSlot uint8
 	chestAssessment    references.ChestAssessment
 }
@@ -287,12 +289,12 @@ func (combatState *CombatState) transferCombatantObjectTo(
 	return true
 }
 
+// replaceObjectInOriginalSlot admits a replacement where a removed object stood.
+// A replacement for an object that had yielded its slot holds none either.
 func (combatState *CombatState) replaceObjectInOriginalSlot(previous, replacement CombatObject) {
-	if previous.originalObjectSlot == 0 {
-		panic("replacement object has no original slot")
-	}
 	replacement.originalObjectSlot = previous.originalObjectSlot
-	if combatState.originalObjectSlotInUse(decodeOriginalObjectSlot(replacement.originalObjectSlot)) {
+	if replacement.originalObjectSlot != 0 &&
+		combatState.originalObjectSlotInUse(decodeOriginalObjectSlot(replacement.originalObjectSlot)) {
 		panic("replacement original object slot is still occupied")
 	}
 	combatState.insertObjectByOriginalSlot(replacement)
@@ -416,10 +418,44 @@ func (combatState *CombatState) ObjectCount() int {
 	return len(combatState.objects)
 }
 
-func (combatState *CombatState) hasFreeOriginalObjectSlot() bool {
-	_, found := combatState.firstFreeOriginalObjectSlot(0, 1)
+// hasActiveObjectSlot reports whether claimActiveObjectSlot would succeed.
+func (combatState *CombatState) hasActiveObjectSlot() bool {
+	if _, found := combatState.firstFreeOriginalObjectSlot(0, 1); found {
+		return true
+	}
+	for _, object := range combatState.objects {
+		if object.originalObjectSlot != 0 {
+			return true
+		}
+	}
 
-	return found
+	return false
+}
+
+// claimActiveObjectSlot returns an object-table slot for a living combatant or
+// a field: the lowest empty slot, as in the original.
+//
+// REDUX DEVIATION: COMBAT-0001: the original's 32 object entries are shared by
+// combatants, fields, corpses and loot, so remains can leave no room for anything
+// new. Redux counts only the living and active: once no slot is empty, the
+// lowest-slotted object on the ground yields its slot. It stays where it is,
+// keeps its lifetime, and keeps its place below every slotted object, which is
+// where the lowest slot already put it. Nothing changes while a slot is empty.
+func (combatState *CombatState) claimActiveObjectSlot() (uint8, bool) {
+	if slot, found := combatState.firstFreeOriginalObjectSlot(0, 1); found {
+		return encodeOriginalObjectSlot(slot), true
+	}
+	for index := range combatState.objects {
+		object := &combatState.objects[index]
+		if object.originalObjectSlot != 0 {
+			yielded := object.originalObjectSlot
+			object.originalObjectSlot = 0
+
+			return yielded, true
+		}
+	}
+
+	return 0, false
 }
 
 func (combatState *CombatState) originalObjectSlotCount() int {
@@ -438,11 +474,11 @@ func (combatState *CombatState) registerCombatantObject(identity CombatTurnIdent
 	if entry == nil || entry.originalObjectSlot != 0 {
 		return false
 	}
-	slot, found := combatState.firstFreeOriginalObjectSlot(0, 1)
+	slot, found := combatState.claimActiveObjectSlot()
 	if !found {
 		return false
 	}
-	entry.originalObjectSlot = encodeOriginalObjectSlot(slot)
+	entry.originalObjectSlot = slot
 
 	return true
 }

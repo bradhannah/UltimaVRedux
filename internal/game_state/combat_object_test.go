@@ -135,35 +135,64 @@ func TestCombatStateOnlyBlocksMovementForBlockingObjects(t *testing.T) {
 	assert.True(t, combatState.HasBlockingObjectAt(position))
 }
 
-func TestOriginalObjectCapacityReusesDeadEntryObjectSlot(t *testing.T) {
+// fillCombatObjectTableWithFields exhausts the object table with entries that
+// never yield their slot, unlike loot and corpses.
+func fillCombatObjectTableWithFields(t *testing.T, combat *CombatState, position references.Position) {
+	t.Helper()
+	for combat.hasActiveObjectSlot() {
+		require.True(t, combat.AddField(NewCombatField(CombatFieldFire, position)))
+	}
+}
+
+// REDUX DEVIATION: COMBAT-0001. Objects on the ground give up their table slot
+// to the living only once no slot is empty, lowest slot first, and stay put.
+func TestGroundObjectsYieldTheirSlotOnlyWhenTheTableIsFull(t *testing.T) {
 	queue := NewCombatTurnQueue()
 	queue.AddCombatant(newMockPC(15), 0)
-	queue.AddCombatant(newMockMonster(15), 0)
 	combatState := &CombatState{TurnQueue: queue}
 	require.True(t, combatState.registerCombatantObject(CombatTurnIdentity{IsPartyMember: true, EntityIndex: 0}))
-	require.True(t, combatState.registerCombatantObject(CombatTurnIdentity{EntityIndex: 0}))
-	for range sourceCombatQueueSlots - 2 {
-		require.True(t, combatState.AddObject(NewCombatLooseItem(
-			references.Position{X: 1, Y: 1}, references.Food, 1, indexes.ItemFood,
-		)))
+	corpseAt, lootAt := references.Position{X: 2, Y: 2}, references.Position{X: 1, Y: 1}
+	require.True(t, combatState.AddObject(NewCombatCorpse(corpseAt)))
+	for range sourceCombatQueueSlots - 3 {
+		require.True(t, combatState.AddObject(NewCombatLooseItem(lootAt, references.Food, 1, indexes.ItemFood)))
 	}
-	assert.False(t, combatState.hasFreeOriginalObjectSlot())
+	corpse := combatState.objects[0]
+	require.Equal(t, uint8(2), corpse.originalObjectSlot)
 
-	queue.markDeadIdentity(CombatTurnIdentity{EntityIndex: 0})
-	require.True(t, combatState.transferCombatantObjectTo(
-		CombatTurnIdentity{EntityIndex: 0},
-		NewCombatCorpse(references.Position{X: 2, Y: 2}),
-	))
-	assert.False(t, combatState.hasFreeOriginalObjectSlot(),
-		"a corpse retains its actor's original object slot")
-	_, found := combatState.takeObjectAt(references.Position{X: 2, Y: 2}, CombatObject.IsCorpse)
+	slot, found := combatState.claimActiveObjectSlot()
 	require.True(t, found)
+	assert.Equal(t, uint8(sourceCombatQueueSlots), slot, "an empty slot is taken before anything yields")
+	assert.Equal(t, uint8(2), combatState.objects[0].originalObjectSlot)
+	require.True(t, combatState.AddField(NewCombatField(CombatFieldFire, lootAt)))
+	require.Equal(t, sourceCombatQueueSlots, combatState.originalObjectSlotCount())
+	assert.False(t, combatState.AddObject(NewCombatCorpse(corpseAt)), "ground objects never displace each other")
 
-	assert.True(t, combatState.hasFreeOriginalObjectSlot(),
-		"removing the battlefield object frees only its object[] slot")
-	deadEntry := queue.GetEntryByIdentity(CombatTurnIdentity{EntityIndex: 0})
-	require.NotNil(t, deadEntry)
-	assert.False(t, deadEntry.sourceSlotReleased, "the dead combatq slot remains retained")
+	slot, found = combatState.claimActiveObjectSlot()
+	require.True(t, found)
+	assert.Equal(t, uint8(2), slot, "the lowest-slotted object yields first")
+	yielded := combatState.objects[0]
+	assert.Zero(t, yielded.originalObjectSlot)
+	assert.Equal(t, corpse.LifetimeID(), yielded.LifetimeID())
+	assert.Equal(t, corpseAt, yielded.Position())
+	assert.Equal(t, sourceCombatQueueSlots-2, combatState.ObjectCount())
+	sprite, _, isField := combatState.combatGroundDisplayAt(corpseAt)
+	assert.Equal(t, indexes.SpriteIndex(indexes.Splat), sprite, "a corpse without a slot still shows when alone")
+	assert.False(t, isField)
+
+	taken, found := combatState.takeObjectAt(corpseAt, CombatObject.IsCorpse)
+	require.True(t, found)
+	combatState.replaceObjectInOriginalSlot(taken, NewCombatLooseItem(corpseAt, references.Gold, 1, indexes.ItemMoney))
+	assert.Zero(t, combatState.objects[0].originalObjectSlot, "loot found on a slotless corpse holds no slot either")
+	assert.Equal(t, corpseAt, combatState.objects[0].Position())
+}
+
+func TestActiveObjectSlotsRunOutWhenNothingOnTheGroundCanYield(t *testing.T) {
+	combatState := &CombatState{TurnQueue: NewCombatTurnQueue()}
+	fillCombatObjectTableWithFields(t, combatState, references.Position{X: 1, Y: 1})
+
+	_, found := combatState.claimActiveObjectSlot()
+	assert.False(t, found)
+	assert.False(t, combatState.AddField(NewCombatField(CombatFieldSleep, references.Position{X: 2, Y: 2})))
 }
 
 func TestOriginalObjectSlotsAreIndependentFromQueueSlotsAndReuseAscending(t *testing.T) {
@@ -203,7 +232,7 @@ func TestCombatLootRejectsOnlyFreeSlotZero(t *testing.T) {
 	}
 	_, found := combat.takeFirstObjectAt(position, func(CombatObject) bool { return true })
 	require.True(t, found)
-	assert.True(t, combat.hasFreeOriginalObjectSlot())
+	assert.True(t, combat.hasActiveObjectSlot())
 	assert.False(t, combat.addLootObject(NewCombatLooseItem(position, references.Gold, 1, indexes.ItemMoney)),
 		"findempt returns zero as the additem failure sentinel")
 	assert.True(t, combat.AddObject(NewCombatLooseItem(position, references.Gold, 1, indexes.ItemMoney)),
@@ -222,11 +251,7 @@ func TestCombatFieldDirectContactResolvesWhenObjectPoolIsFull(t *testing.T) {
 		newFixedRNG(0),
 	)
 	combat.AddMonsterToQueue(monster)
-	for combat.hasFreeOriginalObjectSlot() {
-		require.True(t, combat.AddObject(NewCombatLooseItem(
-			references.Position{X: 1, Y: 1}, references.Food, 1, indexes.ItemFood,
-		)))
-	}
+	fillCombatObjectTableWithFields(t, combat, references.Position{X: 1, Y: 1})
 	callbacks := NewMockSystemCallbacks(t)
 	state := &GameState{
 		PartyState: *party, CombatScene: combat, SystemCallbacks: callbacks.ToSystemCallbacks(),

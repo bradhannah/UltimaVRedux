@@ -109,6 +109,16 @@ func (g *GameScene) thenUseCombatDaemonScroll(canCommit func() bool, didCommit *
 	}
 }
 
+// combatSummonFailureMessage keeps "no room" for a full fight. A summon that
+// found no legal square in its eight random tries says so instead.
+func combatSummonFailureMessage(outcome game_state.CombatSummonOutcome) string {
+	if outcome == game_state.CombatSummonNoLegalPosition {
+		return "Failed! No open ground."
+	}
+
+	return "No room to summon!"
+}
+
 func (g *GameScene) thenCombatSummon(spell references.Spell, casterIdx int, fromScroll bool) event_queue.Sequence {
 	timing := g.captureCombatTiming()
 	owner := g.gameState.CaptureCombatUseOwner()
@@ -143,7 +153,7 @@ func (g *GameScene) thenCombatSummon(spell references.Spell, casterIdx int, from
 			}
 			if result.Outcome != game_state.CombatSummonSucceeded {
 				g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundSpellFailure)
-				g.gameState.SystemCallbacks.UI.ShowActionFeedback("No room to summon!", true)
+				g.gameState.SystemCallbacks.UI.ShowActionFeedback(combatSummonFailureMessage(result.Outcome), true)
 
 				return
 			}

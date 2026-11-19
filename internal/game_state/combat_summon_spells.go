@@ -133,7 +133,7 @@ func (g *GameState) summonCombatMonsters(
 			break
 		}
 		monster := NewCombatMonster(monsterType, enemyRef, position, rng)
-		if !g.CombatScene.hasFreeOriginalObjectSlot() {
+		if !g.CombatScene.hasActiveObjectSlot() {
 			break
 		}
 		monster.SetLoyalty(loyalty)

@@ -240,7 +240,7 @@ func TestPopulateFixedDungeonRoomRejectsMalformedDataBeforeRNG(t *testing.T) {
 		combatMap.DungeonEntityTiles[0] = 2
 		combatMap.MonsterPositions[0] = references.Position{X: 1, Y: 1}
 		combat := NewCombatState(combatMap, CombatEntryNorth, &state.PartyState)
-		for combat.hasFreeOriginalObjectSlot() {
+		for combat.originalObjectSlotCount() < sourceCombatQueueSlots {
 			combat.AddObject(NewCombatLooseItem(
 				references.Position{X: 1, Y: 1}, references.Food, 1, indexes.ItemFood,
 			))
