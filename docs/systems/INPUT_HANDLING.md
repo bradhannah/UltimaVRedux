@@ -781,7 +781,7 @@ with no resource, command-time, or combat-action commitment. No function keys ar
 required.
 
 Cast awaits the reusable Mix sequence inside its own workflow. The underlying
-selector is suspended until Mix's receipt/trap steps and command completion
+selector is suspended until Mix's result-box/trap steps and command completion
 finish. On the surface, Mix pays one ordinary command cycle; a later cancelled
 Cast adds none. In a dungeon, the uncharged Cast token completes before Mix
 starts its normal precharged full cycle. Resuming Cast reserves a fresh deferred
@@ -794,8 +794,11 @@ Opening a spell finder, choosing a recipe and editing quantity never consumes
 resources. Enter in preparation transfers a typed request to `ExecuteMixing`,
 which validates quantity and current selected-reagent stocks before deduction.
 Incorrect recipes still spend the confirmed ingredients and resolve the normal
-trap sequence before returning. Workflow finalizers remove the exact owned Mix
-and receipt instances, including shutdown while a parent Cast remains mounted.
+trap sequence before returning. A plain success opened with `M` is acknowledged
+at once and the dialog returns to its own list, so nothing waits on a key; a
+shortcut mix and a newly learned recipe show a result box first. Workflow
+finalizers remove the exact owned Mix and result-box instances, including
+shutdown while a parent Cast remains mounted.
 
 ## Primary To Secondary Transition
 

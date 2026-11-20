@@ -156,21 +156,23 @@ func TestReagentMixingDialogResizePreservesWorkflowState(t *testing.T) {
 		reagents,
 	)
 	dialog.ChooseSpell(references.VasFlam, false)
-	dialog.selection = 1 << references.SulfurAsh
-	dialog.quantityBuffer = "3"
-	dialog.reagentListState.SetIndex(2)
+	dialog.tab, dialog.selection = mixTabExperiment, 1<<references.SulfurAsh
+	dialog.quantity, dialog.cursor = 3, 2
 	dialog.awaitingConfirmation = true
-	oldOutput := dialog.view.body
+	dialog.ensureLayout()
+	oldOutput, oldWindow := dialog.view.body, dialog.window.body
 
 	setResponsiveDialogTestResolution(t, 1920, 1080)
 	dialog.ensureLayout()
 
 	assert.Equal(t, references.VasFlam.ID(), dialog.spell.ID)
 	assert.Equal(t, uint16(1<<references.SulfurAsh), dialog.selection)
-	assert.Equal(t, "3", dialog.quantityBuffer)
-	assert.Equal(t, 2, dialog.reagentListState.GetCurrentIndex())
+	assert.Equal(t, mixTabExperiment, dialog.tab)
+	assert.Equal(t, 3, dialog.amount())
+	assert.Equal(t, 2, dialog.cursor)
 	assert.True(t, dialog.awaitingConfirmation)
 	assert.NotSame(t, oldOutput, dialog.view.body)
+	assert.NotEqual(t, oldWindow, dialog.window.body, "the quantity window is fitted again for the new size")
 }
 
 func TestReadyEquipmentDialogResizePreservesWorkflowState(t *testing.T) {

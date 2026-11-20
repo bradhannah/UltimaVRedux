@@ -2,9 +2,7 @@ package widgets
 
 import (
 	"fmt"
-	"image"
-	"strconv"
-	"strings"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -24,63 +22,84 @@ type ReagentInfo struct {
 	SpriteIndex int
 }
 
-// ReagentMixingDialog owns a finder and a preparation view. It never spends
-// inventory; only Enter in preparation emits an authoritative Mix request.
+// mixTab is one page of the quantity window.
+type mixTab int
+
+const (
+	// mixTabRecipe mixes the recorded recipe: one amount and the rows it changes.
+	mixTabRecipe mixTab = iota
+	// mixTabExperiment lists every ingredient with a tick box, for trying a mixture.
+	mixTabExperiment
+)
+
+// ReagentMixingDialog owns the spell list and the quantity window. It never
+// spends inventory; only Enter in the quantity window emits a Mix request.
 type ReagentMixingDialog struct {
 	navigation
-	keyboard             *input.Keyboard
-	browser              *spellBrowser
-	view                 spellPresentation
-	reagentInventory     []ReagentInfo
-	reagentListState     *ScrollableListState
-	preparing            bool
-	hasPreparation       bool
-	returnAfterMix       bool
-	spell                game_state.ZStatsSpell
-	selection            uint16
-	quantityBuffer       string
-	maxQuantity          int
-	notice               string
+	keyboard         *input.Keyboard
+	browser          *spellBrowser
+	view             spellPresentation
+	window           mixWindow
+	reagentInventory []ReagentInfo
+	preparing        bool
+	returnAfterMix   bool
+	spell            game_state.ZStatsSpell
+	tab              mixTab
+	selection        uint16 // The Experiment tab's ticked ingredients.
+	cursor           int    // The Experiment tab's highlighted ingredient.
+	quantity         int    // At least one, and no more than the ingredients allow.
+	typedDigits      int    // Digits typed in a row, so a second digit joins the first.
+	notice           string
+	// result reports the last mix on the list's header; resultLoss marks one
+	// that threw mixtures away.
+	result               string
+	resultLoss           bool
 	pendingMixRequest    *game_state.MixRequest
 	awaitingConfirmation bool
 	isDismissed          bool
 }
 
-// NewReagentMixingDialog opens the shared finder with detached knowledge and inventory.
+// NewReagentMixingDialog opens the spell list with detached knowledge and inventory.
 func NewReagentMixingDialog(keyboard *input.Keyboard,
 	catalog []game_state.ZStatsSpell, reagents []ReagentInfo,
 ) *ReagentMixingDialog {
 	if keyboard == nil {
 		panic("ReagentMixingDialog: keyboard required")
 	}
-	//nolint:exhaustruct_v5 // Preparation and intents start empty; ensureLayout initializes presentation.
-	d := &ReagentMixingDialog{keyboard: keyboard, browser: newSpellBrowser(catalog),
+	//nolint:exhaustruct_v5 // The quantity window and intents start empty; ensureLayout initializes presentation.
+	dialog := &ReagentMixingDialog{keyboard: keyboard, browser: newSpellBrowser(catalog),
 		navigation:       newNavigation(keyboard.IsKeyHeld),
-		reagentInventory: append([]ReagentInfo(nil), reagents...), reagentListState: NewScrollableListState(len(reagents), 1)}
-	d.ensureLayout()
+		reagentInventory: append([]ReagentInfo(nil), reagents...), quantity: 1}
+	// Mix writes every refusal and shortage in the red that reads on black.
+	dialog.view.warning = DialogWarningColor
+	browser := dialog.browser
+	browser.widenMixable = true
+	browser.initialsLabel, browser.initialsPrompt = "Spell", "type its initials, such as VF for Vas Flam"
+	// Open on what can be mixed now. With nothing mixable, an empty list would
+	// say less than every known spell and the reason beside each.
+	if slices.ContainsFunc(browser.catalog, spellMixable) {
+		browser.filterMode = spellFilterMixable
+		browser.filter()
+	}
+	dialog.ensureLayout()
 
-	return d
+	return dialog
 }
 
 func (d *ReagentMixingDialog) ensureLayout() {
 	width, height := display.GetManager().GetCurrentSize()
 	d.view.layout(width, height)
 	if d.preparing {
-		d.view.configureControls(d.controls(), false)
+		d.layoutWindow()
 	} else {
 		d.view.configureDetails(d.browser, d.controls(), 0, nil)
 	}
-	selected := d.reagentListState.GetCurrentIndex()
-	listHeight := d.view.listRect.Inset(d.view.padding).Dy() - d.view.lineHeight
-	visible := max(1, listHeight/spellRowHeight(d.view.row))
-	if visible != d.reagentListState.visibleSlots {
-		d.reagentListState = NewScrollableListState(len(d.reagentInventory), visible)
-		d.reagentListState.SetIndex(selected)
-	}
 }
 
-// ChooseSpell skips the finder when another spell screen supplied an identity.
+// ChooseSpell skips the list when another spell screen supplied an identity.
 func (d *ReagentMixingDialog) ChooseSpell(spell references.Spell, returnAfterMix bool) {
+	d.browser.filterMode = spellFilterAll
+	d.browser.filter()
 	d.browser.selectID(spell.ID())
 	selected := d.browser.current()
 	if selected == nil || selected.ID != spell.ID() {
@@ -90,22 +109,23 @@ func (d *ReagentMixingDialog) ChooseSpell(spell references.Spell, returnAfterMix
 	d.prepare(*selected)
 }
 
+// prepare opens the quantity window: on the recorded recipe when there is one,
+// otherwise on the experiment, which is then the only tab.
 func (d *ReagentMixingDialog) prepare(spell game_state.ZStatsSpell) {
 	d.Reset()
 	d.browser.navigation.Reset()
-	d.browser.page, d.browser.pages = 0, 1
-	if !d.hasPreparation || d.spell.ID != spell.ID || d.spell.Name != spell.Name {
-		d.spell = spell
-		d.selection = spell.RecipeMask
-		d.quantityBuffer = ""
-		d.reagentListState.SetIndex(0)
+	d.spell = spell
+	d.selection = spell.RecipeMask
+	d.tab = mixTabRecipe
+	if spell.RecipeMask == 0 {
+		d.tab = mixTabExperiment
 	}
-	d.preparing, d.hasPreparation = true, true
+	d.quantity, d.typedDigits, d.cursor = 1, 0, 0
+	d.preparing = true
 	d.notice = ""
-	d.maxQuantity = d.maximumForSelection()
 }
 
-// Update routes finder or preparation input and emits requests only on confirmation.
+// Update routes list or quantity-window input and emits requests only on confirmation.
 func (d *ReagentMixingDialog) Update() {
 	if d.isDismissed || d.awaitingConfirmation {
 		return
@@ -116,31 +136,21 @@ func (d *ReagentMixingDialog) Update() {
 
 		return
 	}
-	if d.handlePreparationControls() {
+	if d.handleWindowControls() || d.handleDigits() {
 		return
 	}
-	for digit := range 10 {
-		if d.keyboard.IsTextKeyPressedAndRegister(ebiten.Key0+ebiten.Key(digit)) ||
-			d.keyboard.IsTextKeyPressedAndRegister(ebiten.KeyNumpad0+ebiten.Key(digit)) {
-			d.handleQuantityInput(digit)
-
-			return
-		}
-	}
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter) || d.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter) {
-		if d.selection == 0 || d.maxQuantity == 0 || d.getEffectiveQuantity() > d.maxQuantity {
-			d.notice = "Select ingredients and a quantity within the maximum."
-
-			return
+		if d.amount() == 0 {
+			return // The top line already says why nothing can be mixed.
 		}
 		d.pendingMixRequest = &game_state.MixRequest{
-			Spell: references.Spell(d.spell.ID), ReagentMask: d.selection, Quantity: d.getEffectiveQuantity(),
+			Spell: references.Spell(d.spell.ID), ReagentMask: d.mask(), Quantity: d.amount(),
 		}
 		d.awaitingConfirmation = true
 
 		return
 	}
-	d.navigateIngredients()
+	d.navigateWindow()
 }
 
 func (d *ReagentMixingDialog) onDialogFocusChanged(focused bool) {
@@ -148,68 +158,65 @@ func (d *ReagentMixingDialog) onDialogFocusChanged(focused bool) {
 	d.browser.navigation.BlockUntilRelease(d.keyboard.IsKeyHeld)
 }
 
-func (d *ReagentMixingDialog) navigateIngredients() {
-	if key, _ := d.Poll(d.keyboard); key != nil {
-		navigateScrollableList(d.reagentListState, *key)
+// navigateWindow steps the amount with Left and Right on either tab, and moves
+// the Experiment tab's highlight with Up and Down.
+func (d *ReagentMixingDialog) navigateWindow() {
+	key, _ := d.Poll(d.keyboard, ebiten.KeyUp, ebiten.KeyDown, ebiten.KeyPageUp, ebiten.KeyPageDown,
+		ebiten.KeyLeft, ebiten.KeyRight)
+	if key == nil {
+		return
+	}
+	switch *key { //nolint:exhaustive // Poll returns only the keys named above.
+	case ebiten.KeyLeft:
+		d.setQuantity(d.quantity - 1)
+	case ebiten.KeyRight:
+		d.setQuantity(d.quantity + 1)
+	default:
+		if d.tab == mixTabExperiment {
+			const halfList = 2
+			last := max(0, len(d.reagentInventory)-1)
+			d.cursor = max(0, min(last, d.cursor+listNavigationDelta(*key, len(d.reagentInventory)/halfList)))
+		}
 	}
 }
 
-func (d *ReagentMixingDialog) handlePreparationControls() bool {
-	if d.keyboard.IsModifierPressed(input.ModifierCtrl) && d.keyboard.IsTextKeyPressedAndRegister(ebiten.KeyF) {
-		d.fillUsefulQuantity()
-
-		return true
-	}
-	if d.keyboard.IsModifierPressed(input.ModifierCtrl) && d.keyboard.IsTextKeyPressedAndRegister(ebiten.KeyB) {
-		d.preparing = false
-
-		return true
-	}
-	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
+func (d *ReagentMixingDialog) handleWindowControls() bool {
+	switch {
+	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape):
 		if d.returnAfterMix {
 			d.isDismissed = true
 		} else {
 			d.preparing = false
-			d.hasPreparation = false
 		}
-
-		return true
-	}
-	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyBackspace) || d.keyboard.IsKeyPressedAndRegister(ebiten.KeyDelete) {
-		d.quantityBuffer, d.notice = "", ""
-
-		return true
-	}
-	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace) {
+	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeyTab):
+		if d.spell.RecipeMask != 0 {
+			d.tab = d.otherTab()
+			d.maskChanged()
+		}
+	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeyBackspace), d.keyboard.IsKeyPressedAndRegister(ebiten.KeyDelete):
+		d.setQuantity(1)
+	case d.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace):
 		d.toggleReagent()
+	case !d.keyboard.IsModifierPressed(input.ModifierCtrl) && d.keyboard.IsTextKeyPressedAndRegister(ebiten.KeyM):
+		d.setMost()
+	default:
+		return false
+	}
 
-		return true
+	return true
+}
+
+func (d *ReagentMixingDialog) handleDigits() bool {
+	for digit := range 10 {
+		if d.keyboard.IsTextKeyPressedAndRegister(ebiten.Key0+ebiten.Key(digit)) ||
+			d.keyboard.IsTextKeyPressedAndRegister(ebiten.KeyNumpad0+ebiten.Key(digit)) {
+			d.handleQuantityInput(digit)
+
+			return true
+		}
 	}
 
 	return false
-}
-
-func (d *ReagentMixingDialog) fillUsefulQuantity() {
-	if d.spell.FormulaState != string(game_state.SpellFormulaConfirmed) || d.spell.RecipeMask == 0 ||
-		d.selection != d.spell.RecipeMask {
-		d.notice = "Select the confirmed recipe before using maximum that fits."
-
-		return
-	}
-	room := max(0, spellInventoryLimit-int(d.spell.Prepared))
-	if room == 0 {
-		d.notice = "No room in prepared stock."
-
-		return
-	}
-	quantity := min(d.maximumForSelection(), room)
-	if quantity == 0 {
-		d.notice = "Missing ingredients for this recipe."
-
-		return
-	}
-	d.quantityBuffer = strconv.Itoa(quantity)
-	d.notice = "Quantity set to maximum that fits; Enter mixes."
 }
 
 func (d *ReagentMixingDialog) updateFinder() {
@@ -233,92 +240,143 @@ func (d *ReagentMixingDialog) updateFinder() {
 
 		return
 	}
+	asked := d.listRequest()
 	if d.browser.handleInput(d.keyboard, d.view.font) {
+		// The last mix keeps its line and its row only until the list is asked
+		// for something else: new letters, a search or another filter.
+		if d.result != "" && d.listRequest() != asked {
+			d.result, d.browser.keepID = "", -1
+			d.browser.refilter()
+		}
+
 		return
 	}
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
-		if d.hasPreparation {
-			d.preparing = true
-		} else {
-			d.isDismissed = true
-		}
+		d.isDismissed = true
 	}
 }
 
+// mixListRequest is what the player has asked the list to show.
+type mixListRequest struct {
+	syllables, query string
+	searching        bool
+	filter           spellBrowserFilter
+}
+
+func (d *ReagentMixingDialog) listRequest() mixListRequest {
+	return mixListRequest{syllables: d.browser.syllables, query: d.browser.query,
+		searching: d.browser.searching, filter: d.browser.filterMode}
+}
+
+// toggleReagent ticks or clears the highlighted ingredient on the Experiment
+// tab. An ingredient the party carries none of cannot be added.
 func (d *ReagentMixingDialog) toggleReagent() {
-	index := d.reagentListState.GetCurrentIndex()
-	if index >= len(d.reagentInventory) {
+	if d.tab != mixTabExperiment || d.cursor >= len(d.reagentInventory) {
 		return
 	}
-	reagent := d.reagentInventory[index]
+	reagent := d.reagentInventory[d.cursor]
 	bit := uint16(1) << uint(reagent.Reagent)
 	if reagent.Quantity == 0 && d.selection&bit == 0 {
 		return
 	}
 	d.selection ^= bit
-	d.maxQuantity = d.maximumForSelection()
-	d.notice = ""
+	d.maskChanged()
 }
 
-func (d *ReagentMixingDialog) maximumForSelection() int {
-	if d.selection == 0 {
+// mask is the mixture Enter would request: the recorded recipe on the Recipe
+// tab, the ticked ingredients on the Experiment tab.
+func (d *ReagentMixingDialog) mask() uint16 {
+	if d.tab == mixTabRecipe {
+		return d.spell.RecipeMask
+	}
+
+	return d.selection
+}
+
+// maskChanged keeps the amount within what the new mixture allows.
+func (d *ReagentMixingDialog) maskChanged() {
+	d.notice, d.typedDigits = "", 0
+	if maximum := d.maximum(); maximum > 0 {
+		d.quantity = min(d.quantity, maximum)
+	}
+}
+
+// maximum is how many mixtures the carried ingredients allow, whether or not
+// the prepared stock has room for them.
+func (d *ReagentMixingDialog) maximum() int {
+	mask := d.mask()
+	if mask == 0 {
 		return 0
 	}
-	maximum, found := 99, uint16(0)
+	maximum, found := spellInventoryLimit, uint16(0)
 	for _, reagent := range d.reagentInventory {
 		bit := uint16(1) << uint(reagent.Reagent)
-		if d.selection&bit != 0 {
+		if mask&bit != 0 {
 			maximum = min(maximum, reagent.Quantity)
 			found |= bit
 		}
 	}
-	if found != d.selection {
+	if found != mask {
 		return 0
 	}
 
 	return max(0, maximum)
 }
 
+// room is how many more of the spell the prepared stock can hold.
+func (d *ReagentMixingDialog) room() int {
+	return max(0, spellInventoryLimit-int(d.spell.Prepared))
+}
+
+// amount is how many mixtures Enter would request; zero when none can be mixed.
+func (d *ReagentMixingDialog) amount() int {
+	if d.maximum() == 0 {
+		return 0
+	}
+
+	return d.quantity
+}
+
+func (d *ReagentMixingDialog) setQuantity(quantity int) {
+	if maximum := d.maximum(); maximum > 0 {
+		d.quantity = max(1, min(maximum, quantity))
+		d.notice, d.typedDigits = "", 0
+	}
+}
+
+// setMost sets the largest amount that the ingredients allow and the prepared
+// stock can hold. With no room at all the amount stays; the top line says why.
+func (d *ReagentMixingDialog) setMost() {
+	if most := min(d.maximum(), d.room()); most > 0 {
+		d.setQuantity(most)
+	}
+}
+
 func (d *ReagentMixingDialog) handleQuantityInput(digit int) {
-	if d.maxQuantity == 0 {
+	maximum := d.maximum()
+	if maximum == 0 {
 		return
 	}
-	buffer := d.quantityBuffer
-	if d.maxQuantity <= 9 || len(buffer) >= 2 {
-		buffer = ""
+	const (
+		singleDigitMaximum = 9
+		decimal            = 10
+	)
+	candidate, typed := digit, 1
+	if maximum > singleDigitMaximum && d.typedDigits == 1 {
+		candidate, typed = d.quantity*decimal+digit, typed+1
 	}
-	if buffer == "" && digit == 0 {
+	if candidate == 0 {
 		return
 	}
-	candidate := buffer + strconv.Itoa(digit)
-	quantity, err := strconv.Atoi(candidate)
-	if err != nil {
-		panic("Mix: nonnumeric quantity")
-	}
-	if quantity > d.maxQuantity {
-		d.notice = fmt.Sprintf("Maximum is %d; digit not accepted.", d.maxQuantity)
+	if candidate > maximum {
+		d.notice = fmt.Sprintf("Maximum is %d; digit not accepted.", maximum)
 
 		return
 	}
 	// REDUX DEVIATION: Original mixing reads two digits and zero cancels; ref:MIX-0002.
 	// Redux defaults to one and replaces single-digit quantities when max < 10,
 	// making editing explicit; Escape remains the cancellation key.
-	d.quantityBuffer, d.notice = candidate, ""
-}
-
-func (d *ReagentMixingDialog) getEffectiveQuantity() int {
-	if d.maxQuantity == 0 {
-		return 0
-	}
-	if d.quantityBuffer == "" {
-		return 1
-	}
-	quantity, err := strconv.Atoi(d.quantityBuffer)
-	if err != nil {
-		panic("Mix: invalid quantity buffer")
-	}
-
-	return quantity
+	d.quantity, d.typedDigits, d.notice = candidate, typed, ""
 }
 
 // Draw uses the same readable typography and catalog as Cast and Z-stats.
@@ -327,148 +385,30 @@ func (d *ReagentMixingDialog) Draw(screen *ebiten.Image) {
 		return
 	}
 	d.ensureLayout()
+	if d.preparing {
+		d.drawWindow(screen)
+
+		return
+	}
 	view := &d.view
 	view.drawFrame(screen)
 	header := view.headerRect.Inset(view.padding)
 	prepareSpellOutput(view.title, header)
 	view.title.AppendLine().Text("MIX REAGENTS", DialogHeaderColor).Done()
-	if d.preparing {
-		label := FitDialogLine(d.spell.Name+" - "+d.spell.EffectLabel, view.title.Font, header.Dx())
-		view.title.AppendLine().Text(label, DialogValueColor).Done()
+	switch {
+	case d.result == "":
+		view.title.AppendLine().Text("Choose a spell to mix", DialogControlHintColor).Done()
+	case d.resultLoss:
+		view.title.AppendLine().Text(d.result, DialogWarningColor).Done()
+	default:
+		view.title.AppendLine().Text(d.result, DialogStatusOKColor).Done()
 	}
 	drawSpellOutput(screen, view.title, header, 0, spellBrowserRowLines)
-	if !d.preparing {
-		view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
-		view.drawList(screen, d.browser, view.listRect.Inset(view.padding), spellMixable)
-		view.drawDetails(screen, d.browser)
-		view.drawFooter(screen)
-	} else {
-		d.drawPreparation(screen)
-	}
-	view.finishFrame(screen)
-}
-
-func (d *ReagentMixingDialog) drawPreparation(screen *ebiten.Image) {
-	view := &d.view
-	status := view.searchRect.Inset(view.padding)
-	prepareSpellOutput(view.search, status)
-	view.search.AppendLine().Text(d.preparationStatus(), DialogLabelColor).WordWrap().Done()
-	line := AppendControlHints(view.search.AppendLine(), "[0-9] Type quantity")
-	line.Text("; then ", DialogControlHintColor)
-	AppendControlHints(line, fmt.Sprintf("[Enter] Mix %d", d.getEffectiveQuantity())).Done()
-	drawSpellOutput(screen, view.search, status, 0, view.search.GetPanelContentLineCount())
-	d.drawIngredients(screen)
-	rect := view.detailRect.Inset(view.padding)
-	prepareSpellOutput(view.heading, rect)
-	quantity := d.getEffectiveQuantity()
-	appendSpellField(view.heading.AppendLine(), "Quantity", fmt.Sprintf("[%d_]", quantity)).Done()
-	appendSpellField(view.heading.AppendLine(), "Prepared",
-		fmt.Sprintf("%d / %d", d.spell.Prepared, spellInventoryLimit)).Done()
-	drawSpellOutput(screen, view.heading, rect, 0, spellBrowserRowLines)
-	rect.Min.Y += view.lineHeight * spellBrowserRowLines
-	prepareSpellOutput(view.body, rect)
-	d.populatePreparation()
-	capacity := max(1, view.body.GetLineCapacity(rect.Dy()))
-	d.browser.pages = max(1, (view.body.GetPanelContentLineCount()+capacity-1)/capacity)
-	d.browser.page = min(d.browser.page, d.browser.pages-1)
-	drawSpellOutput(screen, view.body, rect, d.browser.page*capacity, capacity)
+	view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
+	view.drawList(screen, d.browser, view.listRect.Inset(view.padding), spellMixable)
+	view.drawDetails(screen, d.browser)
 	view.drawFooter(screen)
-}
-
-func (d *ReagentMixingDialog) preparationStatus() string {
-	if d.notice != "" {
-		return d.notice
-	}
-	if d.selection == 0 {
-		return "Choose ingredients."
-	}
-	if d.maxQuantity == 0 {
-		return "Missing ingredients; cannot mix this selection."
-	}
-	if d.getEffectiveQuantity() > d.maxQuantity {
-		return "Quantity exceeds available ingredients."
-	}
-	if d.spell.RecipeMask != 0 && d.selection == d.spell.RecipeMask {
-		return "Ready to mix."
-	}
-
-	return "Untested mixture"
-}
-
-func (d *ReagentMixingDialog) drawIngredients(screen *ebiten.Image) {
-	view := &d.view
-	list := view.listRect.Inset(view.padding)
-	prepareSpellOutput(view.heading, list)
-	view.heading.AppendLine().Text("INGREDIENTS", DialogHeaderColor).Done()
-	drawSpellOutput(screen, view.heading, list, 0, 1)
-	list.Min.Y += view.lineHeight
-	start, end := d.reagentListState.GetVisibleRange()
-	rowHeight := spellRowHeight(view.row)
-	for index := start; index < end; index++ {
-		reagent := d.reagentInventory[index]
-		top := list.Min.Y + (index-start)*rowHeight
-		row := image.Rect(list.Min.X, top, list.Max.X-view.scrollGutter(), min(list.Max.Y, top+rowHeight))
-		d.drawIngredientRow(screen, row, reagent, index == d.reagentListState.GetCurrentIndex())
-	}
-	drawMasterDetailScrollIndicators(screen, list, start, end, len(d.reagentInventory), rowHeight,
-		view.scrollGutter(), view.font, view.indicator)
-}
-
-func (d *ReagentMixingDialog) drawIngredientRow(screen *ebiten.Image, rect image.Rectangle,
-	reagent ReagentInfo, selected bool,
-) {
-	output := d.view.row
-	nameColor, _ := spellRowColours(selected, reagent.Quantity > 0)
-	if selected {
-		fillSelectedRow(screen, rect)
-	}
-	rect = spellRowContentRect(output, rect)
-	prepareSpellOutput(output, rect)
-	checked := d.selection&(1<<uint(reagent.Reagent)) != 0
-	markWidth, _ := output.Font.MeasureString("[X] ")
-	line := appendReagentMark(output.AppendLine(), checked, selected)
-	line.Text(FitDialogLine(reagent.Name, output.Font, rect.Dx()-int(markWidth)), nameColor).Done()
-	labelColor, valueColor := DialogLabelColor, DialogValueColor
-	if selected {
-		labelColor, valueColor = DialogSelectedLabelColor, DialogSelectedText
-	}
-	// Spaces as wide as the "[X] " mark put Have: under the reagent name.
-	output.AppendLine().Text("    Have: ", labelColor).Text(strconv.Itoa(reagent.Quantity), valueColor).Done()
-	drawSpellOutput(screen, output, rect, 0, spellBrowserRowLines)
-}
-
-func (d *ReagentMixingDialog) populatePreparation() {
-	output := d.view.body
-	appendSpellField(output.AppendLine(), "Ingredients allow", strconv.Itoa(d.maxQuantity)).Done()
-	if d.spell.FormulaState == string(game_state.SpellFormulaConfirmed) {
-		room := max(0, spellInventoryLimit-int(d.spell.Prepared))
-		appendSpellField(output.AppendLine(), "Room in stock", strconv.Itoa(room)).Done()
-	}
-	quantity := d.getEffectiveQuantity()
-	if d.spell.RecipeMask != 0 && d.selection == d.spell.RecipeMask {
-		stock := min(spellInventoryLimit, int(d.spell.Prepared)+quantity)
-		appendSpellField(output.AppendLine(), "After mixing", strconv.Itoa(stock)).Done()
-		if excess := int(d.spell.Prepared) + quantity - stock; excess > 0 {
-			output.AppendLine().Textf("%d excess discarded; full reagent cost.",
-				DialogStatusWarningColor, excess).WordWrap().Done()
-		}
-	} else {
-		output.AppendLine().Text("Untested: ingredients may be wasted and cause injury.",
-			DialogStatusWarningColor).WordWrap().Done()
-	}
-	output.AppendLine().Text("INGREDIENT COST", DialogHeaderColor).Done()
-	for _, reagent := range d.reagentInventory {
-		if d.selection&(1<<uint(reagent.Reagent)) != 0 {
-			line := appendSpellField(output.AppendLine(), reagent.Name, strconv.Itoa(quantity))
-			line.Text(" / ", DialogValueColor)
-			appendSpellField(line, "Remaining", strconv.Itoa(max(0, reagent.Quantity-quantity))).WordWrap().Done()
-		}
-	}
-	if len(d.spell.ReagentCandidates) > 0 {
-		for _, candidate := range d.spell.ReagentCandidates {
-			appendSpellWarningField(output.AppendLine(), "Untested formula", strings.Join(candidate, " + ")).WordWrap().Done()
-		}
-	}
+	view.finishFrame(screen)
 }
 
 // IsDismissed implements Widget.
@@ -485,25 +425,61 @@ func (d *ReagentMixingDialog) ConsumePendingMixRequest() game_state.MixRequest {
 	return request
 }
 
+// NeedsResultBox reports whether the owner must show a successful mix in its
+// own box. A plain success needs none: the dialog returns to its list and
+// reports the mix on the header. Two cases keep the box: a mix opened for one
+// spell from Cast or Z-stats, which closes with no Mix list to return to, and a
+// mixture that had no recorded recipe, so the player has just learned one.
+func (d *ReagentMixingDialog) NeedsResultBox() bool {
+	return d.returnAfterMix || d.spell.RecipeMask == 0
+}
+
 // Acknowledge refreshes detached inventory once, after the authoritative result.
+// A success returns to the list with the result on its header, the typed
+// letters cleared and the mixed spell kept in view even when it can no longer
+// be mixed.
 func (d *ReagentMixingDialog) Acknowledge(outcome game_state.MixOutcome,
 	catalog []game_state.ZStatsSpell, reagents []ReagentInfo,
 ) {
 	d.awaitingConfirmation = false
-	d.browser.refresh(catalog)
-	d.reagentInventory = append(d.reagentInventory[:0], reagents...)
-	d.maxQuantity = d.maximumForSelection()
-	if !outcome.Success {
-		d.isDismissed = outcome.TrapResult != nil
-		d.notice = outcome.Message
-
-		return
+	// Both before the refresh, which lists by what is typed and what is kept.
+	switch {
+	case !outcome.Success:
+		// An earlier success no longer describes the stock.
+		d.result, d.browser.keepID = "", -1
+	case !d.returnAfterMix:
+		d.preparing = false
+		d.result, d.resultLoss = mixResultLine(outcome)
+		d.browser.clearTyped()
+		d.browser.keepID = d.spell.ID
 	}
-	if d.returnAfterMix {
+	d.browser.refresh(catalog)
+	d.browser.selectID(d.spell.ID)
+	d.reagentInventory = append(d.reagentInventory[:0], reagents...)
+	switch {
+	case !outcome.Success:
+		d.isDismissed = outcome.TrapResult != nil
+		d.maskChanged()
+		d.notice = outcome.Message
+	case d.returnAfterMix:
 		d.isDismissed = true
-	} else {
-		d.preparing, d.hasPreparation = false, false
-		d.quantityBuffer = ""
-		d.browser.selectID(d.spell.ID)
+	}
+}
+
+// mixResultLine says what a successful mix added, and whether any of it was
+// lost to the prepared-stock limit.
+// REDUX DEVIATION: MIX-0004: original success feedback is brief. Redux states
+// the charges added, the stock and any loss to the 99 limit, so a capped mix is
+// never silent.
+func mixResultLine(outcome game_state.MixOutcome) (string, bool) {
+	switch {
+	case outcome.Added >= outcome.Quantity:
+		return fmt.Sprintf("Mixed %d %s. You now have %d.", outcome.Added, outcome.SpellName, outcome.Stock), false
+	case outcome.Added == 0:
+		return fmt.Sprintf("No room for %d %s. You still have %d.",
+			outcome.Quantity, outcome.SpellName, outcome.Stock), true
+	default:
+		return fmt.Sprintf("Only %d of %d %s fit. You now have %d.",
+			outcome.Added, outcome.Quantity, outcome.SpellName, outcome.Stock), true
 	}
 }

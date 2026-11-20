@@ -48,7 +48,9 @@ func TestMixFailureWorkflowShowsActualTrapWithoutFizzle(t *testing.T) {
 	}
 	pressDungeonInputKey(t, scene, ebiten.KeyM)
 	waitForDungeonInputDialog(t, scene, state)
-	for _, key := range []ebiten.Key{ebiten.KeyA, ebiten.KeyN, ebiten.KeyEnter, ebiten.KeySpace, ebiten.Key1, ebiten.KeyEnter} {
+	// An Nox, then the Experiment tab, where Sulfurous Ash is added to spoil the recipe.
+	for _, key := range []ebiten.Key{ebiten.KeyA, ebiten.KeyN, ebiten.KeyEnter, ebiten.KeyTab, ebiten.KeySpace,
+		ebiten.Key1, ebiten.KeyEnter} {
 		pressDungeonInputKey(t, scene, key)
 	}
 	drainDungeonInputWorkflowThroughUpdate(t, scene, state, "reagent_mixing_workflow")

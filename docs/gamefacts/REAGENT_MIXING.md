@@ -189,22 +189,41 @@ persisted knowledge source/date rather than storing duplicate discovery events.
 
 The spell finder accepts canonical syllable initials and name/effect search, with
 All known, Prepared, and Mixable filters. Mixable requires a confirmed formula,
-sufficient ingredients, and room for another charge. Manual mixing still permits
-the full-cost cap behavior. Exact abbreviations precede longer prefixes: In Zu
-wins over In Zu Grav. Ctrl+M from Cast or Z-stats opens preparation for the selected
-spell; Ctrl+B returns to browsing.
+sufficient ingredients, and room for another charge. Mix opens on Mixable when
+anything can be mixed and on All known otherwise. Mixable is a convenience, not a
+wall: initials or search words that match no mixable spell widen the list to All
+known, where the spell's row and details say why it cannot be mixed. Manual
+mixing still permits the full-cost cap behavior. Exact abbreviations precede
+longer prefixes: In Zu wins over In Zu Grav. Ctrl+M from Cast or Z-stats opens
+preparation for the selected spell; Escape returns.
+
+Preparation has two tabs, changed with Tab. Recipe mixes the recorded recipe and
+lists only its ingredients, which cannot be changed there. Experiment lists all
+eight ingredients with tick boxes, the recorded recipe ticked to begin with, and
+is the only place a different mixture can be chosen; a spell with no recorded
+recipe has the Experiment tab alone. A top line states, before commitment,
+whether the mixture is ready, untested, short of a named ingredient, or would
+lose charges to the 99 cap. It informs and never blocks: untested and wasteful
+mixes stay allowed at full cost.
 
 Preparation defaults to one and Escape cancels, replacing the original zero-to-
-cancel quantity prompt. For maxima 1–9 a valid digit replaces the quantity;
+cancel quantity prompt. Left and Right step the quantity within what the
+ingredients allow. M sets the largest quantity that the ingredients allow and the
+prepared stock can hold. For maxima 1–9 a valid digit replaces the quantity;
 otherwise two digits are accepted and a third starts a new number. Over-limit
 digits are rejected, not clamped. Backspace/Delete reset to one without modifying
 spell syllables; a zero maximum prevents commitment. These are input conveniences,
 not discounts for incorrect recipes.
 
-Successful feedback retains the success indication and adds a receipt containing
-spell, actual charges added, final stock, and discarded excess; one success sound
-follows creation. Failure presents the actual trap without an extra fizzle prefix.
-No-stock entry is reported before opening preparation.
+Successful feedback states the spell, the actual charges added, the final stock
+and any charges lost to the cap; one success sound follows creation. From Mix's
+own list it is one line on the list's header as the list returns: the typed
+initials are cleared, and the mixed spell keeps its row, even if it can no longer
+be mixed, until the list is next typed into or filtered. A mix opened from Cast or
+Z-stats, which has no Mix list to return to, and a mixture that had no recorded
+recipe report the same facts in a box that is dismissed. Failure presents the
+actual trap without an extra fizzle prefix. No-stock entry is reported before
+opening preparation.
 
-**Implementation:** `internal/game_state/action_mix.go`, `internal/game_state/magic_state.go`, `internal/ui/widgets/reagent_mixing_dialog.go`, `internal/ui/widgets/spell_browser.go`
+**Implementation:** `internal/game_state/action_mix.go`, `internal/game_state/magic_state.go`, `internal/ui/widgets/reagent_mixing_dialog.go`, `internal/ui/widgets/reagent_mixing_window.go`, `internal/ui/widgets/spell_browser.go`
 **Tests:** `internal/ui/widgets/reagent_mixing_dialog_test.go`, `internal/game_state/taught_spell_discovery_test.go`

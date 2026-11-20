@@ -23,7 +23,7 @@ func TestSpellDetailPagingUsesRealContentInBothDialogs(t *testing.T) {
 				keyboard := newWidgetTestKeyboard(0)
 				catalog := testMixCatalog()[:2]
 				catalog[0].Description = "Light."
-				catalog[0].CanMix = 2
+				catalog[0].CanMix, catalog[1].CanMix = 2, 2 // Both are on the list Mix opens on.
 				catalog[1].Description = "First page.\n"
 				for index := range 20 {
 					catalog[1].Description += fmt.Sprintf("Detail %02d: %s\n", index,
@@ -147,7 +147,9 @@ func assertSpellDetailPagePixels(t *testing.T, view *spellPresentation, browser 
 	expected.Dispose()
 }
 
-func TestMixPagingPreparationTransitionRetainsSpaceToggle(t *testing.T) {
+// Space pages a long description in the list and ticks an ingredient on the
+// Experiment tab; neither meaning leaks into the other screen.
+func TestMixSpacePagesTheListAndTicksInTheExperiment(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 1280, 720)
 	keyboard := newWidgetTestKeyboard(0)
 	catalog := testMixCatalog()
@@ -162,8 +164,8 @@ func TestMixPagingPreparationTransitionRetainsSpaceToggle(t *testing.T) {
 	require.Equal(t, 1, dialog.browser.page)
 	press(ebiten.KeyEnter)
 	require.True(t, dialog.preparing)
-	require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Space] Toggle")
-	require.NotContains(t, dialog.view.footer.GetOutputStr(false), "Next detail page")
+	press(ebiten.KeyTab)
+	require.Equal(t, mixTabExperiment, dialog.tab)
 	selection := dialog.selection
 	press(ebiten.KeySpace)
 	require.NotEqual(t, selection, dialog.selection)

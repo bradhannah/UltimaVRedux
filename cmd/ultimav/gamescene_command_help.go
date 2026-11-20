@@ -72,7 +72,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: "J", Purpose: "Jimmy a lock", NextInput: direction + " Choose a character when asked."},
 		{Key: "K", Purpose: "Klimb", NextInput: "Use a ladder or climbable terrain; choose direction when asked."},
 		{Key: "L", Purpose: "Look", NextInput: direction},
-		{Key: "M", Purpose: "Mix reagents", NextInput: "Choose a spell, then ingredients and quantity. Ctrl+F sets the maximum that fits for a confirmed recipe; Enter in preparation mixes."},
+		{Key: "M", Purpose: "Mix reagents", NextInput: "Choose a spell, then how many: Left/Right or digits set the amount, M the most that fits, Enter mixes. Tab opens Experiment to try other ingredients."},
 		{Key: "N", Purpose: "New party order", NextInput: "Select members to exchange; Avatar remains first."},
 		{Key: "O", Purpose: "Open", NextInput: direction},
 		{Key: "P", Purpose: "Push", NextInput: direction},

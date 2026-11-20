@@ -90,7 +90,8 @@ func TestCastGuidanceUsesResolvedTargetAndScope(t *testing.T) {
 			catalog := testMixCatalog()
 			entry := &catalog[test.spell]
 			profile := references.GetSpellTargetingProfile(test.spell, test.context)
-			entry.Targeting, entry.Scope = profile.Selection.PlayerLabel(), profile.Scope
+			entry.Targeting, entry.Scope = references.SpellTargetLabel(test.spell, test.context), profile.Scope
+			entry.Unaimed = profile.Selection == references.TargetAutomatic
 			entry.Contexts = references.GetSpellInfo(test.spell).Context.PlayerLabel()
 			dialog := NewSpellCastingDialog(newWidgetTestKeyboard(-1), &state.PartyState, test.context, catalog, state.ValidateSpellTargetingPrerequisites)
 			dialog.browser.selectID(test.spell.ID())
@@ -98,8 +99,13 @@ func TestCastGuidanceUsesResolvedTargetAndScope(t *testing.T) {
 			content := strings.Join(strings.Fields(dialog.view.body.GetOutputStr(true)), " ")
 			require.Contains(t, content, "Circle:")
 			require.Contains(t, content, "MP cost:")
-			require.Contains(t, content, test.choice.PlayerLabel())
-			require.Contains(t, content, spellScopeLabel(test.scope))
+			require.Contains(t, content, "Target: "+entry.Targeting)
+			if entry.Unaimed {
+				require.NotContains(t, content, "Affects:", "the Target line already says what an unaimed spell falls on")
+			} else {
+				require.Contains(t, content, "Target: "+test.choice.PlayerLabel())
+				require.Contains(t, content, "Affects: "+spellScopeLabel(test.scope))
+			}
 			require.Contains(t, content, strings.Join(strings.Fields(entry.Description), " "))
 			require.Contains(t, content, "Where: "+entry.Contexts)
 			require.Positive(t, dialog.browser.pages, "overflow is accessible through detail paging")

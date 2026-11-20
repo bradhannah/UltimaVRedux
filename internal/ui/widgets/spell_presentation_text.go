@@ -1,7 +1,6 @@
 package widgets
 
 import (
-	"fmt"
 	"image"
 	stdcolor "image/color"
 	"math"
@@ -19,8 +18,8 @@ func appendSpellField(line *text.LineBuilder, label, value string) *text.LineBui
 	return line.Text(label+": ", DialogLabelColor).Text(value, DialogValueColor)
 }
 
-func appendSpellWarningField(line *text.LineBuilder, label, value string) *text.LineBuilder {
-	return line.Text(label+": ", DialogLabelColor).Text(value, DialogStatusWarningColor)
+func appendSpellWarningField(line *text.LineBuilder, label, value string, warning stdcolor.Color) *text.LineBuilder {
+	return line.Text(label+": ", DialogLabelColor).Text(value, warning)
 }
 
 // A row has one measured two-line block with equal leading/trailing padding.
@@ -77,23 +76,14 @@ func spellFinderControls(action, escape string, searching bool) []ControlHint {
 	return append(controls, ControlHint{hintKeyEnter, action}, ControlHint{hintKeyEsc, escape})
 }
 
+// controls are the spell list's hints; the quantity window writes its own.
 func (d *ReagentMixingDialog) controls() []ControlHint {
-	if !d.preparing {
-		escape := "Close"
-		if d.hasPreparation || d.browser.searching {
-			escape = spellBackAction
-		}
-
-		return spellFinderControls("Choose spell", escape, d.browser.searching)
+	escape := "Close"
+	if d.browser.searching {
+		escape = spellBackAction
 	}
 
-	return []ControlHint{
-		{hintKeyUpDown, "Ingredients"}, {hintKeyShiftPage, hintActionPage}, {hintKeySpace, "Toggle"},
-		{"0-9", "Type quantity"},
-		{"Backspace/Del", "Reset to 1"}, {"Ctrl+B", "Find spell"},
-		{"Ctrl+F", "Maximum that fits"},
-		{hintKeyEnter, fmt.Sprintf("Mix %d", d.getEffectiveQuantity())}, {hintKeyEsc, spellBackAction},
-	}
+	return spellFinderControls("Choose spell", escape, d.browser.searching)
 }
 
 func (d *SpellCastingDialog) controls() []ControlHint {

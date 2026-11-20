@@ -1160,9 +1160,14 @@ Manual syllable experimentation in Mix does not reveal an undiscovered formula.
 
 `internal/ui/widgets/spell_browser.go` owns shared filtering, two-line rows,
 recipe vocabulary and measured/clipped rendering. The detail's `Target`,
-`Affects` and `Where` lines use a player's words ("No aim needed", "A creature
-you pick", "All before you", "Outside battle"), from `PlayerLabel` on the
-targeting and context types; logs and the Workbench keep the short names. A
+`Affects` and `Where` lines use a player's words ("A creature you pick", "All
+before you", "Outside battle"); logs and the Workbench keep the short names.
+`Target` comes from `references.SpellTargetLabel`, resolved for where the party
+is. For an aimed spell it says how the caster aims. For a spell cast with no
+aiming step it says who or what the spell falls on ("All foes", "The whole
+party", "The square ahead"), and the details then have no `Affects` line,
+because `Target` has already said it. The same text shows in Cast, Z-stats and
+Mix. `Where` comes from `PlayerLabel` on the context type. A
 spell's one-line description says what it does for the caster, and says so when
 a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
@@ -1176,7 +1181,10 @@ Z-stats and Mix, which have no caster, keep All known, Prepared, Mixable. Ready
 follows a change of caster. It is a convenience, not a wall: when typed initials
 or search words match none of the ready spells, the list widens to `All known`,
 so a known spell is always found by name and its row and status say why it
-cannot be cast.
+cannot be cast. Mix's list opens on `Mixable` in the same spirit, or on
+`All known` when nothing can be mixed, and widens from `Mixable` the same way.
+Its initials field is labelled `Spell:` and, while empty, says what to type; the
+spare row of its header names the step (`Choose a spell to mix`).
 Prepared counts sit under a labelled heading at the right of a row's first line.
 The name stops short of the number, not of the heading's width, and the meaning
 on the second line has the whole row, so every spell's name and meaning is shown
@@ -1190,6 +1198,16 @@ capacity use the same row pitch. Cast/Mix allocate 40% to lists and 60% to detai
 reserve a separate scroll-indicator gutter, and size the footer from its wrapped
 hint content. Keys/actions and labels/values use separate semantic-colour
 segments. Ingredient check marks have distinct normal and selected-row colours.
+
+Mix's quantity window (`reagent_mixing_window.go`) is not that full-size frame.
+It is fifty body-font letters wide and as tall as its taller tab, centred on the
+screen, so it never moves when the tab or the amount changes. Every sentence,
+table row and hint row in it is written to fit fifty letters, which holds at
+every supported size; its hint rows are composed by hand so `[Left/Right] or
+[0-9]` stays one phrase. Refusals, losses and shortages across Mix (this window
+and the details beside Mix's list) use `DialogWarningColor`, light red that
+reads on black; a warning on the white selection bar keeps the darker
+`DialogStatusWarningColor`. Cast and Z-stats details are unchanged.
 
 Z-stats keeps its separate title and eight full section labels in a fixed two-row,
 four-column grid at the configured body font size. Tab/Shift+Tab traverses the
@@ -1258,28 +1276,44 @@ and displayed rows synchronized without shrinking typography.
 - `Ctrl+M` in Cast or Z-stats opens preparation for the selected identity.
   Widgets emit an intent and suspend input while the owning scene/workflow
   handles Mix. Refresh retains filter, selection and caster. Combat refuses Mix.
-- Direct Mix opens the finder. Enter chooses a spell without consuming anything;
-  Enter in preparation emits a `MixRequest`. Known formulas are preselected,
-  but ingredient toggles remain available for experimentation.
-- Preparation digits edit quantity. When maximum is below ten, each valid digit
-  replaces the previous value. Otherwise two digits accumulate and a third
+- Direct Mix opens the finder. Enter chooses a spell without consuming anything
+  and opens the quantity window; Enter there emits a `MixRequest`.
+- The quantity window has two tabs, changed with `Tab` and marked with the shared
+  active-tab plate. **Recipe** is for the recorded recipe: the amount row holds
+  the highlight, a `Prepared` row shows stock before and after, and a `USES`
+  table lists only the recipe's ingredients with `Have`, `Use` and `Left`. It has
+  no tick boxes, so the mixture cannot be changed by accident. **Experiment**
+  lists all eight ingredients with tick boxes, the recorded recipe ticked to
+  begin with; `Up/Down` move the highlight and `Space` adds or removes an
+  ingredient the party carries. A spell with no recorded recipe has the
+  Experiment tab alone, with any untested clues listed under the table.
+- `Left/Right` step the amount within what the ingredients allow, with the list
+  repeat. Digits type it: when the maximum is below ten, each valid digit
+  replaces the previous value; otherwise two digits accumulate and a third
   starts a replacement. Over-limit digits are rejected, not silently clamped.
-  Backspace/Delete restore one; zero maximum disables mixing. Both number rows
-  work and separate rapid presses are accepted without movement-repeat delay.
-  The preparation field displays its editable quantity, teaches typing digits
-  before Enter, and labels confirmation with the actual amount (`[Enter] Mix 5`).
-- `Ctrl+B` reopens the finder, preserving the unfinished preparation if cancelled.
-  A successful standalone mix returns to the finder; a shortcut mix returns to
-  its originating screen after the receipt. Mix previews ingredient cost and
-  stock overflow but the authoritative operation revalidates before mutation.
-- `Ctrl+F` in preparation fills the quantity with the maximum confirmed-recipe
-  amount that fits both current ingredients and the remaining 99-spell stock
-  capacity. It never mixes directly. Changed/unconfirmed recipes, missing
-  ingredients, or full stock retain the draft and explain the unavailable action.
-  Manual quantities and experimentation retain their existing rules.
+  `M` sets the most that the ingredients allow and the prepared stock can hold;
+  it never mixes. Backspace/Delete restore one. Both number rows work and
+  separate rapid presses are accepted without movement-repeat delay. Changing
+  the mixture lowers the amount to what the new mixture allows.
+- The top line under the tabs carries the most important fact: `Ready to mix.`,
+  an untested mix, the missing ingredient by name, a refused digit, or how many
+  of the amount would be thrown away at the 99 cap. Refusals and losses are in
+  the readable warning red. When nothing can be mixed the table shows `none`
+  beside what is short, lists no costs, and the amount, `M` and Enter hints are
+  dimmed; the top line gives the reason in words. Confirmation is labelled with
+  the actual amount (`[Enter] Mix 5`).
+- Escape leaves the quantity window: back to Mix's list, or back to Cast or
+  Z-stats when Mix was opened from there. A plain success returns to Mix's list
+  with the result on the header's spare row (green, or the warning red when
+  mixtures were lost to the cap), the typed initials and any search cleared, and
+  the mixed spell selected and kept on the list, even if it can no longer be
+  mixed, until the list is next typed into or filtered. The result box remains
+  for a shortcut mix, which returns to its originating screen, and for a mixture
+  that had no recorded recipe. Mix previews ingredient cost and stock overflow
+  but the authoritative operation revalidates before mutation.
 
 `cmd/ultimav/gamescene_spell_browsing.go` owns the shared awaited Mix sequence,
-receipts, trap resolution, exact modal cleanup, catalog refresh and command-cycle
+result boxes, trap resolution, exact modal cleanup, catalog refresh and command-cycle
 handoff. See [Input Handling](../systems/INPUT_HANDLING.md#spell-browser-mix-handoffs)
 for timing. Regression entry points are `spell_casting_search_test.go`,
 `reagent_mixing_dialog_test.go`, `ztats_catalog_regression_test.go` under widgets,

@@ -110,14 +110,17 @@ type ZStatsMagicDossier struct {
 
 // ZStatsSpell describes one visible Book-of-Lore or learned hidden spell.
 type ZStatsSpell struct {
-	ID                 int
-	SpriteIndex        indexes.SpriteIndex
-	Syllables          string
-	Name               string
-	Circle             int
-	MPCost             int
-	Prepared           uint16
-	Targeting          string
+	ID          int
+	SpriteIndex indexes.SpriteIndex
+	Syllables   string
+	Name        string
+	Circle      int
+	MPCost      int
+	Prepared    uint16
+	Targeting   string
+	// Unaimed marks a spell cast here with no aiming step. Its Targeting already
+	// says who or what it falls on, so the details show no separate Affects line.
+	Unaimed            bool
 	Scope              references.SpellEffectScope
 	Contexts           string
 	Description        string
@@ -499,7 +502,8 @@ func (g *GameState) projectZStatsSpell(
 		Circle:             info.Circle,
 		MPCost:             info.Circle,
 		Prepared:           preparedSpells[spell],
-		Targeting:          profile.Selection.PlayerLabel(),
+		Targeting:          references.SpellTargetLabel(spell, context),
+		Unaimed:            profile.Selection == references.TargetAutomatic,
 		Scope:              profile.Scope,
 		Contexts:           info.Context.PlayerLabel(),
 		Description:        info.Description,

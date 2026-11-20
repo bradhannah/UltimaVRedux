@@ -36,6 +36,10 @@ func TestMixFilterCyclesAndCombinesWithSearchWithoutTypingChord(t *testing.T) {
 		clear(held)
 		keyboard.ClearFrameConsumption()
 	}
+	require.Equal(t, spellFilterMixable, dialog.browser.filterMode, "Mix opens on what can be mixed")
+	require.Equal(t, []int{0, 3}, dialog.browser.filtered)
+	press(ebiten.KeyControl, ebiten.KeyO)
+	require.Equal(t, spellFilterAll, dialog.browser.filterMode)
 	press(ebiten.KeyControl, ebiten.KeyO)
 	require.Equal(t, spellFilterPrepared, dialog.browser.filterMode)
 	require.Equal(t, []int{1, 2, 3}, dialog.browser.filtered)
@@ -57,10 +61,12 @@ func TestMixFilterCyclesAndCombinesWithSearchWithoutTypingChord(t *testing.T) {
 	press(ebiten.KeyControl, ebiten.KeyO)
 	catalog[3].Prepared = 99
 	dialog.browser.refresh(catalog)
-	require.Equal(t, spellFilterMixable, dialog.browser.filterMode)
+	require.Equal(t, spellFilterAll, dialog.browser.filterMode, "words that match nothing mixable widen the list")
+	require.Len(t, dialog.browser.filtered, 3)
+	press(ebiten.KeyZ)
 	require.Empty(t, dialog.browser.filtered)
 	press(ebiten.KeyEnter)
-	require.False(t, dialog.preparing, "an empty filtered view must not enter manual experimentation")
+	require.False(t, dialog.preparing, "an empty search must not enter manual experimentation")
 	require.False(t, dialog.HasPendingMixRequest())
 }
 
@@ -87,18 +93,35 @@ func TestSpellHintsFieldsAndSelectionMarksHaveDistinctColours(t *testing.T) {
 		[]ReagentInfo{{Reagent: references.SulfurAsh, Name: "Sulfurous Ash", Quantity: 6}})
 	dialog.ChooseSpell(references.InLor, false)
 	dialog.handleQuantityInput(5)
-	dialog.ensureLayout()
+	screen := ebiten.NewImage(1280, 720)
+	t.Cleanup(screen.Dispose)
+	dialog.Draw(screen)
 	view := &dialog.view
-	require.Contains(t, view.footer.GetOutputStr(false), "[Enter] Mix 5")
-	require.Contains(t, view.footer.GetOutputStr(false), "Type quantity")
-	require.Contains(t, view.footer.GetOutputStr(false), "[Space] Toggle")
-	require.NotContains(t, view.footer.GetOutputStr(false), "[Space] Next detail page")
-	hint := AppendControlHints(view.footer.AppendLine(), "[Enter] Mix 5").GetSegments()
+	footer := func() []string {
+		lines := strings.Split(view.footer.GetOutputStr(false), "\n")
+		for index := range lines {
+			lines[index] = strings.TrimSpace(lines[index])
+		}
+
+		return lines
+	}
+	require.Equal(t, []string{"[Left/Right] or [0-9] How many   [M] Most",
+		"[Enter] Mix 5   [Esc] Back   [Tab] Experiment"}, footer())
+	dialog.tab = mixTabExperiment
+	dialog.Draw(screen)
+	require.Equal(t, []string{"[Up/Down] Move   [Space] Add or remove", "[Left/Right] or [0-9] How many   [M] Most",
+		"[Enter] Mix 5   [Esc] Back   [Tab] Recipe"}, footer())
+	hint := appendMixHint(view.footer.AppendLine(), "Enter", " Mix 5", true).GetSegments()
 	require.Equal(t, "[Enter]", hint[0].Text)
 	require.Equal(t, DialogControlKeyColor, hint[0].Color)
 	require.Equal(t, " Mix 5", hint[1].Text)
 	require.Equal(t, DialogControlHintColor, hint[1].Color)
-	field := appendSpellField(view.heading.AppendLine(), "Quantity", "[5_]").GetSegments()
+	// A key that cannot work now is dimmed whole; the top line says why in words.
+	dead := appendMixHint(view.footer.AppendLine(), "Enter", " Mix", false).GetSegments()
+	require.Len(t, dead, 1)
+	require.Equal(t, "[Enter] Mix", dead[0].Text)
+	require.Equal(t, DialogUnavailableItemColor, dead[0].Color)
+	field := appendSpellField(view.heading.AppendLine(), "Prepared", "5").GetSegments()
 	require.Equal(t, DialogLabelColor, field[0].Color)
 	require.Equal(t, DialogValueColor, field[1].Color)
 	for _, selected := range []bool{false, true} {
@@ -199,20 +222,22 @@ func TestSpellAndIngredientLastRowsFullyRenderAcrossResolutions(t *testing.T) {
 			last := lastSpellRowRect(view, list, end-start)
 			requireCompleteSpellRow(t, screen, last, view, catalog[len(catalog)-1], true, false)
 
+			// The quantity window lists all eight ingredients with no scrolling.
 			dialog.ChooseSpell(references.AnTym, false)
-			dialog.reagentListState.SetIndex(7)
-			screen.Clear()
-			dialog.Draw(screen)
-			list = view.listRect.Inset(view.padding)
-			list.Min.Y += view.lineHeight
-			start, end = dialog.reagentListState.GetVisibleRange()
-			require.Equal(t, 8, end)
+			dialog.tab, dialog.cursor = mixTabExperiment, 7
+			dialog.ensureLayout()
+			window := ebiten.NewImageWithOptions(dialog.window.body, nil)
+			t.Cleanup(window.Dispose)
+			dialog.Draw(window)
+			body := dialog.window.body.Inset(view.padding)
+			top := body.Min.Y + (mixExperimentHead+7)*view.lineHeight
+			last = image.Rect(body.Min.X, top, body.Max.X, top+view.lineHeight)
+			require.True(t, last.In(body), "the last ingredient is inside the pane")
 			require.Contains(t, view.row.GetOutputStr(false), "Mandrake Root")
-			last = lastSpellRowRect(view, list, end-start)
 			expected := ebiten.NewImageWithOptions(last, nil)
 			t.Cleanup(expected.Dispose)
-			dialog.drawIngredientRow(expected, last, dialog.reagentInventory[7], true)
-			requireSameRowPixels(t, screen, expected, last)
+			dialog.drawIngredient(expected, last, dialog.reagentInventory[7], dialog.amount(), true)
+			requireSameRowPixels(t, window, expected, last)
 		})
 	}
 }
@@ -278,7 +303,7 @@ func TestSpellRecipeGroupsIndentedInventoryWithAvailabilityColours(t *testing.T)
 		{Name: "Ginseng", Quantity: 6}, {Name: "Garlic", Quantity: 0},
 	}
 	spell.Contexts = "Combat"
-	appendSpellFormula(output, spell)
+	appendSpellFormula(output, spell, DialogStatusWarningColor)
 	content := output.GetOutputStr(false)
 	lines := strings.Split(content, "\n")
 	for index := range lines {
@@ -289,7 +314,7 @@ func TestSpellRecipeGroupsIndentedInventoryWithAvailabilityColours(t *testing.T)
 	require.Contains(t, content, "Where: Combat")
 	require.NotContains(t, content, "When:")
 	for _, ingredient := range spell.RecipeInventory {
-		segments := appendSpellIngredient(output.AppendLine(), ingredient).GetSegments()
+		segments := appendSpellIngredient(output.AppendLine(), ingredient, DialogStatusWarningColor).GetSegments()
 		require.Equal(t, DialogValueColor, segments[0].Color)
 		amountColor := DialogStatusOKColor
 		if ingredient.Quantity == 0 {

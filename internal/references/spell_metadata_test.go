@@ -268,7 +268,6 @@ func TestTargetingTypeString(t *testing.T) {
 // A player reads plain words in the spell details; logs and the Workbench keep
 // the short names.
 func TestSpellPlayerLabelsUsePlainWords(t *testing.T) {
-	assert.Equal(t, "No aim needed", TargetAutomatic.PlayerLabel())
 	assert.Equal(t, "A companion in the fight", TargetCombatPartyMember.PlayerLabel())
 	assert.Equal(t, "A square beside you", TargetAdjacentTile.PlayerLabel())
 	assert.Equal(t, "A creature you pick", TargetCombatantCrosshair.PlayerLabel())
@@ -277,6 +276,60 @@ func TestSpellPlayerLabelsUsePlainWords(t *testing.T) {
 	assert.Equal(t, "Anywhere", ContextAll.PlayerLabel())
 	assert.Equal(t, "Outside battle", ContextNonCombat.PlayerLabel())
 	assert.Equal(t, "Overworld, Combat", (ContextOverworld | ContextCombat).PlayerLabel())
+}
+
+// A spell cast with no aiming step says who or what it falls on; an aimed
+// spell keeps the words for its aim.
+func TestSpellTargetLabelSaysWhatAnUnaimedSpellFallsOn(t *testing.T) {
+	unaimed := map[string][]Spell{
+		"All foes":                     {InQuasCorp, InVasPorYlem, QuasAnWis},
+		"All undead foes":              {AnXenCorp},
+		"All unseen foes":              {WisQuas},
+		"All but the party":            {AnTym},
+		"All magic, yours too":         {InAn},
+		"The whole party":              {RelTym, InLor, VasLor, InSanct, UusPor, DesPor},
+		"The party's food":             {InXenMani},
+		"The caster":                   {SanctLor},
+		"Where you stand":              {InWis},
+		"The area around you":          {InQuasWis},
+		"The walls around you":         {WisAnYlem},
+		"Somewhere on the battlefield": {KalXen, InBetXen, KalXenCorp},
+	}
+	listed := 0
+	for label, spells := range unaimed {
+		for _, spell := range spells {
+			listed++
+			assert.Equal(t, TargetAutomatic, GetSpellInfo(spell).Targeting, GetSpellName(spell))
+			for _, context := range []SpellContext{ContextOverworld, ContextTown, ContextDungeon, ContextCombat} {
+				assert.Equal(t, label, SpellTargetLabel(spell, context), "%s/%s", GetSpellName(spell), context)
+			}
+		}
+	}
+	// Two more become unaimed by where they are cast.
+	assert.Equal(t, "The caster", SpellTargetLabel(InPor, ContextCombat))
+	assert.Equal(t, "Direction", SpellTargetLabel(InPor, ContextOverworld))
+	for _, spell := range []Spell{AnSanct, AnGrav, InFlamGrav, InNoxGrav, InZuGrav, InSanctGrav} {
+		assert.Equal(t, "The square ahead", SpellTargetLabel(spell, ContextDungeon), GetSpellName(spell))
+		assert.NotEqual(t, "The square ahead", SpellTargetLabel(spell, ContextCombat), GetSpellName(spell))
+	}
+	// Every spell has a label everywhere, and no unaimed spell is left unlisted.
+	automatic := 0
+	for spell := Spell(0); spell < TotalSpellCount; spell++ {
+		if GetSpellInfo(spell).Targeting == TargetAutomatic {
+			automatic++
+		}
+		for _, context := range []SpellContext{0, ContextOverworld, ContextTown, ContextDungeon, ContextCombat} {
+			label := SpellTargetLabel(spell, context)
+			assert.NotEmpty(t, label)
+			if selection := GetSpellTargetingProfile(spell, context).Selection; selection != TargetAutomatic {
+				assert.Equal(t, selection.PlayerLabel(), label, "%s/%s keeps its aim", GetSpellName(spell), context)
+			} else {
+				assert.NotEqual(t, "Automatic", label, "%s/%s", GetSpellName(spell), context)
+			}
+		}
+	}
+	assert.Equal(t, automatic, listed)
+	assert.Equal(t, "Direction", SpellTargetLabel(RelHur, ContextOverworld), "Rel Hur is aimed and unchanged")
 }
 
 func TestSpellTargetingProfilesResolveCombatOverrides(t *testing.T) {

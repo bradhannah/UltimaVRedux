@@ -1350,10 +1350,10 @@ func (d *ZStatsDossierDialog) prepareSpellDetail(rect image.Rectangle) zStatsCat
 	return d.prepareCatalogDetail(rect, func(output *text.Output) {
 		d.appendDetailHeaderTo(output, zStatsDisplayName(spell.Name, spell.Syllables))
 		d.appendDetailTextTo(output, spell.EffectLabel, DialogControlHintColor)
-		appendSpellMetrics(output, *spell)
+		appendSpellMetrics(output, *spell, DialogStatusWarningColor)
 	}, func(output *text.Output) {
 		d.appendDetailTextTo(output, spell.Description, DialogValueColor)
-		appendSpellFormula(output, *spell)
+		appendSpellFormula(output, *spell, DialogStatusWarningColor)
 		if spell.Hidden {
 			if source := zStatsLearningSource(spell.LearningSourceKind, spell.LearningSource); source != "" {
 				d.appendDetailPairTo(output, "Learned from", source, DialogValueColor)
