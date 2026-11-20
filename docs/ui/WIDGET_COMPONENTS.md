@@ -1167,32 +1167,48 @@ is. For an aimed spell it says how the caster aims. For a spell cast with no
 aiming step it says who or what the spell falls on ("All foes", "The whole
 party", "The square ahead"), and the details then have no `Affects` line,
 because `Target` has already said it. The same text shows in Cast, Z-stats and
-Mix. `Where` comes from `PlayerLabel` on the context type. A
+Mix. `Where` comes from `PlayerLabel` on the context type and reads as a place
+("In battle", "On the overworld or in town"). A
 spell's one-line description says what it does for the caster, and says so when
 a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
-Cast has a fourth filter, `Ready`: what the chosen caster can cast right now
-(mixed, within their level, enough MP, allowed here), judged by the same
-validation that guards the cast. In battle the list opens on it, so spells that
-are mixed but beyond the acting character are out of the way; with nothing ready
-it opens on `All known` rather than an empty list. Outside battle it opens on
-`All known` as before. In Cast, Ctrl+O steps Ready, Prepared, All known, Mixable;
-Z-stats and Mix, which have no caster, keep All known, Prepared, Mixable. Ready
-follows a change of caster. It is a convenience, not a wall: when typed initials
-or search words match none of the ready spells, the list widens to `All known`,
-so a known spell is always found by name and its row and status say why it
-cannot be cast. Mix's list opens on `Mixable` in the same spirit, or on
-`All known` when nothing can be mixed, and widens from `Mixable` the same way.
-Its initials field is labelled `Spell:` and, while empty, says what to type; the
-spare row of its header names the step (`Choose a spell to mix`).
+Cast lists every known spell, in and out of battle, with what the chosen caster
+can cast right now first (mixed, within their level, enough MP, allowed here),
+judged by the same validation that guards the cast. The opening rows therefore
+all answer Enter, and the rest follow in the book's order, dimmed and marked
+`[No]`, for reference. The order follows a change of caster. In Cast, Ctrl+O
+steps All known, Ready, Prepared; Z-stats and Mix, which have no caster, keep
+All known, Prepared, Mixable. `Ready` narrows the list to the castable spells.
+It is a convenience, not a wall: when typed initials or search words match none
+of the ready spells, the list widens to `All known`, so a known spell is always
+found by name and its details say why it cannot be cast. Mix's list opens on
+`Mixable` in the same spirit, or on `All known` when nothing can be mixed, and
+widens from `Mixable` the same way. The initials field is labelled `Spell:` in
+all three and, while empty, says what to type where there is room; the spare
+row of Mix's header names the step (`Choose a spell to mix`).
 Prepared counts sit under a labelled heading at the right of a row's first line.
 The name stops short of the number, not of the heading's width, and the meaning
 on the second line has the whole row, so every spell's name and meaning is shown
 whole at every supported size, including a name marked `[No]` and a newly learned
 spell's `New:` meaning. Text that could not fit would be cut plainly, never with
-an ellipsis. Cast adds current-caster
-validation and a fixed action-status area; Z-stats retains portraits and
-discovery provenance. Overflow details page instead of reducing font size.
+an ellipsis. Z-stats retains portraits and discovery provenance. Overflow
+details page instead of reducing font size.
+
+Cast keeps to casting. The line under the selected spell's name says whether
+Enter will work: `Ready to cast.`, or a sentence with the reason and the figure
+that matters in `DialogWarningColor` ("Cannot be cast here: battle only.",
+"Not enough MP: costs 5, Avatar has 2.", "None prepared. [Ctrl+M] Mix up to
+12"). A refusal the dialog has no sentence for keeps the game's own words. The
+details below are Cast's own short entry: description, Prepared, Circle and
+cost, then the shared `Target`, `Affects` and `Where` lines. Recipes, formulas
+and reagent stock are shown by Mix and Z-stats, not here. Cast's two hint rows
+are placed by hand so they stay put as the highlight moves: one for moving
+about the list, one for acting. Enter is named for the selected spell's next
+step (`Cast now` for a spell with no aiming step, which commits on that press;
+`Choose who`, `Choose direction`, `Aim` or `Name the phase` for the others)
+and is dimmed when the spell is refused; a refused spell stays on the list.
+The keys every list shares (Shift+Up/Down, Backspace, 1-6) keep working and
+are listed in Help rather than on the screen.
 Two-line rows centre their measured text block; rendering, paging and visible
 capacity use the same row pitch. Cast/Mix allocate 40% to lists and 60% to details,
 reserve a separate scroll-indicator gutter, and size the footer from its wrapped
@@ -1207,7 +1223,8 @@ every supported size; its hint rows are composed by hand so `[Left/Right] or
 [0-9]` stays one phrase. Refusals, losses and shortages across Mix (this window
 and the details beside Mix's list) use `DialogWarningColor`, light red that
 reads on black; a warning on the white selection bar keeps the darker
-`DialogStatusWarningColor`. Cast and Z-stats details are unchanged.
+`DialogStatusWarningColor`. Cast's status line uses the same light red; Z-stats
+details are unchanged.
 
 Z-stats keeps its separate title and eight full section labels in a fixed two-row,
 four-column grid at the configured body font size. Tab/Shift+Tab traverses the
@@ -1250,7 +1267,7 @@ buffers. Long queries expose the latest characters and cursor with a leading
 the strip visible and replace selected details with an explicit no-match state.
 
 Cast/Mix detail paging is measured from wrapped content and final pane bounds,
-including headings, Cast action status/explanations, and the wrapped footer.
+including headings, Cast's status line, and the footer.
 Layout first measures without a paging hint; genuine overflow then reserves the
 indicator and conditional hint together. Multipage details show **Page X/Y** and
 advertise **[Space] Next detail page** only in browse mode. Selection, refresh,
@@ -1258,8 +1275,9 @@ mode changes, and resize recompute this before drawing, keeping the page, hint,
 and displayed rows synchronized without shrinking typography.
 
 - Type syllable initials, or `/` to search names, effects and descriptions.
-- `Ctrl+O` cycles All known, Prepared, and Mixable in either input mode, retaining
-  the selected identity when it survives filtering. Mixable requires a confirmed
+- `Ctrl+O` cycles All known, Prepared, and Mixable in either input mode (All
+  known, Ready, Prepared in Cast), retaining the selected identity when it
+  survives filtering. Mixable requires a confirmed
   recipe, ingredients for at least one mixture, and room below the 99-spell cap.
   The displayed mixing capacity includes stock headroom; the manual preparation
   maximum still follows reagent availability and previews discarded overflow.

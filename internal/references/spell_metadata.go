@@ -230,8 +230,9 @@ func (c SpellContext) String() string {
 	return result
 }
 
-// PlayerLabel says where the spell may be cast, in a player's words. String keeps
-// the plain names that logs and the Workbench use.
+// PlayerLabel says where the spell may be cast, in a player's words and as a
+// place: "In battle", "On the overworld or in town". String keeps the plain
+// names that logs and the Workbench use.
 func (c SpellContext) PlayerLabel() string {
 	if c == ContextAll {
 		return "Anywhere"
@@ -239,8 +240,54 @@ func (c SpellContext) PlayerLabel() string {
 	if c == ContextNonCombat {
 		return "Outside battle"
 	}
+	label := joinSpellPlaces(c.places(true))
 
-	return c.String()
+	return strings.ToUpper(label[:1]) + label[1:]
+}
+
+// OnlyLabel says the same to a caster standing in the wrong place, after
+// "Cannot be cast here:": "battle only", "overworld or town".
+func (c SpellContext) OnlyLabel() string {
+	if c == ContextNonCombat {
+		return "not in battle"
+	}
+	places := c.places(false)
+	if len(places) == 1 {
+		return places[0] + " only"
+	}
+
+	return joinSpellPlaces(places)
+}
+
+// places names each permitted context, bare ("town") or as a place ("in town").
+func (c SpellContext) places(placed bool) []string {
+	names := [...][2]string{
+		{"overworld", "on the overworld"}, {"town", "in town"}, {"dungeon", "in a dungeon"}, {"battle", "in battle"},
+	}
+	form := 0
+	if placed {
+		form = 1
+	}
+	var places []string
+	for bit, name := range names {
+		if c&(SpellContext(1)<<bit) != 0 {
+			places = append(places, name[form])
+		}
+	}
+
+	return places
+}
+
+func joinSpellPlaces(places []string) string {
+	last := len(places) - 1
+	if last < 0 {
+		return "nowhere"
+	}
+	if last == 0 {
+		return places[0]
+	}
+
+	return strings.Join(places[:last], ", ") + " or " + places[last]
 }
 
 // HasContext returns true if the spell context includes the specified context

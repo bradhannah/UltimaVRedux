@@ -514,8 +514,11 @@ selection into No One, following the original rule in
 [CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001). Escape cancels setup,
 a recorded deviation from that rule.
 
-Cast gathers required targets/directions before final confirmation spends MP and
-one mixture. Cancellation before that boundary preserves resources, gameplay
+Cast gathers any target or direction a spell needs before it spends MP and one
+mixture. A spell with no aiming step has nothing to gather, so Enter in the
+list commits it; the list's Enter hint says which case applies ("Cast now"
+against "Choose who", "Choose direction", "Aim" or "Name the phase").
+Cancellation before commitment preserves resources, gameplay
 time, combat action, and gameplay RNG, including party-member target selection.
 Later effect failure does not refund committed costs.
 
@@ -771,8 +774,8 @@ Cast and Z-stats Spells reserve `Ctrl+M` locally for preparing the selected spel
 outside those modals the existing music shortcut remains unchanged. Ctrl chords
 are consumed before syllable/free-text input and held keys cannot bleed into the
 next owner. The shared finder also uses `/` search, `Ctrl+O` to cycle All known /
-Prepared / Mixable filtering (Cast adds Ready, the spells its caster can cast
-now, and cycles Ready / Prepared / All known / Mixable),
+Prepared / Mixable filtering (Cast, which lists the spells its caster can cast
+now first, cycles All known / Ready / Prepared),
 and Space detail paging outside search. While searching, Space enters text;
 Escape returns to browse mode for paging while retaining the selected spell.
 An incompatible older syllable prefix is cleared rather than selecting a different
@@ -881,8 +884,9 @@ shared original ordinary/spell direction-reader behavior:
 The six ordinary combat prompts show `Arrows; Space: Pass; Esc: Cancel`;
 combat Help distinguishes free cancellation from paid Pass.
 Cast details use the resolved context targeting profile rather than base spell
-metadata. Cast guidance describes final-confirmation MP/mixture commitment and
-free cancellation beforehand, including preservation of the combat action.
+metadata. Cast's Enter hint names the selected spell's next step, and Help
+states that casting spends MP and a mixture and that cancelling beforehand is
+free, including preservation of the combat action.
 Ready labels come from the authoritative preview: Equip, Unready,
 no change, or the blocking reason.
 

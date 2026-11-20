@@ -11,7 +11,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
@@ -185,9 +184,9 @@ func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
 	for _, height := range []int{720, 360, 720, 360, 720} {
 		view.layout(1280, height)
 		for range 3 {
-			view.configureDetails(browser, controls, 0, nil)
+			view.configureDetails(browser, packedSpellFooter(controls))
 			pages, footer, body := browser.pages, view.footerRect, view.detailBodyRect
-			view.configureDetails(browser, controls, 0, nil)
+			view.configureDetails(browser, packedSpellFooter(controls))
 			require.Equal(t, pages, browser.pages)
 			require.Equal(t, footer, view.footerRect)
 			require.Equal(t, body, view.detailBodyRect)
@@ -203,17 +202,5 @@ func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
 				browser.page = pages - 1
 			}
 		}
-	}
-}
-
-func TestCastCombatAdditionalDetailsAreIncludedBeforePaging(t *testing.T) {
-	_, dialog, _ := newCastBrowserTest(t)
-	dialog.currentContext = references.ContextCombat
-	dialog.ensureLayout()
-	require.Contains(t, dialog.view.body.GetOutputStr(false), "combat action")
-	statusTop := dialog.view.detailRect.Max.Y - dialog.view.padding - dialog.view.lineHeight*spellBrowserRowLines
-	require.Less(t, dialog.view.detailBodyRect.Max.Y, statusTop)
-	if dialog.browser.pages > 1 {
-		require.Less(t, dialog.view.detailPageRect.Max.Y, statusTop)
 	}
 }

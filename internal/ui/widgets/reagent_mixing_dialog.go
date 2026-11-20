@@ -74,7 +74,6 @@ func NewReagentMixingDialog(keyboard *input.Keyboard,
 	dialog.view.warning = DialogWarningColor
 	browser := dialog.browser
 	browser.widenMixable = true
-	browser.initialsLabel, browser.initialsPrompt = "Spell", "type its initials, such as VF for Vas Flam"
 	// Open on what can be mixed now. With nothing mixable, an empty list would
 	// say less than every known spell and the reason beside each.
 	if slices.ContainsFunc(browser.catalog, spellMixable) {
@@ -92,7 +91,7 @@ func (d *ReagentMixingDialog) ensureLayout() {
 	if d.preparing {
 		d.layoutWindow()
 	} else {
-		d.view.configureDetails(d.browser, d.controls(), 0, nil)
+		d.view.configureDetails(d.browser, packedSpellFooter(d.controls()))
 	}
 }
 

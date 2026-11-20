@@ -98,21 +98,27 @@ type spellBrowser struct {
 	searching  bool
 	filterMode spellBrowserFilter
 	ready      func(game_state.ZStatsSpell) bool // Nil where no caster is chosen.
-	// Mix's list only: Mixable widens like Ready, a finished mix keeps its spell
-	// listed (keepID, -1 for none), and the initials field says what to type.
-	widenMixable   bool
-	keepID         int
-	initialsLabel  string
-	initialsPrompt string
-	searchInput    *TextInput
-	page           int
-	pages          int
-	visible        int
+	// readyFirst lists what the caster can cast now ahead of the rest of All known.
+	readyFirst bool
+	// Mix's list only: Mixable widens like Ready, and a finished mix keeps its
+	// spell listed (keepID, -1 for none).
+	widenMixable bool
+	keepID       int
+	searchInput  *TextInput
+	page         int
+	pages        int
+	visible      int
 }
+
+// The initials field says what it finds and what to type into it.
+const (
+	spellInitialsLabel  = "Spell"
+	spellInitialsPrompt = "type its initials, such as VF for Vas Flam"
+)
 
 func newSpellBrowser(catalog []game_state.ZStatsSpell) *spellBrowser {
 	//nolint:exhaustruct_v5 // Search starts empty; refresh installs the detached catalog.
-	b := &spellBrowser{pages: 1, visible: 1, keepID: -1, initialsLabel: "Words"}
+	b := &spellBrowser{pages: 1, visible: 1, keepID: -1}
 	b.refresh(catalog)
 
 	return b
@@ -147,11 +153,12 @@ func (b *spellBrowser) refilter() {
 	b.selectID(spellID)
 }
 
-// nextFilter is where Ctrl+O goes from the current filter.
+// nextFilter is where Ctrl+O goes from the current filter. A list with a caster
+// offers Ready and leaves Mixable to Mix.
 func (b *spellBrowser) nextFilter() spellBrowserFilter {
 	order := []spellBrowserFilter{spellFilterAll, spellFilterPrepared, spellFilterMixable}
 	if b.ready != nil {
-		order = []spellBrowserFilter{spellFilterReady, spellFilterPrepared, spellFilterAll, spellFilterMixable}
+		order = []spellBrowserFilter{spellFilterAll, spellFilterReady, spellFilterPrepared}
 	}
 
 	return order[(slices.Index(order, b.filterMode)+1)%len(order)]
@@ -223,6 +230,9 @@ func (b *spellBrowser) applyFilter() {
 			b.filtered = append(b.filtered, index)
 		}
 	}
+	if b.readyFirst && b.filterMode == spellFilterAll {
+		b.filtered = slices.Concat(b.partition(true), b.partition(false))
+	}
 	b.selected = min(b.selected, max(0, len(b.filtered)-1))
 	if !b.searching && b.syllables != "" {
 		for position, index := range b.filtered {
@@ -234,6 +244,18 @@ func (b *spellBrowser) applyFilter() {
 		}
 	}
 	b.page, b.pages = 0, 1
+}
+
+// partition keeps the listed spells the caster can, or cannot, cast now.
+func (b *spellBrowser) partition(ready bool) []int {
+	var kept []int
+	for _, index := range b.filtered {
+		if b.ready(b.catalog[index]) == ready {
+			kept = append(kept, index)
+		}
+	}
+
+	return kept
 }
 
 // clearTyped empties the initials and leaves any search, for a list that starts over.
@@ -361,10 +383,26 @@ func (b *spellBrowser) navigate(keyboard *input.Keyboard) bool {
 	return owned
 }
 
+// spellFooter writes a dialog's hint rows; paged asks for the detail paging key.
+type spellFooter func(output *text.Output, width int, paged bool)
+
+// packedSpellFooter wraps complete hints into as few rows as the width allows.
+func packedSpellFooter(controls []ControlHint) spellFooter {
+	return func(output *text.Output, width int, paged bool) {
+		if paged {
+			controls = append(controls, ControlHint{hintKeySpace, "Next detail page"})
+		}
+		PackControlHints(output, controls, width, etext.AlignStart)
+	}
+}
+
 type spellPresentation struct {
 	// warning is the red of a shortage in the spell details: the shared status
 	// red unless the owner asks for another before the first layout.
-	warning                        stdcolor.Color
+	warning stdcolor.Color
+	// entry writes the selected spell's details under its name. Nil writes the
+	// full entry that Mix and Z-Stats share.
+	entry                          func(output *text.Output, spell game_state.ZStatsSpell)
 	font                           *text.UltimaFont
 	row, count, body, heading      *text.Output
 	search, footer, title          *text.Output
@@ -426,15 +464,12 @@ func (p *spellPresentation) layout(width, height int) {
 	}, getClassicUIPixelUnit(width, height))
 }
 
-// configureControls measures wrapped, styled hints before row capacity is computed.
+// configureControls measures the styled hint rows before row capacity is computed.
 // Detail paging is shown only when Space actually pages details in this mode.
-func (p *spellPresentation) configureControls(controls []ControlHint, detailPaging bool) {
+func (p *spellPresentation) configureControls(footer spellFooter, detailPaging bool) {
 	rect := p.footerRect.Inset(p.padding)
 	prepareSpellOutput(p.footer, rect)
-	if detailPaging {
-		controls = append(controls, ControlHint{hintKeySpace, "Next detail page"})
-	}
-	PackControlHints(p.footer, controls, rect.Dx(), etext.AlignStart)
+	footer(p.footer, rect.Dx(), detailPaging)
 	height := int(math.Ceil(p.footer.GetTotalHeightForLines(p.footer.GetPanelContentLineCount())))
 	p.footerRect.Min.Y = p.footerRect.Max.Y - height - p.padding*spellBrowserRowLines
 	p.listRect.Max.Y, p.detailRect.Max.Y = p.footerRect.Min.Y, p.footerRect.Min.Y
@@ -481,7 +516,7 @@ func (p *spellPresentation) prepareSearch(
 ) (image.Rectangle, image.Rectangle, image.Rectangle) {
 	inputRect, filterRect, matchesRect := p.searchFields(rect, len(browser.filtered))
 	prepareSpellOutput(p.search, inputRect)
-	label, value := browser.initialsLabel, browser.syllables
+	label, value := spellInitialsLabel, browser.syllables
 	if browser.searching {
 		label, value = "Search", browser.query
 	} else if value != "" {
@@ -492,8 +527,10 @@ func (p *spellPresentation) prepareSearch(
 		value += " -> " + strings.Join(words, " ")
 	}
 	line := appendSpellField(p.search.AppendLine(), label, spellInputViewport(p.font, label, value, inputRect.Dx()))
-	if value == "" && !browser.searching && browser.initialsPrompt != "" {
-		line.Text("  "+browser.initialsPrompt, DialogControlHintColor)
+	prompt := "  " + spellInitialsPrompt
+	if width, _ := p.font.MeasureString(label + ": _" + prompt); value == "" && !browser.searching &&
+		width <= float64(inputRect.Dx()) {
+		line.Text(prompt, DialogControlHintColor)
 	}
 	line.Done()
 	prepareSpellOutput(p.filter, filterRect)
@@ -670,6 +707,12 @@ func appendSpellFormula(output *text.Output, spell game_state.ZStatsSpell, warni
 		appendSpellWarningField(output.AppendLine(), "Missing", strings.Join(spell.MixMissing, ", "), warning).
 			WordWrap().Done()
 	}
+	appendSpellAim(output, spell)
+}
+
+// appendSpellAim says what the spell is aimed at, what it reaches and where it
+// may be cast: the lines every spell entry ends with.
+func appendSpellAim(output *text.Output, spell game_state.ZStatsSpell) {
 	appendSpellField(output.AppendLine(), "Target", spell.Targeting).WordWrap().Done()
 	if !spell.Unaimed {
 		appendSpellField(output.AppendLine(), "Affects", spellScopeLabel(spell.Scope)).WordWrap().Done()
@@ -715,14 +758,12 @@ func spellScopeLabel(scope references.SpellEffectScope) string {
 
 // Always start with the unpaged footer. Only genuine overflow adds the paging
 // control and its indicator, so footer wrapping cannot feed back across frames.
-func (p *spellPresentation) configureDetails(browser *spellBrowser, controls []ControlHint,
-	statusHeight int, extra func(*text.Output),
-) {
-	p.configureControls(controls, false)
-	p.measureDetails(browser, statusHeight, extra, false)
+func (p *spellPresentation) configureDetails(browser *spellBrowser, footer spellFooter) {
+	p.configureControls(footer, false)
+	p.measureDetails(browser, false)
 	if browser.pages > 1 {
-		p.configureControls(controls, !browser.searching)
-		p.measureDetails(browser, statusHeight, extra, true)
+		p.configureControls(footer, !browser.searching)
+		p.measureDetails(browser, true)
 	}
 	browser.page = max(0, min(browser.page, browser.pages-1))
 	p.pageIndicator.Reset()
@@ -734,11 +775,8 @@ func (p *spellPresentation) configureDetails(browser *spellBrowser, controls []C
 	browser.visible = max(1, (list.Dy()-p.lineHeight)/spellRowHeight(p.row))
 }
 
-func (p *spellPresentation) measureDetails(
-	browser *spellBrowser, statusHeight int, extra func(*text.Output), paged bool,
-) {
+func (p *spellPresentation) measureDetails(browser *spellBrowser, paged bool) {
 	rect := p.detailRect.Inset(p.padding)
-	rect.Max.Y -= statusHeight
 	spell := browser.current()
 	prepareSpellOutput(p.body, rect)
 	if spell == nil {
@@ -752,9 +790,10 @@ func (p *spellPresentation) measureDetails(
 		rect.Max.Y = p.detailPageRect.Min.Y
 	}
 	p.detailBodyRect = rect
-	appendSpellDetails(p.body, *spell, p.warning)
-	if extra != nil {
-		extra(p.body)
+	if p.entry != nil {
+		p.entry(p.body, *spell)
+	} else {
+		appendSpellDetails(p.body, *spell, p.warning)
 	}
 	p.detailCapacity = max(1, p.body.GetLineCapacity(rect.Dy()))
 	browser.pages = max(1, (p.body.GetPanelContentLineCount()+p.detailCapacity-1)/p.detailCapacity)

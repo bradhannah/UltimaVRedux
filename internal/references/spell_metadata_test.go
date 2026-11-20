@@ -275,7 +275,12 @@ func TestSpellPlayerLabelsUsePlainWords(t *testing.T) {
 	assert.Equal(t, "Direction", TargetDirection.PlayerLabel())
 	assert.Equal(t, "Anywhere", ContextAll.PlayerLabel())
 	assert.Equal(t, "Outside battle", ContextNonCombat.PlayerLabel())
-	assert.Equal(t, "Overworld, Combat", (ContextOverworld | ContextCombat).PlayerLabel())
+	assert.Equal(t, "On the overworld or in battle", (ContextOverworld | ContextCombat).PlayerLabel())
+	assert.Equal(t, "In battle", ContextCombat.PlayerLabel())
+	// The same places, said to a caster who is standing somewhere else.
+	assert.Equal(t, "battle only", ContextCombat.OnlyLabel())
+	assert.Equal(t, "overworld or town", (ContextOverworld | ContextTown).OnlyLabel())
+	assert.Equal(t, "not in battle", ContextNonCombat.OnlyLabel())
 }
 
 // A spell cast with no aiming step says who or what it falls on; an aimed

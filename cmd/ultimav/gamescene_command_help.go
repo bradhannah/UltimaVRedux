@@ -62,8 +62,9 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: commandKeyLabelSpace, Purpose: "Pass", NextInput: "Wait once immediately; hold to repeat in exploration. Release after a dialog or context change."},
 		{Key: "A", Purpose: "Attack", NextInput: direction},
 		{Key: "B", Purpose: "Board a vehicle", NextInput: "Stand on a boardable vehicle."},
-		{Key: "C", Purpose: "Cast a prepared spell", NextInput: "Choose caster/spell, then the displayed target interaction. " +
-			"Final confirmation spends MP and one mixture. Cancelling beforehand costs no MP, mixture, or gameplay time."},
+		{Key: "C", Purpose: "Cast a prepared spell", NextInput: "Choose a caster and a spell. Enter names the next step: " +
+			"a spell with no aim is cast at once; any other asks who or where first. " +
+			"Casting spends MP and one mixture. Cancelling beforehand costs no MP, mixture, or gameplay time."},
 		{Key: "E", Purpose: "Enter a location", NextInput: "Stand on a town, dungeon or other entrance."},
 		{Key: "F", Purpose: "Fire a cannon", NextInput: direction},
 		{Key: "G", Purpose: "Get an item", NextInput: direction},
@@ -121,8 +122,9 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 				entry.NextInput = "Arrows/keypad aim; Enter or A attacks. Escape cancels before the first attack, " +
 					"then skips the remaining weapon. Space skips at your own square and attacks elsewhere."
 			case "C":
-				entry.NextInput = "Choose a spell for the acting caster, then its displayed target interaction. " +
-					"Final confirmation spends MP and one mixture. " +
+				entry.NextInput = "Choose a spell for the acting caster. Enter names the next step: " +
+					"a spell with no aim is cast at once; any other is aimed first. " +
+					"Casting spends MP and one mixture. " +
 					"Cancelling beforehand costs no MP, mixture, or gameplay time and preserves the combat action."
 			case "R":
 				entry.NextInput = "Choose equipment for the acting character; Enter applies the displayed Equip/Unready operation immediately."

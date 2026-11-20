@@ -433,7 +433,7 @@ func TestMixWindowAndResultTextFitEverySupportedSize(t *testing.T) {
 			}
 		}
 		list := NewReagentMixingDialog(newWidgetTestKeyboard(0), catalog, fullTestReagentInventory())
-		prompt, _ := list.view.font.MeasureString("Spell: _  " + list.browser.initialsPrompt)
+		prompt, _ := list.view.font.MeasureString("Spell: _  " + spellInitialsPrompt)
 		require.LessOrEqual(t, int(prompt), list.view.searchRect.Inset(list.view.padding).Dx(), "%dx%d", size.X, size.Y)
 	}
 }
