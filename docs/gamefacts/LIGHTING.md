@@ -303,12 +303,16 @@ surface time changes. LOS/obstructions and changing sources still affect admissi
 Breathing remains independent of world time. Neither policy consumes fuel, advances
 the calendar, or draws RNG. Returning
 to the surface restores clock tinting and stale daylight targets cannot cross layers.
-Basement, dungeon, combat/camping, mini-map, and finale policies are not broadened
-by this exploration rule.
+A camp pitched in the Underworld or a dungeon keeps the same full-night cosmetic
+darkness for the whole rest, whatever the surface hour; a surface camp follows the
+clock. The camp map replaces the player location, so this is read from the place
+the party lay down. It is tint only: the camp map stays fully shown.
+Basement, dungeon exploration, combat, mini-map, and finale policies are not
+broadened by these rules.
 
 Regression fixtures compare indoor (10,24) and outdoor (15,23) views of Serpent's
 Hold, diagonal exterior corners, and bricks beside windows. Underworld tests fix
 source/animation state across midnight, dawn, noon, dusk, and transitions.
 
 **Implementation:** `internal/game_state/daylight_tinting.go`, `internal/game_state/ambient_tinting.go`, `internal/game_state/game_state.go`, `internal/map_state/light_source_tinting.go`
-**Tests:** `internal/game_state/daylight_boundary_view_test.go`, `cmd/ultimav/gamescene_daylight_boundary_test.go`, `cmd/ultimav/gamescene_underworld_tint_test.go`
+**Tests:** `internal/game_state/daylight_boundary_view_test.go`, `cmd/ultimav/gamescene_daylight_boundary_test.go`, `cmd/ultimav/gamescene_underworld_tint_test.go`, `internal/game_state/ambient_tinting_test.go`
