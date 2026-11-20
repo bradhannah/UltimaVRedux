@@ -13,6 +13,8 @@ const (
 	spellBackAction  = "Back"
 	spellCasterLabel = "Caster"
 	spellAimAction   = "Aim"
+	// casterGapLetters separates the casters on Cast's header where there is room.
+	casterGapLetters = 3
 	spellFilterKey   = "Ctrl+O"
 	spellFilterHint  = "Filter"
 	spellClearSearch = "Clear search"
@@ -131,7 +133,7 @@ func (d *SpellCastingDialog) writeFooter(output *text.Output, _ int, paged bool)
 		browse = append(browse, spellHint{"/", hintActionSearch, false})
 	}
 	browse = append(browse, spellHint{spellFilterKey, spellFilterHint, false})
-	if !d.casterSelectionLocked {
+	if !d.casterSelectionLocked && len(d.casters()) > 1 {
 		browse = append(browse, spellHint{"Tab", "Next caster", false})
 	}
 	appendSpellHints(output.AppendLine(), browse...)

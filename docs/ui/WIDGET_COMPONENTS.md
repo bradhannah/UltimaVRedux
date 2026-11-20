@@ -1209,6 +1209,15 @@ step (`Cast now` for a spell with no aiming step, which commits on that press;
 and is dimmed when the spell is refused; a refused spell stays on the list.
 The keys every list shares (Shift+Up/Down, Backspace, 1-6) keep working and
 are listed in Help rather than on the screen.
+
+Cast's header shows the chosen caster's Level and MP on its first row and,
+under it, every member who can cast (a class with magic, fit to act), each
+with their place in the party and the chosen one on the tab plate. Tab and
+Shift+Tab step through those members only and a number picks one of them, so
+the list never turns wholly to `[No]` for a member with no magic; with a single
+caster the Tab hint is left out. The gap between names narrows when six long
+names would not fit. In battle the caster is whoever's turn it is, and the row
+only names them.
 Two-line rows centre their measured text block; rendering, paging and visible
 capacity use the same row pitch. Cast/Mix allocate 40% to lists and 60% to details,
 reserve a separate scroll-indicator gutter, and size the footer from its wrapped

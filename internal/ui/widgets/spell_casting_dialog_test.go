@@ -207,3 +207,26 @@ func TestCastStatusLineGivesTheReason(t *testing.T) {
 		require.False(t, dialog.HasPendingCastRequest())
 	}
 }
+
+// Tab and the number keys choose among the members who can cast, so the list
+// never turns wholly to "[No]" for a member with no magic.
+func TestCastChoosesAmongCastersOnly(t *testing.T) {
+	state, dialog, press := newCastBrowserTest(t)
+	for place := 1; state.PartyState.HasCharacter(place); place++ {
+		state.PartyState.GetCharacter(place).Class = party_state.Fighter
+	}
+	require.Equal(t, []int{0}, dialog.casters())
+	dialog.ensureLayout()
+	require.NotContains(t, dialog.view.footer.GetOutputStr(false), "Next caster", "one caster has no one to step to")
+	press(ebiten.KeyTab)
+	require.Zero(t, dialog.selectedCasterIdx)
+	state.PartyState.GetCharacter(2).Class = party_state.Bard
+	dialog.ensureLayout()
+	require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Tab] Next caster")
+	press(ebiten.Key2)
+	require.Zero(t, dialog.selectedCasterIdx, "the second member has no magic")
+	press(ebiten.KeyTab)
+	require.Equal(t, 2, dialog.selectedCasterIdx, "Tab steps over the member with no magic")
+	press(ebiten.Key1)
+	require.Zero(t, dialog.selectedCasterIdx)
+}

@@ -2,6 +2,8 @@ package widgets
 
 import (
 	"fmt"
+	"image"
+	"math"
 	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -117,7 +119,7 @@ func (d *SpellCastingDialog) handleMixShortcut() bool {
 }
 
 // handleCasterKeys changes an unlocked caster with Tab/Shift+Tab, or with a
-// party digit while not searching. It reports whether the caster key was used.
+// caster's party digit while not searching. It reports whether the key was used.
 func (d *SpellCastingDialog) handleCasterKeys() bool {
 	if d.casterSelectionLocked {
 		return false
@@ -143,7 +145,7 @@ func (d *SpellCastingDialog) handleCasterKeys() bool {
 	return false
 }
 
-// Draw renders the shared catalog with a caster strip. Whether Enter will work is
+// Draw renders the shared catalog under the casters. Whether Enter will work is
 // the first line of the selected spell's details.
 func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 	if d.isDismissed {
@@ -152,21 +154,102 @@ func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
 	view := &d.view
 	view.drawFrame(screen)
-	header := view.headerRect.Inset(view.padding)
-	prepareSpellOutput(view.title, header)
-	view.title.AppendLine().Text("CAST", DialogHeaderColor).Done()
-	if caster := d.getSelectedCaster(); caster != nil {
-		line := appendSpellField(view.title.AppendLine(), spellCasterLabel, caster.GetNameAsString())
-		line.Text("   ", DialogValueColor)
-		appendSpellField(line, "Level", strconv.Itoa(int(caster.Level))).Text("   ", DialogValueColor)
-		appendSpellField(line, "MP", fmt.Sprintf("%d / %d", caster.GetCurrentMp(), caster.GetMaxMp())).Done()
-	}
-	drawSpellOutput(screen, view.title, header, 0, spellBrowserRowLines)
+	d.drawHeader(screen)
 	view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
 	view.drawList(screen, d.browser, view.listRect.Inset(view.padding), d.spellAvailable)
 	view.drawDetails(screen, d.browser)
 	view.drawFooter(screen)
 	view.finishFrame(screen)
+}
+
+// drawHeader names the screen and the chosen caster's level and MP, and under
+// them everyone who can cast.
+func (d *SpellCastingDialog) drawHeader(screen *ebiten.Image) {
+	view := &d.view
+	header := view.headerRect.Inset(view.padding)
+	prepareSpellOutput(view.title, header)
+	view.title.AppendLine().Text("CAST", DialogHeaderColor).Done()
+	drawSpellOutput(screen, view.title, header, 0, 1)
+	caster := d.getSelectedCaster()
+	if caster == nil {
+		return
+	}
+	level, magic := strconv.Itoa(int(caster.Level)), fmt.Sprintf("%d / %d", caster.GetCurrentMp(), caster.GetMaxMp())
+	width, _ := view.title.Font.MeasureString("Level: " + level + "   MP: " + magic)
+	facts := header
+	facts.Min.X = max(header.Min.X, header.Max.X-int(math.Ceil(width)))
+	prepareSpellOutput(view.title, facts)
+	line := appendSpellField(view.title.AppendLine(), "Level", level).Text("   ", DialogValueColor)
+	appendSpellField(line, "MP", magic).Done()
+	drawSpellOutput(screen, view.title, facts, 0, 1)
+	d.drawCasters(screen, image.Rect(header.Min.X, header.Max.Y-view.lineHeight, header.Max.X, header.Max.Y))
+}
+
+// drawCasters lists the members who can cast, each with their place in the
+// party, the chosen one on the tab plate. In battle the caster is whoever's turn
+// it is, so the row only names them.
+func (d *SpellCastingDialog) drawCasters(screen *ebiten.Image, rect image.Rectangle) {
+	view := &d.view
+	letter, _ := view.font.MeasureString("M")
+	left := rect.Min.X + int(math.Ceil(letter))
+	if d.casterSelectionLocked {
+		rect.Min.X = left
+		prepareSpellOutput(view.casters, rect)
+		view.casters.AppendLine().Text(d.getSelectedCaster().GetNameAsString(), DialogValueColor).
+			Text(", whose turn it is", DialogControlHintColor).Done()
+		drawSpellOutput(screen, view.casters, rect, 0, 1)
+
+		return
+	}
+	places := d.casters()
+	labels, total := make([]string, len(places)), 0.0
+	for index, place := range places {
+		labels[index] = strconv.Itoa(place+1) + " " + d.partyState.GetCharacter(place).GetNameAsString()
+		width, _ := view.font.MeasureString(labels[index])
+		total += math.Ceil(width)
+	}
+	// Six casters with long names fit only with a narrower gap.
+	gap := casterGapLetters
+	for gap > 1 && total+letter*float64(gap*(len(places)-1)+casterGapLetters) > float64(rect.Dx()) {
+		gap--
+	}
+	unit, fontHeight := getClassicUIPixelUnit(view.width, view.height), int(math.Ceil(view.casters.GetFontHeight()))
+	for index, place := range places {
+		width, _ := view.font.MeasureString(labels[index])
+		cell := image.Rect(left, rect.Min.Y, left+int(math.Ceil(width)), rect.Max.Y)
+		textColor := DialogTabColor
+		if place == d.selectedCasterIdx {
+			textColor = DialogActiveTabText
+			DrawActiveTabPlate(screen, cell, width, cell.Min.Y, fontHeight, unit)
+		}
+		prepareSpellOutput(view.casters, cell)
+		view.casters.AppendLine().Text(labels[index], textColor).Done()
+		drawSpellOutput(screen, view.casters, cell, 0, 1)
+		left = cell.Max.X + int(math.Ceil(letter))*gap
+	}
+}
+
+// casters are the party places of the members who can cast now, in party order.
+func (d *SpellCastingDialog) casters() []int {
+	var places []int
+	for place := range zStatsDossierCharacterSelectors {
+		if d.canCast(place) {
+			places = append(places, place)
+		}
+	}
+
+	return places
+}
+
+// canCast applies the game's rule for who may be chosen to cast: a member of
+// the party whose class has magic and who is fit to act.
+func (d *SpellCastingDialog) canCast(place int) bool {
+	if !d.partyState.HasCharacter(place) {
+		return false
+	}
+	member := d.partyState.GetCharacter(place)
+
+	return member.IsInParty() && member.CanCastSpells() && (member.IsGood() || member.IsPoisoned())
 }
 
 // appendEntry writes what a caster needs to know: whether Enter will work and
@@ -340,15 +423,12 @@ func (d *SpellCastingDialog) attemptCast() {
 }
 
 func (d *SpellCastingDialog) selectCaster(index int) {
-	if d.casterSelectionLocked || index < 0 || index >= 6 || !d.partyState.HasCharacter(index) {
+	if d.casterSelectionLocked || !d.canCast(index) {
 		return
 	}
-	caster := d.partyState.GetCharacter(index)
-	if caster.IsInParty() && caster.IsAlive() {
-		d.selectedCasterIdx = index
-		d.notice = ""
-		d.browser.refilter() // Ready depends on who is casting.
-	}
+	d.selectedCasterIdx = index
+	d.notice = ""
+	d.browser.refilter() // What can be cast depends on who is casting.
 }
 
 // SetInitialCaster restores the workflow's previously selected caster and opens
@@ -372,17 +452,12 @@ func (d *SpellCastingDialog) cycleCaster(direction int) {
 	if d.casterSelectionLocked {
 		return
 	}
-	for step := 1; step <= zStatsDossierCharacterSelectors; step++ {
+	for step := 1; step < zStatsDossierCharacterSelectors; step++ {
 		index := (d.selectedCasterIdx + direction*step + zStatsDossierCharacterSelectors) % zStatsDossierCharacterSelectors
-		if d.partyState.HasCharacter(index) {
-			caster := d.partyState.GetCharacter(index)
-			if caster.IsInParty() && caster.IsAlive() {
-				d.selectedCasterIdx = index
-				d.notice = ""
-				d.browser.refilter() // Ready depends on who is casting.
+		if d.canCast(index) {
+			d.selectCaster(index)
 
-				return
-			}
+			return
 		}
 	}
 }

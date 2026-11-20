@@ -406,7 +406,7 @@ type spellPresentation struct {
 	font                           *text.UltimaFont
 	row, count, body, heading      *text.Output
 	search, footer, title          *text.Output
-	filter, matches, status        *text.Output
+	filter, matches, casters       *text.Output
 	indicator                      *text.Output
 	pageIndicator                  *text.Output
 	detailBodyRect, detailPageRect image.Rectangle
@@ -441,7 +441,7 @@ func (p *spellPresentation) layout(width, height int) {
 	p.search = text.NewOutput(p.font, spacing, spellBrowserRowLines, spellBrowserTextCapacity)
 	p.filter = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.matches = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
-	p.status = text.NewOutput(p.font, spacing, spellBrowserRowLines, spellBrowserTextCapacity)
+	p.casters = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.pageIndicator = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.footer = text.NewOutput(p.font, spacing, spellBrowserFooterLines*spellBrowserRowLines, spellBrowserTextCapacity)
 	_, p.title = GetScaledFontWithOutput(FontConfig{
