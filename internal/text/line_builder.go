@@ -106,16 +106,6 @@ func (lb *LineBuilder) Yellowf(format string, args ...interface{}) *LineBuilder 
 	return lb.Textf(format, ucolor.EGAYellow, args...)
 }
 
-// Red adds red text segment
-func (lb *LineBuilder) Red(text string) *LineBuilder {
-	return lb.Text(text, ucolor.EGARed)
-}
-
-// Redf adds formatted red text segment
-func (lb *LineBuilder) Redf(format string, args ...interface{}) *LineBuilder {
-	return lb.Textf(format, ucolor.EGARed, args...)
-}
-
 // LightRed adds light red text segment
 func (lb *LineBuilder) LightRed(text string) *LineBuilder {
 	return lb.Text(text, ucolor.EGALightRed)

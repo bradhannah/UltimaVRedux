@@ -110,7 +110,7 @@ func TestOutput_Reset_ClearsBufferAndResetsIndex(t *testing.T) {
 	// Add some lines first
 	output.AppendLine().Yellow("Line 1").Done()
 	output.AppendLine().White("Line 2").Done()
-	output.AppendLine().Red("Line 3").Done()
+	output.AppendLine().LightRed("Line 3").Done()
 
 	// Verify lines were added
 	assert.Equal(t, 3, output.nextLineToIndex, "Should have advanced index after adding 3 lines")

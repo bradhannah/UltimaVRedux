@@ -120,7 +120,6 @@ func TestRunic_InheritsFromVariousColors(t *testing.T) {
 		expectedColor interface{}
 	}{
 		{"Yellow", func(lb *LineBuilder) *LineBuilder { return lb.Yellow("text") }, ucolor.EGAYellow},
-		{"Red", func(lb *LineBuilder) *LineBuilder { return lb.Red("text") }, ucolor.EGARed},
 		{"LightGreen", func(lb *LineBuilder) *LineBuilder { return lb.LightGreen("text") }, ucolor.EGALightGreen},
 		{"Cyan", func(lb *LineBuilder) *LineBuilder { return lb.Cyan("text") }, ucolor.EGACyan},
 	}
