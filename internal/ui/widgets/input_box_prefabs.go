@@ -36,6 +36,16 @@ import (
 func NewYesNoInputBox(
 	question string, yesNoCommand *grammar.TextCommand, keyboard *input.Keyboard, dialogStack *DialogStack,
 ) *InputBox {
+	return NewYesNoInputBoxAt(question, yesNoCommand, keyboard, dialogStack, DialogDefaultVerticalPos)
+}
+
+// NewYesNoInputBoxAt is NewYesNoInputBox centred at another height, as a share
+// of the screen from the top, for a question asked beside a dialog that already
+// fills the standard position.
+func NewYesNoInputBoxAt(
+	question string, yesNoCommand *grammar.TextCommand, keyboard *input.Keyboard, dialogStack *DialogStack,
+	centerY float64,
+) *InputBox {
 	questionLines := text.MeasureText(
 		question,
 		GetScaledFont(inputBoxFontSize),
@@ -49,6 +59,6 @@ func NewYesNoInputBox(
 		WithTextLines(max(DialogConfirmationLines, questionLines)).
 		WithCharsPerLine(dialogConfirmationCharsPerLine).
 		WithHorizontalPosition(DialogHorizontalMapOnly).
-		WithVerticalPosition(DialogDefaultVerticalPos).
+		WithVerticalPosition(centerY).
 		Build()
 }

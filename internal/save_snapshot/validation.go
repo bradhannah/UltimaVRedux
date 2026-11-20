@@ -55,6 +55,9 @@ func validateSnapshot(snapshot SaveSnapshot, expectedVersion int) []Issue {
 	if expectedVersion >= 27 {
 		validateExperienceRecordsV27(snapshot, add)
 	}
+	if expectedVersion >= 28 {
+		validateCircleStudyV28(snapshot, add)
+	}
 	validateWorldJournal(snapshot, add)
 	validateChestAssessments(snapshot, add)
 	validateOpenDoor(snapshot, add)

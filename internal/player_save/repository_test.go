@@ -816,6 +816,7 @@ func minimumVersionPlayerSaveData(t *testing.T, envelope save_snapshot.Envelope)
 	delete(snapshot, "notes")
 	delete(snapshot, "deedExperiencePaid")
 	delete(snapshot, "sharedExperienceRemainder")
+	delete(snapshot, "circleStudy")
 	data, err = json.Marshal(document)
 	if err != nil {
 		t.Fatal(err)

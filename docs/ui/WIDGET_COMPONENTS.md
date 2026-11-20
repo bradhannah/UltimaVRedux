@@ -968,6 +968,18 @@ columns for every candidate. Dead members show no recoverable-HP estimate; the
 existing warning/availability rules and resource commitment remain authoritative.
 The detail pane prioritizes the action explanation over a portrait in this mode.
 
+A selector normally closes after one confirmation. An owner that keeps it open
+after changing game state, as circle study does so a second member can study,
+replaces the detached rows with `SetOptions`; the inspected character stays
+selected. A roster row holds fewer letters at 1080p and 1440p than at 720p, so
+an owner's title, status words and detail text must be checked at every
+supported size: `LayoutProblemsAt` reports a title cut to its last row, a name
+the row would shorten and detail text taller than its box. The study list's
+short status words exist for that reason
+([PROGRESS-0005](../gamefacts/CHARACTER_PROGRESSION.md#progress-0005)). Its
+question uses `NewYesNoInputBoxAt` to sit just below the list instead of over
+its footer.
+
 Camping watch selection instead explicitly sets
 `CharacterSelectionConfig.GuardResources`. `CharacterSelectionResources` carries
 typed current/max HP (`uint16`) and MP (`byte`) values copied from the party's

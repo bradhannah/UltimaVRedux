@@ -126,7 +126,8 @@ to interests after feedback and a key wait; it does not start another Talk actio
 Redux translates these controls into semantic actions, expands shared responses,
 and replaces numeric questions with validated identities. Its custom in-memory
 GoToJail value `0xE1` is not a raw TLK opcode; knowledge discovery has no original
-byte assignment. Arbitrary operand equivalence is unverified: the importer masks
+byte assignment, and neither has the action that ends a talk to open circle study
+([PROGRESS-0005](CHARACTER_PROGRESSION.md#progress-0005)). Arbitrary operand equivalence is unverified: the importer masks
 the karma threshold and limits it to 99, while the original compares an unmasked
 unsigned byte (see KARMA-0018). Zero-gold Take and
 no-effect Give codes are also not a universal semantic-import contract.
@@ -232,7 +233,9 @@ its earlier ordered match, and MAGI and SYMB/CODE remain independently available
 No item gate, invented lore, or automatic Chronicle fact is added.
 
 Tracked corrections: `data/conversation-patches/dwelling/014.patch` and
-`data/conversation-patches/dwelling/015.patch`.
+`data/conversation-patches/dwelling/015.patch`. The one other patch that adds
+spoken lines, `data/conversation-patches/keep/011.patch`, is not a correction; it
+belongs to [PROGRESS-0005](CHARACTER_PROGRESSION.md#progress-0005).
 
 **Implementation:** `internal/conversation/semantic_engine.go`, `cmd/ultimav/linear_talk_dialog_discovery.go`
 **Tests:** `internal/conversation/extractor/arbuthnot_original_test.go`, `internal/conversation/semantic_engine_original_test.go`

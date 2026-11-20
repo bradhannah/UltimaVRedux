@@ -182,6 +182,8 @@ func actionYAMLNode(action Action) *yaml.Node {
 		return stringNode(string(ActionKindCallGuards))
 	case *GoToJailAction:
 		return stringNode(string(ActionKindGoToJail))
+	case *BeginCircleStudyAction:
+		return stringNode(string(ActionKindBeginCircleStudy))
 	case *ReturnToTopicsAction:
 		return stringNode(string(ActionKindReturnToTopics))
 	case *EndAction:

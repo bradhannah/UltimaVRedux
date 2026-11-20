@@ -46,6 +46,9 @@ type ActionCallbacks interface {
 	IncreaseKarma()
 	DecreaseKarma()
 	GoToJail()
+	// BeginCircleStudy records that the host should open circle study once the
+	// talk has closed; ref:PROGRESS-0005.
+	BeginCircleStudy()
 	GiveItem(itemID int)
 	DeductGoldSimple(amount int, npcName string) error
 	TimedPause()

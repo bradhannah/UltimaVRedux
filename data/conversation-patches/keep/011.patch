@@ -1,0 +1,61 @@
+# format: ultima5redux.conversation-patch/v1
+# target: keep/011.yaml
+# schema: ultima5redux.conversation/v1
+# extractor: original-tlk/v2
+# base-sha256: ffd5a87b51fcd199424203b9c602a2eb2b2c9e7990df11d4a47bdde51527a0fe
+--- a/keep/011.yaml
++++ b/keep/011.yaml
+@@ -1,4 +1,5 @@
+ schema: ultima5redux.conversation/v1
++# REDUX DEVIATION: PROGRESS-0005. KEEP.TLK 11 teaches nothing. Lady Janell offers circle study, led in from her own answer about evil times.
+ protocol: ultima5
+ id: original.keep.011
+ origin:
+@@ -15,7 +16,27 @@
+       - quee
+       - mag
+       - brit
+-    response: Evil times are before us, but the hearts of our people shall perservere.
++    response:
++      - say: Evil times are before us, but the hearts of our people shall perservere.
++      - narrate:
++          - line_break
++          - line_break
++      - wait_for_key
++      - say: The Great Council is broken, and those who served on it are hunted.
++  - keywords:
++      - coun
++      - grea
++    response: They sealed the eight dungeons, to entomb the creatures within. Should those seals be broken, the land will need defenders stronger than any it has now.
++  - keywords:
++      - stro
++      - defe
++    response:
++      - say: Here in the Keep of Truth, we use the precepts of Truth to strengthen our arts.
++      - narrate:
++          - line_break
++          - line_break
++      - wait_for_key
++      - ask: question_03
+   - keywords:
+       - hear
+       - peop
+@@ -55,3 +76,18 @@
+           - y
+         response: Enter one of the mystic moongates at precisely midnight. Then shalt thou find the Shrine!
+     default: I see.
++  question_03:
++    prompt:
++      - say: For 3000 gold crowns I shall teach one of thy party to cast spells of one Circle higher than they now may. Each may learn it but once.
++      - narrate:
++          - line_break
++          - line_break
++      - wait_for_key
++      - say: Dost thou wish one of thy party to learn it now?
++    answers:
++      - keywords:
++          - y
++        response:
++          - say: Then let the one who would learn step forward.
++          - begin_circle_study
++    default: I see.

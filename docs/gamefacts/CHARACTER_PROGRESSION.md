@@ -128,3 +128,58 @@ is ready for that level.
 
 **Implementation:** `internal/game_state/deed_experience.go`, `cmd/ultimav/gamescene_experience.go`
 **Tests:** `internal/game_state/deed_experience_test.go`
+
+### PROGRESS-0005
+
+**Circle study**
+
+**Kind:** rule
+**Uses:** PROGRESS-0001, PROGRESS-0003, PROGRESS-0004, SPELL-0001
+**Original:** Incomplete
+**Redux:** Intentional deviation
+
+The original lets a member cast a prepared spell only when their level is at
+least the spell's Circle (SPELL-0001), and level follows experience alone
+(PROGRESS-0001, PROGRESS-0003). No inspected original routine, shop or
+conversation raises that limit, and none teaches for gold. The inspected
+material is not an exhaustive audit, so this absence is not established for
+every routine.
+
+**REDUX DEVIATION: PROGRESS-0005:** a member may study once to cast spells of one
+Circle above their level. A party that follows the quest reaches Doom at about
+level 7 even with deed experience (PROGRESS-0004), one Circle short of
+Resurrection, Summon Daemon and Time Stop; the study closes that gap without
+more fighting. It is always offered and has no setting.
+
+- **Effect.** A studied member's Circle limit is their level plus one, never
+  above the eighth. The limit follows the level as it rises or falls, so a
+  member returned to level 6 by a death still casts the seventh Circle. Level,
+  hit points, experience, magic points and the cost of a spell do not change.
+- **Who may study.** A member of the active party whose class casts spells
+  (Avatar, Wizard or Bard), who is not Dead, has not studied before and does
+  not already cast the eighth Circle. A Fighter is refused. Each refusal is
+  stated in words on the study list.
+- **Price.** 3000 gold for each member, once. A party without the price is
+  refused and nothing changes.
+- **Record.** The mark belongs to the member. It moves with them when the party
+  is reordered and is saved with the game.
+
+Lady Janell teaches it at the Lycaeum. Her original conversation (`KEEP.TLK`
+record 11 in the inspected installation) is kept whole; Redux adds one sentence
+after her answer about evil times, two answers and one question. She speaks every
+new keyword before the player needs it: the added sentence names the Great
+Council, her Council answer speaks of defenders who must be stronger, and that
+answer leads to her offer. On a yes she bids the learner step forward, the talk
+ends and the study list opens; anything else returns to her topics. Choosing a
+member who can study then asks a yes-or-no question naming the member and the
+price before any gold is spent, and a no changes nothing.
+
+Her new lines repeat only what the game already establishes elsewhere: that the
+Great Council sealed the eight dungeons to entomb the creatures within, that
+those who served on it are hunted, and that the Lycaeum uses the precepts of
+Truth to strengthen its magic. The Council is her reason for teaching, not the
+source of what she teaches. That she teaches at all, and what the teaching
+does, is Redux's invention.
+
+**Implementation:** `internal/game_state/circle_study.go`, `internal/party_state/player_character.go`, `internal/game_state/action_cast.go`, `cmd/ultimav/gamescene_circle_study.go`, `internal/conversation/semantic_engine.go`
+**Tests:** `internal/game_state/circle_study_test.go`, `cmd/ultimav/gamescene_circle_study_test.go`, `internal/conversation/semantic_engine_regressions_original_test.go`

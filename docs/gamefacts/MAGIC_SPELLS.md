@@ -54,6 +54,13 @@ Precommit rejections include every prepared combat Cast while Negate Magic is
 active (**Absorbed!**, In An included), combat Vas Mani before victory, and An Tym
 while a Shadowlord would absorb it.
 
+**REDUX DEVIATION: SPELL-0001:** the level gate compares the spell's Circle with
+the caster's Circle limit: their level, or one above it once they have taken
+circle study ([PROGRESS-0005](CHARACTER_PROGRESSION.md#progress-0005)), never
+above the eighth. The original compares level alone. The study exists so a party
+that reaches Doom at level 7 is not shut out of the eighth Circle. Mixture stock,
+MP cost and every other gate are unchanged.
+
 Metadata owns legal contexts and separate selection/effect scope. The support
 table owns implemented contexts. Crosshair, adjacent-tile, and cone workflows
 validate first, revalidate on confirmation, retain authoritative pending data,

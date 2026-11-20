@@ -52,6 +52,8 @@ type GameActionCallbacks struct {
 	dialogOutput     *text.Output // Reference to dialog's output for Crout() calls
 	pendingKnowledge []pendingConversationKnowledge
 	notifiedResponse uint64
+	// circleStudyRequested is set when the conversation ends by offering circle study.
+	circleStudyRequested bool
 }
 
 type pendingConversationKnowledge struct {
@@ -108,7 +110,7 @@ func NewGameActionCallbacks(
 	return &GameActionCallbacks{
 		gameScene: gameScene, npcRef: npcRef, npc: npc, npcName: "NPC",
 		knownSpeaker: "", output: strings.Builder{}, dialogOutput: nil,
-		pendingKnowledge: nil, notifiedResponse: 0,
+		pendingKnowledge: nil, notifiedResponse: 0, circleStudyRequested: false,
 	}
 }
 
@@ -217,6 +219,12 @@ func (g *GameActionCallbacks) DecreaseKarma() {
 func (g *GameActionCallbacks) GoToJail() {
 	g.dialogOutput.AddTextWithColor("Guards grab you and throw you in jail!", ucolor.EGAYellow)
 	g.gameScene.gameState.ExecuteJailSentence()
+}
+
+// BeginCircleStudy records that circle study opens once this talk has closed.
+// The talk workflow owns the screen; ref:PROGRESS-0005.
+func (g *GameActionCallbacks) BeginCircleStudy() {
+	g.circleStudyRequested = true
 }
 
 // GiveItem gives the specified item to the player's inventory.

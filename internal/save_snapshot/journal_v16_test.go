@@ -43,6 +43,12 @@ func registerJournalSchemaFormats(compiler *jsonschema.Compiler, version int) {
 				return err
 			}
 			snapshot = previous.validationView()
+		case 27:
+			var previous saveSnapshotV27
+			if err = decodeRequiredJSON(data, &previous); err != nil {
+				return err
+			}
+			snapshot = previous.validationView()
 		default:
 			if err = decodeRequiredJSON(data, &snapshot); err != nil {
 				return err
@@ -68,6 +74,9 @@ func registerJournalSchemaFormats(compiler *jsonschema.Compiler, version int) {
 		}
 		if version >= 27 {
 			validateExperienceRecordsV27(snapshot, add)
+		}
+		if version >= 28 {
+			validateCircleStudyV28(snapshot, add)
 		}
 		if len(issues) != 0 {
 			return &ValidationError{Issues: issues}

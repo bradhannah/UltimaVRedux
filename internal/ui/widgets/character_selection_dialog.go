@@ -86,6 +86,24 @@ func NewCharacterSelectionDialog(config CharacterSelectionConfig) *CharacterSele
 	return dialog
 }
 
+// SetOptions replaces the roster after its owner changed game state, keeping
+// the inspected character selected.
+func (d *CharacterSelectionDialog) SetOptions(options []CharacterSelectionOption) {
+	if len(options) == 0 {
+		panic("CharacterSelectionDialog: at least one option is required")
+	}
+	inspected := d.options[d.selected].CharacterIndex
+	d.options = cloneCharacterSelectionOptions(options)
+	d.selected = 0
+	for index, option := range d.options {
+		if option.CharacterIndex == inspected {
+			d.selected = index
+
+			break
+		}
+	}
+}
+
 // Draw renders the detached roster and the currently inspected option.
 func (d *CharacterSelectionDialog) Draw(screen *ebiten.Image) {
 	d.shell.draw(screen, characterRosterDialogView{

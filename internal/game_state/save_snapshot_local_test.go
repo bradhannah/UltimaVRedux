@@ -108,6 +108,9 @@ func assertHistoricalPersistedBase(t *testing.T, original []byte, recaptured sav
 		delete(current, "deedExperiencePaid") // Older saves have paid no deeds.
 		delete(current, "sharedExperienceRemainder")
 	}
+	if version < 28 {
+		delete(current, "circleStudy") // Older saves have no member studied.
+	}
 	require.Equal(t, old, current, "every persisted field must survive promotion and hydration")
 	t.Logf("v%d: full persisted base, hydration/recapture and metadata preserved", version)
 }

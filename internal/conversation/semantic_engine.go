@@ -448,6 +448,13 @@ func (engine *SemanticConversationEngine) execute() *ConversationResponse {
 		case *semantic.GoToJailAction:
 			engine.output.markControl()
 			engine.callbacks.GoToJail()
+		case *semantic.BeginCircleStudyAction:
+			engine.output.markControl()
+			engine.callbacks.BeginCircleStudy()
+			engine.active = false
+			engine.frames = nil
+
+			return engine.dismissalResponse()
 		case *semantic.ReturnToTopicsAction:
 			engine.output.markControl()
 			engine.frames = nil

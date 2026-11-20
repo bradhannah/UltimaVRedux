@@ -43,6 +43,7 @@ func TestV27ExperienceRecordsPromoteRoundTripAndReject(t *testing.T) {
 		body[member] = kept
 	}
 
+	delete(body, "circleStudy") // Version 28 added it; this document stands in for older saves.
 	body["version"] = 26
 	admitted, err := json.Marshal(document)
 	require.NoError(t, err)

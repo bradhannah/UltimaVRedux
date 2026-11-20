@@ -177,3 +177,57 @@ func TestOriginalSemanticRecognitionAndEmptyGreeting(t *testing.T) {
 		}
 	}
 }
+
+// Lady Janell plants each keyword in her own speech before the player can use
+// it, and only a yes at her question asks the host for circle study.
+// ref:PROGRESS-0005
+func TestOriginalSemanticLadyJanellLeadsFromHerOwnWordsToCircleStudy(t *testing.T) {
+	originalCatalog, err := catalog.LoadOriginal(originaldata.Directory(t), conversationpatchdata.Files)
+	require.NoError(t, err)
+	definition := originalCatalogDefinition(t, originalCatalog, semantic.OriginalSourceKeep, 11)
+	for _, answer := range []string{"y", "n"} {
+		t.Run("answer="+answer, func(t *testing.T) {
+			callbacks := &semanticTestCallbacks{avatarName: "Avatar"}
+			engine, engineErr := NewSemanticConversationEngine(definition, callbacks, false)
+			require.NoError(t, engineErr)
+			require.NoError(t, engine.Start(40).Error)
+			assert.Contains(t, engine.ProcessInput("study").Output, responseNoHelp, "a bare keyword she never spoke does nothing")
+
+			evilTimes := engine.ProcessInput("queen")
+			assert.Contains(t, evilTimes.Output, "Evil times are before us")
+			require.True(t, evilTimes.WaitingForKeypress)
+			assert.Contains(t, engine.ProcessInput("").Output, "The Great Council is broken")
+
+			council := engine.ProcessInput("council")
+			assert.Contains(t, council.Output, "They sealed the eight dungeons")
+			assert.Contains(t, council.Output, "defenders stronger")
+
+			truth := engine.ProcessInput("stronger")
+			assert.Contains(t, truth.Output, "precepts of Truth")
+			require.True(t, truth.WaitingForKeypress)
+			price := engine.ProcessInput("")
+			assert.Contains(t, price.Output, "3000 gold crowns")
+			assert.Contains(t, price.Output, "but once")
+			require.True(t, price.WaitingForKeypress)
+			question := engine.ProcessInput("")
+			assert.Contains(t, question.Output, "Dost thou wish one of thy party to learn it now?")
+			require.True(t, question.NeedsInput)
+			require.Zero(t, callbacks.studies, "nothing is asked of the host before the answer")
+
+			response := engine.ProcessInput(answer)
+			require.NoError(t, response.Error)
+			if answer == "y" {
+				assert.Contains(t, response.Output, "Then let the one who would learn step forward.",
+					"she speaks before the talk ends, so no empty quotation is shown")
+				assert.True(t, response.IsCompleteAwaitingDismissal, "the talk ends so the study can open")
+				assert.Equal(t, 1, callbacks.studies)
+
+				return
+			}
+			assert.Contains(t, response.Output, "I see.")
+			assert.False(t, response.IsCompleteAwaitingDismissal, "declining returns to her topics")
+			assert.Zero(t, callbacks.studies)
+			assert.Contains(t, engine.ProcessInput("truth").Output, "two sisters", "her own quest chain is unchanged")
+		})
+	}
+}

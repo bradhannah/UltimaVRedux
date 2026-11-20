@@ -191,6 +191,7 @@ func comprehensiveConversation(reverseQuestions bool) *semantic.Conversation {
 			{Keywords: []string{"survey", "routes"}, Response: semantic.Body{&semantic.AskAction{Question: "question_01"}}},
 			{Keywords: []string{"ledger"}, Response: semantic.Body{simpleSay("The entries remain ordered.")}},
 			{Keywords: []string{"leave"}, Response: semantic.Body{&semantic.EndAction{}}},
+			{Keywords: []string{"study"}, Response: semantic.Body{&semantic.BeginCircleStudyAction{}}},
 		},
 		Questions: questions,
 	}

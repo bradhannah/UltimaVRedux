@@ -311,6 +311,11 @@ func (context *validationContext) validateBody(body Body, path string) {
 			if value == nil {
 				context.add(actionPath, "go_to_jail action must not be nil")
 			}
+		case *BeginCircleStudyAction:
+			terminal = true
+			if value == nil {
+				context.add(actionPath, "begin_circle_study action must not be nil")
+			}
 		case *ReturnToTopicsAction:
 			terminal = true
 			if value == nil {

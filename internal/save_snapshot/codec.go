@@ -259,6 +259,13 @@ func decodePreviousSnapshot(data json.RawMessage, version int) (SaveSnapshot, er
 		}
 
 		return previous.validationView(), nil
+	case 27:
+		var previous saveSnapshotV27
+		if err := decodeRequiredJSON(data, &previous); err != nil {
+			return SaveSnapshot{}, fmt.Errorf("%w: decode version %d snapshot: %w", ErrInvalidEnvelope, version, err)
+		}
+
+		return previous.validationView(), nil
 	default:
 		return SaveSnapshot{}, &UnsupportedVersionError{Version: version}
 	}

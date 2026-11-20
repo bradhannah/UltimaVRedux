@@ -23,6 +23,7 @@ func (g *GameState) capturePersonalSnapshot(snapshot *save_snapshot.SaveSnapshot
 	snapshot.CodexRevelationComplete = g.CodexRevelationComplete
 	snapshot.DeedExperiencePaid = g.deedExperiencePaidKeys()
 	snapshot.SharedExperienceRemainder = g.sharedExperienceRemainder
+	snapshot.CircleStudy = g.circleStudyRosterIndices()
 	for i, record := range g.BasementChestHistory {
 		if date := record.LastOpened; date != nil {
 			snapshot.BasementChestHistory[i].LastOpened = &save_snapshot.BritannianDateSnapshot{Year: int(date.Year), Month: int(date.Month), Day: int(date.Day)}
@@ -59,6 +60,9 @@ func (g *GameState) restorePersonalSnapshot(snapshot save_snapshot.SaveSnapshot)
 		return fmt.Errorf("hydrating deed experience: %w", err)
 	}
 	g.sharedExperienceRemainder = snapshot.SharedExperienceRemainder
+	if err := g.restoreCircleStudy(snapshot.CircleStudy); err != nil {
+		return fmt.Errorf("hydrating circle study: %w", err)
+	}
 
 	return nil
 }

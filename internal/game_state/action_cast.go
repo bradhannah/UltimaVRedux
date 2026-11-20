@@ -170,8 +170,9 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 		return SpellValidationResult{Valid: false, ErrorMsg: SpellMPTooLowMessage}
 	}
 
-	// Check caster level - must be >= spell circle
-	if !g.DebugOptions.BypassSpellLevelRestrictions && int(caster.Level) < circle {
+	// Check caster level - must be >= spell circle.
+	// REDUX DEVIATION: SPELL-0001: circle study lifts the limit by one; ref:PROGRESS-0005.
+	if !g.DebugOptions.BypassSpellLevelRestrictions && caster.SpellCircleLimit() < circle {
 		return SpellValidationResult{Valid: false, ErrorMsg: "Level too low!"}
 	}
 	if validateTarget && !g.isPreparedSpellEffectTargetValid(request) {

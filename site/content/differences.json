@@ -43,6 +43,14 @@
       "setting": "Deed Experience"
     },
     {
+      "area": "Party",
+      "title": "Study to cast one Circle higher",
+      "kind": "always_on",
+      "original": "A member casts only spells of a Circle up to their level, and nothing but experience raises it. A party that follows the quest reaches the end about a level short of the eighth Circle.",
+      "redux": "Lady Janell at the Lycaeum teaches a member to cast spells of one Circle above their level. It costs 3000 gold for each member, once, and changes nothing else.",
+      "rule": "PROGRESS-0005"
+    },
+    {
       "area": "Camping",
       "title": "Camp on horseback or a carpet",
       "kind": "always_on",

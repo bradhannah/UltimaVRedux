@@ -113,6 +113,8 @@ Player notes in My Notes follow their checkpoint in the same way: a reload rewin
 them with the rest of the save, and older saves start with a fresh notebook.
 The record of quest deeds already paid experience follows its checkpoint too, so
 a reload can neither pay a deed twice nor lose a payment.
+The record of members who have taken circle study follows its checkpoint in the
+same way, so a reload returns both the mark and the gold paid for it.
 Fleet identity likewise follows each actual vehicle across parked/boarded forms,
 with one checkpoint allocation watermark and no duplicate position/history store.
 Registration requires a real eligible boat-use boundary; acquiring a sextant or

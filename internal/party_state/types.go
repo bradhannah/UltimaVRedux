@@ -56,4 +56,6 @@ type PlayerCharacter struct {
 	Ring         byte
 	Amulet       byte
 	PartyMap     PartyMap
+	// circleStudy is Redux-only state with no original record byte; ref:PROGRESS-0005.
+	circleStudy bool // private - use HasCircleStudy() and SetCircleStudy()
 }

@@ -152,6 +152,11 @@ func (g *GameScene) startTalkWorkflow(
 				func() bool { return theftResult.Occurred() },
 				func(theftQ *event_queue.SequentialEventBuilder) {
 					theftQ.ThenSequence(g.thenShowConfirmationDialog("Something was stolen!"))
+				}).If(
+				// Read the dialog after the talk event has assigned it. ref:PROGRESS-0005
+				func() bool { return normalConversationCompleted && normalDialog.CircleStudyRequested() },
+				func(studyQ *event_queue.SequentialEventBuilder) {
+					studyQ.ThenSequence(g.thenRunCircleStudy())
 				})
 		}).If(
 
