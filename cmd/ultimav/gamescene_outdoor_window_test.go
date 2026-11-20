@@ -130,7 +130,7 @@ func TestOutdoorWindowProductionCastCostsCancellationAndFailureText(t *testing.T
 				}
 				scene.keyboard.SimulateKeyPress(key)
 				paid := outcome == "success" || outcome == "failure"
-				if paid {
+				if outcome == "failure" {
 					var feedback *widgets.OverlayDialog
 					for range 30 {
 						state.ElapsedMs += 1000
@@ -140,14 +140,15 @@ func TestOutdoorWindowProductionCastCostsCancellationAndFailureText(t *testing.T
 							break
 						}
 					}
-					require.NotNil(t, feedback)
-					if outcome == "failure" {
-						assert.Equal(t, "Failed!", feedback.GetMessage())
-					} else {
-						assert.Equal(t, "Teleport!", feedback.GetMessage())
-					}
+					require.NotNil(t, feedback, "a cast that fails keeps its box")
+					assert.Equal(t, "Failed!", feedback.GetMessage())
 				}
 				drainProductionCastWorkflow(t, scene)
+				if outcome == "success" {
+					// A cast that simply works reports in the message window, with no box to close.
+					assert.Contains(t, scene.output.GetOutputStr(false), "In Por")
+					assert.Contains(t, callbacks.Messages, "Teleport!")
+				}
 				if paid {
 					assert.Equal(t, byte(5), caster.GetCurrentMp())
 					assert.Equal(t, uint16(1), state.PartyState.Inventory.Spells.Get(references.InPor))

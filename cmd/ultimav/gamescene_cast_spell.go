@@ -50,10 +50,18 @@ func (g *GameScene) thenShowSpellFeedback(message string, sound game_state.Sound
 	}
 }
 
-// thenShowSpellSuccess shows a success message with the magic sound.
-// Used when a spell completes successfully.
+// thenShowSpellSuccess reports a spell that simply worked; its sound has already
+// played. Outside battle the report is a row in the message window, where every
+// other command reports, so there is no box to close. Battle keeps the box, as
+// does anything to read and any cast that failed or did nothing.
 func (g *GameScene) thenShowSpellSuccess(message string) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
-	return g.thenShowSpellFeedback(message, game_state.SoundNoEffect) // Sound played via PartyStateBuilder
+	return func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
+		if g.gameState.IsInCombat() {
+			return g.thenShowSpellFeedback(message, game_state.SoundNoEffect)(q)
+		}
+
+		return q.Then(func() { g.gameState.SystemCallbacks.Message.AddRowStr(message) })
+	}
 }
 
 func (g *GameScene) thenShowRunicSpellSuccess(message string) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
@@ -306,7 +314,7 @@ func (g *GameScene) thenCastAnZu(targetIdx int) func(*event_queue.SequentialEven
 				g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundMagic)
 			}).ThenSequence(
 
-				g.thenShowSpellSuccess("Not asleep!"))
+				g.thenShowSpellFeedback("Not asleep!", game_state.SoundNoEffect))
 		}
 
 		// Wake the character
@@ -337,7 +345,7 @@ func (g *GameScene) thenCastInManiCorp(targetIdx int) func(*event_queue.Sequenti
 				g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundMagic)
 			}).ThenSequence(
 
-				g.thenShowSpellSuccess("Not dead!"))
+				g.thenShowSpellFeedback("Not dead!", game_state.SoundNoEffect))
 		}
 
 		// Resurrect the character

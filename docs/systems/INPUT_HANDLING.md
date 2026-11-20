@@ -522,6 +522,15 @@ list commits it; the list's Enter hint says which case applies ("Cast now"
 against "Choose who", "Choose direction", "Aim" or "Name the phase").
 Cancellation before commitment preserves resources, gameplay
 time, combat action, and gameplay RNG, including party-member target selection.
+Every prompt that follows the list says so where it matters, ending
+`[Esc] Cancel, nothing spent`: the party picker (`Mani: who is it for?`), the
+direction box (`In Por: which way?`) and the battle aiming rows
+(`[Arrows/keypad] Aim`, then `[Enter] Cast   [Esc] Cancel, nothing spent`, the
+same for a square, a creature or a direction). Once a spell is chosen its name
+joins the `Cast...` row of the message window. Outside battle a spell that
+simply works reports there as well (`Light!`, `Healed 12!`) and opens no box.
+A cast that fails or does nothing, anything to read such as In Wis's
+coordinates, and every result in battle keep their box.
 Later effect failure does not refund committed costs.
 
 Interaction transcript text prompts normally use Escape to cancel. Blackthorn

@@ -1143,11 +1143,31 @@ func (g *GameScene) thenShowCastUseDirectionPrompt(
 	onDirection func(references.Direction),
 	onCancel func(),
 ) event_queue.Sequence {
-	return g.thenShowDirectionPromptWithCancellation(message, "Arrow/keypad; Esc/Space cancels", onDirection, onCancel, true)
+	return g.thenShowDirectionPromptWithCancellation(message, "Arrow/keypad; Esc/Space cancels",
+		directionPromptChars, onDirection, onCancel, true)
+}
+
+// Letters per line of a direction prompt. Cast's is wider so that neither of
+// its hint lines breaks.
+const (
+	directionPromptChars     = 24
+	castDirectionPromptChars = 28
+)
+
+// thenShowCastDirectionPrompt asks which way a spell goes, names the spell, and
+// says that backing out is free.
+func (g *GameScene) thenShowCastDirectionPrompt(
+	spell references.Spell,
+	onDirection func(references.Direction),
+	onCancel func(),
+) event_queue.Sequence {
+	return g.thenShowDirectionPromptWithCancellation(references.GetSpellName(spell)+": which way?",
+		"[Arrows] Direction\n[Esc] "+castCancelLabel, castDirectionPromptChars, onDirection, onCancel, true)
 }
 
 func (g *GameScene) thenShowDirectionPromptWithCancellation(
 	message, hintText string,
+	charsPerLine int,
 	onDirection func(references.Direction),
 	onPass func(),
 	allowEscape bool,
@@ -1163,7 +1183,7 @@ func (g *GameScene) thenShowDirectionPromptWithCancellation(
 			// Reuse MessageDialog for visual display
 			dialog = widgets.NewMessageDialog(fullMessage).
 				WithTextLines(5).
-				WithCharsPerLine(24).
+				WithCharsPerLine(charsPerLine).
 				WithContentTextAlignment(widgets.ContentAlignCenter).
 				WithTextHorizontalCenter(true).
 				WithVerticalPosition(defaultMessageVertical).

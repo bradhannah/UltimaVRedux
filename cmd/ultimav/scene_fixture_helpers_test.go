@@ -38,7 +38,7 @@ func (g *GameScene) thenShowDirectionPrompt(
 	onDirection func(references.Direction),
 	onPass func(),
 ) event_queue.Sequence {
-	return g.thenShowDirectionPromptWithCancellation(message, hintText, onDirection, onPass, false)
+	return g.thenShowDirectionPromptWithCancellation(message, hintText, directionPromptChars, onDirection, onPass, false)
 }
 
 func (g *Game) prepareLegacyPlayerSave(selectedSavedGamPath string) (preparedLegacyPlayerSave, error) {

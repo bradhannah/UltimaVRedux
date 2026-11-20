@@ -160,6 +160,8 @@ func (g *GameScene) thenChooseSpell(state *spellCastingWorkflowState) event_queu
 				if state.spellDialog.HasPendingCastRequest() {
 					state.pendingRequest = state.spellDialog.ConsumePendingCastRequest()
 					state.hasRequest = true
+					// "Cast...In Lor": the message window names the spell before its result.
+					g.appendToCurrentRowStr(references.GetSpellName(state.pendingRequest.Spell))
 					state.targetingProfile = references.GetSpellTargetingProfile(state.pendingRequest.Spell, g.gameState.GetCurrentSpellContext())
 				}
 				state.spellDialog.Dismiss()

@@ -75,6 +75,13 @@ type spellCastingWorkflowState struct {
 
 const castFailureDialogDurationMs = 2000
 
+// castCancelLabel ends every prompt that follows Cast's list. It says at the one
+// moment it matters that backing out costs no MP, mixture or turn.
+const (
+	castCancelLabel = "Cancel, nothing spent"
+	castActionLabel = "Cast"
+)
+
 // startSpellCastingWorkflow initiates the spell casting workflow.
 // Flow: "Who will cast?" → SpellCastingDialog → Targeting → Spell Effect
 //
@@ -222,7 +229,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 				func() bool { return state.validationResult.Valid },
 				func(phaseQ *event_queue.SequentialEventBuilder) {
 					phaseQ.ThenSequence(g.thenShowInputBox(
-						"To phase:",
+						"To which phase, 1 to 8?",
 						"^[1-8]$",
 						func(text string, submitted bool) {
 							phase, selected := parseMoonPhaseInput(text, submitted)
@@ -306,8 +313,9 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 		func(subQ *event_queue.SequentialEventBuilder) {
 			subQ.Then(func() {
 				state.targetingDialog = widgets.NewCharacterSelectionDialog(widgets.CharacterSelectionConfig{
-					Title:       references.GetSpellName(state.pendingRequest.Spell) + ": Choose Target",
-					CancelLabel: "Cancel without cost",
+					Title:        references.GetSpellName(state.pendingRequest.Spell) + ": who is it for?",
+					ConfirmLabel: castActionLabel,
+					CancelLabel:  castCancelLabel,
 					Options: g.characterSelectionOptions(characterSelectionContext{
 						Profile: characterSelectionSpellTarget,
 						Spell:   state.pendingRequest.Spell,
@@ -362,7 +370,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 							return
 						}
 						state.combatActionTransferred = true
-						g.appendToCurrentRowStr(references.GetSpellName(state.pendingRequest.Spell) + " - choose adjacent target")
+						g.showCombatAimControls(castActionLabel, castCancelLabel)
 						g.secondaryKeyState = CombatAdjacentSpellTargetInput
 						g.keyboard.SetAllowKeyPressImmediately()
 					})
@@ -378,7 +386,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 							return
 						}
 						state.combatActionTransferred = true
-						g.appendToCurrentRowStr("Direction - arrow: preview, Enter: cast, Esc: cancel")
+						g.showCombatAimControls(castActionLabel, castCancelLabel)
 						g.secondaryKeyState = CombatConeTargetInput
 						g.keyboard.SetAllowKeyPressImmediately()
 					})
@@ -389,8 +397,8 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 			var directionSelected bool
 			var selectedDirection references.Direction
 
-			subQ.ThenSequence(g.thenShowCastUseDirectionPrompt(
-				"Direction?",
+			subQ.ThenSequence(g.thenShowCastDirectionPrompt(
+				state.pendingRequest.Spell,
 				func(dir references.Direction) {
 					selectedDirection = dir
 					directionSelected = true
@@ -436,8 +444,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 					return
 				}
 				state.combatActionTransferred = true
-				g.appendToCurrentRowStr("Aim!")
-				g.showCombatAimControls("Cast", combatAimCancelLabel)
+				g.showCombatAimControls(castActionLabel, castCancelLabel)
 				g.secondaryKeyState = CombatSpellTargetInput
 				g.keyboard.PrepareForTransition(0)
 			})
