@@ -412,7 +412,7 @@ func (d *ReagentPurchaseDialog) GetBodyText() string {
 
 // GetFooterGuidance returns the exact keyboard guidance displayed by the modal.
 func (d *ReagentPurchaseDialog) GetFooterGuidance() string {
-	return "[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back"
+	return reagentPurchaseFooter
 }
 
 // HasPendingPurchaseIntent reports whether the workflow has an unconsumed modal intent.

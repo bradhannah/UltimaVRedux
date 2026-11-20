@@ -904,11 +904,11 @@ widget tests rather than designing a parallel transaction framework.
 
 | Family / widget sources | Preserve when extending |
 |---|---|
-| Arms: `arms_shop_dialog.go`, `arms_trade_dialog.go` | Carried inventory is sale authority; READY counts are informational. Buy/Sell retain independent selection/scroll/sort. M selects the Buy maximum or the gold-safe Sell all (A remains a Sell alias); ammo is a fixed refill. Used-ammo refusal ends the session; zero-price/headroom refusals return to Sell. Capacity refusal returns to Buy; insufficient Buy funds terminate after acknowledgement. |
+| Arms: `arms_shop_dialog.go`, `arms_trade_dialog.go` | Carried inventory is sale authority; READY counts are informational. Buy/Sell retain independent selection/scroll/sort. M ("Most") selects the Buy maximum or the gold-safe Sell maximum (A remains a Sell alias); ammo is a fixed refill. Headings and the Buy/Sell titles are in ordinary case; the open table's title sits on the shared tab plate and B, S and R are shown only in the hint row. Used-ammo refusal ends the session; zero-price/headroom refusals return to Sell. Capacity refusal returns to Buy; insufficient Buy funds terminate after acknowledgement. |
 | Healer: `healer_shop_dialog.go`, `healer_treatment_dialog.go` | Services focus does not silently select a recipient. Individual and All intents require approval. Preserve distinct eligibility, funds blockers, and authoritative effect projections; refresh all recipients/prices after outcomes. |
 | Horse: `horse_shop_dialog.go`, `horse_purchase_dialog.go` | Placement/ownership/terrain details stay out of shopping UI. Approval Escape returns to Browse (a documented Redux deviation); success/funds/stable-closure outcomes remain one-shot terminal acknowledgements. Remote Preview does not claim Live placement availability. |
 | Ships: `ship_shop_dialog.go`, `ship_purchase_dialog.go`, `ship_dispatch_dialog.go`, `ship_travel_dialog.go` | The selected card uses the shared white selection bar. Parent shows trusted berth/delivery projections. Frigate loading uses aggregate quantities; standalone delivery is one. Refresh after purchase/stale refusal. First vessel creation can open dispatch; reviewed harbour escort is separate from boarding. Preview stops before purchase or travel. |
-| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
+| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode; the open page's title sits on the shared tab plate (`shop_tabs.go`, as in the Arms and Tavern tab rows) and R, L and P appear only in the hint row. The Tavern's Tab hint reads "Order or" plus its information page's name. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
 | Guild: `guild_shop_dialog.go`, `guild_purchase_dialog.go` | Browsing does not replace latest speech; pitch appears in quantity approval. Cancellation retains exchange. Maximum comes from authority and permits a saturating final bundle. Zero maximum emits no request. Session errors disable purchase until dismissal. |
 
 All approval dialogs consume requests once. Do not normalize distinct family
@@ -918,11 +918,15 @@ for navigation, terminal/nonterminal refusals, duplicate suppression, and refres
 ### Merchant Quantity Controls
 
 `quantity_input.go` shares input ownership across five approval forms; each form
-retains its existing quote-derived bounds and request type:
+retains its existing quote-derived bounds and request type. The Arms and Reagent
+amounts (`shop_amount_step.go`) show one amount row, the unit price, and a Have/Then
+table for the goods and gold; the line "Faulinei may take more." keeps the fact that
+the gold shown is before any theft by Faulinei (a purchase only). Their Left/Right
+and M hints dim when only one amount exists.
 
 | Form | Repeating adjustment | Existing one-shot shortcuts / limits |
 |---|---|---|
-| `ArmsTradeDialog` | Left/Right item count | Up/Down decrement/increment once; M selects the maximum (Sell all), with A as a Sell alias; ammunition remains a fixed refill. |
+| `ArmsTradeDialog` | Left/Right item count | Up/Down decrement/increment once; M ("Most") selects the maximum, with A as a Sell alias; ammunition remains a fixed refill. |
 | `GuildPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the quoted maximum, including the existing saturating final bundle. |
 | `ReagentPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the maximum supplied approval view. |
 | `ShipPurchaseDialog` | Left/Right loaded-skiff count | Up/Down decrement/increment once; M selects the maximum supplied approval view. Standalone vessel delivery remains one. |

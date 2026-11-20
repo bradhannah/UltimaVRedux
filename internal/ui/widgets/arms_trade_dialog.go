@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
+	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
@@ -74,6 +76,8 @@ type ArmsTradeDialog struct {
 	cancelled bool
 	pending   *ArmsTradeRequest
 
+	amountLine int // The body line holding the amount row, or -1.
+
 	frame *merchantModalFrame
 
 	headerOutput *text.Output
@@ -98,11 +102,12 @@ func NewArmsTradeDialog(config ArmsTradeDialogConfig) *ArmsTradeDialog {
 	}
 
 	dialog := &ArmsTradeDialog{ //nolint:exhaustruct_v5 // Layout, output and result fields initialize on demand.
-		keyboard: config.Keyboard,
-		intent:   config.Intent,
-		prose:    config.Prose,
-		quantity: 1,
-		refusal:  refusal,
+		keyboard:   config.Keyboard,
+		intent:     config.Intent,
+		prose:      config.Prose,
+		quantity:   1,
+		refusal:    refusal,
+		amountLine: -1,
 		frame: newMerchantModalFrame(merchantModalFrameConfig{
 			placement:             armsTradePlacement(),
 			headerRatio:           armsTradeHeaderRatio,
@@ -127,6 +132,7 @@ func (d *ArmsTradeDialog) Draw(screen *ebiten.Image) {
 	}
 	d.ensureLayout()
 	d.frame.draw(screen)
+	d.frame.fillBodyLine(screen, d.bodyOutput, d.amountLine)
 	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
 }
 
@@ -182,13 +188,22 @@ func (d *ArmsTradeDialog) GetFooterGuidance() string {
 		return "[Enter/Esc] Acknowledge"
 	}
 	if d.intent.Mode == ArmsShopBuy && d.intent.BuyQuote.AmmoRefill {
-		return "[Enter] Confirm   [Esc] Back"
-	}
-	if d.intent.Mode == ArmsShopSell {
-		return "[Left/Right] Quantity   [M] Sell all\n[Enter] Confirm   [Esc] Back"
+		return "[Enter] Buy   [Esc] Back"
 	}
 
-	return merchantQuantityFooter
+	return "[Left/Right] Quantity   [M] Most\n[Enter] " + d.intent.Mode.String() + "   [Esc] Back"
+}
+
+// onlyOneAmount reports that Left/Right and M have nothing to choose between.
+func (d *ArmsTradeDialog) onlyOneAmount() bool {
+	if d.refusal != ArmsTradeNoRefusal {
+		return false
+	}
+	if d.intent.Mode == ArmsShopBuy {
+		return d.intent.BuyQuote.MaxQuantity <= 1
+	}
+
+	return d.intent.SellQuote.MaxQuantity <= 1
 }
 
 // GetBounds returns the centered modal bounds.
@@ -268,6 +283,15 @@ func (d *ArmsTradeDialog) ensureLayout() {
 	if !d.frame.ensureLayout() {
 		return
 	}
+	d.buildOutputs()
+	if d.refusal == ArmsTradeNoRefusal {
+		// The amount step's window is as tall as its content, pitch included.
+		d.frame.fitBodyLines(d.bodyOutput.GetPanelContentLineCount())
+		d.buildOutputs()
+	}
+}
+
+func (d *ArmsTradeDialog) buildOutputs() {
 	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
 		lineSpacing: armsTradeLineSpacing, maximumBodyLines: armsTradeMaximumBodyLines,
 		footerLines: armsTradeFooterLines, minimumChars: armsTradeMinimumTextChars, fixedBody: false,
@@ -280,9 +304,10 @@ func (d *ArmsTradeDialog) populateOutputs() {
 		return
 	}
 	equipment := d.intent.Equipment()
+	d.amountLine = -1
 	d.headerOutput.Reset()
 	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(d.intent.Mode.String()+" "+strings.ToUpper(equipment.String()), DialogHeaderColor).Done()
+		Text(d.intent.Mode.String()+" "+equipment.String(), DialogHeaderColor).Done()
 	d.bodyOutput.Reset()
 	switch {
 	case d.refusal != ArmsTradeNoRefusal:
@@ -304,25 +329,18 @@ func (d *ArmsTradeDialog) populateBuyBody() {
 	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
 		White(quoteArmsProse(d.prose.Pitch)).WordWrap().Done()
 	d.bodyOutput.AppendLine().White("").Done()
-	if quote.AmmoRefill {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).Yellow("AMMUNITION REFILL").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray("CARRIED  ").Cyanf("%d", quote.QuantityBefore).White("  ->  ").LightGreen("99").Done()
-	} else {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("QUANTITY (BEFORE THEFT)").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			White("<   ").Yellowf("%d", d.quantity).White("   >").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGrayf("of %d", max(uint16(1), quote.MaxQuantity)).Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray("CARRIED  ").Cyanf("%d", quote.QuantityBefore).White("  ->  ").
-			LightGreenf("%d", uint32(quote.QuantityBefore)+uint32(d.quantity)).Done()
-	}
 	total := quote.UnitPrice * int(d.quantity)
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("UNIT / TOTAL  ").Yellowf("%d / %d GOLD", quote.UnitPrice, total).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("GOLD  ").Cyanf("%d", quote.Gold).White("  ->  ").LightGreenf("%d", int(quote.Gold)-total).Done()
+	amount := shopAmount{
+		label: "Quantity", count: int(d.quantity), most: int(max(uint16(1), quote.MaxQuantity)),
+		price: fmt.Sprintf("%d gold each", quote.UnitPrice), goods: quote.Equipment.String(),
+		goodsNow: int(quote.QuantityBefore), goodsThen: int(quote.QuantityBefore) + int(d.quantity),
+		goldNow: int(quote.Gold), goldThen: int(quote.Gold) - total, theftAfter: true,
+	}
+	if quote.AmmoRefill {
+		amount.label, amount.goodsThen = "", int(party_state.ItemQuantitySmallMax)
+		amount.price = fmt.Sprintf("Refills to %d for %d gold", party_state.ItemQuantitySmallMax, total)
+	}
+	d.amountLine = appendShopAmount(d.bodyOutput, amount)
 }
 
 func (d *ArmsTradeDialog) populateSellBody() {
@@ -330,24 +348,18 @@ func (d *ArmsTradeDialog) populateSellBody() {
 	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
 		White(quoteArmsProse(d.prose.Offer)).WordWrap().Done()
 	d.bodyOutput.AppendLine().White("").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("QUANTITY").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White("<   ").Yellowf("%d", d.quantity).White("   >").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGrayf("of %d  (Sell All)", quote.MaxQuantity).Done()
 	total := quote.UnitOffer * int(d.quantity)
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("UNIT / TOTAL  ").Yellowf("%d / %d GOLD", quote.UnitOffer, total).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("GOLD  ").Cyanf("%d", quote.Gold).White("  ->  ").LightGreenf("%d", int(quote.Gold)+total).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("CARRIED  ").Cyanf("%d", quote.QuantityBefore).White("  ->  ").
-		LightGreenf("%d", quote.QuantityBefore-d.quantity).Done()
+	d.amountLine = appendShopAmount(d.bodyOutput, shopAmount{
+		label: "Quantity", count: int(d.quantity), most: int(quote.MaxQuantity),
+		price: fmt.Sprintf("%d gold each", quote.UnitOffer), goods: quote.Equipment.String(),
+		goodsNow: int(quote.QuantityBefore), goodsThen: int(quote.QuantityBefore) - int(d.quantity),
+		goldNow: int(quote.Gold), goldThen: int(quote.Gold) + total, theftAfter: false,
+	})
 }
 
 func (d *ArmsTradeDialog) populateFooter() {
 	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
+	appendAmountGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx(), d.onlyOneAmount())
 }
 
 func armsTradePlacement() sprites.PercentBasedPlacement {

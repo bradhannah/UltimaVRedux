@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -25,6 +26,8 @@ const (
 	reagentPurchaseMaximumBodyLines = 13
 	reagentPurchaseMinimumTextChars = 8
 	reagentPurchaseFooterLines      = 2
+	reagentPurchaseWarningLines     = 2
+	reagentPurchaseFooter           = "[Left/Right] Bundles   [M] Most\n[Enter] Buy   [Esc] Back"
 )
 
 var _ Widget = (*ReagentPurchaseDialog)(nil)
@@ -46,6 +49,7 @@ type ReagentPurchaseDialog struct {
 	dismissed   bool
 	cancelled   bool
 	pending     *game_state.ReagentPurchaseRequest
+	amountLine  int // The body line holding the amount row.
 
 	frame        *merchantModalFrame
 	headerOutput *text.Output
@@ -69,6 +73,7 @@ func NewReagentPurchaseDialog(config ReagentPurchaseDialogConfig) *ReagentPurcha
 		dismissed:   false,
 		cancelled:   false,
 		pending:     nil,
+		amountLine:  -1,
 		frame: newMerchantModalFrame(merchantModalFrameConfig{
 			placement:             reagentPurchasePlacement(),
 			headerRatio:           reagentPurchaseHeaderRatio,
@@ -93,6 +98,7 @@ func (d *ReagentPurchaseDialog) Draw(screen *ebiten.Image) {
 	}
 	d.ensureLayout()
 	d.frame.draw(screen)
+	d.frame.fillBodyLine(screen, d.bodyOutput, d.amountLine)
 	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
 }
 
@@ -187,6 +193,18 @@ func (d *ReagentPurchaseDialog) ensureLayout() {
 	if !d.frame.ensureLayout() {
 		return
 	}
+	d.buildOutputs()
+	// The window is as tall as its content, with room kept for the two warning
+	// lines, so it never changes size as the amount does.
+	lines := d.bodyOutput.GetPanelContentLineCount()
+	if !d.GetApprovalView().PaidOverflow {
+		lines += reagentPurchaseWarningLines
+	}
+	d.frame.fitBodyLines(lines)
+	d.buildOutputs()
+}
+
+func (d *ReagentPurchaseDialog) buildOutputs() {
 	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
 		lineSpacing: reagentPurchaseLineSpacing, maximumBodyLines: reagentPurchaseMaximumBodyLines,
 		footerLines: reagentPurchaseFooterLines, minimumChars: reagentPurchaseMinimumTextChars, fixedBody: false,
@@ -207,34 +225,23 @@ func (d *ReagentPurchaseDialog) populateOutputs() {
 	header.Text("Purchase "+approval.ReagentName, DialogHeaderColor).Done()
 
 	d.bodyOutput.Reset()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("Bundles (before theft)").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White("<   ").Yellowf("%d", approval.BundleCount).White("   >").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGrayf("of %d max", approval.MaxBundles).Done()
-	d.bodyOutput.AppendLine().Whitef("%d %s per bundle", approval.BundleQuantity, approval.ReagentName).Done()
-	d.bodyOutput.AppendLine().LightGray("Requested quantity: ").Whitef("%d", approval.RequestedQuantity).Done()
-	d.bodyOutput.AppendLine().LightGray("Inventory: ").Cyanf("%d", approval.QuantityBefore).
-		White(" -> ").LightGreenf("%d", approval.QuantityAfter).Done()
-	d.bodyOutput.AppendLine().LightGray("Maximum receipt: ").LightGreenf("%d", approval.ActualReceipt).Done()
-	d.bodyOutput.AppendLine().LightGray("Price per bundle: ").Yellowf("%d gold", approval.PricePerBundle).Done()
-	d.bodyOutput.AppendLine().LightGray("Total price: ").Yellowf("%d gold", approval.TotalPrice).Done()
-	d.bodyOutput.AppendLine().LightGray("Gold: ").Cyanf("%d", approval.GoldBefore).
-		White(" -> ").LightGreenf("%d", approval.GoldAfterPayment).Done()
+	d.amountLine = appendShopAmount(d.bodyOutput, shopAmount{
+		label: "Bundles", count: int(approval.BundleCount), most: int(approval.MaxBundles),
+		price: fmt.Sprintf("%d gold for %d %s", approval.PricePerBundle, approval.BundleQuantity,
+			approval.ReagentName),
+		goods: approval.ReagentName, goodsNow: int(approval.QuantityBefore), goodsThen: int(approval.QuantityAfter),
+		goldNow: int(approval.GoldBefore), goldThen: int(approval.GoldAfterPayment), theftAfter: true,
+	})
 	if approval.PaidOverflow {
 		d.bodyOutput.AppendLine().Textf(
-			"%d %s will not fit.",
-			DialogStatusWarningColor,
-			approval.OverflowQuantity,
-			reagentOverflowNoun(approval.OverflowQuantity),
-		).WordWrap().Done()
-		d.bodyOutput.AppendLine().Text(
-			"Full bundle prices apply.", DialogStatusWarningColor,
+			" %d %s will not fit.", DialogWarningColor,
+			approval.OverflowQuantity, reagentOverflowNoun(approval.OverflowQuantity),
 		).Done()
+		d.bodyOutput.AppendLine().Text(" Full bundle prices apply.", DialogWarningColor).Done()
 	}
 
 	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, merchantQuantityFooter, d.frame.footerText.Dx())
+	appendAmountGuidance(d.footerOutput, reagentPurchaseFooter, d.frame.footerText.Dx(), d.quote.MaxBundles <= 1)
 }
 
 func reagentOverflowNoun(quantity uint16) string {

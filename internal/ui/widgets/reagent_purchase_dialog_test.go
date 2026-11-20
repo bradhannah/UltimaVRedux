@@ -29,14 +29,14 @@ func TestReagentPurchaseDialogDisplaysSuppliedApprovalAndPaidOverflow(t *testing
 	assert.Equal(t, approval, dialog.GetApprovalView())
 	assert.True(t, dialog.IsPreview())
 	assert.Contains(t, dialog.headerOutput.GetOutputStr(false), "PREVIEW - Purchase Ginseng")
-	assert.Contains(t, body, "Bundles (before theft)")
-	assert.Contains(t, body, "10 Ginseng per bundle")
-	assert.Contains(t, body, "Requested quantity: 10")
-	assert.Contains(t, body, "Inventory: 10 -> 20")
-	assert.Contains(t, body, "Maximum receipt: 10")
-	assert.Contains(t, body, "Price per bundle: 20 gold")
-	assert.Contains(t, body, "Total price: 20 gold")
-	assert.Contains(t, body, "Gold: 200 -> 180")
+	flat := strings.Join(strings.Fields(body), " ")
+	assert.Contains(t, flat, "Bundles < 1 > of 9")
+	assert.Contains(t, flat, "20 gold for 10 Ginseng")
+	assert.Contains(t, flat, "Have Then Ginseng 10 20 Gold 200 180")
+	assert.Contains(t, flat, "Faulinei may take more.", "the gold shown is before any theft")
+	for _, mechanism := range []string{"before theft", "Requested quantity", "Maximum receipt", "Inventory:"} {
+		assert.NotContains(t, body, mechanism)
+	}
 	assert.NotContains(t, body, "PAID OVERFLOW")
 
 	dialog.setBundleCount(quote.MaxBundles)
@@ -44,11 +44,8 @@ func TestReagentPurchaseDialogDisplaysSuppliedApprovalAndPaidOverflow(t *testing
 	body = dialog.GetBodyText()
 	assert.Equal(t, maximum, dialog.GetApprovalView())
 	assert.True(t, maximum.PaidOverflow)
-	assert.Contains(t, body, "Requested quantity: 90")
-	assert.Contains(t, body, "Inventory: 10 -> 99")
-	assert.Contains(t, body, "Maximum receipt: 89")
-	assert.Contains(t, body, "Total price: 180 gold")
-	assert.Contains(t, body, "Gold: 200 -> 20")
+	flat = strings.Join(strings.Fields(body), " ")
+	assert.Contains(t, flat, "Ginseng 10 99 Gold 200 20")
 	assert.Contains(t, compactReagentText(body), "1 reagent will not fit.")
 	assert.Contains(t, compactReagentText(body), "Full bundle prices apply.")
 }
@@ -134,7 +131,7 @@ func TestReagentPurchaseDialogIsCenteredOpaqueAndResolutionSafe(t *testing.T) {
 	assert.InDelta(t, 640, initial.Min.X+initial.Dx()/2, 1)
 	assert.InDelta(t, 360, initial.Min.Y+initial.Dy()/2, 1)
 	assert.Equal(t,
-		"[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back",
+		"[Left/Right] Bundles   [M] Most\n[Enter] Buy   [Esc] Back",
 		dialog.GetFooterGuidance(),
 	)
 	requireKeyedGuidance(t, dialog.GetFooterGuidance())
@@ -152,7 +149,7 @@ func TestReagentPurchaseDialogIsCenteredOpaqueAndResolutionSafe(t *testing.T) {
 	assert.Greater(t, dialog.GetBounds().Dx(), initial.Dx())
 	assert.Greater(t, dialog.GetBounds().Dy(), initial.Dy())
 	assert.Equal(t, uint16(2), dialog.GetBundleCount())
-	assert.Contains(t, dialog.GetBodyText(), "Requested quantity: 20")
+	assert.Contains(t, strings.Join(strings.Fields(dialog.GetBodyText()), " "), "Ginseng 10 30")
 	assert.NotContains(t, strings.ToLower(dialog.GetFooterGuidance()), "mouse")
 }
 

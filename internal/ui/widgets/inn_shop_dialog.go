@@ -85,7 +85,7 @@ func (a InnAction) String() string {
 	case InnActionRest:
 		return "Rest"
 	case InnActionLeave:
-		return "Leave"
+		return shopTitleLeave
 	case InnActionPickup:
 		return "Pick Up"
 	default:
@@ -259,6 +259,11 @@ func (d *InnShopDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
 	d.shell.DrawBackground(screen)
 	d.shell.DrawCommonRegions(screen)
+	row := 0
+	if d.preview {
+		row = 1
+	}
+	drawShopTabPlate(screen, d.modeOutput, d.modeBounds, d.pixelUnit(), row, "", d.tabs())
 	d.modeOutput.DrawPanelContent(
 		screen,
 		image.Pt(d.modeBounds.Min.X, verticallyCenteredOutputY(d.modeBounds, d.modeOutput)),
@@ -999,11 +1004,14 @@ func (d *InnShopDialog) populateModeOutput() {
 		d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter).
 			Text("PREVIEW", DialogStatusWarningColor).Done()
 	}
-	colors := d.modeTabColors()
-	d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text("[R]est", colors[InnShopRest]).
-		Text("    [L]eave", colors[InnShopLeave]).
-		Text("    [P]ick Up", colors[InnShopPickup]).Done()
+	appendShopTabs(d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter), d.tabs())
+}
+
+// tabs lists the Rest, Leave and Pick Up pages, the open one on the plate.
+func (d *InnShopDialog) tabs() []shopTab {
+	return []shopTab{
+		{"Rest", d.mode == InnShopRest}, {shopTitleLeave, d.mode == InnShopLeave}, {"Pick Up", d.mode == InnShopPickup},
+	}
 }
 
 func (d *InnShopDialog) populateDetailOutput() {
@@ -1166,13 +1174,6 @@ func (d *InnShopDialog) appendInlineFeedback() {
 	}
 }
 
-func (d *InnShopDialog) modeTabColors() [innShopModeCount]stdcolor.Color {
-	colors := [innShopModeCount]stdcolor.Color{DialogEmptyColor, DialogEmptyColor, DialogEmptyColor}
-	colors[d.mode] = DialogLabelColor
-
-	return colors
-}
-
 func (d *InnShopDialog) syncPresentation() {
 	d.shell.RefreshShop(d.state.Merchant, d.state.Gold, d.latestExchange, d.footerGuidance())
 	d.populateOutputs()
@@ -1184,11 +1185,12 @@ func (d *InnShopDialog) footerGuidance() string {
 	}
 	switch d.phase {
 	case InnShopBrowse:
+		const pages = "[R] Rest   [L] Leave   [P] Pick Up   [H] Help\n"
 		if d.mode == InnShopRest {
-			return "[H] Help\n[Enter] Review Rest   [Esc] Leave"
+			return pages + "[Enter] Review Rest   [Esc] Leave"
 		}
 
-		return "[H] Help\n[Up/Down] Select   [Enter] Review   [Esc] Leave"
+		return pages + "[Up/Down] Select   [Enter] Review   [Esc] Leave"
 	case InnShopAwaitingApproval:
 		return "Complete or cancel the Inn action dialog"
 	case InnShopAwaitingResult:

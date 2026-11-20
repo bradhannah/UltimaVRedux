@@ -337,7 +337,7 @@ func (d *ReagentShopDialog) GetSelectedIndex() int { return d.listState.GetCurre
 
 // GetCatalogHeadings returns the exact four reagent catalog headings.
 func (d *ReagentShopDialog) GetCatalogHeadings() [reagentShopCatalogColumns]string {
-	return [reagentShopCatalogColumns]string{"Reagent", "Bundle", "Owned", "Price"}
+	return [reagentShopCatalogColumns]string{"Reagent", "Bundle", "Owned", shopHeadingPrice}
 }
 
 // GetCatalogRowText returns the four non-projected values displayed for one quote.

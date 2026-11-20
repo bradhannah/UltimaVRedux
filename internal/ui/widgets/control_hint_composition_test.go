@@ -48,7 +48,7 @@ func TestArmsAndAcknowledgementActualOutputsUseControlColours(t *testing.T) {
 	_, hints := dialog.footerOutput.FirstPanelLineWithColor(0, dialog.footerOutput.GetPanelContentLineCount(), DialogControlHintColor)
 	require.True(t, keys)
 	require.True(t, hints)
-	require.Contains(t, strings.Join(strings.Fields(dialog.footerOutput.GetOutputStr(false)), " "), "[M] Sell all")
+	require.Contains(t, strings.Join(strings.Fields(dialog.footerOutput.GetOutputStr(false)), " "), "[M] Most")
 	screen := ebiten.NewImage(1280, 720)
 	t.Cleanup(screen.Deallocate)
 	dialog.Draw(screen)

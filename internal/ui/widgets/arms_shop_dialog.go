@@ -51,9 +51,9 @@ const (
 func (m ArmsShopMode) String() string {
 	switch m {
 	case ArmsShopBuy:
-		return "BUY"
+		return "Buy"
 	case ArmsShopSell:
-		return "SELL"
+		return "Sell"
 	default:
 		panic("ArmsShopMode.String: unknown mode")
 	}
@@ -74,11 +74,11 @@ const (
 func (s ArmsShopSort) String() string {
 	switch s {
 	case ArmsSortName:
-		return "NAME A-Z"
+		return "Name A-Z"
 	case ArmsSortQuantity:
-		return "QUANTITY HIGH-LOW"
+		return "Quantity high-low"
 	case ArmsSortValue:
-		return "VALUE HIGH-LOW"
+		return "Value high-low"
 	default:
 		panic("ArmsShopSort.String: unknown sort")
 	}
@@ -586,9 +586,9 @@ func (d *ArmsShopDialog) rowView(index int, selected bool) ArmsShopRowView {
 	view.Reason = armsSellUnavailableReason(quote)
 	switch {
 	case quote.Equipment.IsAmmo():
-		view.ValueText = "REFUSED"
+		view.ValueText = "Refused"
 	case quote.BasePrice == 0 || quote.UnitOffer == 0:
-		view.ValueText = "NO OFFER"
+		view.ValueText = "No offer"
 	default:
 		view.ValueText = strconv.Itoa(quote.UnitOffer)
 	}
@@ -995,7 +995,7 @@ func (d *ArmsShopDialog) configureTableLayout(inset int) {
 // Numeric columns reserve measured headings and worst-case values. The item
 // column gets all remaining space; long identities wrap without reducing type.
 func (d *ArmsShopDialog) configureTableColumns() {
-	labels := [...]string{"", "CARRIED", "READY", "NO OFFER"}
+	labels := [...]string{"", "Carried", shopHeadingReady, "No offer"}
 	right := d.workspaceContent.Max.X
 	inset := max(1, d.pixelUnit()*armsShopCellInsetUnits)
 	for index := armsShopColumnCount - 1; index > 0; index-- {
@@ -1012,15 +1012,16 @@ func (d *ArmsShopDialog) configureTableColumns() {
 func (d *ArmsShopDialog) drawWorkspace(screen *ebiten.Image) {
 	DrawClassicPixelRoundedFrame(screen, d.tableBounds, d.pixelUnit(), DialogRuleLightColor)
 	DrawClassicPixelRoundedFrame(screen, d.detailBounds, d.pixelUnit(), DialogRuleLightColor)
+	drawShopTabPlate(screen, d.headerOutput, d.modeHeader, d.pixelUnit(), 0, d.previewLead(), d.tabs())
 	d.headerOutput.DrawPanelContent(screen,
 		image.Pt(d.modeHeader.Min.X, verticallyCenteredOutputY(d.modeHeader, d.headerOutput)),
 		d.modeHeader.Dx(), etext.AlignCenter)
 	d.sortOutput.DrawPanelContent(screen,
 		image.Pt(d.sortBounds.Min.X, verticallyCenteredOutputY(d.sortBounds, d.sortOutput)),
 		d.sortBounds.Dx()-max(1, d.pixelUnit()*armsShopCellInsetUnits), etext.AlignEnd)
-	headings := [armsShopColumnCount]string{"ITEM", "CARRIED", "READY", "PRICE"}
+	headings := [armsShopColumnCount]string{"Item", "Carried", shopHeadingReady, shopHeadingPrice}
 	if d.mode == ArmsShopSell {
-		headings[3] = "OFFER"
+		headings[3] = "Offer"
 	}
 	headerContent := d.tableHeaderContentBounds()
 	for index, heading := range headings {
@@ -1124,14 +1125,12 @@ func (d *ArmsShopDialog) populateWorkspaceOutput() {
 	d.headerOutput.Reset()
 	header := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
 	if d.preview {
-		header.Text("PREVIEW   ", DialogStatusWarningColor)
+		header.Text(d.previewLead(), DialogStatusWarningColor)
 	}
-	buyColor, sellColor := d.modeTabColors()
-	header.Text("[B] BUY", buyColor).Text("      ", DialogEmptyColor).Text("[S] SELL", sellColor).Done()
+	appendShopTabs(header, d.tabs())
 	d.sortOutput.Reset()
 	d.sortOutput.AppendLine().WithAlignment(etext.AlignEnd).
-		Text("[R]", DialogControlKeyColor).Text(" SORT: ", DialogControlHintColor).
-		Text(d.GetSort().String(), DialogValueColor).Done()
+		Text("Sort: ", DialogLabelColor).Text(d.GetSort().String(), DialogValueColor).Done()
 	d.detailOutput.Reset()
 	if d.receiptText != "" {
 		d.detailOutput.AppendLine().Text(d.receiptText, DialogValueColor).WordWrap().Done()
@@ -1204,12 +1203,18 @@ func (d *ArmsShopDialog) populateUnavailableDetail() {
 	}
 }
 
-func (d *ArmsShopDialog) modeTabColors() (stdcolor.Color, stdcolor.Color) {
-	if d.mode == ArmsShopBuy {
-		return DialogLabelColor, DialogEmptyColor
+// tabs lists the Buy and Sell pages, the browsed table's on the plate.
+func (d *ArmsShopDialog) tabs() []shopTab {
+	return []shopTab{{"Buy", d.mode == ArmsShopBuy}, {"Sell", d.mode == ArmsShopSell}}
+}
+
+// previewLead is the Preview label that leads the tab row.
+func (d *ArmsShopDialog) previewLead() string {
+	if d.preview {
+		return "PREVIEW   "
 	}
 
-	return DialogEmptyColor, DialogLabelColor
+	return ""
 }
 
 func (d *ArmsShopDialog) syncPresentation() {

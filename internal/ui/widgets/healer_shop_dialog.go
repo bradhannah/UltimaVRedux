@@ -534,7 +534,7 @@ func (d *HealerShopDialog) configureColumns() {
 		d.serviceColumns[index] = image.Rect(left, d.serviceBounds.Min.Y, right, d.serviceBounds.Max.Y)
 	}
 
-	recipientRatios := [...]float64{0, 0.50, 0.67, 1}
+	recipientRatios := [...]float64{0, 0.46, 0.70, 1}
 	for index := range healerShopRecipientColumns {
 		left := d.recipientBounds.Min.X + int(math.Round(float64(d.recipientBounds.Dx())*recipientRatios[index]))
 		right := d.recipientBounds.Min.X + int(math.Round(float64(d.recipientBounds.Dx())*recipientRatios[index+1]))
