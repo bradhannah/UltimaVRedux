@@ -28,9 +28,10 @@ func TestCommandHelpDialogSpacePagingAndNavigation(t *testing.T) {
 	}
 	require.Zero(t, dialog.row)
 	require.Greater(t, dialog.lastRow(), dialog.pageSize())
-	require.Contains(t, dialog.footer.GetOutputStr(false), "[Space] Next")
 	require.Contains(t, dialog.footer.GetOutputStr(false), "COMMAND HELP")
-	require.Contains(t, dialog.footer.GetOutputStr(false), "[Esc] Close")
+	require.Contains(t, strings.Join(strings.Fields(dialog.footer.GetOutputStr(false)), " "),
+		"[Tab] Page of Help [Up/Down] Scroll [Esc] Close")
+	require.NotContains(t, dialog.footer.GetOutputStr(false), "Home/End", "extra paging keys work but are not hinted")
 	press(ebiten.KeySpace)
 	require.Equal(t, dialog.pageSize(), dialog.row)
 	press(ebiten.KeyHome)
@@ -117,7 +118,7 @@ func TestCommandHelpOpensOnKeysThatWorkRightNow(t *testing.T) {
 	}, HelpStatusView{}, newWidgetTestKeyboard(0), func() {})
 	page := strings.Join(strings.Fields(dialog.output.GetOutputStr(false)), " ")
 	require.Contains(t, page, "MOVE AND ACT [A] Attack BATTLE PANELS [F2] Combat details")
-	require.Contains(t, page, "Not available here: T.")
+	require.Contains(t, page, "Not available during combat. [T] Talk")
 	require.NotContains(t, page, "SURROUNDINGS", "a group with no usable key is not headed")
 	require.Equal(t, "Right now    Commands    Status", dialog.header.GetOutputStr(false))
 	screen := ebiten.NewImage(1280, 720)

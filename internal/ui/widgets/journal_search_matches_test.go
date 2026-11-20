@@ -29,7 +29,7 @@ func TestJournalSearchShowsSnippetAndOpensActualWrappedMatch(t *testing.T) {
 	entry := dialog.searchEntries[dialog.searchResults[0]]
 	require.Contains(t, entry.snippet, "NEEDLE")
 	require.NotContains(t, entry.snippet, "hidden runic")
-	require.Equal(t, "Iolo - Britain", entry.source)
+	require.NotContains(t, entry.snippetText(), "...", "a long line is cut plainly")
 	dialog.openSearchResult()
 	require.Equal(t, QuestJournalExcerptsTab, dialog.activeTab)
 	require.Greater(t, dialog.detailPage, 0)
@@ -55,6 +55,21 @@ func TestJournalSearchUnicodeHighlightAndSnippetBounds(t *testing.T) {
 	line.Done()
 	_, found := output.FirstPanelLineWithColor(0, output.GetPanelContentLineCount(), journalMatchColour(false))
 	require.True(t, found)
+}
+
+// A result shows the one line that matched, with its label, under its title.
+func TestJournalSearchShowsTheMatchedLineWithItsLabel(t *testing.T) {
+	setQuestJournalTestResolution(t, 1280, 720)
+	configuration := testQuestJournalConfig(newWidgetTestKeyboard(-1))
+	configuration.Excerpts = []journal.Exchange{{ID: "a", Speaker: "Iolo", Location: "Britain", Input: "JOB",
+		Passages: []journal.Passage{{Text: "I am a bard."}}}}
+	dialog := NewQuestJournalDialog(testQuestJournalDossier(), configuration)
+	dialog.beginSearch()
+	dialog.setSearchQuery("britain")
+	require.Len(t, dialog.searchResults, 1)
+	require.Equal(t, "Place: Britain", dialog.searchEntries[dialog.searchResults[0]].snippetText())
+	dialog.setSearchQuery("bard")
+	require.Equal(t, "I am a bard.", dialog.searchEntries[dialog.searchResults[0]].snippetText())
 }
 
 func TestJournalSearchResultRowsAndPagingShareCapacity(t *testing.T) {

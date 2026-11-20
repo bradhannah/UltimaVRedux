@@ -243,8 +243,7 @@ func (d *QuestJournalDialog) footerGuidance() string {
 		return d.exchangeFooterGuidance()
 	}
 	if d.searching {
-		return "[Up/Down] Select  [Shift+Up/Down] Page  [Home/End] First/Last  " +
-			"[Enter] Open  [Esc] Back  [Shift+J] Close"
+		return "[Up/Down] Select  [Enter] Open  [Esc] Back  [Shift+J] Close"
 	}
 
 	paging := ""

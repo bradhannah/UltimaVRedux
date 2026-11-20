@@ -730,7 +730,8 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 			if valueLine > 0 {
 				valueTop += int(math.Ceil(d.gameplayOutput.GetTotalHeightForLines(d.gameplayOutput.GetPanelContentLineCount())))
 			}
-			d.drawGameplayValue(clipped, image.Pt(rect.Max.X-inset, valueTop), settings[index], textColor)
+			d.drawGameplayValue(clipped, image.Pt(rect.Max.X-inset, valueTop), settings[index], textColor,
+				index == d.focusedGameplayIndex)
 		} else {
 			d.labelOutput.AppendLine().Text("[", textColor).
 				Text(d.gameplayCheckmark(index), markColor).Text("]", textColor).Done()
@@ -758,12 +759,17 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 	)
 }
 
-// drawGameplayValue draws a numeric row's value ending at the row's right edge.
+// drawGameplayValue draws a numeric row's value between arrows, ending at the row's right edge.
 func (d *ConfigurationDialog) drawGameplayValue(
-	target *ebiten.Image, topRight image.Point, setting gameplaySettingDefinition, textColor color.Color,
+	target *ebiten.Image, topRight image.Point, setting gameplaySettingDefinition, textColor color.Color, selected bool,
 ) {
+	arrowColor := widgets.DialogControlHintColor
+	if selected {
+		arrowColor = textColor
+	}
 	valueWidth := d.gameplayValueWidth(setting)
-	d.labelOutput.AppendLine().Text(setting.numeric.format(setting.numeric.get(d.stagedGameplay)), textColor).Done()
+	d.labelOutput.AppendLine().Text("< ", arrowColor).
+		Text(setting.numeric.format(setting.numeric.get(d.stagedGameplay)), textColor).Text(" >", arrowColor).Done()
 	d.labelOutput.DrawPanelContent(target, image.Pt(topRight.X-valueWidth, topRight.Y), valueWidth, etext.AlignEnd)
 }
 
@@ -918,27 +924,7 @@ func (d *ConfigurationDialog) drawFooter(screen *ebiten.Image) {
 	case d.confirmingDeedExperience:
 		widgets.AppendControlHints(d.footerOutput.AppendLine(), deedExperienceConfirmHint).Done()
 	default:
-		var adjust string
-		switch d.currentTab {
-		case audioSettingsGameplayTab:
-			adjust = "[Space] Toggle   [Left/Right] Adjust"
-		case audioSettingsAudioTab:
-			adjust = "[Left/Right] Adjust   [D] Diagnostics"
-		case audioSettingsDisplayTab:
-			adjust = "[Left/Right] Change"
-		default:
-			panic("unsupported Configuration section")
-		}
-		hints := []string{"[Tab/Shift+Tab] Section   [Up/Down] Select", adjust, "[Enter] Apply   [Esc] Cancel"}
-		if d.currentTab == audioSettingsDisplayTab {
-			hints = []string{
-				"[Tab/Shift+Tab] Section   [Up/Down] Select", "[Left/Right] Change", "",
-				"[Enter] Apply   [Esc] Cancel",
-			}
-		}
-		for _, hint := range hints {
-			widgets.AppendControlHints(d.footerOutput.AppendLine(), hint).Done()
-		}
+		d.appendConfigurationHints()
 	}
 	d.footerOutput.DrawPanelContent(
 		screen,
@@ -949,6 +935,47 @@ func (d *ConfigurationDialog) drawFooter(screen *ebiten.Image) {
 		d.layout.footerRect.Dx(),
 		etext.AlignCenter,
 	)
+}
+
+// appendConfigurationHints adds the two hint rows: what moves and changes a
+// setting, then how to leave. A key that does nothing on the selected row is dimmed.
+func (d *ConfigurationDialog) appendConfigurationHints() {
+	onCheckbox := d.currentTab == audioSettingsGameplayTab && d.gameplayCheckbox(d.focusedGameplayIndex) != nil
+	onStepped := d.currentTab == audioSettingsGameplayTab && !onCheckbox
+	const leftRight, tab = "Left/Right", "Tab"
+	first := []hintKey{{"Up/Down", "Select", true}}
+	switch d.currentTab {
+	case audioSettingsGameplayTab:
+		first = append(first, hintKey{"Space", "Toggle", !onStepped}, hintKey{leftRight, "Adjust", !onCheckbox})
+	case audioSettingsAudioTab:
+		first = append(first, hintKey{leftRight, "Adjust", true}, hintKey{"D", "Diagnostics", true})
+	case audioSettingsDisplayTab:
+		first = append(first, hintKey{leftRight, "Change", true})
+	default:
+		panic("unsupported Configuration section")
+	}
+	first = append(first, hintKey{tab, "Section", true})
+	rows := [][]hintKey{first, {{"Enter", "Apply", true}, {"Esc", "Cancel", true}}}
+	for _, row := range rows {
+		line := d.footerOutput.AppendLine()
+		for index, hint := range row {
+			keyColor, hintColor := widgets.DialogControlKeyColor, widgets.DialogControlHintColor
+			if !hint.works {
+				keyColor, hintColor = widgets.DialogUnavailableItemColor, widgets.DialogUnavailableItemColor
+			}
+			if index > 0 {
+				line.Text("  ", hintColor)
+			}
+			line.Text("["+hint.key+"]", keyColor).Text(" "+hint.action, hintColor)
+		}
+		line.Done()
+	}
+}
+
+// hintKey is one footer hint; works is false when the key does nothing now.
+type hintKey struct {
+	key, action string
+	works       bool
 }
 
 func (d *ConfigurationDialog) configurationErrorGuidance() string {

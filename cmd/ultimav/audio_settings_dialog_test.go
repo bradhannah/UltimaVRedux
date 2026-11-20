@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -230,7 +231,7 @@ func TestConfigurationDialogDisplayConfirmationChoicesHaveContrast(t *testing.T)
 }
 
 func TestConfigurationDialogUsesPreferredCardWidthAndEqualTabs(t *testing.T) {
-	placement := gameScreenPercents
+	placement := sprites.PercentBasedPlacement{StartPercentX: 0, EndPercentX: 1, StartPercentY: 0, EndPercentY: 1}
 	dialog := NewConfigurationDialog(
 		&placement,
 		newPresentationTestKeyboard(),
@@ -242,9 +243,10 @@ func TestConfigurationDialogUsesPreferredCardWidthAndEqualTabs(t *testing.T) {
 
 	assert.Equal(t, int(math.Round(audioSettingsPreferredWidthPercent*1280)), dialog.layout.cardRect.Dx())
 	naturalMetrics := dialog.measureLayout(dialog.layout.pixelUnit, dialog.layout.bodyRect.Dx())
-	// The preferred height is capped by the 720-pixel screen; the Gameplay list scrolls.
+	// The preferred height is capped by the screen less its top and bottom margins.
 	assert.Equal(t,
-		min(int(math.Ceil(float64(naturalMetrics.cardHeight)*audioSettingsPreferredHeightScale)), 720),
+		min(int(math.Ceil(float64(naturalMetrics.cardHeight)*audioSettingsPreferredHeightScale)),
+			int(math.Round(720*(1-2*audioSettingsVerticalMarginPercent)))),
 		dialog.layout.cardRect.Dy(),
 	)
 	require.Len(t, dialog.layout.tabRects, 3)
@@ -1398,4 +1400,21 @@ func (m *audioSettingsManagerStub) StopAmbientSoundPreview() error {
 
 func (m *audioSettingsManagerStub) SetEnabled(enabled bool) {
 	m.enabledStates = append(m.enabledStates, enabled)
+}
+
+// On the full-width card every Gameplay setting is one line at every supported size,
+// and a stepped setting shows its value between arrows.
+func TestConfigurationGameplayRowsAreOneLineEach(t *testing.T) {
+	placement := sprites.PercentBasedPlacement{StartPercentX: 0, EndPercentX: 1, StartPercentY: 0, EndPercentY: 1}
+	for _, size := range config.SupportedWindowResolutions() {
+		t.Run(fmt.Sprintf("%dx%d", size.X, size.Y), func(t *testing.T) {
+			dialog := NewConfigurationDialog(&placement, newPresentationTestKeyboard(), func() {},
+				dialogConfiguration(&config.AudioConfiguration{}), nil)
+			dialog.ensureLayout(size.X, size.Y)
+			for index, row := range dialog.layout.gameplayRows {
+				require.Equal(t, dialog.layout.gameplayRows[0].Dy(), row.Dy(), "setting %d wraps", index)
+			}
+		})
+	}
+	require.Equal(t, "< Lean >", gameplayChoiceText("Lean"))
 }

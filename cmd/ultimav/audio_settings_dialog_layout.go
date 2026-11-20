@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	audioSettingsPreferredWidthPercent   = 0.58
+	audioSettingsPreferredWidthPercent   = 0.90 // As wide as the other full dialogs.
+	audioSettingsVerticalMarginPercent   = 0.05 // Clear space above and below, as Z-Stats keeps.
 	audioSettingsPreferredHeightScale    = 1.30
 	audioSettingsCenterDivisor           = 2
 	audioSettingsSliderCount             = 3
@@ -27,9 +28,9 @@ const (
 	audioSettingsModeCardLines           = 7
 	audioSettingsVolumeSteps             = 10
 	audioSettingsDetailLines             = 32
-	audioSettingsFooterLines             = 4
+	audioSettingsFooterLines             = 3
 	audioSettingsDisplayPresetLines      = 3
-	audioSettingsGameplayListRatio       = 0.50
+	audioSettingsGameplayListRatio       = 0.62 // Wide enough for the longest setting on one line.
 	audioSettingsDisplayLabelRatio       = 0.36
 )
 
@@ -83,7 +84,7 @@ func (d *ConfigurationDialog) ensureLayout(width, height int) {
 	contentWidth := max(1, cardWidth-metrics.padding*audioSettingsCenterDivisor)
 	d.configureLayoutOutputs(contentWidth)
 	metrics = d.measureLayout(pixelUnit, contentWidth)
-	metrics.fitCardHeight(placementRect.Dy())
+	metrics.fitCardHeight(int(math.Round(float64(placementRect.Dy()) * (1 - 2*audioSettingsVerticalMarginPercent))))
 	cardRect := centeredAudioSettingsCard(placementRect, cardWidth, metrics.cardHeight)
 	titleRect, tabRects, bodyRect, footerRect := d.buildSections(cardRect, metrics, pixelUnit)
 	labelRects, valueRects, sliderRects := d.buildSliderRects(bodyRect, metrics)
@@ -400,6 +401,12 @@ func (d *ConfigurationDialog) gameplayCheckboxWidth() int {
 	return int(math.Ceil(width))
 }
 
+// gameplayChoiceText shows a stepped setting's value between arrows, as the
+// shops show an amount.
+func gameplayChoiceText(value string) string {
+	return "< " + value + " >"
+}
+
 // gameplayValueWidth fits a numeric row's widest choice, drawn at the row's
 // right edge, so a long choice such as Ludicrous narrows only its own label.
 func (d *ConfigurationDialog) gameplayValueWidth(setting gameplaySettingDefinition) int {
@@ -408,7 +415,7 @@ func (d *ConfigurationDialog) gameplayValueWidth(setting gameplaySettingDefiniti
 	}
 	width := 0.0
 	for _, choice := range setting.numeric.spec.Choices() {
-		choiceWidth, _ := d.gameplayOutput.Font.MeasureString(" " + setting.numeric.format(choice))
+		choiceWidth, _ := d.gameplayOutput.Font.MeasureString(" " + gameplayChoiceText(setting.numeric.format(choice)))
 		width = max(width, choiceWidth)
 	}
 

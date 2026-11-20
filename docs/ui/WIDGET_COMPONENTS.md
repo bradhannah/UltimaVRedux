@@ -29,7 +29,7 @@ Paths in this table are relative to `internal/ui/widgets/` unless stated.
 | Player checkpoint selection | `save_slot_browser.go` | Detached views; no persistence or revision authority. |
 | Journal reading | `quest_journal_dialog.go`, `quest_journal_search.go`, `quest_journal_excerpts.go` | Detached opening snapshot; scene owns pause, acknowledgements, and persistence. |
 | Traveller's map / personal notes | `atlas_dialog.go`, `atlas_panels.go`, `atlas_view.go`, `atlas_render.go`, `atlas_note_editor.go` | Detached point authorities and separate supplied artwork; scene owns pause/preferences and note intents; application lends one geography texture. |
-| Commands / status reference | `command_help_dialog.go` | Detached command and visible-status snapshots; Tab switches pages without gameplay actions. |
+| Commands / status reference | `command_help_dialog.go` | Detached command and visible-status snapshots; Tab switches pages without gameplay actions. One hint row (Tab, Up/Down, Esc; Up/Down dims when the page fits); Right now names unavailable commands under the reason Commands gives. |
 | Party selection/reordering | `character_selection_dialog.go`, `character_roster_dialog.go`, `new_order_dialog.go` | Inspectable and actionable rows differ; preserve stable character identity. |
 | Use selection | `item_selection_dialog.go` | Emits a detached item; workflow revalidates inventory and context. |
 | Ready / Cast / Mix | `ready_equipment_dialog.go`, `spell_casting_dialog.go`, `reagent_mixing_dialog.go` | Inspect the corresponding scene workflow for commitment and cancellation. |
@@ -524,7 +524,7 @@ Paging and boundary exceptions are explicit:
 | Talk history / Tavern transcript / Command Help | Page the reader's text using its existing measured page boundaries. Talk's Shift+Up also opens history. |
 | Button menus | Page the selected description; arrows retain wraparound selection. |
 | Party selectors / New Order | No paging; repeating arrows retain wraparound selection and unavailable-row inspection. |
-| Intro menu / Configuration tabs | No paging; repeating arrows select bounded rows. On the title menu Right opens and Left closes a sub-menu; Left/Right setting adjustment remains one-shot. |
+| Intro menu / Configuration tabs | The Configuration card is 90% of the window (it covers the party panel in game) with one line per Gameplay setting; stepped settings show `< value >`; two hint rows, with Space or Left/Right dimmed when the selected row ignores it. No paging; repeating arrows select bounded rows. On the title menu Right opens and Left closes a sub-menu; Left/Right setting adjustment remains one-shot. |
 | Save slots; compact Guild, Reagent, Healer, Inn, and Tavern choice lists | No list paging; repeating arrows retain existing selection rules. Unsupported page chords do not fall through to row movement. |
 
 Combat HUD history remains on gameplay input routing, outside this modal-list
@@ -667,8 +667,10 @@ are not indexed. Stable destination identities survive query changes. Enter
 opens a result; searching alone does not visit its tab. Empty/unmatched queries
 show explicit instructions/no-match state.
 
-Results use three measured rows: title/category, known speaker/location where
-available, and a matching snippet. Query terms are highlighted with contrast on
+Results use two measured rows: title with its tab at the right, then the one line
+that matched with its label (for example "Shrine quest: Ready to complete"; the
+first line when only the title matched). A long line is cut plainly with no dots,
+starting near the first match. Query terms are highlighted with contrast on
 both normal and selected rows. Snippets elide Runic passages rather than reveal
 their transliteration; complete captured source remains unchanged in the reader.
 Enter reveals the first rendered text match inside the selected exchange/message

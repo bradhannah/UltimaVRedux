@@ -483,8 +483,10 @@ Help also appears in Escape. It lists context-specific command purposes, next
 inputs, unavailable reasons, and Shift+J without puzzle answers. It is a detached
 keyboard-only modal: opening/browsing/closing adds no gameplay time, RNG draw,
 or combat action and does not begin a dungeon cycle. It cannot intercept a
-secondary prompt or an input-owning workflow. Physical-keyboard acceptance
-remains separate from injected-input coverage.
+secondary prompt or an input-owning workflow. Its hint row lists only Tab, Up/Down
+and Esc; Shift+Up/Down, PgUp/PgDn, Space and Home/End keep paging but are not
+hinted. Right now names each unavailable command under its Commands-page reason.
+Physical-keyboard acceptance remains separate from injected-input coverage.
 
 `InputState` is defined in `cmd/ultimav/gamescene.go`.
 

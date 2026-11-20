@@ -13,7 +13,8 @@ import (
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
-const journalSearchResultRows = 3
+// A search result is its title line and the one line of it that matched.
+const journalSearchResultRows = 2
 
 func journalMatchMask(value, query string) []bool {
 	runes := []rune(value)
@@ -76,33 +77,78 @@ func journalMatchSegments(value, query string, foreground stdcolor.Color, select
 	return segments
 }
 
+// journalSearchSnippet fits value to capacity letters. When the value is longer
+// the window starts near the first match so the match stays in view; the cut is
+// plain, with no dots.
 func journalSearchSnippet(value, query string, capacity int) string {
 	value = strings.Join(strings.Fields(value), " ")
 	runes := []rune(value)
 	if len(runes) <= capacity {
 		return value
 	}
-	const ellipsis = "..."
 	const contextDivisor = 4
-	available := max(1, capacity-len(ellipsis)*2)
+	capacity = max(1, capacity)
 	start := 0
 	for index, matched := range journalMatchMask(value, query) {
 		if matched {
-			start = max(0, min(index-available/contextDivisor, len(runes)-available))
+			start = max(0, min(index-capacity/contextDivisor, len(runes)-capacity))
+			for start > 0 && start < index && runes[start-1] != ' ' {
+				start++ // Begin on a whole word.
+			}
 
 			break
 		}
 	}
-	end := min(len(runes), start+available)
-	result := string(runes[start:end])
-	if start > 0 {
-		result = ellipsis + result
+
+	return string(runes[start:min(len(runes), start+capacity)])
+}
+
+// journalSearchLine picks the first labelled line that matches the query, else
+// the first line, and returns its label with its value fitted to capacity.
+func journalSearchLine(lines []questJournalSearchLine, query string, capacity int) (string, string) {
+	var chosen questJournalSearchLine
+	for _, line := range lines {
+		if strings.TrimSpace(line.value) == "" {
+			continue
+		}
+		if chosen.value == "" {
+			chosen = line
+		}
+		if journalHasMatch(line.label+" "+line.value, query) {
+			chosen = line
+
+			break
+		}
 	}
-	if end < len(runes) {
-		result += ellipsis
+	if chosen.label != "" {
+		capacity -= utf8.RuneCountInString(chosen.label) + len(journalLabelSeparator)
 	}
 
-	return result
+	return chosen.label, journalSearchSnippet(chosen.value, query, capacity)
+}
+
+const (
+	journalSnippetIndentText = "  "
+	journalLabelSeparator    = ": "
+	journalLabelPlace        = "Place"
+	journalLabelSection      = "Section"
+)
+
+// snippetText is the matched line as shown, with its label.
+func (e questJournalSearchEntry) snippetText() string {
+	if e.label == "" {
+		return e.snippet
+	}
+
+	return e.label + journalLabelSeparator + e.snippet
+}
+
+// exchangeSearchLines lists what a conversation entry can match on: the words
+// spoken, then where they were heard.
+func exchangeSearchLines(exchange journal.Exchange) []questJournalSearchLine {
+	return []questJournalSearchLine{
+		{label: "", value: journalSnippetSource(exchange)}, {label: journalLabelPlace, value: exchange.Location},
+	}
 }
 
 func journalSnippetSource(exchange journal.Exchange) string {
@@ -120,7 +166,7 @@ func journalSnippetSource(exchange journal.Exchange) string {
 
 func (d *QuestJournalDialog) drawJournalMatchLine(screen *ebiten.Image, rect image.Rectangle,
 	value, query string, foreground stdcolor.Color, selected bool) {
-	value = FitDialogLine(value, d.font, rect.Dx())
+	value = CutDialogLine(d.font, value, "", rect.Dx())
 	d.rowOutput.Reset()
 	d.rowOutput.SetMaxCharsPerLine(max(1, utf8.RuneCountInString(value)))
 	line := d.rowOutput.AppendLine()
