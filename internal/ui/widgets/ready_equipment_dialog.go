@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	stdcolor "image/color"
+	"strconv"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -866,7 +867,6 @@ func (d *ReadyEquipmentDialog) populateDetailOutput() {
 
 	d.appendEquipmentFacts(item)
 	d.appendEquipmentComparison(item)
-	d.appendEquipmentWarnings(item)
 }
 
 func (d *ReadyEquipmentDialog) appendEquipmentFacts(item *availableEquipment) {
@@ -900,24 +900,9 @@ func (d *ReadyEquipmentDialog) appendEquipmentComparison(item *availableEquipmen
 	if preview.Selection == game_state.ReadyEquipmentNoChange {
 		return
 	}
-	d.appendComparisonRating("Attack", equip.GetAttackValue(), preview.Resulting.Attack-preview.Current.Attack)
-	d.appendComparisonRating("Defense", equip.GetDefenseValue(), preview.Resulting.Defense-preview.Current.Defense)
+	d.appendComparisonRating(ratingAttack, equip.GetAttackValue(), preview.Resulting.Attack-preview.Current.Attack)
+	d.appendComparisonRating(ratingDefense, equip.GetDefenseValue(), preview.Resulting.Defense-preview.Current.Defense)
 	d.appendStrengthBudget(item)
-}
-
-func (d *ReadyEquipmentDialog) appendEquipmentWarnings(item *availableEquipment) {
-	if item.CanEquip || item.EquipError == "" || item.StrengthBlocked {
-		return
-	}
-	label := "Cannot equip: "
-	if item.Equipped {
-		label = "Cannot unequip: "
-	}
-	// The authority's refusal is the only failure explanation. Do not separately
-	// reconstruct Strength/ammunition errors in the comparison or footer.
-	d.detailOutput.AppendLine().Done()
-	d.detailOutput.AppendLine().Text(label, DialogLabelColor).
-		Text(item.EquipError, DialogWarningColor).WordWrap().Done()
 }
 
 const (
@@ -956,63 +941,101 @@ func (d *ReadyEquipmentDialog) drawStatusBar(screen *ebiten.Image) {
 func (d *ReadyEquipmentDialog) populateStatusOutput(contentWidth int) {
 	d.statusOutput.Reset()
 
-	status, action := d.selectionGuidance()
-	statusColor := DialogStatusOKColor
-	if action == readySelectionUnavailable {
-		statusColor = DialogStatusWarningColor
-	}
-	// First line: Status message or warning
+	status, action, refused := d.selectionGuidance()
+	// First line: the reason a Ready was refused, or what Enter will do.
 	item := d.getSelectedItem()
-	if d.warningMessage != "" && (item == nil || d.warningMessage != item.EquipError) {
-		d.statusOutput.AppendLine().Text(d.warningMessage, DialogStatusWarningColor).Done()
-	} else {
-		d.statusOutput.AppendLine().Text(status, statusColor).Done()
+	switch {
+	case d.warningMessage != "" && (item == nil || d.warningMessage != item.EquipError):
+		d.statusOutput.AppendLine().Text(d.warningMessage, DialogWarningColor).WordWrap().Done()
+	case refused:
+		d.statusOutput.AppendLine().Text(status, DialogWarningColor).WordWrap().Done()
+	default:
+		d.statusOutput.AppendLine().Text(status, DialogStatusOKColor).Done()
 	}
 
-	d.appendStatusControls(action, contentWidth)
+	d.appendStatusControls(action, refused, contentWidth)
 }
 
-// Space pages details; [ and ] remain unadvertised paging aliases.
-func (d *ReadyEquipmentDialog) appendStatusControls(action string, width int) {
+// Space pages details; [ and ] remain unadvertised paging aliases, and
+// Shift+Tab (previous character) goes unlisted beside Tab. Enter keeps its
+// name and is dimmed when the selection cannot be readied.
+func (d *ReadyEquipmentDialog) appendStatusControls(action string, refused bool, width int) {
 	var hints []ControlHint
 	if !d.request.LockCharacter {
-		hints = append(hints, ControlHint{"Tab", "Next character"}, ControlHint{"Shift+Tab", "Previous"})
+		hints = append(hints, ControlHint{"Tab", "Next character"})
 	}
-	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{hintKeyEnter, action},
-		ControlHint{"H", "Hand"}, ControlHint{"B", "Strength breakdown"})
+	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{"H", "Hand"},
+		ControlHint{"B", "Strength"}, ControlHint{hintKeyEnter, action})
 	if d.detailPageCount() > 1 {
 		hints = append(hints, ControlHint{hintKeySpace, "Details"})
 	}
 	hints = append(hints, ControlHint{hintKeyEsc, hintActionClose})
-	PackControlHints(d.statusOutput, hints, width, etext.AlignStart)
+	PackControlHintsDimming(d.statusOutput, hints, width, etext.AlignStart,
+		func(hint ControlHint) bool { return refused && hint.Key == hintKeyEnter })
 }
 
-const (
-	readySelectionUnavailable = "Unavailable"
-)
-
-func (d *ReadyEquipmentDialog) selectionGuidance() (string, string) {
+// selectionGuidance returns the status sentence and the name of what Enter does
+// for the selection. refused is true when Ready cannot be done; the sentence then
+// says why.
+func (d *ReadyEquipmentDialog) selectionGuidance() (string, string, bool) {
 	index := d.itemListNav.GetCurrentIndex()
 	if index < 0 || index >= len(d.availableItems) {
-		return "No equipment selected", readySelectionUnavailable
+		return "No equipment selected", readyActionReady, true
 	}
 	item := d.availableItems[index]
 	if !item.CanEquip {
-		return "Unavailable - see details", readySelectionUnavailable
+		action := readyActionReady
+		if item.Equipped {
+			action = readyActionUnready
+		}
+
+		return d.refusalSentence(&item), action, true
 	}
 	switch item.Preview.Selection {
 	case game_state.ReadyEquipmentEquip:
 		if item.Preview.RequiresConfirmation() {
-			return "Review removed items before replacing", "Review replacement"
+			return "Review removed items before replacing", "Review replacement", false
 		}
 
-		return "Ready to equip", "Equip"
+		return "Ready to equip", readyActionReady, false
 	case game_state.ReadyEquipmentUnready:
-		return "Ready to unready", "Unready"
+		return "Ready to unready", readyActionUnready, false
 	case game_state.ReadyEquipmentNoChange:
-		return "No equipment change", "No change"
+		return "No equipment change", "No change", false
 	}
 	panic("unknown Ready preview selection")
+}
+
+// Rating labels shared by item facts and comparisons.
+const (
+	ratingAttack  = "Attack"
+	ratingDefense = "Defense"
+)
+
+const (
+	readyActionReady   = "Ready"
+	readyActionUnready = "Unready"
+)
+
+// refusalSentence is the whole reason a selection cannot be readied. A Strength
+// refusal is worded here from the preview's figures; any other refusal is the
+// authority's own sentence.
+func (d *ReadyEquipmentDialog) refusalSentence(item *availableEquipment) string {
+	if !item.StrengthBlocked {
+		return item.EquipError
+	}
+	name := d.getSelectedCharacter().GetNameAsString()
+	cost := item.Equipment.GetStrengthRequired()
+	if cost == 0 {
+		return "Too heavy: " + name + " already carries more than Strength allows."
+	}
+	spare := "none"
+	if left := item.Preview.Strength - readyOtherStrength(item); left > 0 {
+		spare = strconv.Itoa(left)
+	}
+
+	return fmt.Sprintf("Too heavy: the %s needs %d Strength; %s has %s to spare.",
+		item.Equipment.String(), cost, name, spare)
 }
 
 // formatDelta formats a stat delta with sign

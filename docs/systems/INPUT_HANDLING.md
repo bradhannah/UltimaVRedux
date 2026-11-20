@@ -636,10 +636,12 @@ modal has no number-key shortcuts or mouse handling. It emits a detached item
 identity only, and the owning workflow revalidates current inventory before
 mutation. All contexts show every owned identity in the existing Use categories,
 including an inventory containing only unavailable items. `UnavailableReason`
-blocks activation independently of effect-applicability warnings. Unavailable
-rows use muted text and a `[No]` marker with an explicit legend; selected rows
-retain contrast. Enter shows the specific restriction on the first detail page
-without dismissing or dispatching. Warning-only consumables remain selectable.
+blocks activation independently of effect-applicability warnings. Usable
+items are listed first (stable order) and the list opens on the first of them;
+unavailable rows follow with muted text and a `[No]` marker, and the title carries
+no legend. The footer's Enter stays `[Enter] Use`, dimmed whole when the selected
+item cannot be used. Enter shows the specific restriction, in `DialogWarningColor`,
+on the first detail page without dismissing or dispatching. Warning-only consumables remain selectable.
 Normal details combine concise handling/current state with atmospheric lore;
 there are no separate mechanical pages before lore. Page hints/counts appear
 only for overflow. Ownership does not reveal mysterious powers, ritual recipes

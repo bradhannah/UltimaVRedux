@@ -220,6 +220,24 @@ func TestItemSelectionDialogUnavailableEnterStaysOpenAndShowsReason(t *testing.T
 	}
 }
 
+func TestItemSelectionListsUsableFirstAndOpensOnIt(t *testing.T) {
+	sextant := testUseItem("Sextant", game_state.UseItemCategoryQuest, references.Sextant)
+	sextant.UnavailableReason = "Use on the world map."
+	yellow := testUseItem("Yellow", game_state.UseItemCategoryPotion, references.Yellow)
+	watch := testUseItem("Watch", game_state.UseItemCategoryTools, references.PocketWatch)
+	locked := testUseItem("Spare Scroll", game_state.UseItemCategoryScroll, references.ScrollVasLor)
+	locked.UnavailableReason = "Not during battle."
+	dialog := NewItemSelectionDialog(testItemSelectionConfig(
+		newWidgetTestKeyboard(0), []game_state.UseableItemInfo{sextant, yellow, locked, watch}))
+	var names []string
+	for _, item := range dialog.currentItems() {
+		names = append(names, item.Name)
+	}
+	require.Equal(t, []string{"Yellow", "Watch", "Sextant", "Spare Scroll"}, names)
+	require.Equal(t, "Yellow", dialog.selectedItem().Name)
+	require.Equal(t, "Sextant", dialog.itemsByCategory[ItemCategoryQuest][0].Name)
+}
+
 func TestItemSelectionUnavailableMarkerQuantityAndFocusRemainReadable(t *testing.T) {
 	for _, size := range []image.Point{{X: 320, Y: 200}, {X: 640, Y: 480}, {X: 1280, Y: 800}} {
 		setItemDialogTestResolution(t, size.X, size.Y)
@@ -243,8 +261,7 @@ func TestItemSelectionUnavailableMarkerQuantityAndFocusRemainReadable(t *testing
 			screen.Fill(MerchantDialogBackgroundColor)
 			dialog.drawDetailHeader(screen, item)
 			dialog.drawHeader(screen)
-			require.Contains(t, dialog.titleOutput.GetOutputStr(false), "[No] Unavailable")
-			require.Equal(t, 1, dialog.titleOutput.GetPanelContentLineCount(), "availability legend must fit the title")
+			require.NotContains(t, dialog.titleOutput.GetOutputStr(false), "Unavailable", "the title carries no legend")
 			dialog.drawListRow(screen, rect, item, selected)
 			// Keep exactly the same glyphs and geometry, but render the control as an available row.
 			// Its brighter text exposes glyph coverage even when no small glyph pixel is fully opaque.

@@ -77,3 +77,12 @@ func TestArmsAndAcknowledgementActualOutputsUseControlColours(t *testing.T) {
 	message.ClearPrompt()
 	require.Empty(t, message.promptOutput.GetOutputStr(false))
 }
+
+func TestControlHintsDimmingDimsOnlyChosenHintsWhole(t *testing.T) {
+	hints := []ControlHint{{hintKeyEnter, "Use"}, {hintKeyEsc, "Cancel"}}
+	line := appendControlHintRow(text.NewOutput(text.NewUltimaFont(16), 1, 2, 80).AppendLine(), hints, controlHintSeparator,
+		func(hint ControlHint) bool { return hint.Key == hintKeyEnter })
+	require.Equal(t, []text.ColorSegment{{Text: "[Enter] Use", Color: DialogUnavailableItemColor},
+		{Text: controlHintSeparator, Color: DialogControlHintColor}, {Text: "[Esc]", Color: DialogControlKeyColor},
+		{Text: " Cancel", Color: DialogControlHintColor}}, line.GetSegments())
+}

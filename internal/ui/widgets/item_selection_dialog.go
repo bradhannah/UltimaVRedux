@@ -1,10 +1,12 @@
 package widgets
 
 import (
+	"cmp"
 	"fmt"
 	"image"
 	stdcolor "image/color"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -166,7 +168,12 @@ func NewItemSelectionDialog(config ItemSelectionDialogConfig) *ItemSelectionDial
 	return dialog
 }
 
+// organizeItems lists what can be used now first, then what cannot, each group
+// in the order given, so the list opens on something that works.
 func (d *ItemSelectionDialog) organizeItems() {
+	slices.SortStableFunc(d.allItems, func(a, b game_state.UseableItemInfo) int {
+		return cmp.Compare(boolRank(a.UnavailableReason != ""), boolRank(b.UnavailableReason != ""))
+	})
 	for _, item := range d.allItems {
 		category := widgetCategoryForUseItem(item.Category)
 		d.itemsByCategory[category] = append(d.itemsByCategory[category], item)
@@ -187,6 +194,14 @@ func (d *ItemSelectionDialog) organizeItems() {
 			d.categories = append(d.categories, category)
 		}
 	}
+}
+
+func boolRank(unavailable bool) int {
+	if unavailable {
+		return 1
+	}
+
+	return 0
 }
 
 func widgetCategoryForUseItem(category game_state.UseItemCategory) ItemCategory {
@@ -638,13 +653,6 @@ func (d *ItemSelectionDialog) calculateDetailRects(lineHeight int) {
 
 func (d *ItemSelectionDialog) drawHeader(screen *ebiten.Image) {
 	title := "Use Item"
-	for _, item := range d.allItems {
-		if item.UnavailableReason != "" {
-			title = "Use Item  [No] Unavailable"
-
-			break
-		}
-	}
 	d.titleOutput.SetMaxCharsPerLine(max(1, d.titleOutput.Font.CharsForWidth(d.layout.titleRect.Dx())))
 	d.titleOutput.Reset()
 	d.titleOutput.AppendLine().
@@ -845,21 +853,20 @@ func (d *ItemSelectionDialog) drawDetailHeader(screen *ebiten.Image, item game_s
 
 func (d *ItemSelectionDialog) drawFooter(screen *ebiten.Image) {
 	content := d.footerContentRect()
-	enter := "Use"
-	if item := d.selectedItem(); item != nil && item.UnavailableReason != "" {
-		enter = "Unavailable"
-	}
-	details := ""
+	hints := []ControlHint{{hintKeyTabCycle, labelCategory}}
 	if len(d.detailPages()) > 1 {
-		details = "  [Space] Details"
+		hints = append(hints, ControlHint{hintKeySpace, "Details"})
 	}
-	drawModifierFooter(
-		screen,
-		content,
-		"[Tab/Shift+Tab] Category"+details+"\n"+
-			"[Up/Down] Item   [Shift+Up/Down] Page   [Enter] "+enter+"   [Esc] Cancel",
-		d.footerOutput,
-	)
+	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{hintKeyShiftPage, hintActionPage},
+		ControlHint{hintKeyEnter, "Use"}, ControlHint{hintKeyEsc, "Cancel"})
+	item := d.selectedItem()
+	d.footerOutput.Reset()
+	PackControlHintsDimming(d.footerOutput, hints, content.Dx(), etext.AlignCenter,
+		func(hint ControlHint) bool {
+			return hint.Key == hintKeyEnter && (item == nil || item.UnavailableReason != "")
+		})
+	d.footerOutput.DrawPanelContent(screen,
+		image.Pt(content.Min.X, verticallyCenteredOutputY(content, d.footerOutput)), content.Dx(), etext.AlignCenter)
 }
 
 func (d *ItemSelectionDialog) detailPages() [][]detailLine {
@@ -883,7 +890,7 @@ func (d *ItemSelectionDialog) actionDetailLines(item game_state.UseableItemInfo)
 	var lines []detailLine
 	if item.UnavailableReason != "" {
 		lines = append(lines, detailLine{
-			label: "", value: item.UnavailableReason, color: DialogStatusWarningColor, header: false,
+			label: "", value: item.UnavailableReason, color: DialogWarningColor, header: false,
 		})
 	} else {
 		for _, hint := range []string{item.EffectSummary, item.Requirement, item.Consumption} {

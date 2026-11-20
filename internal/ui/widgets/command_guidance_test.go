@@ -46,7 +46,7 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 		gear           references.Equipment
 		action, status string
 	}{
-		{references.Dagger, "Equip", "Ready to equip"},
+		{references.Dagger, "Ready", "Ready to equip"},
 		{references.LeatherHelm, "Unready", "Ready to unready"},
 		{references.Arrows, "No change", "No equipment change"},
 		{references.ChainCoif, "Review replacement", "Review removed items before replacing"},
@@ -58,7 +58,7 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 			}
 			found = true
 			dialog.itemListNav.SetIndex(index)
-			status, action := dialog.selectionGuidance()
+			status, action, _ := dialog.selectionGuidance()
 			require.Equal(t, test.status, status)
 			require.Equal(t, test.action, action)
 			dialog.populateStatusOutput(dialog.statusBorder.GetInteriorBounds().Dx() - (itemDialogTextPadding+4)*2)

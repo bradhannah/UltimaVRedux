@@ -95,10 +95,12 @@ func ParseControlHints(guidance string) []ControlHint {
 
 // AppendControlHints styles one row of bracketed guidance on line.
 func AppendControlHints(line *text.LineBuilder, guidance string) *text.LineBuilder {
-	return appendControlHintRow(line, ParseControlHints(guidance), controlHintSeparator)
+	return appendControlHintRow(line, ParseControlHints(guidance), controlHintSeparator, nil)
 }
 
-func appendControlHintRow(line *text.LineBuilder, hints []ControlHint, separator string) *text.LineBuilder {
+func appendControlHintRow(
+	line *text.LineBuilder, hints []ControlHint, separator string, dimmed func(ControlHint) bool,
+) *text.LineBuilder {
 	if len(hints) == 0 {
 		return line.Text("", DialogControlHintColor) // Keep a blank guidance row.
 	}
@@ -108,6 +110,11 @@ func appendControlHintRow(line *text.LineBuilder, hints []ControlHint, separator
 		}
 		if hint.Key == "" {
 			line.Text(hint.Action, DialogControlHintColor)
+
+			continue
+		}
+		if dimmed != nil && dimmed(hint) {
+			line.Text(hint.String(), DialogUnavailableItemColor)
 
 			continue
 		}
@@ -123,6 +130,15 @@ func appendControlHintRow(line *text.LineBuilder, hints []ControlHint, separator
 // PackControlHints appends hints to output as measured physical rows, wrapping
 // only between complete hints so a key never separates from its action.
 func PackControlHints(output *text.Output, hints []ControlHint, width int, align etext.Align) {
+	PackControlHintsDimming(output, hints, width, align, nil)
+}
+
+// PackControlHintsDimming is PackControlHints with the hints for which dimmed
+// returns true drawn whole in the unavailable colour: a key that cannot work
+// now. The caller's text says why. A nil dimmed dims nothing.
+func PackControlHintsDimming(
+	output *text.Output, hints []ControlHint, width int, align etext.Align, dimmed func(ControlHint) bool,
+) {
 	separator, rows := controlHintSeparator, packControlHintRows(output.Font, hints, width, controlHintSeparator)
 	for _, tighter := range [...]string{"  ", " "} {
 		if candidate := packControlHintRows(output.Font, hints, width, tighter); len(candidate) < len(rows) {
@@ -132,7 +148,7 @@ func PackControlHints(output *text.Output, hints []ControlHint, width int, align
 	for _, row := range rows {
 		runes := utf8.RuneCountInString(joinControlHints(row, separator))
 		output.SetMaxCharsPerLine(max(runes, output.Font.CharsForWidth(max(1, width))))
-		appendControlHintRow(output.AppendLine().WithAlignment(align), row, separator).Done()
+		appendControlHintRow(output.AppendLine().WithAlignment(align), row, separator, dimmed).Done()
 	}
 }
 

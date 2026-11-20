@@ -1057,8 +1057,9 @@ the 26-size title; EQUIPPED, AVAILABLE and DETAILS are 23-size section labels. A
 full-width character header shows the selected character's `GetKeySpriteIndex`
 sprite at integer nearest-neighbour scale, name, and `CHAR N/count` in active-party
 order (including dead members in the count). Its measured text bounds reserve the
-portrait and position label. It labels the actual loadout as `Current equipment`,
-with Strength use, capacity, and remaining allowance. Tab/Shift+Tab cycles living
+portrait and position label. It labels the actual loadout `Strength in use: N of M`,
+adding `K over` in the readable light red only when the loadout exceeds Strength
+(never a negative remainder). Tab/Shift+Tab cycles living
 present members with wraparound; Left/Right and 1–6 remain shortcuts. Combat locks
 the acting character and omits character-switch hints. Footer hints wrap as
 measured key/action pairs so a key never separates from its description. Hand
@@ -1084,10 +1085,15 @@ equipment excludes every displaced item, including both hands for two-handed
 replacements. Zero-cost items show `None` in the cost column. A Strength refusal
 is explained by the red shortfall alone; other refusals retain their own message.
 Equipped-item inspection instead shows current Attack/Defense and `Uses N Strength`
-or `No Strength required`, without removal deltas or a hypothetical budget. Availability
-refusals appear once in details; the footer points to that explanation rather
-than repeating it, including after a refused attempt. H switches the
-one-handed target; B opens an equipment Strength breakdown. Enter equips an
+or `No Strength required`, without removal deltas or a hypothetical budget. A refusal is
+one sentence with its reason on the status line (`DialogWarningColor`), not in
+details and not as "Unavailable": Strength reads `Too heavy: the Bow needs 8
+Strength; Avatar has none to spare.`, any other refusal keeps the authority's own
+message, and a refused attempt shows the same sentence. The hint rows list Tab
+(Shift+Tab keeps working but is unlisted), Up/Down, H, B (`Strength`), Enter, Space
+and Esc; Enter keeps its name (`Ready` or `Unready`) and is dimmed whole while the
+selection cannot be readied (`PackControlHintsDimming`). H switches the
+one-handed target; B opens an equipment Strength breakdown. Enter readies an
 empty slot or unreadies an equipped item; replacements first open a child review
 card listing removed gear, resulting ratings, and inventory returns. Fresh Enter
 confirms, Escape cancels the card, and held keys cannot leak into the parent.
@@ -1247,9 +1253,17 @@ use the additional body space. Cast and Mix retain their own original placement.
 
 The Z-stats Character section has two columns: the readied list, and the stats
 box above the selected item's box. The stats box opens with a small framed
-portrait beside the name, class, status and level, as an item's box opens with
-its picture; short figures share lines (HP with MP, the three attributes, Attack
-with Defense), and the party numbers take its last line.
+portrait beside the name, class, status and the labelled `Level` and `XP`
+values, as an item's box opens with its picture; short figures share lines (HP
+with MP, the three attributes, Attack with Defense), and the party numbers take
+its last line, the open member's number on the light blue tab plate
+(`DrawActiveTabPlate`) like an open tab.
+
+An item's details (equipped box and Armory) leave out a fact with nothing to say:
+no Attack, Defense, Strength required or Range of zero, no Hands required unless
+the item is a weapon or shield (it takes a hand), no Abilities line without an
+ability, and, in the equipped box, no Category that only repeats the slot label.
+Reagents and the other lists are unchanged.
 
 Every Z-stats list except Spells (equipment, supplies, reagents, potions, scrolls
 and owned items) shows full names with measured wrapping; no name is cut short.
