@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bradhannah/UltimaVRedux/main/docs/schemas/native-save-e2-s28.schema.json",
+  "title": "Native Ultima V Redux Save Envelope 2 / Snapshot 28",
+  "description": "Load frozen sibling s16-s27 schemas locally and assert the version-aware ultima5-world-journal format. V28 adds the record of members who have taken the once-only circle study, as ascending unique roster slots. Older saves promote with no member studied.",
+  "type": "object", "additionalProperties": false,
+  "required": ["format", "envelopeVersion", "metadata", "snapshot"],
+  "properties": {
+    "format": {"const": "ultima5redux-native-snapshot"}, "envelopeVersion": {"const": 2},
+    "metadata": {"$ref": "native-save-e2-s27.schema.json#/properties/metadata"},
+    "snapshot": {"$ref": "#/$defs/snapshot"}
+  },
+  "$defs": {
+    "snapshot": {
+      "type": "object", "additionalProperties": false, "format": "ultima5-world-journal",
+      "required": ["version", "party", "inventory", "world", "progression", "effects", "wind", "random", "continuation", "redux", "presentation", "lastConversation", "excerpts", "notes", "dungeonJournal", "moonstoneJournal", "atlasLandmarks", "dungeon", "partyVehicle", "mapUnits", "itemStacks", "mapMutations", "openDoor", "basementChestHistory", "atlasNotes", "atlasFleet", "codexRevelationComplete", "deedExperiencePaid", "sharedExperienceRemainder", "circleStudy"],
+      "properties": {
+        "version": {"const": 28},
+        "party": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/party"},
+        "inventory": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/inventory"},
+        "world": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/world"},
+        "progression": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/progression"},
+        "effects": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/effects"},
+        "wind": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/wind"},
+        "random": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/random"},
+        "continuation": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/continuation"},
+        "redux": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/redux"},
+        "presentation": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/presentation"},
+        "lastConversation": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/lastConversation"},
+        "excerpts": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/excerpts"},
+        "notes": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/notes"},
+        "dungeonJournal": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/dungeonJournal"},
+        "moonstoneJournal": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/moonstoneJournal"},
+        "atlasLandmarks": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/atlasLandmarks"},
+        "dungeon": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/dungeon"},
+        "partyVehicle": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/partyVehicle"},
+        "mapUnits": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/mapUnits"},
+        "itemStacks": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/itemStacks"},
+        "mapMutations": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/mapMutations"},
+        "openDoor": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/openDoor"},
+        "basementChestHistory": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/basementChestHistory"},
+        "atlasNotes": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/atlasNotes"},
+        "atlasFleet": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/atlasFleet"},
+        "codexRevelationComplete": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/codexRevelationComplete"},
+        "deedExperiencePaid": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/deedExperiencePaid"},
+        "sharedExperienceRemainder": {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/properties/sharedExperienceRemainder"},
+        "circleStudy": {"type": ["array", "null"], "maxItems": 16, "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 15}}
+      },
+      "allOf": [
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/0"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/1"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/2"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/3"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/4"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/5"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/6"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/7"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/8"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/9"},
+        {"$ref": "native-save-e2-s27.schema.json#/$defs/snapshot/allOf/10"}
+      ]
+    }
+  }
+}

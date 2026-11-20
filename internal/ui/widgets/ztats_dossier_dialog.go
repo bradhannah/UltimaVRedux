@@ -918,9 +918,17 @@ func (d *ZStatsDossierDialog) appendCharacterStats(
 			character.ExperienceToNextLevel,
 		), DialogValueColor)
 	}
-	if !character.CanCast {
+	switch {
+	case !character.CanCast:
 		d.appendDetailPairTo(output, "Highest spell", "Cannot cast", DialogValueColor)
-	} else if character.HighestUsableSpellCircle != character.Level {
+	case character.CircleStudied:
+		d.appendDetailPairTo(
+			output,
+			"Spell circle",
+			strconv.Itoa(character.HighestUsableSpellCircle)+" (studied)",
+			DialogValueColor,
+		)
+	case character.HighestUsableSpellCircle != character.Level:
 		d.appendDetailPairTo(
 			output,
 			"Spell circle cap",

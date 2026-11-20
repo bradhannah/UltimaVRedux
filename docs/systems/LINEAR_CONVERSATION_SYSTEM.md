@@ -97,7 +97,7 @@ The closed v1 grammar is implemented in `internal/conversation/semantic`:
   substitutions.
 - Branches for NPC name knowledge and karma thresholds.
 - Gold, item, karma, knowledge discovery, pause, key wait, AskName, recruitment,
-  guards, jail, return-to-topics, and end actions.
+  guards, jail, circle study, return-to-topics, and end actions.
 
 The loader rejects unknown fields and variants, duplicate keys, aliases,
 invalid substitutions, missing question targets, duplicate normalized
@@ -222,6 +222,16 @@ contains no automatic discovery action. Original evidence and the deliberate
 story-flow departure are recorded in
 [TALK-0006](../gamefacts/TALK_SYSTEM_STRUCTURE.md#talk-0006).
 
+Lady Janell (`keep/011`) is the one patch that adds a Redux service rather than
+a correction or a discovery. QUEE/MAG/BRIT keeps her original answer, then after a
+fresh key adds one sentence naming the Great Council. COUN/GREA and STRO/DEFE
+are new answers, the second leading through two fresh keys to `question_03`. Y
+speaks one closing line and runs `begin_circle_study`, which ends the talk; a
+terminal action with no speech before it would show an empty quotation. Any
+other answer gives her existing `I see.` and returns to topics. Her original topics, questions and
+farewell are unchanged. The lore boundary and the service are recorded in
+[PROGRESS-0005](../gamefacts/CHARACTER_PROGRESSION.md#progress-0005).
+
 Standalone domain notes remain nameless Chronicle entries even after a name is
 learned separately. The three fixed Shadowlord rows expose Embodies and derived
 Opposes only after explicit association; a prior association-only save remains
@@ -285,6 +295,13 @@ not merely after dialog removal. Cancelled conversations and alternate Talk
 handlers such as merchants, Guards, sleeping NPCs, and automatic Astaroth or
 Nosfentor responses do not invoke it. Yell-summoned Faulinei is also excluded
 because it does not establish automatic town presence.
+
+A completed conversation that ended with `begin_circle_study` then opens the
+circle study list. The action only records the request on the host callbacks;
+the Talk workflow reads it after the dialog has closed and owns the list until
+the player leaves it. The list only records a choice; the workflow asks the
+yes-or-no question before any gold is spent. A dialog removed before its terminal response opens
+nothing.
 
 Ordinary input responses continue from the submitted prompt row. This makes the
 first of the original two protocol newlines terminate that occupied row and the
@@ -371,7 +388,8 @@ Offline lookup projections and source/dialog-to-NPC identity joins are tested by
 
 Tracked source-backed patches add knowledge discovery without adding dialogue
 output, including the independent domain, keeper, staged Sutek, and seven NPC
-Words of Power paths above.
+Words of Power paths above. The Lighthouse corrections and Lady Janell's circle
+study are the patches that add spoken lines.
 Runtime patch coverage is enumerated by
 `internal/conversation/catalog/catalog_original_test.go` and
 `internal/conversation/semantic_engine_original_test.go`. Original-data tests

@@ -457,6 +457,7 @@ func TestEmbeddedSchemaVocabularyMatchesGoModel(t *testing.T) {
 		string(semantic.ActionKindAdjustKarma),
 		string(semantic.ActionKindAsk),
 		string(semantic.ActionKindAskName),
+		string(semantic.ActionKindBeginCircleStudy),
 		string(semantic.ActionKindBranch),
 		string(semantic.ActionKindCallGuards),
 		string(semantic.ActionKindDiscoverKnowledge),

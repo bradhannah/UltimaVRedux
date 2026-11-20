@@ -56,10 +56,12 @@ type ZStatsCharacter struct {
 	NextLevelProgress        float64
 	ReadyToAdvance           bool
 	HighestUsableSpellCircle int
-	CanCast                  bool
-	EquipmentAttack          int
-	EquipmentDefense         int
-	Equipped                 []ZStatsEquippedItem
+	// CircleStudied reports the once-only study that lifts the circle above level.
+	CircleStudied    bool
+	CanCast          bool
+	EquipmentAttack  int
+	EquipmentDefense int
+	Equipped         []ZStatsEquippedItem
 }
 
 // ZStatsEquippedItem describes one of the six ordered character equipment slots.
@@ -286,7 +288,7 @@ func projectZStatsCharacter(rosterIndex int, character *party_state.PlayerCharac
 	canCast := character.CanCastSpells()
 	highestCircle := 0
 	if canCast {
-		highestCircle = min(int(character.Level), references.MaxSpellCircle)
+		highestCircle = character.SpellCircleLimit()
 	}
 
 	equipped := make([]ZStatsEquippedItem, 0, len(references.EquipmentSlots()))
@@ -333,6 +335,7 @@ func projectZStatsCharacter(rosterIndex int, character *party_state.PlayerCharac
 		NextLevelProgress:        progress,
 		ReadyToAdvance:           ready,
 		HighestUsableSpellCircle: highestCircle,
+		CircleStudied:            character.HasCircleStudy(),
 		CanCast:                  canCast,
 		EquipmentAttack:          character.GetTotalAttack(),
 		EquipmentDefense:         character.GetTotalDefense(),

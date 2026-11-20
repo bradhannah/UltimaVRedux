@@ -17,6 +17,7 @@ type semanticTestCallbacks struct {
 	joined      int
 	guards      int
 	jail        int
+	studies     int
 	karmaUp     int
 	karmaDown   int
 	pauses      int
@@ -41,7 +42,8 @@ func (callbacks *semanticTestCallbacks) IncreaseKarma() {
 func (callbacks *semanticTestCallbacks) DecreaseKarma() {
 	callbacks.karmaDown++
 }
-func (callbacks *semanticTestCallbacks) GoToJail() { callbacks.jail++ }
+func (callbacks *semanticTestCallbacks) GoToJail()         { callbacks.jail++ }
+func (callbacks *semanticTestCallbacks) BeginCircleStudy() { callbacks.studies++ }
 func (callbacks *semanticTestCallbacks) GiveItem(itemID int) {
 	callbacks.items = append(callbacks.items, itemID)
 }
@@ -183,6 +185,28 @@ func TestSemanticConversationEngineNameBranchWaitAndActions(t *testing.T) {
 	assert.Equal(t, 2, callbacks.karmaDown)
 	assert.Equal(t, 1, callbacks.guards)
 	assert.Equal(t, 1, callbacks.jail)
+}
+
+func TestSemanticConversationEngineBeginCircleStudyEndsTheTalkOnce(t *testing.T) {
+	definition := semanticTestConversation()
+	definition.Topics = []semantic.Topic{{
+		Keywords: []string{"study"},
+		Response: semantic.Body{
+			&semantic.SayAction{Content: semanticText("Then let us begin.")},
+			&semantic.BeginCircleStudyAction{},
+		},
+	}}
+	callbacks := &semanticTestCallbacks{avatarName: "Avatar"}
+	engine, err := NewSemanticConversationEngine(definition, callbacks, false)
+	require.NoError(t, err)
+	engine.Start(13)
+	require.Zero(t, callbacks.studies, "nothing is asked of the host before the keyword")
+
+	complete := engine.ProcessInput("study")
+
+	assert.Contains(t, complete.Output, "Then let us begin.")
+	assert.True(t, complete.IsCompleteAwaitingDismissal, "the talk ends so the host can open the study")
+	assert.Equal(t, 1, callbacks.studies)
 }
 
 func TestSemanticConversationEngineRunicParagraphsAndPause(t *testing.T) {

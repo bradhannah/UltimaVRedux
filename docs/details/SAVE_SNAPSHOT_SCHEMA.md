@@ -2,7 +2,7 @@
 
 ## Status
 
-This document describes native envelope version 2 and canonical `SaveSnapshot` version 27 in
+This document describes native envelope version 2 and canonical `SaveSnapshot` version 28 in
 `internal/save_snapshot`, its strict native envelope, and the runtime
 capture/hydration boundary.
 
@@ -12,15 +12,16 @@ Original-save conversion dispositions are recorded in the
 For headless command-line conversion and loading either a standalone snapshot or
 a player slot, follow the [save converter procedure](SAVE_CONVERTER.md).
 The executable Draft 2020-12 contract is
-[`native-save-e2-s27.schema.json`](../schemas/native-save-e2-s27.schema.json), with
-frozen V16–V26 sibling resources loaded locally. Assert its version-aware
+[`native-save-e2-s28.schema.json`](../schemas/native-save-e2-s28.schema.json), with
+frozen V16–V27 sibling resources loaded locally. Assert its version-aware
 `ultima5-world-journal` format as well as structural validation. Go DTOs and the
 strict codec in `internal/save_snapshot` own the current wire contract.
-Versions 24 (first shipped in `v0.1.0-preview.1`), 25 and 26 are the frozen strict
+Versions 24 (first shipped in `v0.1.0-preview.1`), 25, 26 and 27 are the frozen strict
 promotion sources, described by
 [`native-save-e2-s24.schema.json`](../schemas/native-save-e2-s24.schema.json),
-[`native-save-e2-s25.schema.json`](../schemas/native-save-e2-s25.schema.json) and
-[`native-save-e2-s26.schema.json`](../schemas/native-save-e2-s26.schema.json).
+[`native-save-e2-s25.schema.json`](../schemas/native-save-e2-s25.schema.json),
+[`native-save-e2-s26.schema.json`](../schemas/native-save-e2-s26.schema.json) and
+[`native-save-e2-s27.schema.json`](../schemas/native-save-e2-s27.schema.json).
 Frozen V16–V23 schemas remain solely because later schemas reuse their
 definitions; they are not decode paths. See
 [Snapshot Version Compatibility](#snapshot-version-compatibility).
@@ -34,6 +35,18 @@ Public availability does not change accepted fields, validation constraints,
 envelope or snapshot versions, or promotion.
 
 ## Principles
+
+### Snapshot 28 Circle Study Record
+
+One required member records Redux's once-only circle study
+([PROGRESS-0005](../gamefacts/CHARACTER_PROGRESSION.md#progress-0005)):
+
+- `circleStudy` lists the roster slots, 0 to 15, of the members who have studied,
+  unique and in ascending order (null or `[]` means none). Each listed slot must
+  be occupied. The mark belongs to the member, so it moves with them when the
+  party is reordered and is written against the slot they hold at capture.
+
+A version 27 or older save promotes with no member studied.
 
 ### Snapshot 27 Experience Records
 
@@ -467,8 +480,8 @@ Fixed collection sizes are 16 roster slots, 48 equipment entries, 48 spells, 8 s
 checkpoint-local `presentation`, `lastConversation`, `dungeonJournal`,
 `moonstoneJournal`, `atlasLandmarks`, `openDoor`, `basementChestHistory`,
 `atlasNotes`, `atlasFleet`, `notes`, `codexRevelationComplete`,
-`deedExperiencePaid`, and `sharedExperienceRemainder` values.
-The current [JSON schema](../schemas/native-save-e2-s27.schema.json) and `codec.go`
+`deedExperiencePaid`, `sharedExperienceRemainder`, and `circleStudy` values.
+The current [JSON schema](../schemas/native-save-e2-s28.schema.json) and `codec.go`
 own required/null/unknown-member rules;
 `validation.go` and the version-specific validators own semantic
 constraints. Use those executable definitions when changing the wire shape.
@@ -1044,10 +1057,11 @@ Quick Save authority over a player slot.
 
 ### Snapshot Version Compatibility
 
-Within a valid envelope 2, strict decode accepts snapshot version 27
-(`CurrentVersion`) and promotes versions 26, 25 and 24 (`MinimumVersion`, first
-shipped in `v0.1.0-preview.1`). All retain all state; they only receive empty
-experience records, V25 and V24 a fresh notebook, and V24 also empty excerpts
+Within a valid envelope 2, strict decode accepts snapshot version 28
+(`CurrentVersion`) and promotes versions 27, 26, 25 and 24 (`MinimumVersion`, first
+shipped in `v0.1.0-preview.1`). All retain all state; they only receive an empty
+circle study record, V26 and older empty experience records, V25 and V24 a fresh
+notebook, and V24 also empty excerpts
 plus the application-level notebook import described
 [above](#snapshot-25-save-owned-excerpts). Promotion consumes no time or RNG and
 never rewrites the source record. Named-record and slot revisions use the
@@ -1057,7 +1071,7 @@ Versions 23 and older, plus future versions, return a typed
 `UnsupportedVersionError`. Player slots holding them list as incompatible with a
 reviewed revision, so they can be overwritten or deleted. Original `SAVED.GAM`
 import is unaffected and always produces the current version. New encoding
-always emits version 27 and rejects the private reconstruction hint.
+always emits version 28 and rejects the private reconstruction hint.
 
 Metadata is not part of gameplay equality comparisons unless explicitly requested.
 

@@ -141,6 +141,28 @@ func (p *PlayerCharacter) CanCastSpells() bool {
 	return p.Class == Avatar || p.Class == Wizard || p.Class == Bard
 }
 
+// SpellCircleLimit returns the highest spell circle the character's level
+// allows: the level itself, or one above it after circle study, never past the
+// eighth. ref:PROGRESS-0005
+func (p *PlayerCharacter) SpellCircleLimit() int {
+	limit := int(p.Level)
+	if p.circleStudy {
+		limit++
+	}
+
+	return min(limit, references.MaxSpellCircle)
+}
+
+// HasCircleStudy reports whether the character has taken the once-only circle study.
+func (p *PlayerCharacter) HasCircleStudy() bool {
+	return p.circleStudy
+}
+
+// SetCircleStudy records or clears the once-only circle study.
+func (p *PlayerCharacter) SetCircleStudy(studied bool) {
+	p.circleStudy = studied
+}
+
 // SetMp sets current MP, clamped to Intelligence.
 func (p *PlayerCharacter) SetMp(amount byte) {
 	maxMp := p.GetMaxMp()

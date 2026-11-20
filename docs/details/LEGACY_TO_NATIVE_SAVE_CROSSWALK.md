@@ -71,6 +71,12 @@ a Look observation at Guardians. Imported `atlasLandmarks` remains empty and
 all unmeasured surveys retain `flexible: false`. These are quiet native defaults,
 not inferred acquisition events or new conversion warnings.
 
+### Snapshot 28 Circle Study Default
+
+Original saves have no circle study. Conversion writes no studied member, so an
+imported party may study once each like any other. See the
+[circle study record](SAVE_SNAPSHOT_SCHEMA.md#snapshot-28-circle-study-record).
+
 ### Snapshot 27 Experience Record Defaults
 
 Original saves record no deed experience. Conversion writes no paid deeds and a

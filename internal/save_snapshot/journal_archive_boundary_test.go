@@ -30,6 +30,7 @@ func TestNativeConversationArchiveMemberCodecSchemaAgreement(t *testing.T) {
 				delete(body, "excerpts")
 				delete(body, "notes")
 				deleteExperienceRecords(body)
+				delete(body, "circleStudy")
 			}
 			schema, _ := compileNativeSaveSchemaFile(t, fmt.Sprintf("native-save-e2-s%d.schema.json", version))
 			data, err := json.Marshal(document)

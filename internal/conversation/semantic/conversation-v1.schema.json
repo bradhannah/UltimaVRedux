@@ -122,6 +122,7 @@
         { "const": "join_party" },
         { "const": "call_guards" },
         { "const": "go_to_jail" },
+        { "const": "begin_circle_study" },
         { "const": "return_to_topics" },
         { "const": "end" },
         {

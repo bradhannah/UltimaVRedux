@@ -205,6 +205,8 @@ const (
 	ActionKindCallGuards ActionKind = "call_guards"
 	// ActionKindGoToJail identifies the standard jail outcome.
 	ActionKindGoToJail ActionKind = "go_to_jail"
+	// ActionKindBeginCircleStudy ends the talk so the host can open circle study.
+	ActionKindBeginCircleStudy ActionKind = "begin_circle_study"
 	// ActionKindReturnToTopics identifies a return to the topic prompt.
 	ActionKindReturnToTopics ActionKind = "return_to_topics"
 	// ActionKindEnd identifies the end of a conversation.
@@ -321,6 +323,14 @@ type GoToJailAction struct{}
 // Kind returns ActionKindGoToJail.
 func (*GoToJailAction) Kind() ActionKind { return ActionKindGoToJail }
 func (*GoToJailAction) isAction()        {}
+
+// BeginCircleStudyAction ends the conversation and asks the host to open circle
+// study once the talk has closed. REDUX DEVIATION: PROGRESS-0005.
+type BeginCircleStudyAction struct{}
+
+// Kind returns ActionKindBeginCircleStudy.
+func (*BeginCircleStudyAction) Kind() ActionKind { return ActionKindBeginCircleStudy }
+func (*BeginCircleStudyAction) isAction()        {}
 
 // ReturnToTopicsAction returns to the protocol topic prompt.
 type ReturnToTopicsAction struct{}

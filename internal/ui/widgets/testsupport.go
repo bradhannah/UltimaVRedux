@@ -79,6 +79,39 @@ func (d *CharacterSelectionDialog) GetCurrentOption() CharacterSelectionOption {
 	return cloneCharacterSelectionOption(d.options[d.selected])
 }
 
+// LayoutProblemsAt lists what the selector cannot show whole at one screen
+// size: a title that needs more than its one row, a roster name the row would
+// cut, or detail text taller than its box. An owner uses it to test its wording
+// at every supported resolution; the display manager must already be that size.
+func (d *CharacterSelectionDialog) LayoutProblemsAt(width, height int) []string {
+	shell := d.shell
+	shell.ensureLayout(width, height, len(d.options), d.footer())
+	var problems []string
+	shell.titleOutput.Reset()
+	shell.titleOutput.AppendLine().Text(d.title, DialogHeaderColor).Done()
+	if shown := strings.TrimSpace(shell.titleOutput.GetOutputStr(false)); shown != d.title {
+		problems = append(problems, "title shows as "+shown)
+	}
+	detailRect := shell.layout.detailTextRect
+	shell.detailOutput.SetMaxCharsPerLine(max(1, shell.detailOutput.Font.CharsForWidth(detailRect.Dx())))
+	for index, option := range d.options {
+		nameRect, _ := shell.rosterRowTextRects(shell.layout.rowRects[index], option.Status)
+		shell.appendRosterRow(option, index == d.selected, nameRect.Dx())
+		if !strings.Contains(shell.rowOutput.GetOutputStr(false), option.Name) {
+			problems = append(problems, "name cut: "+option.Name+" beside "+option.Status)
+		}
+		shell.detailOutput.Reset()
+		shell.appendDetailText(option)
+		lines := shell.detailOutput.GetPanelContentLineCount()
+		if lines >= characterRosterDialogDetailMaximumLines ||
+			shell.detailOutput.GetTotalHeightForLines(lines) > float64(detailRect.Dy()) {
+			problems = append(problems, "detail too tall: "+option.Name)
+		}
+	}
+
+	return problems
+}
+
 // GetOptions returns defensive copies of all visible rows.
 func (d *CharacterSelectionDialog) GetOptions() []CharacterSelectionOption {
 	return cloneCharacterSelectionOptions(d.options)

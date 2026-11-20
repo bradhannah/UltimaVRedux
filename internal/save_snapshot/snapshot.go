@@ -6,7 +6,7 @@ import "github.com/bradhannah/UltimaVRedux/internal/journal"
 
 const (
 	// CurrentVersion is the native snapshot schema version.
-	CurrentVersion = 27
+	CurrentVersion = 28
 	// MinimumVersion is the oldest native snapshot schema this build promotes.
 	// It shipped in v0.1.0-preview.1; older native saves are unsupported.
 	MinimumVersion = 24
@@ -74,6 +74,9 @@ type SaveSnapshot struct {
 	DeedExperiencePaid []string `json:"deedExperiencePaid"`
 	// SharedExperienceRemainder carries points an even kill split could not divide.
 	SharedExperienceRemainder int `json:"sharedExperienceRemainder"`
+	// CircleStudy lists, in ascending order, the roster slots of members who have
+	// taken the once-only circle study.
+	CircleStudy []int `json:"circleStudy"`
 
 	reconstructMapUnits bool
 }

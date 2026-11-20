@@ -366,6 +366,12 @@ func (d *LinearTalkDialog) ConversationCompleted() bool {
 	return d != nil && d.conversationCompleted
 }
 
+// CircleStudyRequested reports whether a completed conversation ended by
+// offering circle study; ref:PROGRESS-0005.
+func (d *LinearTalkDialog) CircleStudyRequested() bool {
+	return d.ConversationCompleted() && d.callbacks != nil && d.callbacks.circleStudyRequested
+}
+
 // displayResponseOutput renders the response output, handling runic segments and pause markers.
 // Uses segment-based rendering for mixed normal/runic text, falling back to string-based for plain text.
 func (d *LinearTalkDialog) displayResponseOutput() {

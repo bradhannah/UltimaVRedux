@@ -499,7 +499,8 @@ func (parser *documentParser) parseAction(node *yaml.Node, path string) (Action,
 
 		return &DiscoverKnowledgeAction{Knowledge: KnowledgeID(knowledge)}, err
 	case ActionKindPause, ActionKindWaitForKey, ActionKindAskName, ActionKindJoinParty,
-		ActionKindCallGuards, ActionKindGoToJail, ActionKindReturnToTopics, ActionKindEnd:
+		ActionKindCallGuards, ActionKindGoToJail, ActionKindBeginCircleStudy, ActionKindReturnToTopics,
+		ActionKindEnd:
 		return nil, parser.error(key, actionPath, fmt.Sprintf("action %q must use its bare form", key.Value))
 	default:
 		return nil, parser.error(key, actionPath, fmt.Sprintf("unknown action %q", key.Value))
@@ -525,6 +526,8 @@ func (parser *documentParser) parseBareAction(node *yaml.Node, path string) (Act
 		return &CallGuardsAction{}, nil
 	case ActionKindGoToJail:
 		return &GoToJailAction{}, nil
+	case ActionKindBeginCircleStudy:
+		return &BeginCircleStudyAction{}, nil
 	case ActionKindReturnToTopics:
 		return &ReturnToTopicsAction{}, nil
 	case ActionKindEnd:
