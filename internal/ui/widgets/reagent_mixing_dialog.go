@@ -384,11 +384,6 @@ func (d *ReagentMixingDialog) Draw(screen *ebiten.Image) {
 		return
 	}
 	d.ensureLayout()
-	if d.preparing {
-		d.drawWindow(screen)
-
-		return
-	}
 	view := &d.view
 	view.drawFrame(screen)
 	header := view.headerRect.Inset(view.padding)
@@ -408,6 +403,11 @@ func (d *ReagentMixingDialog) Draw(screen *ebiten.Image) {
 	view.drawDetails(screen, d.browser)
 	view.drawFooter(screen)
 	view.finishFrame(screen)
+	if d.preparing {
+		// The amount window is a window on top of the list: the list stays, shaded.
+		drawBackdropShade(screen)
+		d.drawWindow(screen)
+	}
 }
 
 // IsDismissed implements Widget.

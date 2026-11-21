@@ -437,3 +437,30 @@ func TestMixWindowAndResultTextFitEverySupportedSize(t *testing.T) {
 		require.LessOrEqual(t, int(prompt), list.view.searchRect.Inset(list.view.padding).Dx(), "%dx%d", size.X, size.Y)
 	}
 }
+
+// The amount window is a window on top of the spell list: the list stays drawn
+// behind it, shaded, and the window itself keeps its full brightness.
+func TestMixAmountWindowSitsOnItsShadedList(t *testing.T) {
+	setGuidanceTestResolution(t, 1280, 720)
+	dialog := NewReagentMixingDialog(newWidgetTestKeyboard(0), testMixCatalog(), fullTestReagentInventory())
+	dialog.ChooseSpell(references.InLor, true)
+	require.True(t, dialog.preparing)
+	screen := ebiten.NewImage(1280, 720)
+	t.Cleanup(screen.Deallocate)
+	dialog.Draw(screen)
+
+	window := dialog.window.header.Union(dialog.window.footer)
+	list := dialog.view.headerRect
+	require.False(t, list.In(window), "the list is wider than the window on it")
+	behind := image.Rect(list.Min.X, list.Min.Y, window.Min.X, list.Max.Y)
+	brightest := uint32(0)
+	for y := behind.Min.Y; y < behind.Max.Y; y++ {
+		for x := behind.Min.X; x < behind.Max.X; x++ {
+			red, _, _, _ := screen.At(x, y).RGBA()
+			brightest = max(brightest, red>>8)
+		}
+	}
+	require.Positive(t, brightest, "the list is still drawn behind the window")
+	require.LessOrEqual(t, brightest, uint32(255-backdropShadeAlpha), "and it is shaded")
+	requireImageRegionContainsColor(t, screen, dialog.window.header, DialogHeaderColor)
+}

@@ -472,6 +472,28 @@ result, and workflow state. There is no generic flex/grid or resolution-scaler
 framework. Focus helpers are owner-driven presentation, not an alternative input
 router or a claim of accessibility compliance.
 
+### Where A Window Sits, And What Is Behind It
+
+The map takes the left 76% of the play screen. Three cases cover every window:
+
+1. A window that fits inside the map and opens over the play screen centres on
+   the map (`DialogHorizontalMapOnly`, 37%) and does not cross the map's right
+   border, so the party panel stays readable: Yes/No and message boxes, text and
+   direction prompts, the rest hours box, the party picker, signs, Save/Load.
+2. A window too big for the map centres on the screen and covers the party panel
+   on purpose: the Map, Cast and Mix lists, Ready, Configure, the Journal, Help,
+   Z-stats, the shop screens and Use.
+3. A window opened on top of another window centres on that window: the shop
+   amount and approval windows, and Mix's amount window on its spell list.
+
+A window in the third case is the one being answered, so `DialogStack.Draw` lays
+one flat shade (`drawBackdropShade`, alpha 150 of 255, no fade and no pattern)
+over everything behind the top modal window whenever another modal window is
+under it: the window behind, the map and the party panel all recede and can
+still be read. A window alone over the play screen shades nothing, and passing
+feedback above a window is not a window on a window. A widget that is its own
+parent, as Mix is for its amount window, draws the same shade itself.
+
 ### One Tab Style
 
 Z-stats, the Journal, the Map, Help, Configure and Use mark the open tab the same way.
@@ -1263,8 +1285,8 @@ segments. Ingredient check marks have distinct normal and selected-row colours.
 
 Mix's quantity window (`reagent_mixing_window.go`) is not that full-size frame.
 It is as wide as its table, forty-one body-font letters, and as tall as its
-taller tab, centred on the screen, so it never moves when the tab or the amount
-changes. Every sentence, table row and hint row in it is written to fit those
+taller tab, centred on the spell list, which stays drawn behind it under the
+shared shade, so it never moves when the tab or the amount changes. Every sentence, table row and hint row in it is written to fit those
 letters, which holds at every supported size, so the window carries no spare
 width; the spell is named in the title, not again in the top line. Its hint rows
 are composed by hand: the Tab hint shares the Enter row when it fits beside the
