@@ -25,11 +25,7 @@ type OverlayRenderer struct {
 	overlayImage *ebiten.Image
 
 	// Colors for different overlay types
-	lightOverlayColor     color.RGBA
-	searchOverlayColor    color.RGBA
 	moonstoneOverlayColor color.RGBA
-	pathOverlayColor      color.RGBA
-	collisionOverlayColor color.RGBA
 
 	// Overlay enable flags
 	moonstoneOverlayEnabled bool
@@ -38,11 +34,7 @@ type OverlayRenderer struct {
 // NewOverlayRenderer creates a new overlay renderer with default colors
 func NewOverlayRenderer() *OverlayRenderer {
 	return &OverlayRenderer{
-		lightOverlayColor:       ucolor.DebugLightOverlay.RGBA(),     // Yellow, semi-transparent for light
-		searchOverlayColor:      ucolor.DebugSearchOverlay.RGBA(),    // Green, semi-transparent for searchable areas
 		moonstoneOverlayColor:   ucolor.DebugMoonstoneOverlay.RGBA(), // Purple for moonstones
-		pathOverlayColor:        ucolor.DebugPathOverlay.RGBA(),      // Blue for pathfinding
-		collisionOverlayColor:   ucolor.DebugCollisionOverlay.RGBA(), // Red for collision
 		moonstoneOverlayEnabled: false,
 	}
 }
@@ -76,11 +68,6 @@ func (r *OverlayRenderer) RenderOverlays(screen *ebiten.Image, g *GameScene) {
 	if r.moonstoneOverlayEnabled {
 		r.renderMoonstoneOverlay(g)
 	}
-
-	// Future overlays can be added here
-	// if g.gameState.DebugOptions.PathfindingOverlay {
-	//     r.renderPathfindingOverlay(g)
-	// }
 
 	// Draw the combined overlay onto the screen
 	if g.gameState.DebugOptions.LightOverlay || g.gameState.DebugOptions.SearchOverlay || r.moonstoneOverlayEnabled {

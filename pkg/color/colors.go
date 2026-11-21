@@ -332,11 +332,7 @@ var (
 //nolint:gochecknoglobals,mnd // Read-only debug palette; alpha values are per-overlay visual tuning data.
 var (
 	// Debug Overlays
-	DebugLightOverlay     = From(EGAYellow).Subtle()         // Yellow for light areas
-	DebugSearchOverlay    = From(EGAGreen).VeryTransparent() // Green for searchable
-	DebugMoonstoneOverlay = From(EGAMagenta).Light()         // Purple for moonstones
-	DebugPathOverlay      = From(EGABlue).Subtle()           // Blue for pathfinding
-	DebugCollisionOverlay = From(EGARed).Subtle()            // Red for collision
+	DebugMoonstoneOverlay = From(EGAMagenta).Light() // Purple for moonstones
 
 	// Search Overlay States
 	DebugSearchUnsearched       = From(EGAGreen).VeryTransparent() // Green for unsearched locations

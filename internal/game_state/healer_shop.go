@@ -624,7 +624,7 @@ func (g *GameState) projectHealerTreatment(
 			if g.PartyState.Karma.Value < 98 {
 				projection.ExpAfter = uint16((int(character.Exp) * g.PartyState.Karma.Value) / KarmaPercentageBase)
 			}
-			projection.LevelAfter = resurrectionLevel(projection.ExpAfter)
+			projection.LevelAfter = CalculateLevelFromExperience(projection.ExpAfter)
 			projection.MaxHPAfter = uint16(projection.LevelAfter) * 30
 			projection.HPAfter = projection.MaxHPAfter
 			switch character.Class {
@@ -641,13 +641,4 @@ func (g *GameState) projectHealerTreatment(
 	}
 
 	return projection
-}
-
-func resurrectionLevel(experience uint16) byte {
-	var level byte = 1
-	for remaining := int(experience) / 100; remaining > 0; remaining >>= 1 {
-		level++
-	}
-
-	return level
 }

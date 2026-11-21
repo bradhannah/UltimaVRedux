@@ -215,21 +215,6 @@ func (h *EnvironmentalHazards) checkBurningHazard(party *party_state.PartyState,
 	return result
 }
 
-// extractCharacterName safely extracts a character name from byte array, removing null terminators
-func extractCharacterName(nameBytes []byte) string {
-	name := string(nameBytes)
-	// Remove null terminator if present
-	for i, b := range nameBytes {
-		if b == 0 {
-			name = name[:i]
-
-			break
-		}
-	}
-
-	return name
-}
-
 // joinNames creates a grammatically correct list of names
 func joinNames(names []string) string {
 	switch len(names) {
@@ -313,7 +298,7 @@ func (h *EnvironmentalHazards) ApplyDamageToParty(party *party_state.PartyState,
 		names := make([]string, 0, len(result.Affected))
 		for _, memberIndex := range result.Affected {
 			char := party.GetCharacter(memberIndex)
-			name := extractCharacterName(char.Name[:])
+			name := char.GetNameAsString()
 			if name != "" {
 				names = append(names, name)
 			}

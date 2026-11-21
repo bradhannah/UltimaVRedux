@@ -7,6 +7,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/internal/visual"
@@ -123,12 +124,14 @@ func (g *GameScene) ShowWellInteraction(pos *references.Position) {
 								func(horseQ *event_queue.SequentialEventBuilder) {
 									var horseDissolveID int
 									horseQ.Then(func() {
-										horseDissolveID = g.StartTileDissolve(
-											outcome.SpawnPosition,
-											indexes.HorseRight,
-											visual.DissolveModeReveal,
-											true,
-										)
+										horseDissolveID = g.StartTileDissolveWithOptions(TileDissolveOptions{
+											Position:     outcome.SpawnPosition,
+											SpriteIndex:  indexes.HorseRight,
+											Mode:         visual.DissolveModeReveal,
+											OutlineColor: sprites.WhiteOutline,
+											PositionMode: PositionModeWorld,
+											RenderLayer:  RenderLayerDefault,
+										})
 										g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundMagicPoof)
 									}).Animate(horseSpawnMaterializeDurationMs, func(progress float32) {
 										g.UpdateTileDissolveProgress(horseDissolveID, float64(progress))

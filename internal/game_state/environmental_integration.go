@@ -246,7 +246,7 @@ func (g *GameState) hazardAffectedMessage(prefix string, targets []int) string {
 		if memberIndex < 0 || memberIndex >= g.PartyState.GetCharacterCount() {
 			continue
 		}
-		name := extractCharacterName(g.PartyState.GetCharacter(memberIndex).Name[:])
+		name := g.PartyState.GetCharacter(memberIndex).GetNameAsString()
 		if name != "" {
 			names = append(names, name)
 		}
@@ -384,7 +384,7 @@ func (g *GameState) applySwampPoisonToTargets(poisonTargets []int) {
 			changes.observePoison(statusBefore, member)
 
 			// Extract character name for message
-			name := extractCharacterName(member.Name[:])
+			name := member.GetNameAsString()
 			if name != "" {
 				poisonedNames = append(poisonedNames, name)
 			}
@@ -397,25 +397,6 @@ func (g *GameState) applySwampPoisonToTargets(poisonTargets []int) {
 		message := "Poisoned: " + joinNames(poisonedNames)
 		g.SystemCallbacks.Message.AddRowStr(message)
 	}
-}
-
-// Utility functions for character name handling
-// Note: These are intentionally duplicated from environment package since they are not exported there
-// and used by our event queue implementations for consistent messaging
-
-// extractCharacterName safely extracts a character name from byte array, removing null terminators
-func extractCharacterName(nameBytes []byte) string {
-	name := string(nameBytes)
-	// Remove null terminator if present
-	for i, b := range nameBytes {
-		if b == 0 {
-			name = name[:i]
-
-			break
-		}
-	}
-
-	return name
 }
 
 // joinNames creates a grammatically correct list of names

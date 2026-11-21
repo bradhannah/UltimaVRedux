@@ -373,33 +373,3 @@ func TestBedRest_StarvationDuringNonMealHours(t *testing.T) {
 	t.Logf("✅ Character died from starvation during non-meal hours: %d HP -> %d HP",
 		initialHp, char.GetCurrentHp())
 }
-
-// TestBedRest_AvatarMovement tests that the avatar moves one tile east after bed rest
-func TestBedRest_AvatarMovement(t *testing.T) {
-	gs, _ := NewIntegrationTestBuilder(t).
-		WithLocation(references.Britain). // Small map type
-		WithPlayerAt(15, 15).
-		WithSystemCallbacks().
-		Build()
-
-	// Record initial position
-	initialPos := gs.MapState.PlayerLocation.Position
-	t.Logf("Initial position: (%d, %d)", initialPos.X, initialPos.Y)
-
-	// Test avatar movement after bed rest
-	gs.MoveAvatarOutOfBed()
-
-	// Check final position
-	finalPos := gs.MapState.PlayerLocation.Position
-	t.Logf("Final position: (%d, %d)", finalPos.X, finalPos.Y)
-
-	// Avatar should have moved one tile east (X should increase by 1)
-	if initialPos.X+1 == finalPos.X && initialPos.Y == finalPos.Y {
-		t.Logf("✅ Avatar successfully moved east from (%d,%d) to (%d,%d)",
-			initialPos.X, initialPos.Y, finalPos.X, finalPos.Y)
-	} else {
-		t.Logf("⚠️  Avatar movement: expected (%d,%d), got (%d,%d)",
-			initialPos.X+1, initialPos.Y, finalPos.X, finalPos.Y)
-		// This might be expected if the destination was blocked
-	}
-}
