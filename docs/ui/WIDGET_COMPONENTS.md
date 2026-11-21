@@ -29,7 +29,7 @@ Paths in this table are relative to `internal/ui/widgets/` unless stated.
 | Player checkpoint selection | `save_slot_browser.go` | Detached views; no persistence or revision authority. |
 | Journal reading | `quest_journal_dialog.go`, `quest_journal_search.go`, `quest_journal_excerpts.go` | Detached opening snapshot; scene owns pause, acknowledgements, and persistence. |
 | Traveller's map / personal notes | `atlas_dialog.go`, `atlas_panels.go`, `atlas_view.go`, `atlas_render.go`, `atlas_note_editor.go` | Detached point authorities and separate supplied artwork; scene owns pause/preferences and note intents; application lends one geography texture. |
-| Commands / status reference | `command_help_dialog.go` | Detached command and visible-status snapshots; Tab switches pages without gameplay actions. |
+| Commands / status reference | `command_help_dialog.go` | Detached command and visible-status snapshots; Tab switches pages without gameplay actions. One hint row (Tab, Up/Down, Esc; Up/Down dims when the page fits); Right now names unavailable commands under the reason Commands gives. |
 | Party selection/reordering | `character_selection_dialog.go`, `character_roster_dialog.go`, `new_order_dialog.go` | Inspectable and actionable rows differ; preserve stable character identity. |
 | Use selection | `item_selection_dialog.go` | Emits a detached item; workflow revalidates inventory and context. |
 | Ready / Cast / Mix | `ready_equipment_dialog.go`, `spell_casting_dialog.go`, `reagent_mixing_dialog.go` | Inspect the corresponding scene workflow for commitment and cancellation. |
@@ -472,6 +472,30 @@ result, and workflow state. There is no generic flex/grid or resolution-scaler
 framework. Focus helpers are owner-driven presentation, not an alternative input
 router or a claim of accessibility compliance.
 
+### Where A Window Sits, And What Is Behind It
+
+The map takes the left 76% of the play screen. Three cases cover every window:
+
+1. A window that fits inside the map and opens over the play screen centres on
+   the map (`DialogHorizontalMapOnly`, 37%) and does not cross the map's right
+   border, so the party panel stays readable: Yes/No and message boxes, text and
+   direction prompts, the rest hours box, the party picker, signs, Save/Load.
+2. A window too big for the map centres on the screen and covers the party panel
+   on purpose: the Map, Cast and Mix lists, Ready, Configure, the Journal, Help,
+   Z-stats, the shop screens and Use.
+3. A window opened on top of another window centres on that window: the shop
+   amount and approval windows (the healer's, the horse dealer's, the tavern
+   receipt, the shipwright's dispatch and escort and the inn's Rest, Leave and
+   Pick Up among them), and Mix's amount window on its spell list.
+
+A window in the third case is the one being answered, so `DialogStack.Draw` lays
+one flat shade (`drawBackdropShade`, alpha 150 of 255, no fade and no pattern)
+over everything behind the top modal window whenever another modal window is
+under it: the window behind, the map and the party panel all recede and can
+still be read. A window alone over the play screen shades nothing, and passing
+feedback above a window is not a window on a window. A widget that is its own
+parent, as Mix is for its amount window, draws the same shade itself.
+
 ### One Tab Style
 
 Z-stats, the Journal, the Map, Help, Configure and Use mark the open tab the same way.
@@ -524,7 +548,7 @@ Paging and boundary exceptions are explicit:
 | Talk history / Tavern transcript / Command Help | Page the reader's text using its existing measured page boundaries. Talk's Shift+Up also opens history. |
 | Button menus | Page the selected description; arrows retain wraparound selection. |
 | Party selectors / New Order | No paging; repeating arrows retain wraparound selection and unavailable-row inspection. |
-| Intro menu / Configuration tabs | No paging; repeating arrows select bounded rows. On the title menu Right opens and Left closes a sub-menu; Left/Right setting adjustment remains one-shot. |
+| Intro menu / Configuration tabs | The Configuration card is 90% of the window (it covers the party panel in game) with one line per Gameplay setting; stepped settings show `< value >`; two hint rows, with Space or Left/Right dimmed when the selected row ignores it. No paging; repeating arrows select bounded rows. On the title menu Right opens and Left closes a sub-menu; Left/Right setting adjustment remains one-shot. |
 | Save slots; compact Guild, Reagent, Healer, Inn, and Tavern choice lists | No list paging; repeating arrows retain existing selection rules. Unsupported page chords do not fall through to row movement. |
 
 Combat HUD history remains on gameplay input routing, outside this modal-list
@@ -667,8 +691,10 @@ are not indexed. Stable destination identities survive query changes. Enter
 opens a result; searching alone does not visit its tab. Empty/unmatched queries
 show explicit instructions/no-match state.
 
-Results use three measured rows: title/category, known speaker/location where
-available, and a matching snippet. Query terms are highlighted with contrast on
+Results use two measured rows: title with its tab at the right, then the one line
+that matched with its label (for example "Shrine quest: Ready to complete"; the
+first line when only the title matched). A long line is cut plainly with no dots,
+starting near the first match. Query terms are highlighted with contrast on
 both normal and selected rows. Snippets elide Runic passages rather than reveal
 their transliteration; complete captured source remains unchanged in the reader.
 Enter reveals the first rendered text match inside the selected exchange/message
@@ -904,11 +930,11 @@ widget tests rather than designing a parallel transaction framework.
 
 | Family / widget sources | Preserve when extending |
 |---|---|
-| Arms: `arms_shop_dialog.go`, `arms_trade_dialog.go` | Carried inventory is sale authority; READY counts are informational. Buy/Sell retain independent selection/scroll/sort. M selects the Buy maximum or the gold-safe Sell all (A remains a Sell alias); ammo is a fixed refill. Used-ammo refusal ends the session; zero-price/headroom refusals return to Sell. Capacity refusal returns to Buy; insufficient Buy funds terminate after acknowledgement. |
-| Healer: `healer_shop_dialog.go`, `healer_treatment_dialog.go` | Services focus does not silently select a recipient. Individual and All intents require approval. Preserve distinct eligibility, funds blockers, and authoritative effect projections; refresh all recipients/prices after outcomes. |
-| Horse: `horse_shop_dialog.go`, `horse_purchase_dialog.go` | Placement/ownership/terrain details stay out of shopping UI. Approval Escape returns to Browse (a documented Redux deviation); success/funds/stable-closure outcomes remain one-shot terminal acknowledgements. Remote Preview does not claim Live placement availability. |
-| Ships: `ship_shop_dialog.go`, `ship_purchase_dialog.go`, `ship_dispatch_dialog.go`, `ship_travel_dialog.go` | The selected card uses the shared white selection bar. Parent shows trusted berth/delivery projections. Frigate loading uses aggregate quantities; standalone delivery is one. Refresh after purchase/stale refusal. First vessel creation can open dispatch; reviewed harbour escort is separate from boarding. Preview stops before purchase or travel. |
-| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
+| Arms: `arms_shop_dialog.go`, `arms_trade_dialog.go` | Carried inventory is sale authority; READY counts are informational. Buy/Sell retain independent selection/scroll/sort. M ("Most") selects the Buy maximum or the gold-safe Sell maximum (A remains a Sell alias); ammo is a fixed refill. Headings and the Buy/Sell titles are in ordinary case; the open table's title sits on the shared tab plate and B, S and R are shown only in the hint row. Used-ammo refusal ends the session; zero-price/headroom refusals return to Sell. Capacity refusal returns to Buy; insufficient Buy funds terminate after acknowledgement. |
+| Healer: `healer_shop_dialog.go`, `healer_treatment_dialog.go` | Services focus does not silently select a recipient. Individual and All intents require approval in the fitted amount window: the title is the service and the patient ("Cure Shamino", "Heal All"), rows show HP, Max HP, Level and Gold as Have/Change/Then, a note names a status change, and free care says so. A party that cannot pay still sends the request: the reason with its figures shows in the readable red, "The healer will refuse." follows, and Enter reads "Cure anyway". Preserve distinct eligibility, funds blockers, and authoritative effect projections; refresh all recipients/prices after outcomes. |
+| Horse: `horse_shop_dialog.go`, `horse_purchase_dialog.go` | The approval is the fitted amount window ("Buy Horse", one Gold row; short of gold it says so, "Buying anyway ends the talk.", and Enter reads "Buy anyway"). Placement/ownership/terrain details stay out of shopping UI. Approval Escape returns to Browse (a documented Redux deviation); success/funds/stable-closure outcomes remain one-shot terminal acknowledgements. Remote Preview does not claim Live placement availability. |
+| Ships: `ship_shop_dialog.go`, `ship_purchase_dialog.go`, `ship_dispatch_dialog.go`, `ship_travel_dialog.go` | The selected card uses the shared white selection bar. Parent shows trusted berth/delivery projections. Frigate loading uses aggregate quantities; standalone delivery is one. Refresh after purchase/stale refusal. First vessel creation can open dispatch ("Frigate Dispatched": the harbour, berth, skiffs aboard and whether an escort is available; Enter returns to the showroom, D escorts); the reviewed escort ("Escort the Frigate", Enter "Travel") is separate from boarding. All four are fitted amount windows. Preview stops before purchase or travel. |
+| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode; the open page's title sits on the shared tab plate (`shop_tabs.go`, as in the Arms and Tavern tab rows) and R, L and P appear only in the hint row. The Tavern's Tab hint reads "Order or" plus its information page's name. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. The approval is a fitted amount window: "Rest at <inn>" ("Rest" when the name does not fit), "Leave <name>", "Pick Up <name>"; Enter repeats the verb. Rest and Pick Up show the Gold row, Leave and Pick Up the Party and Rooms rows; who will die, the wake time, who heals and who is dead and unchanged are notes, the death warning first in the readable red. Without the gold Enter reads "Rest anyway" or "Pick Up anyway" and one line says what follows (the keeper turns the party out; the guards are called). Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
 | Guild: `guild_shop_dialog.go`, `guild_purchase_dialog.go` | Browsing does not replace latest speech; pitch appears in quantity approval. Cancellation retains exchange. Maximum comes from authority and permits a saturating final bundle. Zero maximum emits no request. Session errors disable purchase until dismissal. |
 
 All approval dialogs consume requests once. Do not normalize distinct family
@@ -918,15 +944,51 @@ for navigation, terminal/nonterminal refusals, duplicate suppression, and refres
 ### Merchant Quantity Controls
 
 `quantity_input.go` shares input ownership across five approval forms; each form
-retains its existing quote-derived bounds and request type:
+retains its existing quote-derived bounds and request type. All five, and every
+other merchant approval and receipt, draw one
+window, `amount_window.go`, described by an `amountStep`: the item named once in
+the title with the price of one under it in grey; the keeper's own line first in
+the body, where the shop has one; the amount row; and a grid that reads across as
+a sum (`Have` in grey, the signed change, `Then`), with rows such as Carried,
+Food, Aboard and Gold. The window is fitted to that grid, 36 body letters wide
+and as tall as its lines, and keeps its size while the amount changes: a line is
+kept free for a warning that only some amounts bring. An approval with nothing to
+choose (a meal, a drink, information, a frigate, a lone skiff, an ammunition
+refill, the shipwright's dispatch and escort, the inn's Rest, Leave and Pick Up)
+is the same window without the amount row; a window with no gold to change shows
+its facts as notes and may replace its hints (`footer`).
+
+The chosen number is drawn by `appendAmountStepper`, the one place that decides
+its look: the label yellow between its arrows, no selection bar, an arrow that
+cannot move drawn as unavailable, and the most in grey ("of 14"). Mix's "How
+many" row and the rest prompt (`hours_prompt.go`) use the same function. Digits
+type the amount: a second digit joins the first while the number stays within the
+most, and otherwise starts the number again; a digit that asks for none or for
+more than the most changes nothing. Enter names the amount ("Buy 3"). The amount
+keys dim when only one amount exists.
+
+Under the grid, the readable warning red says what an amount will not bring: goods
+past the most carried ("1 will not fit. The price stays."), or tavern packs the
+gold does not cover ("The gold pays for only 2 packs."). When not even one can be
+had the window gives the reason with its figures. The Guild then offers no Enter,
+as before. The Tavern and the shipwright still send the request, because asking
+without the gold is itself answered there (service or the talk ends; MERCH-0008,
+MERCH-0012 to MERCH-0014): the window says so and Enter reads "Order anyway" or
+"Ask anyway". Gold shown is before any theft by Faulinei, which the receipt
+reports afterwards. The receipt (`tavern_result_dialog.go`) is the same window
+with Food and Gold rows showing what the order did, grey notes for the detail and
+the price when the gold row differs from it, a red line for what Faulinei took, the
+keeper's word (red when the order was refused or ended), and the one-key footer
+"[Enter/Esc] Continue".
 
 | Form | Repeating adjustment | Existing one-shot shortcuts / limits |
 |---|---|---|
-| `ArmsTradeDialog` | Left/Right item count | Up/Down decrement/increment once; M selects the maximum (Sell all), with A as a Sell alias; ammunition remains a fixed refill. |
+| `ArmsTradeDialog` | Left/Right item count | Up/Down decrement/increment once; M ("Most") selects the maximum, with A as a Sell alias; ammunition remains a fixed refill. |
 | `GuildPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the quoted maximum, including the existing saturating final bundle. |
 | `ReagentPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the maximum supplied approval view. |
 | `ShipPurchaseDialog` | Left/Right loaded-skiff count | Up/Down decrement/increment once; M selects the maximum supplied approval view. Standalone vessel delivery remains one. |
-| `TavernActionDialog` | Left/Right ration-pack count | Up/Down decrement/increment once; M selects MaximumUsefulPacks; other Tavern approvals keep their existing controls. |
+| `TavernActionDialog` | Left/Right ration-pack count | Up/Down decrement/increment once; M selects MaximumUsefulPacks, which the gold may not cover; other Tavern approvals keep their existing controls. |
+| `HoursPrompt` | Left/Right hours of rest, 1 to 9 | Up/Down step once; Enter rests, Esc cancels, and in a dungeon 0 and Space cancel too. One grey line says about when the party would wake. Used for bed rest, camping and holing up. |
 
 A fresh plain Left/Right press steps immediately, then waits 300 ms before nominal
 120 ms repeats, quantized to Update ticks. Release stops repetition; rapid taps
@@ -1057,8 +1119,9 @@ the 26-size title; EQUIPPED, AVAILABLE and DETAILS are 23-size section labels. A
 full-width character header shows the selected character's `GetKeySpriteIndex`
 sprite at integer nearest-neighbour scale, name, and `CHAR N/count` in active-party
 order (including dead members in the count). Its measured text bounds reserve the
-portrait and position label. It labels the actual loadout as `Current equipment`,
-with Strength use, capacity, and remaining allowance. Tab/Shift+Tab cycles living
+portrait and position label. It labels the actual loadout `Strength in use: N of M`,
+adding `K over` in the readable light red only when the loadout exceeds Strength
+(never a negative remainder). Tab/Shift+Tab cycles living
 present members with wraparound; Left/Right and 1–6 remain shortcuts. Combat locks
 the acting character and omits character-switch hints. Footer hints wrap as
 measured key/action pairs so a key never separates from its description. Hand
@@ -1084,10 +1147,15 @@ equipment excludes every displaced item, including both hands for two-handed
 replacements. Zero-cost items show `None` in the cost column. A Strength refusal
 is explained by the red shortfall alone; other refusals retain their own message.
 Equipped-item inspection instead shows current Attack/Defense and `Uses N Strength`
-or `No Strength required`, without removal deltas or a hypothetical budget. Availability
-refusals appear once in details; the footer points to that explanation rather
-than repeating it, including after a refused attempt. H switches the
-one-handed target; B opens an equipment Strength breakdown. Enter equips an
+or `No Strength required`, without removal deltas or a hypothetical budget. A refusal is
+one sentence with its reason on the status line (`DialogWarningColor`), not in
+details and not as "Unavailable": Strength reads `Too heavy: the Bow needs 8
+Strength; Avatar has none to spare.`, any other refusal keeps the authority's own
+message, and a refused attempt shows the same sentence. The hint rows list Tab
+(Shift+Tab keeps working but is unlisted), Up/Down, H, B (`Strength`), Enter, Space
+and Esc; Enter keeps its name (`Ready` or `Unready`) and is dimmed whole while the
+selection cannot be readied (`PackControlHintsDimming`). H switches the
+one-handed target; B opens an equipment Strength breakdown. Enter readies an
 empty slot or unreadies an equipped item; replacements first open a child review
 card listing removed gear, resulting ratings, and inventory returns. Fresh Enter
 confirms, Escape cancels the card, and held keys cannot leak into the parent.
@@ -1121,7 +1189,8 @@ Configuration row).
 Status identifies only currently displayed worn items/effects using the same
 artwork and tints as the rail, includes explicit empty states and current food,
 and exposes no countdowns, undiscovered artifacts, or hidden actor identities.
-Long text wraps and scrolls at normal typography. Scene-owned construction and
+Long text wraps and scrolls at normal typography; the scroll hint reads "More below" until the
+end of a page taller than the card, then "More above", and is dimmed when the page fits. Scene-owned construction and
 exact dismissal preserve Help's no-time/no-resource contract and nested menu focus.
 
 ## Title Acknowledgments
@@ -1160,36 +1229,82 @@ Manual syllable experimentation in Mix does not reveal an undiscovered formula.
 
 `internal/ui/widgets/spell_browser.go` owns shared filtering, two-line rows,
 recipe vocabulary and measured/clipped rendering. The detail's `Target`,
-`Affects` and `Where` lines use a player's words ("No aim needed", "A creature
-you pick", "All before you", "Outside battle"), from `PlayerLabel` on the
-targeting and context types; logs and the Workbench keep the short names. A
+`Affects` and `Where` lines use a player's words ("A creature you pick", "All
+before you", "Outside battle"); logs and the Workbench keep the short names.
+`Target` comes from `references.SpellTargetLabel`, resolved for where the party
+is. For an aimed spell it says how the caster aims. For a spell cast with no
+aiming step it says who or what the spell falls on ("All foes", "The whole
+party", "The square ahead"), and the details then have no `Affects` line,
+because `Target` has already said it. The same text shows in Cast, Z-stats and
+Mix. `Where` comes from `PlayerLabel` on the context type and reads as a place
+("In battle", "On the overworld or in town"). A
 spell's one-line description says what it does for the caster, and says so when
 a foe can resist. Spell names and short effect
 labels use the normal resolution-scaled 23-size body font; headings use 26.
-Cast has a fourth filter, `Ready`: what the chosen caster can cast right now
-(mixed, within their level, enough MP, allowed here), judged by the same
-validation that guards the cast. In battle the list opens on it, so spells that
-are mixed but beyond the acting character are out of the way; with nothing ready
-it opens on `All known` rather than an empty list. Outside battle it opens on
-`All known` as before. In Cast, Ctrl+O steps Ready, Prepared, All known, Mixable;
-Z-stats and Mix, which have no caster, keep All known, Prepared, Mixable. Ready
-follows a change of caster. It is a convenience, not a wall: when typed initials
-or search words match none of the ready spells, the list widens to `All known`,
-so a known spell is always found by name and its row and status say why it
-cannot be cast.
+Cast lists every known spell, in and out of battle, with what the chosen caster
+can cast right now first (mixed, within their level, enough MP, allowed here),
+judged by the same validation that guards the cast. The opening rows therefore
+all answer Enter, and the rest follow in the book's order, dimmed and marked
+`[No]`, for reference. The order follows a change of caster. In Cast, Ctrl+O
+steps All known, Ready, Prepared; Z-stats and Mix, which have no caster, keep
+All known, Prepared, Mixable. `Ready` narrows the list to the castable spells.
+It is a convenience, not a wall: when typed initials or search words match none
+of the ready spells, the list widens to `All known`, so a known spell is always
+found by name and its details say why it cannot be cast. Mix's list opens on
+`Mixable` in the same spirit, or on `All known` when nothing can be mixed, and
+widens from `Mixable` the same way. The initials field is labelled `Spell:` in
+all three and, while empty, says what to type where there is room; the spare
+row of Mix's header names the step (`Choose a spell to mix`).
 Prepared counts sit under a labelled heading at the right of a row's first line.
 The name stops short of the number, not of the heading's width, and the meaning
 on the second line has the whole row, so every spell's name and meaning is shown
 whole at every supported size, including a name marked `[No]` and a newly learned
 spell's `New:` meaning. Text that could not fit would be cut plainly, never with
-an ellipsis. Cast adds current-caster
-validation and a fixed action-status area; Z-stats retains portraits and
-discovery provenance. Overflow details page instead of reducing font size.
+an ellipsis. Z-stats retains portraits and discovery provenance. Overflow
+details page instead of reducing font size.
+
+Cast keeps to casting. The line under the selected spell's name says whether
+Enter will work: `Ready to cast.`, or a sentence with the reason and the figure
+that matters in `DialogWarningColor` ("Cannot be cast here: battle only.",
+"Not enough MP: costs 5, Avatar has 2.", "None prepared. [Ctrl+M] Mix up to
+12"). A refusal the dialog has no sentence for keeps the game's own words. The
+details below are Cast's own short entry: description, Prepared, Circle and
+cost, then the shared `Target`, `Affects` and `Where` lines. Recipes, formulas
+and reagent stock are shown by Mix and Z-stats, not here. Cast's two hint rows
+are placed by hand so they stay put as the highlight moves: one for moving
+about the list, one for acting. Enter is named for the selected spell's next
+step (`Cast now` for a spell with no aiming step, which commits on that press;
+`Choose who`, `Choose direction`, `Aim` or `Name the phase` for the others)
+and is dimmed when the spell is refused; a refused spell stays on the list.
+The keys every list shares (Shift+Up/Down, Backspace, 1-6) keep working and
+are listed in Help rather than on the screen.
+
+Cast's header shows the chosen caster's Level and MP on its first row and,
+under it, every member who can cast (a class with magic, fit to act), each
+with their place in the party and the chosen one on the tab plate. Tab and
+Shift+Tab step through those members only and a number picks one of them, so
+the list never turns wholly to `[No]` for a member with no magic; with a single
+caster the Tab hint is left out. The gap between names narrows when six long
+names would not fit. In battle the caster is whoever's turn it is, and the row
+only names them.
 Two-line rows centre their measured text block; rendering, paging and visible
 capacity use the same row pitch. Cast/Mix allocate 40% to lists and 60% to details,
 reserve a separate scroll-indicator gutter, and size the footer from its wrapped
 hint content. Keys/actions and labels/values use separate semantic-colour
 segments. Ingredient check marks have distinct normal and selected-row colours.
+
+Mix's quantity window (`reagent_mixing_window.go`) is not that full-size frame.
+It is as wide as its table, forty-one body-font letters, and as tall as its
+taller tab, centred on the spell list, which stays drawn behind it under the
+shared shade, so it never moves when the tab or the amount changes. Every sentence, table row and hint row in it is written to fit those
+letters, which holds at every supported size, so the window carries no spare
+width; the spell is named in the title, not again in the top line. Its hint rows
+are composed by hand: the Tab hint shares the Enter row when it fits beside the
+longest amount, and otherwise has the row Recipe leaves free. Refusals, losses and shortages across Mix (this window
+and the details beside Mix's list) use `DialogWarningColor`, light red that
+reads on black; a warning on the white selection bar keeps the darker
+`DialogStatusWarningColor`. Cast's status line uses the same light red; Z-stats
+details are unchanged.
 
 Z-stats keeps its separate title and eight full section labels in a fixed two-row,
 four-column grid at the configured body font size. Tab/Shift+Tab traverses the
@@ -1203,9 +1318,17 @@ use the additional body space. Cast and Mix retain their own original placement.
 
 The Z-stats Character section has two columns: the readied list, and the stats
 box above the selected item's box. The stats box opens with a small framed
-portrait beside the name, class, status and level, as an item's box opens with
-its picture; short figures share lines (HP with MP, the three attributes, Attack
-with Defense), and the party numbers take its last line.
+portrait beside the name, class, status and the labelled `Level` and `XP`
+values, as an item's box opens with its picture; short figures share lines (HP
+with MP, the three attributes, Attack with Defense), and the party numbers take
+its last line, the open member's number on the light blue tab plate
+(`DrawActiveTabPlate`) like an open tab.
+
+An item's details (equipped box and Armory) leave out a fact with nothing to say:
+no Attack, Defense, Strength required or Range of zero, no Hands required unless
+the item is a weapon or shield (it takes a hand), no Abilities line without an
+ability, and, in the equipped box, no Category that only repeats the slot label.
+Reagents and the other lists are unchanged.
 
 Every Z-stats list except Spells (equipment, supplies, reagents, potions, scrolls
 and owned items) shows full names with measured wrapping; no name is cut short.
@@ -1232,7 +1355,7 @@ buffers. Long queries expose the latest characters and cursor with a leading
 the strip visible and replace selected details with an explicit no-match state.
 
 Cast/Mix detail paging is measured from wrapped content and final pane bounds,
-including headings, Cast action status/explanations, and the wrapped footer.
+including headings, Cast's status line, and the footer.
 Layout first measures without a paging hint; genuine overflow then reserves the
 indicator and conditional hint together. Multipage details show **Page X/Y** and
 advertise **[Space] Next detail page** only in browse mode. Selection, refresh,
@@ -1240,8 +1363,9 @@ mode changes, and resize recompute this before drawing, keeping the page, hint,
 and displayed rows synchronized without shrinking typography.
 
 - Type syllable initials, or `/` to search names, effects and descriptions.
-- `Ctrl+O` cycles All known, Prepared, and Mixable in either input mode, retaining
-  the selected identity when it survives filtering. Mixable requires a confirmed
+- `Ctrl+O` cycles All known, Prepared, and Mixable in either input mode (All
+  known, Ready, Prepared in Cast), retaining the selected identity when it
+  survives filtering. Mixable requires a confirmed
   recipe, ingredients for at least one mixture, and room below the 99-spell cap.
   The displayed mixing capacity includes stock headroom; the manual preparation
   maximum still follows reagent availability and previews discarded overflow.
@@ -1258,28 +1382,45 @@ and displayed rows synchronized without shrinking typography.
 - `Ctrl+M` in Cast or Z-stats opens preparation for the selected identity.
   Widgets emit an intent and suspend input while the owning scene/workflow
   handles Mix. Refresh retains filter, selection and caster. Combat refuses Mix.
-- Direct Mix opens the finder. Enter chooses a spell without consuming anything;
-  Enter in preparation emits a `MixRequest`. Known formulas are preselected,
-  but ingredient toggles remain available for experimentation.
-- Preparation digits edit quantity. When maximum is below ten, each valid digit
-  replaces the previous value. Otherwise two digits accumulate and a third
+- Direct Mix opens the finder. Enter chooses a spell without consuming anything
+  and opens the quantity window; Enter there emits a `MixRequest`.
+- The quantity window has two tabs, changed with `Tab` and marked with the shared
+  active-tab plate. **Recipe** is for the recorded recipe: the amount row shows
+  the chosen number in yellow between its arrows, with no highlight bar (the shared
+  `appendAmountStepper`), a `Prepared` row shows stock before and after, and a `USES`
+  table lists only the recipe's ingredients with `Have`, `Use` and `Left`. It has
+  no tick boxes, so the mixture cannot be changed by accident. **Experiment**
+  lists all eight ingredients with tick boxes, the recorded recipe ticked to
+  begin with; `Up/Down` move the highlight and `Space` adds or removes an
+  ingredient the party carries. A spell with no recorded recipe has the
+  Experiment tab alone, with any untested clues listed under the table.
+- `Left/Right` step the amount within what the ingredients allow, with the list
+  repeat. Digits type it: when the maximum is below ten, each valid digit
+  replaces the previous value; otherwise two digits accumulate and a third
   starts a replacement. Over-limit digits are rejected, not silently clamped.
-  Backspace/Delete restore one; zero maximum disables mixing. Both number rows
-  work and separate rapid presses are accepted without movement-repeat delay.
-  The preparation field displays its editable quantity, teaches typing digits
-  before Enter, and labels confirmation with the actual amount (`[Enter] Mix 5`).
-- `Ctrl+B` reopens the finder, preserving the unfinished preparation if cancelled.
-  A successful standalone mix returns to the finder; a shortcut mix returns to
-  its originating screen after the receipt. Mix previews ingredient cost and
-  stock overflow but the authoritative operation revalidates before mutation.
-- `Ctrl+F` in preparation fills the quantity with the maximum confirmed-recipe
-  amount that fits both current ingredients and the remaining 99-spell stock
-  capacity. It never mixes directly. Changed/unconfirmed recipes, missing
-  ingredients, or full stock retain the draft and explain the unavailable action.
-  Manual quantities and experimentation retain their existing rules.
+  `M` sets the most that the ingredients allow and the prepared stock can hold;
+  it never mixes. Backspace/Delete restore one. Both number rows work and
+  separate rapid presses are accepted without movement-repeat delay. Changing
+  the mixture lowers the amount to what the new mixture allows.
+- The top line under the tabs carries the most important fact: `Ready to mix.`,
+  an untested mix, the missing ingredient by name, a refused digit, or how many
+  of the amount would be thrown away at the 99 cap. Refusals and losses are in
+  the readable warning red. When nothing can be mixed the table shows `none`
+  beside what is short, lists no costs, and the amount, `M` and Enter hints are
+  dimmed; the top line gives the reason in words. Confirmation is labelled with
+  the actual amount (`[Enter] Mix 5`).
+- Escape leaves the quantity window: back to Mix's list, or back to Cast or
+  Z-stats when Mix was opened from there. A plain success returns to Mix's list
+  with the result on the header's spare row (green, or the warning red when
+  mixtures were lost to the cap), the typed initials and any search cleared, and
+  the mixed spell selected and kept on the list, even if it can no longer be
+  mixed, until the list is next typed into or filtered. The result box remains
+  for a shortcut mix, which returns to its originating screen, and for a mixture
+  that had no recorded recipe. Mix previews ingredient cost and stock overflow
+  but the authoritative operation revalidates before mutation.
 
 `cmd/ultimav/gamescene_spell_browsing.go` owns the shared awaited Mix sequence,
-receipts, trap resolution, exact modal cleanup, catalog refresh and command-cycle
+result boxes, trap resolution, exact modal cleanup, catalog refresh and command-cycle
 handoff. See [Input Handling](../systems/INPUT_HANDLING.md#spell-browser-mix-handoffs)
 for timing. Regression entry points are `spell_casting_search_test.go`,
 `reagent_mixing_dialog_test.go`, `ztats_catalog_regression_test.go` under widgets,

@@ -28,29 +28,24 @@ func TestReagentPurchaseDialogDisplaysSuppliedApprovalAndPaidOverflow(t *testing
 	assert.Equal(t, uint16(1), dialog.GetBundleCount())
 	assert.Equal(t, approval, dialog.GetApprovalView())
 	assert.True(t, dialog.IsPreview())
-	assert.Contains(t, dialog.headerOutput.GetOutputStr(false), "PREVIEW - Purchase Ginseng")
-	assert.Contains(t, body, "Bundles (before theft)")
-	assert.Contains(t, body, "10 Ginseng per bundle")
-	assert.Contains(t, body, "Requested quantity: 10")
-	assert.Contains(t, body, "Inventory: 10 -> 20")
-	assert.Contains(t, body, "Maximum receipt: 10")
-	assert.Contains(t, body, "Price per bundle: 20 gold")
-	assert.Contains(t, body, "Total price: 20 gold")
-	assert.Contains(t, body, "Gold: 200 -> 180")
-	assert.NotContains(t, body, "PAID OVERFLOW")
+	flat := dialog.window.flatText()
+	assert.Contains(t, flat, "PREVIEW - Buy Ginseng 20 gold for a bundle of 10")
+	assert.Contains(t, flat, "Bundles < 1 > of 9")
+	assert.Contains(t, flat, "Have Then Carried 10 +10 20 Gold 200 -20 180")
+	assert.Contains(t, flat, "[Left/Right/0-9] Bundles [M] Most [Enter] Buy 1 [Esc] Back")
+	for _, dropped := range []string{"Faulinei", "before theft", "Requested quantity", "Maximum receipt", "Inventory:"} {
+		assert.NotContains(t, flat, dropped)
+	}
+	assert.NotContains(t, body, "will not fit")
 
-	dialog.setBundleCount(quote.MaxBundles)
+	pressReagentPurchaseKey(dialog, dialog.keyboard, ebiten.KeyM)
 	maximum := quote.ApprovalViews[len(quote.ApprovalViews)-1]
-	body = dialog.GetBodyText()
 	assert.Equal(t, maximum, dialog.GetApprovalView())
 	assert.True(t, maximum.PaidOverflow)
-	assert.Contains(t, body, "Requested quantity: 90")
-	assert.Contains(t, body, "Inventory: 10 -> 99")
-	assert.Contains(t, body, "Maximum receipt: 89")
-	assert.Contains(t, body, "Total price: 180 gold")
-	assert.Contains(t, body, "Gold: 200 -> 20")
-	assert.Contains(t, compactReagentText(body), "1 reagent will not fit.")
-	assert.Contains(t, compactReagentText(body), "Full bundle prices apply.")
+	flat = dialog.window.flatText()
+	assert.Contains(t, flat, "Carried 10 +89 99 Gold 200 -180 20")
+	assert.Contains(t, flat, "1 will not fit. The price stays. [")
+	assert.Contains(t, flat, "[Enter] Buy 9")
 }
 
 func TestReagentPurchaseDialogKeyboardBoundsAndSingleStableRequest(t *testing.T) {
@@ -124,7 +119,7 @@ func TestReagentPurchaseDialogIsCenteredOpaqueAndResolutionSafe(t *testing.T) {
 		Keyboard: newWidgetTestKeyboard(0),
 		Quote:    testReagentShopState().Offers[0],
 	})
-	dialog.setBundleCount(2)
+	pressReagentPurchaseKey(dialog, dialog.keyboard, ebiten.KeyRight)
 	initial := dialog.GetBounds()
 	screen := ebiten.NewImage(1280, 720)
 	t.Cleanup(screen.Dispose)
@@ -133,26 +128,22 @@ func TestReagentPurchaseDialogIsCenteredOpaqueAndResolutionSafe(t *testing.T) {
 	assert.True(t, initial.In(shop.GetShell().GetBounds()))
 	assert.InDelta(t, 640, initial.Min.X+initial.Dx()/2, 1)
 	assert.InDelta(t, 360, initial.Min.Y+initial.Dy()/2, 1)
-	assert.Equal(t,
-		"[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back",
-		dialog.GetFooterGuidance(),
-	)
 	requireKeyedGuidance(t, dialog.GetFooterGuidance())
-	assert.Equal(t, reagentPurchaseFooterLines, dialog.footerOutput.GetPanelContentLineCount())
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlKeyColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlHintColor)
+	assert.Equal(t, 2, dialog.window.footer.GetPanelContentLineCount())
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlKeyColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlHintColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.bodyText, DialogLabelColor)
 	headerBackground := image.Pt(
-		dialog.frame.headerBounds.Min.X+dialog.frame.pixelUnit()*4,
-		dialog.frame.headerBounds.Min.Y,
+		dialog.window.frame.headerBounds.Min.X+dialog.window.frame.pixelUnit()*4,
+		dialog.window.frame.headerBounds.Min.Y,
 	)
 	requireColorRGBA(t, DialogRuleColor, screen.At(headerBackground.X, headerBackground.Y))
 
 	setResponsiveDialogTestResolution(t, 1920, 1080)
-	dialog.ensureLayout()
 	assert.Greater(t, dialog.GetBounds().Dx(), initial.Dx())
 	assert.Greater(t, dialog.GetBounds().Dy(), initial.Dy())
 	assert.Equal(t, uint16(2), dialog.GetBundleCount())
-	assert.Contains(t, dialog.GetBodyText(), "Requested quantity: 20")
+	assert.Contains(t, dialog.window.flatText(), "Carried 10 +20 30")
 	assert.NotContains(t, strings.ToLower(dialog.GetFooterGuidance()), "mouse")
 }
 

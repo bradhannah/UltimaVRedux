@@ -534,7 +534,7 @@ func (d *HealerShopDialog) configureColumns() {
 		d.serviceColumns[index] = image.Rect(left, d.serviceBounds.Min.Y, right, d.serviceBounds.Max.Y)
 	}
 
-	recipientRatios := [...]float64{0, 0.50, 0.67, 1}
+	recipientRatios := [...]float64{0, 0.46, 0.70, 1}
 	for index := range healerShopRecipientColumns {
 		left := d.recipientBounds.Min.X + int(math.Round(float64(d.recipientBounds.Dx())*recipientRatios[index]))
 		right := d.recipientBounds.Min.X + int(math.Round(float64(d.recipientBounds.Dx())*recipientRatios[index+1]))
@@ -1006,26 +1006,6 @@ func healerServicePriceLabel(quote game_state.HealerServiceQuote) string {
 		return "Charity"
 	default:
 		panic("HealerShopDialog: unknown charge kind")
-	}
-}
-
-func healerAllChargeText(quote game_state.HealerAllServiceQuote, gold uint16) (string, stdcolor.Color) {
-	if quote.RecipientCount == 0 {
-		return "No charge.", DialogControlHintColor
-	}
-	switch quote.ChargeKind {
-	case game_state.HealerChargeFree:
-		return "Free care for all.", DialogDeltaPositive
-	case game_state.HealerChargeCharitable:
-		return "Charitable care for all.", DialogDeltaPositive
-	case game_state.HealerChargePaid:
-		if !quote.Affordable {
-			return fmt.Sprintf("Need %d gold; party has %d.", quote.Charge, gold), DialogLabelColor
-		}
-
-		return fmt.Sprintf("Total: %d gold; %d after payment.", quote.Charge, gold-quote.Charge), DialogLabelColor
-	default:
-		panic("HealerShopDialog: unknown aggregate charge kind")
 	}
 }
 

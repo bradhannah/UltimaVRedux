@@ -85,7 +85,7 @@ func TestSpellSearchStripFieldsStayBoundedAcrossConsumersAndResolutions(t *testi
 				}
 				browser.syllables, browser.searching = "IL", false
 				view.prepareSearch(browser, rect)
-				require.Contains(t, view.search.GetOutputStr(false), "Words: IL")
+				require.Contains(t, view.search.GetOutputStr(false), "Spell: IL")
 				require.Contains(t, view.search.GetOutputStr(false), "In Lor")
 			}
 		})
@@ -128,7 +128,7 @@ func TestZStatsSpellStripTracksKeyboardAndSurvivesTabsResizeAndMixRefresh(t *tes
 		require.Equal(t, fmt.Sprintf("Matches: %d", len(dialog.spellBrowser.filtered)), dialog.spellView.matches.GetOutputStr(false))
 	}
 	prepare()
-	require.Equal(t, "Words: _", dialog.spellView.search.GetOutputStr(false))
+	require.Equal(t, "Spell: _  "+spellInitialsPrompt, dialog.spellView.search.GetOutputStr(false))
 	require.Equal(t, "Matches: 47", dialog.spellView.matches.GetOutputStr(false))
 	press(ebiten.KeySlash)
 	for _, key := range []ebiten.Key{ebiten.KeyP, ebiten.KeyO, ebiten.KeyI, ebiten.KeyS, ebiten.KeyO, ebiten.KeyN} {

@@ -161,9 +161,6 @@ func (i *InputBox) footerPlainText() string {
 	if i.escapeClearsText {
 		return "[Enter] Submit   [Esc] Clear"
 	}
-	if i.spaceCancels {
-		return "[Enter] Submit   [Esc/Space] Cancel"
-	}
 
 	return textSubmitControlHint
 }

@@ -162,29 +162,45 @@ func (d *CommandHelpDialog) populatePage() {
 	default:
 		d.populateNow(width)
 	}
+	d.row = min(d.row, d.lastRow())
+	d.populateFooter()
+}
+
+// populateFooter names the page and adds the three keys a lost player needs. The
+// other paging keys keep working and are listed with the Help command on
+// Commands. The scroll hint says which way there is more to read, and is dimmed
+// when the page already fits.
+func (d *CommandHelpDialog) populateFooter() {
+	last := d.lastRow() // Measured before the footer is emptied: the page's room depends on it.
 	d.footer.Reset()
 	title := [helpPageCount]string{"KEYS THAT WORK RIGHT NOW", "COMMAND HELP", "STATUS HELP"}[d.page]
 	d.footer.AppendLine().Text(title, DialogHeaderColor).
 		Text("   No time or resources spent", DialogControlHintColor).WordWrap().Done()
-	d.footer.AppendLine().Text("[Tab/Shift+Tab]", DialogControlKeyColor).
-		Text(" Page of Help  ", DialogControlHintColor).
-		Text("[Up/Down]", DialogControlKeyColor).Text(" Scroll  ", DialogControlHintColor).
-		Text("[Shift+Up/Down/PgUp/PgDn]", DialogControlKeyColor).Text(" Page  ", DialogControlHintColor).
-		Text("[Space]", DialogControlKeyColor).Text(" Next  ", DialogControlHintColor).
-		Text("[Home/End]", DialogControlKeyColor).Text(" First/Last  ", DialogControlHintColor).
-		Text("[Esc]", DialogControlKeyColor).Text(" Close", DialogControlHintColor).WordWrap().Done()
-	d.row = min(d.row, d.lastRow())
+	scrollKey, scrollHint, scroll := DialogControlKeyColor, DialogControlHintColor, " More below   "
+	switch {
+	case last == 0:
+		scrollKey, scrollHint, scroll = DialogUnavailableItemColor, DialogUnavailableItemColor, " Scroll   "
+	case d.row >= last:
+		scroll = " More above   "
+	}
+	d.footer.AppendLine().Text("[Tab]", DialogControlKeyColor).Text(" Page of Help   ", DialogControlHintColor).
+		Text("[Up/Down]", scrollKey).Text(scroll, scrollHint).
+		Text("["+hintKeyEsc+"]", DialogControlKeyColor).Text(" "+hintActionClose, DialogControlHintColor).Done()
 }
 
 // populateNow lists the keys usable at this moment, one group to a heading and
 // several keys to a row, so the whole answer normally fits one screen. Keys that
-// cannot be used here are named last; Commands explains each one.
+// cannot be used here are named last under the reason Commands gives for them.
 func (d *CommandHelpDialog) populateNow(width int) {
-	var groups, unavailable []string
-	hints := map[string][]ControlHint{}
+	var groups, reasons []string
+	hints, unavailable := map[string][]ControlHint{}, map[string][]ControlHint{}
 	for _, entry := range d.entries {
 		if entry.Unavailable != "" {
-			unavailable = append(unavailable, entry.Key)
+			if _, known := unavailable[entry.Unavailable]; !known {
+				reasons = append(reasons, entry.Unavailable)
+			}
+			unavailable[entry.Unavailable] = append(unavailable[entry.Unavailable],
+				ControlHint{Key: entry.Key, Action: entry.Purpose})
 
 			continue
 		}
@@ -204,9 +220,10 @@ func (d *CommandHelpDialog) populateNow(width int) {
 	if len(groups) == 0 {
 		d.output.AppendLine().Text("No command key works at this moment.", DialogValueColor).WordWrap().Done()
 	}
-	if len(unavailable) > 0 {
-		d.output.AppendLine().Text("Not available here: "+strings.Join(unavailable, ", ")+".",
-			DialogControlHintColor).WordWrap().Done()
+	for _, reason := range reasons {
+		d.output.SetMaxCharsPerLine(chars)
+		d.output.AppendLine().Text(reason, DialogWarningColor).WordWrap().Done()
+		PackControlHints(d.output, unavailable[reason], width, etext.AlignStart)
 	}
 }
 
@@ -299,6 +316,7 @@ func (d *CommandHelpDialog) Update() {
 	if !owned && d.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace) {
 		d.row = min(d.lastRow(), d.row+d.pageSize())
 	}
+	d.populateFooter()
 }
 
 // helpTabGap separates the page titles on the one centred tab line.

@@ -21,9 +21,12 @@ func TestInnShopDialogModesTabsAndNavigation(t *testing.T) {
 	dialog := newTestInnShopDialog(keyboard, testInnShopState())
 
 	require.Equal(t, InnShopRest, dialog.GetMode())
-	require.Contains(t, dialog.GetModeHeaderText(), "[R]est")
-	require.Contains(t, dialog.GetModeHeaderText(), "[L]eave")
-	require.Contains(t, dialog.GetModeHeaderText(), "[P]ick Up")
+	require.Contains(t, dialog.GetModeHeaderText(), "Rest")
+	require.Contains(t, dialog.GetModeHeaderText(), "Leave")
+	require.Contains(t, dialog.GetModeHeaderText(), "Pick Up")
+	require.NotContains(t, dialog.GetModeHeaderText(), "[", "the tab titles carry no key letters")
+	require.Equal(t, []shopTab{{"Rest", true}, {"Leave", false}, {"Pick Up", false}}, dialog.tabs())
+	require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[R] Rest   [L] Leave   [P] Pick Up")
 	require.True(t, dialog.GetTableBounds().Empty(), "Rest is a consequence card, not a list")
 	require.False(t, dialog.GetCardBounds().Empty())
 
@@ -53,10 +56,7 @@ func TestInnShopDialogModesTabsAndNavigation(t *testing.T) {
 	}
 	require.Zero(t, dialog.GetSelectedIndex(), "Up/Down must clamp rather than wrap")
 
-	colors := dialog.modeTabColors()
-	require.Equal(t, DialogEmptyColor, colors[InnShopRest])
-	require.Equal(t, DialogLabelColor, colors[InnShopLeave])
-	require.Equal(t, DialogEmptyColor, colors[InnShopPickup])
+	require.Equal(t, []shopTab{{"Rest", false}, {"Leave", true}, {"Pick Up", false}}, dialog.tabs())
 }
 
 func TestInnShopDialogRestCardShowsConciseDecisionDetails(t *testing.T) {
@@ -281,8 +281,8 @@ func TestInnShopDialogPreviewLabelsKeyboardOnlyFooterAndSemanticBacking(t *testi
 	t.Cleanup(screen.Dispose)
 	dialog.Draw(screen)
 	requireImageRegionContainsColor(t, screen, dialog.GetCardBounds(), MerchantDialogBackgroundColor)
-	requireImageRegionContainsColor(t, screen, dialog.modeBounds, DialogLabelColor)
-	requireImageRegionContainsColor(t, screen, dialog.modeBounds, DialogEmptyColor)
+	requireImageRegionContainsColor(t, screen, dialog.modeBounds, DialogActiveTabBackground)
+	requireImageRegionContainsColor(t, screen, dialog.modeBounds, DialogTabColor)
 	requireImageRegionContainsColor(t, screen, dialog.GetShell().footerText, DialogControlKeyColor)
 	requireImageRegionContainsColor(t, screen, dialog.GetShell().footerText, DialogControlHintColor)
 	backgroundInset := dialog.GetShell().pixelUnit() * 2

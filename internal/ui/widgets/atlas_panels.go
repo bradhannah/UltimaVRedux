@@ -237,7 +237,7 @@ func (d *AtlasDialog) buildPositionStatus() {
 // Help stays in two physical rows: describe only the active pane's actions.
 // Alternate close shortcuts and conditional detail paging live outside this footer.
 func (d *AtlasDialog) helpRows() [2][]ControlHint {
-	category, selection := ControlHint{hintKeyTabCycle, "Category"}, ControlHint{hintKeyUpDown, hintActionSelect}
+	category, selection := ControlHint{hintKeyTabCycle, labelCategory}, ControlHint{hintKeyUpDown, hintActionSelect}
 	zoom, world := ControlHint{"+/-", "Zoom"}, ControlHint{"0", "World"}
 	first := []ControlHint{category, selection, {hintKeyEnter, "Show"}, zoom, world}
 	if d.view.Overview {

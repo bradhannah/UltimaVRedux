@@ -10,6 +10,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
+	"github.com/bradhannah/UltimaVRedux/internal/display"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/minimap"
@@ -371,11 +372,15 @@ func (g *GameScene) showDoomRecoveryChoice(description string) {
 	choose := func(action finaleInputAction) {
 		presentation.pendingInput = action
 	}
+	// The ending has the conversation on the left and the map on the right: the
+	// choice sits inside the map, as a small window does in ordinary play, and
+	// leaves the king's words readable.
+	mapPlacement := g.finaleMapViewportPlacement()
 	choice = widgets.NewButtonListModal(
 		"Doom Recovery",
 		func() { choose(finaleInputReturnToMainMenu) },
 		g.keyboard,
-		&gameScreenPercents,
+		&mapPlacement,
 	)
 	choice.SetButtonWidthPercent(finaleRecoveryButtonWidth)
 	choice.SetBorderWidthPercent(finaleRecoveryCardWidth)
@@ -385,6 +390,20 @@ func (g *GameScene) showDoomRecoveryChoice(description string) {
 	choice.AddButton("Return to Main Menu", func() { choose(finaleInputReturnToMainMenu) })
 	presentation.recoveryChoice = choice
 	g.dialogStack.PushModalDialog(choice)
+}
+
+// finaleMapViewportPlacement is the framed map of the ending's split screen, as
+// shares of the screen.
+func (g *GameScene) finaleMapViewportPlacement() sprites.PercentBasedPlacement {
+	width, height := display.GetManager().GetCurrentSize()
+	viewport := cinematicMapLayoutForScreen(width, height).viewport
+
+	return sprites.PercentBasedPlacement{
+		StartPercentX: float64(viewport.Min.X) / float64(width),
+		EndPercentX:   float64(viewport.Max.X) / float64(width),
+		StartPercentY: float64(viewport.Min.Y) / float64(height),
+		EndPercentY:   float64(viewport.Max.Y) / float64(height),
+	}
 }
 
 type finaleWalkTarget struct {
@@ -490,8 +509,10 @@ func (g *GameScene) updateLordBritishFinaleInput() finaleInputAction {
 		return action
 	}
 	if presentation.mode == finaleSuccessCertificate {
-		pressed := g.keyboard.GetBoundKeyPressed(&boundKeysAny)
-		if pressed == nil || !g.keyboard.TryToRegisterKeyPress(*pressed) {
+		// The certificate is the record of the whole game, so a stray key must not
+		// dismiss it: only Enter does.
+		if !g.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter) &&
+			!g.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter) {
 			return finaleInputNone
 		}
 		// REDUX DEVIATION: DNG-0015: original final screen loops forever. Redux returns to

@@ -209,7 +209,7 @@ func TestReadyHeaderAndHintsFitSupportedResolutions(t *testing.T) {
 			dialog.populateStatusOutput(dialog.statusBorder.GetInteriorBounds().Dx() - 2*(itemDialogTextPadding+4))
 			footer := dialog.statusOutput.GetOutputStr(true)
 			require.Contains(t, footer, "[Esc] Close", "keys and their action descriptions must wrap together")
-			require.Contains(t, footer, "[Space] Details")
+			require.Equal(t, dialog.detailPageCount() > 1, strings.Contains(footer, "[Space] Details"))
 			contentWidth := dialog.statusBorder.GetInteriorBounds().Dx() - 2*(itemDialogTextPadding+4)
 			for _, line := range strings.Split(footer, "\n") {
 				width, _ := dialog.font.MeasureString(strings.TrimSpace(line))
@@ -218,8 +218,8 @@ func TestReadyHeaderAndHintsFitSupportedResolutions(t *testing.T) {
 			if locked {
 				require.NotContains(t, footer, "Tab")
 			} else {
-				require.Contains(t, footer, "Tab")
-				require.Contains(t, footer, "Shift+Tab")
+				require.Contains(t, footer, "[Tab] Next character")
+				require.NotContains(t, footer, "Shift+Tab", "the repeated Previous hint leaves the row")
 			}
 			require.LessOrEqual(t, dialog.statusOutput.GetTotalHeightForLines(dialog.statusOutput.GetPanelContentLineCount()),
 				float64(dialog.statusBorder.GetInteriorBounds().Dy()), size.String())

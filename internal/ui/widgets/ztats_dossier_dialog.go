@@ -844,12 +844,22 @@ func (d *ZStatsDossierDialog) drawCharacterStats(screen *ebiten.Image) {
 		if index >= len(d.dossier.Characters) {
 			continue
 		}
-		selectorColor := DialogNavHintColor
+		selectorColor := DialogTabColor
 		if index == d.selectedCharacter {
-			selectorColor = pkgcolor.EGAYellow
+			selectorColor = DialogActiveTabText
+			d.drawSelectorPlate(screen, selectorRect, strconv.Itoa(index+1))
 		}
-		d.drawOutputLine(screen, selectorRect, strconv.Itoa(index+1), selectorColor, etext.AlignStart)
+		d.drawOutputLine(screen, selectorRect, strconv.Itoa(index+1), selectorColor, etext.AlignCenter)
 	}
+}
+
+// drawSelectorPlate puts the open member's number on the same light blue plate
+// as the open tab.
+func (d *ZStatsDossierDialog) drawSelectorPlate(screen *ebiten.Image, rect image.Rectangle, number string) {
+	height := int(math.Ceil(d.rowOutput.GetFontHeight()))
+	width, _ := d.bodyFont.MeasureString(number)
+	top := rect.Min.Y + max(0, (rect.Dy()-height)/zStatsDossierCenterDivisor)
+	DrawActiveTabPlate(screen, rect, width, top, height, d.pixelUnit())
 }
 
 // The party numbers take the last line of the stats box, spaced as text.
@@ -886,11 +896,9 @@ func (d *ZStatsDossierDialog) appendCharacterSummary(output *text.Output, charac
 	d.appendDetailHeaderTo(output, character.Name)
 	d.appendDetailTextTo(output, strings.TrimSpace(character.Gender+" "+character.Class), DialogValueColor)
 	d.appendDetailPairTo(output, "Status", character.Status, zStatsStatusColor(character.Status))
-	d.appendDetailPairTo(
-		output,
-		"Level / XP",
-		fmt.Sprintf("%d / %d", character.Level, character.Experience),
-		DialogValueColor,
+	d.appendDetailPairsTo(output,
+		[2]string{"Level", strconv.Itoa(character.Level)},
+		[2]string{"XP", strconv.Itoa(character.Experience)},
 	)
 }
 
@@ -937,8 +945,8 @@ func (d *ZStatsDossierDialog) appendCharacterStats(
 		)
 	}
 	d.appendDetailPairsTo(output,
-		[2]string{"Attack", strconv.Itoa(character.EquipmentAttack)},
-		[2]string{"Defense", strconv.Itoa(character.EquipmentDefense)},
+		[2]string{ratingAttack, strconv.Itoa(character.EquipmentAttack)},
+		[2]string{ratingDefense, strconv.Itoa(character.EquipmentDefense)},
 	)
 }
 
@@ -969,24 +977,14 @@ func (d *ZStatsDossierDialog) prepareCharacterItemDetail() zStatsCatalogDetailLa
 	}
 	item := character.Equipped[d.tabSelections[ZStatsDossierCharacterTab]]
 
-	return d.prepareCatalogDetail(
-		d.layout.characterItemRect,
-		func(output *text.Output) {
-			d.appendDetailHeaderTo(output, item.Slot+": "+item.Name)
-			d.appendDetailPairTo(output, "Category", item.Category, DialogValueColor)
-			d.appendDetailPairTo(output, "Attack", strconv.Itoa(item.Attack), DialogValueColor)
-			d.appendDetailPairTo(output, "Defense", strconv.Itoa(item.Defense), DialogValueColor)
-		},
-		func(output *text.Output) {
-			d.appendDetailPairTo(output, "Strength required", strconv.Itoa(item.StrengthRequired), DialogValueColor)
-			d.appendDetailPairTo(output, "Range", strconv.Itoa(item.Range), DialogValueColor)
-			d.appendDetailPairTo(output, "Hands required", zStatsHandsRequired(item.TwoHanded), DialogValueColor)
-			if item.RequiresAmmo {
-				d.appendDetailPairTo(output, "Ammo", item.AmmoName, DialogValueColor)
-			}
-			d.appendDetailPairTo(output, "Abilities", zStatsJoinedOrNone(item.Abilities), DialogValueColor)
-		},
-	)
+	facts := []zStatsFact{{label: "", value: item.Slot + ": " + item.Name}}
+	if !strings.EqualFold(item.Category, item.Slot) {
+		facts = append(facts, zStatsFact{labelCategory, item.Category})
+	}
+
+	return d.prepareFactDetail(d.layout.characterItemRect, append(facts, zStatsItemFacts(
+		item.Attack, item.Defense, item.StrengthRequired, item.Range, item.Category, item.TwoHanded,
+		zStatsAmmoName(item.RequiresAmmo, item.AmmoName), item.Abilities)...))
 }
 
 func (d *ZStatsDossierDialog) drawListPane(screen *ebiten.Image, rect image.Rectangle) {
@@ -1305,26 +1303,13 @@ func (d *ZStatsDossierDialog) prepareArmoryDetail(rect image.Rectangle) zStatsCa
 	}
 	item := d.dossier.Armory[d.tabSelections[ZStatsDossierArmoryTab]]
 
-	return d.prepareCatalogDetail(rect, func(output *text.Output) {
-		d.appendDetailHeaderTo(output, item.Name)
-		d.appendDetailPairTo(output, "Category", item.Category, DialogValueColor)
-		d.appendDetailPairTo(
-			output,
-			"Available / Readied",
-			fmt.Sprintf("%d / %d", item.Available, item.Readied),
-			DialogValueColor,
-		)
-	}, func(output *text.Output) {
-		d.appendDetailPairTo(output, "Attack", strconv.Itoa(item.Attack), DialogValueColor)
-		d.appendDetailPairTo(output, "Defense", strconv.Itoa(item.Defense), DialogValueColor)
-		d.appendDetailPairTo(output, "Strength required", strconv.Itoa(item.StrengthRequired), DialogValueColor)
-		d.appendDetailPairTo(output, "Range", strconv.Itoa(item.Range), DialogValueColor)
-		d.appendDetailPairTo(output, "Hands required", zStatsHandsRequired(item.TwoHanded), DialogValueColor)
-		if item.RequiresAmmo {
-			d.appendDetailPairTo(output, "Ammo", item.AmmoName, DialogValueColor)
-		}
-		d.appendDetailPairTo(output, "Abilities", zStatsJoinedOrNone(item.Abilities), DialogValueColor)
-	})
+	facts := append(make([]zStatsFact, 0, zStatsFactCapacity), zStatsFact{label: "", value: item.Name},
+		zStatsFact{labelCategory, item.Category},
+		zStatsFact{"Available / Readied", fmt.Sprintf("%d / %d", item.Available, item.Readied)})
+
+	return d.prepareFactDetail(rect, append(facts, zStatsItemFacts(
+		item.Attack, item.Defense, item.StrengthRequired, item.Range, item.Category, item.TwoHanded,
+		zStatsAmmoName(item.RequiresAmmo, item.AmmoName), item.Abilities)...))
 }
 
 func (d *ZStatsDossierDialog) drawSpellDetail(screen *ebiten.Image, rect image.Rectangle) {
@@ -1350,10 +1335,10 @@ func (d *ZStatsDossierDialog) prepareSpellDetail(rect image.Rectangle) zStatsCat
 	return d.prepareCatalogDetail(rect, func(output *text.Output) {
 		d.appendDetailHeaderTo(output, zStatsDisplayName(spell.Name, spell.Syllables))
 		d.appendDetailTextTo(output, spell.EffectLabel, DialogControlHintColor)
-		appendSpellMetrics(output, *spell)
+		appendSpellMetrics(output, *spell, DialogStatusWarningColor)
 	}, func(output *text.Output) {
 		d.appendDetailTextTo(output, spell.Description, DialogValueColor)
-		appendSpellFormula(output, *spell)
+		appendSpellFormula(output, *spell, DialogStatusWarningColor)
 		if spell.Hidden {
 			if source := zStatsLearningSource(spell.LearningSourceKind, spell.LearningSource); source != "" {
 				d.appendDetailPairTo(output, "Learned from", source, DialogValueColor)
@@ -1427,7 +1412,7 @@ func (d *ZStatsDossierDialog) prepareItemDetail(rect image.Rectangle) zStatsCata
 
 	return d.prepareCatalogDetail(rect, func(output *text.Output) {
 		d.appendDetailHeaderTo(output, item.Name)
-		d.appendDetailPairTo(output, "Category", item.Category, DialogValueColor)
+		d.appendDetailPairTo(output, labelCategory, item.Category, DialogValueColor)
 		d.appendDetailPairTo(
 			output,
 			"Quantity",
@@ -2086,12 +2071,88 @@ func zStatsLearningSource(kind, source string) string {
 	}
 }
 
-func zStatsJoinedOrNone(values []string) string {
-	if len(values) == 0 {
-		return zStatsNoneLabel
+// labelCategory names the kind of an item or the category tabs.
+const (
+	labelCategory = "Category"
+	// zStatsFactCapacity is more lines than an item has facts.
+	zStatsFactCapacity = 12
+)
+
+// zStatsFact is one line of an item's details: a labelled value, or a header
+// when it has no label.
+type zStatsFact struct{ label, value string }
+
+// zStatsItemFacts lists what an item has to say, in order. A fact with nothing
+// to say is left out: no zero rating, Strength or range, no hands unless the
+// item is a weapon or shield, no abilities line without an ability.
+func zStatsItemFacts(
+	attack, defense, strength, attackRange int, category string, twoHanded bool, ammo string, abilities []string,
+) []zStatsFact {
+	var facts []zStatsFact
+	for _, fact := range []struct {
+		label string
+		value int
+	}{{ratingAttack, attack}, {ratingDefense, defense}, {"Strength required", strength}, {"Range", attackRange}} {
+		if fact.value > 0 {
+			facts = append(facts, zStatsFact{fact.label, strconv.Itoa(fact.value)})
+		}
+	}
+	if category == references.CategoryWeapon.String() || category == references.CategoryShield.String() {
+		facts = append(facts, zStatsFact{"Hands required", zStatsHandsRequired(twoHanded)})
+	}
+	if ammo != "" {
+		facts = append(facts, zStatsFact{"Ammo", ammo})
+	}
+	if len(abilities) > 0 {
+		facts = append(facts, zStatsFact{"Abilities", strings.Join(abilities, ", ")})
 	}
 
-	return strings.Join(values, ", ")
+	return facts
+}
+
+// prepareFactDetail lays facts out in order: as many as fit beside the picture,
+// then the rest below it, so a short list leaves no gap.
+func (d *ZStatsDossierDialog) prepareFactDetail(rect image.Rectangle, facts []zStatsFact) zStatsCatalogDetailLayout {
+	_, summaryRect, _ := d.catalogDetailRects(rect)
+	d.summaryOutput.SetMaxCharsPerLine(max(1, d.bodyFont.CharsForWidth(summaryRect.Dx())))
+	capacity := max(1, d.summaryOutput.GetLineCapacity(max(1, summaryRect.Dy())))
+	append1 := func(output *text.Output, fact zStatsFact) {
+		if fact.label == "" {
+			d.appendDetailHeaderTo(output, fact.value)
+		} else {
+			d.appendDetailPairTo(output, fact.label, fact.value, DialogValueColor)
+		}
+	}
+	d.summaryOutput.Reset()
+	beside := 0
+	for _, fact := range facts {
+		append1(d.summaryOutput, fact)
+		if d.summaryOutput.GetPanelContentLineCount() > capacity {
+			break
+		}
+		beside++
+	}
+	beside = max(1, beside)
+
+	return d.prepareCatalogDetail(rect,
+		func(output *text.Output) {
+			for _, fact := range facts[:beside] {
+				append1(output, fact)
+			}
+		},
+		func(output *text.Output) {
+			for _, fact := range facts[beside:] {
+				append1(output, fact)
+			}
+		})
+}
+
+func zStatsAmmoName(requiresAmmo bool, name string) string {
+	if requiresAmmo {
+		return name
+	}
+
+	return ""
 }
 
 func zStatsHandsRequired(twoHanded bool) string {

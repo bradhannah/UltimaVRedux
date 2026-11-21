@@ -11,7 +11,6 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
@@ -23,7 +22,7 @@ func TestSpellDetailPagingUsesRealContentInBothDialogs(t *testing.T) {
 				keyboard := newWidgetTestKeyboard(0)
 				catalog := testMixCatalog()[:2]
 				catalog[0].Description = "Light."
-				catalog[0].CanMix = 2
+				catalog[0].CanMix, catalog[1].CanMix = 2, 2 // Both are on the list Mix opens on.
 				catalog[1].Description = "First page.\n"
 				for index := range 20 {
 					catalog[1].Description += fmt.Sprintf("Detail %02d: %s\n", index,
@@ -147,7 +146,9 @@ func assertSpellDetailPagePixels(t *testing.T, view *spellPresentation, browser 
 	expected.Dispose()
 }
 
-func TestMixPagingPreparationTransitionRetainsSpaceToggle(t *testing.T) {
+// Space pages a long description in the list and ticks an ingredient on the
+// Experiment tab; neither meaning leaks into the other screen.
+func TestMixSpacePagesTheListAndTicksInTheExperiment(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 1280, 720)
 	keyboard := newWidgetTestKeyboard(0)
 	catalog := testMixCatalog()
@@ -162,8 +163,8 @@ func TestMixPagingPreparationTransitionRetainsSpaceToggle(t *testing.T) {
 	require.Equal(t, 1, dialog.browser.page)
 	press(ebiten.KeyEnter)
 	require.True(t, dialog.preparing)
-	require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Space] Toggle")
-	require.NotContains(t, dialog.view.footer.GetOutputStr(false), "Next detail page")
+	press(ebiten.KeyTab)
+	require.Equal(t, mixTabExperiment, dialog.tab)
 	selection := dialog.selection
 	press(ebiten.KeySpace)
 	require.NotEqual(t, selection, dialog.selection)
@@ -183,9 +184,9 @@ func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
 	for _, height := range []int{720, 360, 720, 360, 720} {
 		view.layout(1280, height)
 		for range 3 {
-			view.configureDetails(browser, controls, 0, nil)
+			view.configureDetails(browser, packedSpellFooter(controls))
 			pages, footer, body := browser.pages, view.footerRect, view.detailBodyRect
-			view.configureDetails(browser, controls, 0, nil)
+			view.configureDetails(browser, packedSpellFooter(controls))
 			require.Equal(t, pages, browser.pages)
 			require.Equal(t, footer, view.footerRect)
 			require.Equal(t, body, view.detailBodyRect)
@@ -201,17 +202,5 @@ func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
 				browser.page = pages - 1
 			}
 		}
-	}
-}
-
-func TestCastCombatAdditionalDetailsAreIncludedBeforePaging(t *testing.T) {
-	_, dialog, _ := newCastBrowserTest(t)
-	dialog.currentContext = references.ContextCombat
-	dialog.ensureLayout()
-	require.Contains(t, dialog.view.body.GetOutputStr(false), "combat action")
-	statusTop := dialog.view.detailRect.Max.Y - dialog.view.padding - dialog.view.lineHeight*spellBrowserRowLines
-	require.Less(t, dialog.view.detailBodyRect.Max.Y, statusTop)
-	if dialog.browser.pages > 1 {
-		require.Less(t, dialog.view.detailPageRect.Max.Y, statusTop)
 	}
 }

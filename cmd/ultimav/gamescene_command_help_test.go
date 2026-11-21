@@ -109,7 +109,7 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 				require.Contains(t, entry.NextInput, "Space: Next page")
 			}
 			if entry.Key == "C" {
-				require.Contains(t, entry.NextInput, "Final confirmation spends MP and one mixture.")
+				require.Contains(t, entry.NextInput, "Casting spends MP and one mixture.")
 				require.Contains(t, entry.NextInput, "Cancelling beforehand costs no MP, mixture, or gameplay time")
 				require.NotContains(t, entry.NextInput, "before choice")
 				require.NotContains(t, entry.NextInput, "does not refund")

@@ -1,31 +1,16 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
-	stdcolor "image/color"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
-const (
-	tavernResultStartPercentX    = 0.27
-	tavernResultEndPercentX      = 0.73
-	tavernResultStartPercentY    = 0.22
-	tavernResultEndPercentY      = 0.78
-	tavernResultHeaderRatio      = 0.18
-	tavernResultFooterRatio      = 0.18
-	tavernResultMinimumInset     = 5
-	tavernResultLineSpacing      = 1.08
-	tavernResultMaximumBodyLines = 12
-	tavernResultMinimumTextChars = 8
-	tavernResultFooter           = "[Enter/Esc] Continue"
-)
+const tavernResultFooter = "[Enter/Esc] Continue"
 
 var _ Widget = (*TavernResultDialog)(nil)
 
@@ -74,11 +59,7 @@ type TavernResultDialog struct {
 	visible      bool
 	dismissed    bool
 	keysReady    bool
-
-	frame        *merchantModalFrame
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window       *amountWindow
 }
 
 // NewTavernResultDialog creates a visible finalized-result modal.
@@ -91,20 +72,13 @@ func NewTavernResultDialog(config TavernResultDialogConfig) *TavernResultDialog 
 	if isKeyPressed == nil {
 		isKeyPressed = ebiten.IsKeyPressed
 	}
-	dialog := &TavernResultDialog{ //nolint:exhaustruct_v5 // Resolution-dependent presentation initializes on demand.
+	dialog := &TavernResultDialog{
 		keyboard: config.Keyboard, isKeyPressed: isKeyPressed, view: config.View,
-		visible: true, keysReady: tavernResultControlsReleased(isKeyPressed),
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             tavernResultPlacement(),
-			headerRatio:           tavernResultHeaderRatio,
-			footerRatio:           tavernResultFooterRatio,
-			minimumInset:          tavernResultMinimumInset,
-			lineSpacingMultiplier: tavernResultLineSpacing,
-			footerMinimumLines:    1,
-		}),
+		visible: true, dismissed: false, keysReady: tavernResultControlsReleased(isKeyPressed),
+		window: newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -114,9 +88,7 @@ func (d *TavernResultDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || !d.IsVisible() {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update waits for explicit result acknowledgement.
@@ -139,9 +111,7 @@ func (d *TavernResultDialog) Update() {
 
 // GetBounds returns the responsive modal bounds.
 func (d *TavernResultDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsDismissed reports whether workflow may remove the modal.
@@ -160,112 +130,52 @@ func (d *TavernResultDialog) Dismiss() {
 	d.dismissed = true
 }
 
-func (d *TavernResultDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
+// step describes the receipt: what happened, what it did to the party's food and
+// gold, what Faulinei took, and the keeper's word. It is only acknowledged.
+func (d *TavernResultDialog) step() amountStep {
+	view := d.view
+	step := emptyAmountStep()
+	step.title, step.unit, step.footer = view.Title, view.Item, tavernResultFooter
+	if view.ShowFood {
+		step.rows = append(step.rows, amountRow{label: "Food", have: int(view.FoodBefore), then: int(view.FoodAfter)})
 	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: tavernResultLineSpacing, maximumBodyLines: tavernResultMaximumBodyLines,
-		footerLines: 1, minimumChars: tavernResultMinimumTextChars, fixedBody: false,
-	})
-	d.populateOutputs()
-}
-
-func (d *TavernResultDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
+	if view.ShowGold {
+		step.rows = append(step.rows, amountRow{label: amountGoldRow, have: int(view.GoldBefore), then: int(view.GoldAfter)})
 	}
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(strings.ToUpper(d.view.Title), tavernResultToneColor(d.view.Tone)).Done()
-	d.bodyOutput.Reset()
-	d.populateBodyOutput()
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, tavernResultFooter, d.frame.footerText.Dx())
-}
-
-func (d *TavernResultDialog) populateBodyOutput() {
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).Yellow(d.view.Item).Done()
-	if d.view.Detail != "" {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray(d.view.Detail).Done()
+	if view.Detail != "" {
+		step.notes = append(step.notes, amountNote{text: view.Detail, tone: amountPlain})
 	}
-	d.bodyOutput.AppendLine().White("").Done()
-	d.appendFoodOutput()
-	d.appendChargeOutput()
-	d.appendGoldOutput()
-	d.appendClosingOutput()
-}
-
-func (d *TavernResultDialog) appendFoodOutput() {
-	if d.view.ShowFood {
-		line := d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray("FOOD  ").Cyanf("%d", d.view.FoodBefore).White("  ->  ").
-			Textf("%d", tavernResultAfterColor(d.view), d.view.FoodAfter)
-		if d.view.FoodAfter > d.view.FoodBefore {
-			line.LightGreenf("  (+%d)", d.view.FoodAfter-d.view.FoodBefore)
+	paid := int(view.GoldBefore) - int(view.GoldAfter)
+	if view.Charge > 0 && (!view.ShowGold || view.Charge != paid) {
+		step.notes = append(step.notes, amountNote{
+			text: fmt.Sprintf("%s: %d gold.", view.ChargeLabel, view.Charge), tone: amountPlain,
+		})
+	}
+	if view.Theft > 0 {
+		step.notes = append(step.notes, amountNote{
+			text: fmt.Sprintf("Faulinei took %d more gold.", view.Theft), tone: amountWarning,
+		})
+	}
+	if view.Note != "" {
+		if len(step.notes) > 0 {
+			step.notes = append(step.notes, amountNote{text: "", tone: amountPlain})
 		}
-		line.Done()
+		step.notes = append(step.notes, amountNote{text: view.Note, tone: tavernResultNoteTone(view.Tone)})
 	}
+
+	return step
 }
 
-func (d *TavernResultDialog) appendChargeOutput() {
-	if d.view.Charge > 0 {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray(strings.ToUpper(d.view.ChargeLabel)+"  ").Yellowf("%d GOLD", d.view.Charge).Done()
-	}
-}
-
-func (d *TavernResultDialog) appendGoldOutput() {
-	if d.view.ShowGold {
-		line := d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray("GOLD  ").Cyanf("%d", d.view.GoldBefore).White("  ->  ").
-			Textf("%d", tavernResultAfterColor(d.view), d.view.GoldAfter)
-		if d.view.GoldBefore > d.view.GoldAfter {
-			line.Textf("  (-%d)", DialogLabelColor, d.view.GoldBefore-d.view.GoldAfter)
-		}
-		line.Done()
-	}
-}
-
-func (d *TavernResultDialog) appendClosingOutput() {
-	if d.view.Theft > 0 {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Textf("Faulinei took %d additional gold.", DialogStatusWarningColor, d.view.Theft).Done()
-	}
-	if d.view.Note != "" {
-		d.bodyOutput.AppendLine().White("").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text(d.view.Note, tavernResultToneColor(d.view.Tone)).WordWrap().Done()
-	}
-}
-
-func tavernResultToneColor(tone TavernResultTone) stdcolor.Color {
+// tavernResultNoteTone draws the keeper's word grey, or in the readable red when
+// the order was refused or ended.
+func tavernResultNoteTone(tone TavernResultTone) amountTone {
 	switch tone {
-	case TavernResultSuccess:
-		return DialogDeltaPositive
-	case TavernResultCaution:
-		return DialogLabelColor
+	case TavernResultSuccess, TavernResultCaution:
+		return amountPlain
 	case TavernResultFailure:
-		return DialogStatusWarningColor
+		return amountWarning
 	default:
 		panic("TavernResultDialog: unknown result tone")
-	}
-}
-
-func tavernResultAfterColor(view TavernResultView) stdcolor.Color {
-	if view.Tone == TavernResultFailure {
-		return DialogValueColor
-	}
-
-	return DialogDeltaPositive
-}
-
-func tavernResultPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: tavernResultStartPercentX,
-		EndPercentX:   tavernResultEndPercentX,
-		StartPercentY: tavernResultStartPercentY,
-		EndPercentY:   tavernResultEndPercentY,
 	}
 }
 
@@ -273,7 +183,7 @@ func validateTavernResultView(view TavernResultView) {
 	if strings.TrimSpace(view.Title) == "" || strings.TrimSpace(view.Item) == "" {
 		panic("TavernResultDialog: title and item are required")
 	}
-	_ = tavernResultToneColor(view.Tone)
+	_ = tavernResultNoteTone(view.Tone)
 }
 
 func tavernResultControlsReleased(isKeyPressed func(ebiten.Key) bool) bool {

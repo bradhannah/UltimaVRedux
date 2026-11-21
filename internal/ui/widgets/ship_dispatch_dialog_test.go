@@ -17,19 +17,18 @@ func TestShipDispatchDialogShowsRefreshedDeliveryAndAvailableEscort(t *testing.T
 		Keyboard: newWidgetTestKeyboard(0),
 		State:    state,
 	})
-	body := compactShipText(dialog.GetBodyText())
+	body := compactShipText(dialog.window.flatText())
 
-	require.Equal(t, "Vessel Dispatched", compactShipText(dialog.GetTitleText()))
-	require.Contains(t, body, "Harbour: Jhelom Harbour")
+	require.Equal(t, "Frigate Dispatched", compactShipText(dialog.GetTitleText()))
+	require.Contains(t, body, "To Jhelom Harbour")
 	require.Contains(t, body, "Berth: Pending arrival")
-	require.Contains(t, body, "Vessel: Frigate")
-	require.Contains(t, body, "Skiffs aboard: 2/12")
-	require.Contains(t, body, "[D] Escort available, 3 minutes")
-	require.Equal(t, "[Enter] Return to showroom   [D] Escort",
-		dialog.GetFooterGuidance())
+	require.Contains(t, body, "Skiffs aboard: 2 of 12")
+	require.Contains(t, body, "An escort there takes 3 minutes.")
+	require.Equal(t, "[Enter] Showroom [D] Escort", compactShipText(dialog.GetFooterGuidance()))
 	require.Equal(t, state, dialog.GetState())
+	requireAmountWindowHoldsItsText(t, dialog.window, "dispatch")
 
-	visible := strings.ToLower(body + " " + dialog.GetFooterGuidance())
+	visible := strings.ToLower(body)
 	for _, forbidden := range shipDialogForbiddenDetails() {
 		require.NotContains(t, visible, forbidden)
 	}
@@ -80,8 +79,9 @@ func TestShipDispatchDialogUnavailableEscortCannotEmitTravel(t *testing.T) {
 	keyboard := newWidgetTestKeyboard(0)
 	dialog := NewShipDispatchDialog(ShipDispatchDialogConfig{Keyboard: keyboard, State: state})
 
-	require.Contains(t, compactShipText(dialog.GetBodyText()), "Escort: unavailable, 3 minutes")
-	require.Equal(t, "[Enter] Return to showroom", dialog.GetFooterGuidance())
+	require.Contains(t, compactShipText(dialog.GetBodyText()), "No escort is available now.")
+	require.NotContains(t, compactShipText(dialog.GetBodyText()), "minutes")
+	require.Equal(t, "[Enter] Showroom", compactShipText(dialog.GetFooterGuidance()))
 	pressShipDispatchKey(dialog, keyboard, ebiten.KeyD)
 	require.False(t, dialog.IsDismissed())
 	require.False(t, dialog.HasPendingTravelIntent())
@@ -106,8 +106,8 @@ func TestShipDispatchDialogSemanticBackingResizeAndStrictState(t *testing.T) {
 	require.Greater(t, dialog.GetBounds().Dy(), lowBounds.Dy())
 	require.Equal(t, lowBody, compactShipText(dialog.GetBodyText()))
 	requireImageRegionContainsColor(t, screen, dialog.GetBodyBounds(), MerchantDialogBackgroundColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlKeyColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlHintColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlKeyColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlHintColor)
 
 	require.Panics(t, func() {
 		NewShipDispatchDialog(ShipDispatchDialogConfig{Keyboard: newWidgetTestKeyboard(0), State: testShipShopState()})
@@ -121,8 +121,8 @@ func TestShipDispatchDialogSemanticBackingResizeAndStrictState(t *testing.T) {
 		Keyboard: newWidgetTestKeyboard(0),
 		State:    skiffState,
 	})
-	require.Contains(t, compactShipText(skiffDialog.GetBodyText()), "Skiffs: 1 standalone")
-	require.NotContains(t, skiffDialog.GetBodyText(), "/12")
+	require.Contains(t, compactShipText(skiffDialog.GetBodyText()), "A standalone skiff.")
+	require.NotContains(t, skiffDialog.GetBodyText(), " of 12")
 	require.Equal(t, game_state.ShipBerthPendingSkiff, skiffDialog.GetState().Berth.State)
 }
 

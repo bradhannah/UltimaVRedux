@@ -1,23 +1,12 @@
 package widgets
 
 import (
-	"fmt"
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
-)
-
-const (
-	shipTravelStartPercentX = 0.28
-	shipTravelEndPercentX   = 0.72
-	shipTravelStartPercentY = 0.22
-	shipTravelEndPercentY   = 0.78
 )
 
 var _ Widget = (*ShipTravelDialog)(nil)
@@ -35,11 +24,7 @@ type ShipTravelDialog struct {
 	dismissed bool
 	cancelled bool
 	pending   *game_state.HarbourTravelReview
-	frame     *merchantModalFrame
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window    *amountWindow
 }
 
 // NewShipTravelDialog creates a centered keyboard-only harbour approval.
@@ -51,10 +36,10 @@ func NewShipTravelDialog(config ShipTravelDialogConfig) *ShipTravelDialog {
 	dialog := &ShipTravelDialog{ //nolint:exhaustruct_v5 // Transient lifecycle fields start empty.
 		keyboard: config.Keyboard,
 		intent:   config.Intent,
-		frame:    newShipMerchantModalFrame(shipTravelPlacement()),
+		window:   newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -64,9 +49,7 @@ func (d *ShipTravelDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update confirms or cancels the exact reviewed travel after release debounce.
@@ -99,14 +82,9 @@ func (d *ShipTravelDialog) ConsumePendingTravelReview() (game_state.HarbourTrave
 	return review, true
 }
 
-// GetFooterGuidance returns the keyboard-only travel controls.
-func (d *ShipTravelDialog) GetFooterGuidance() string { return "[Enter] Travel   [Esc] Back" }
-
 // GetBounds returns the centered travel modal bounds.
 func (d *ShipTravelDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the approval.
@@ -118,45 +96,24 @@ func (d *ShipTravelDialog) IsDismissed() bool { return d.dismissed }
 // Dismiss closes the travel modal without emitting a review.
 func (d *ShipTravelDialog) Dismiss() { d.dismissed = true }
 
-func (d *ShipTravelDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = newShipMerchantModalOutputs(d.frame)
-	d.populateOutputs()
-}
-
-func (d *ShipTravelDialog) populateOutputs() {
+// step describes the window: the vessel to escort, where, how long it takes, and
+// that the party leaves town beside it.
+func (d *ShipTravelDialog) step() amountStep {
 	review := d.intent.Review
-	d.headerOutput.Reset()
-	titleLine := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	if d.intent.Preview {
-		titleLine.Text("PREVIEW - ", DialogStatusWarningColor)
-	}
-	titleLine.Text("Harbour Escort", DialogHeaderColor).Done()
-	body := d.bodyOutput
-	body.Reset()
-	body.AppendLine().LightGray("Harbour: ").White(review.HarbourName).Done()
 	berth := "Moored"
 	if review.PendingDelivery {
 		berth = "Pending arrival"
 	}
-	body.AppendLine().LightGray("Berth: ").White(berth).Done()
-	body.AppendLine().LightGray("Vessel: ").White(shipVehicleName(review.VehicleType)).Done()
-	body.AppendLine().LightGray("Travel time: ").Cyanf("%d minutes", review.TimeCostMinutes).Done()
-	body.AppendLine().Text(
-		fmt.Sprintf("Escort to %s and leave town beside the vessel.", review.HarbourName),
-		DialogValueColor,
-	).WordWrap().Done()
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
-}
-
-func shipTravelPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: shipTravelStartPercentX,
-		EndPercentX:   shipTravelEndPercentX,
-		StartPercentY: shipTravelStartPercentY,
-		EndPercentY:   shipTravelEndPercentY,
+	step := emptyAmountStep()
+	step.preview, step.verb = d.intent.Preview, "Travel"
+	step.title = "Escort the " + shipVehicleName(review.VehicleType)
+	step.unit = "To " + review.HarbourName
+	step.notes = []amountNote{
+		{text: "Berth: " + berth, tone: amountPlain},
+		{text: "Travel time: " + countedNoun(review.TimeCostMinutes, "minute"), tone: amountPlain},
+		{text: "", tone: amountPlain},
+		{text: "The party leaves town beside it.", tone: amountPlain},
 	}
+
+	return step
 }

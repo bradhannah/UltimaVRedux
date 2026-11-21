@@ -19,10 +19,12 @@ func TestArmsTradeDialogOrdinaryBuyQuantityAndZeroMaxRequest(t *testing.T) {
 	dialog := newTestArmsTradeDialog(keyboard, ArmsTradeIntent{Mode: ArmsShopBuy, BuyQuote: quote})
 
 	require.Equal(t, uint16(1), dialog.GetQuantity())
-	require.Contains(t, dialog.GetBodyText(), "UNIT / TOTAL")
-	require.Contains(t, dialog.GetBodyText(), "GOLD  500  ->  450")
-	require.Contains(t, dialog.GetBodyText(), "CARRIED  8  ->  9")
-	require.NotContains(t, dialog.GetFooterGuidance(), "M:")
+	flat := dialog.window.flatText()
+	require.Contains(t, flat, "Buy Dagger 50 gold each \"A sound choice at a fair price.\"")
+	require.Contains(t, flat, "Quantity < 1 > of 3")
+	require.Contains(t, flat, "Have Then Carried 8 +1 9 Gold 500 -50 450")
+	require.NotContains(t, flat, "Faulinei")
+	require.Contains(t, flat, "[Left/Right/0-9] Quantity [M] Most [Enter] Buy 1 [Esc] Back")
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyRight)
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyRight)
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyRight)
@@ -55,9 +57,11 @@ func TestArmsTradeDialogAmmoBuyIsFixedRefillAndStillRequestsAt99(t *testing.T) {
 	quote.MaxQuantity = 0
 	dialog := newTestArmsTradeDialog(keyboard, ArmsTradeIntent{Mode: ArmsShopBuy, BuyQuote: quote})
 
-	require.Contains(t, dialog.GetBodyText(), "AMMUNITION REFILL")
-	require.Contains(t, dialog.GetBodyText(), "99  ->  99")
-	require.NotContains(t, dialog.GetFooterGuidance(), "Quantity")
+	flat := dialog.window.flatText()
+	require.Contains(t, flat, "Buy Arrows 10 gold to refill to 99")
+	require.Contains(t, flat, "Carried 99 +0 99 Gold 500 -10 490")
+	require.NotContains(t, flat, "Quantity")
+	require.Contains(t, flat, "[Enter] Buy [Esc] Back")
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyRight)
 	require.Equal(t, uint16(1), dialog.GetQuantity())
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyEnter)
@@ -73,11 +77,13 @@ func TestArmsTradeDialogSellQuantitySellAllAndCancellation(t *testing.T) {
 		QuantityBefore: 5, MaxQuantity: 3, Sellable: true,
 	}
 	dialog := newTestArmsTradeDialog(keyboard, ArmsTradeIntent{Mode: ArmsShopSell, SellQuote: quote})
-	require.Contains(t, dialog.GetFooterGuidance(), "[M] Sell all")
+	require.Contains(t, dialog.GetFooterGuidance(), "[M] Most")
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyA)
 	require.Equal(t, uint16(3), dialog.GetQuantity())
-	require.Contains(t, dialog.GetBodyText(), "500  ->  620")
-	require.Contains(t, dialog.GetBodyText(), "5  ->  2")
+	flat := dialog.window.flatText()
+	require.Contains(t, flat, "Sell Dagger 40 gold each")
+	require.Contains(t, flat, "Carried 5 -3 2 Gold 500 +120 620")
+	require.Contains(t, flat, "[Enter] Sell 3 [Esc] Back")
 	pressArmsTradeKey(dialog, keyboard, ebiten.KeyEnter)
 	request, ok := dialog.ConsumePendingRequest()
 	require.True(t, ok)
@@ -149,8 +155,8 @@ func TestArmsTradeDialogGeometryIsCenteredAndBounded(t *testing.T) {
 		})
 		bounds := dialog.GetBounds()
 		require.InDelta(t, size[0]/2, bounds.Min.X+bounds.Dx()/2, 1)
-		require.True(t, dialog.frame.bodyBounds.In(bounds))
-		require.True(t, dialog.frame.footerBounds.In(bounds))
+		require.True(t, dialog.window.frame.bodyBounds.In(bounds))
+		require.True(t, dialog.window.frame.footerBounds.In(bounds))
 	}
 }
 
@@ -165,7 +171,6 @@ func TestArmsTradeDialogResizePreservesQuantityAndRequest(t *testing.T) {
 	wantBody := dialog.GetBodyText()
 
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	dialog.ensureLayout()
 	require.Greater(t, dialog.GetBounds().Dx(), lowBounds.Dx())
 	require.Equal(t, uint16(2), dialog.GetQuantity())
 	require.Equal(t, wantBody, dialog.GetBodyText())

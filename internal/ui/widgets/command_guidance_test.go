@@ -46,7 +46,7 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 		gear           references.Equipment
 		action, status string
 	}{
-		{references.Dagger, "Equip", "Ready to equip"},
+		{references.Dagger, "Ready", "Ready to equip"},
 		{references.LeatherHelm, "Unready", "Ready to unready"},
 		{references.Arrows, "No change", "No equipment change"},
 		{references.ChainCoif, "Review replacement", "Review removed items before replacing"},
@@ -58,7 +58,7 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 			}
 			found = true
 			dialog.itemListNav.SetIndex(index)
-			status, action := dialog.selectionGuidance()
+			status, action, _ := dialog.selectionGuidance()
 			require.Equal(t, test.status, status)
 			require.Equal(t, test.action, action)
 			dialog.populateStatusOutput(dialog.statusBorder.GetInteriorBounds().Dx() - (itemDialogTextPadding+4)*2)
@@ -76,36 +76,44 @@ func TestCastGuidanceUsesResolvedTargetAndScope(t *testing.T) {
 		context references.SpellContext
 		choice  references.TargetingType
 		scope   references.SpellEffectScope
+		enter   string // What the Enter hint promises for this spell here.
 	}{
-		{references.InPor, references.ContextCombat, references.TargetAutomatic, references.ScopeCaster},
-		{references.Mani, references.ContextTown, references.TargetPartyMember, references.ScopeSingleCharacter},
-		{references.Mani, references.ContextCombat, references.TargetCombatPartyMember, references.ScopeSingleCharacter},
-		{references.AnYlem, references.ContextCombat, references.TargetAdjacentTile, references.ScopeSingleTile},
-		{references.InFlamGrav, references.ContextCombat, references.TargetTileCrosshair, references.ScopeSingleTile},
-		{references.InFlamHur, references.ContextCombat, references.TargetDirection, references.ScopeCone},
-		{references.InFlamGrav, references.ContextDungeon, references.TargetAutomatic, references.ScopeSingleTile},
+		{references.InPor, references.ContextCombat, references.TargetAutomatic, references.ScopeCaster, "Cast now"},
+		{references.InPor, references.ContextOverworld, references.TargetDirection, references.ScopeWorldTransition, "Choose direction"},
+		{references.Mani, references.ContextTown, references.TargetPartyMember, references.ScopeSingleCharacter, "Choose who"},
+		{references.Mani, references.ContextCombat, references.TargetCombatPartyMember, references.ScopeSingleCharacter, "Choose who"},
+		{references.AnYlem, references.ContextCombat, references.TargetAdjacentTile, references.ScopeSingleTile, "Aim"},
+		{references.InFlamGrav, references.ContextCombat, references.TargetTileCrosshair, references.ScopeSingleTile, "Aim"},
+		{references.InFlamHur, references.ContextCombat, references.TargetDirection, references.ScopeCone, "Aim"},
+		{references.InFlamGrav, references.ContextDungeon, references.TargetAutomatic, references.ScopeSingleTile, "Cast now"},
+		{references.VasRelPor, references.ContextTown, references.TargetMoonPhase, references.ScopeWorldTransition, "Name the phase"},
 	} {
 		for _, size := range []image.Point{{1280, 720}, {3840, 2160}} {
 			setGuidanceTestResolution(t, size.X, size.Y)
 			catalog := testMixCatalog()
 			entry := &catalog[test.spell]
 			profile := references.GetSpellTargetingProfile(test.spell, test.context)
-			entry.Targeting, entry.Scope = profile.Selection.PlayerLabel(), profile.Scope
+			entry.Targeting, entry.Scope = references.SpellTargetLabel(test.spell, test.context), profile.Scope
+			entry.Unaimed = profile.Selection == references.TargetAutomatic
 			entry.Contexts = references.GetSpellInfo(test.spell).Context.PlayerLabel()
 			dialog := NewSpellCastingDialog(newWidgetTestKeyboard(-1), &state.PartyState, test.context, catalog, state.ValidateSpellTargetingPrerequisites)
 			dialog.browser.selectID(test.spell.ID())
 			dialog.ensureLayout()
 			content := strings.Join(strings.Fields(dialog.view.body.GetOutputStr(true)), " ")
 			require.Contains(t, content, "Circle:")
-			require.Contains(t, content, "MP cost:")
-			require.Contains(t, content, test.choice.PlayerLabel())
-			require.Contains(t, content, spellScopeLabel(test.scope))
+			require.Contains(t, content, "Costs:")
+			require.NotContains(t, content, "Recipe", "recipes belong to Mix and Z-Stats")
+			require.Contains(t, content, "Target: "+entry.Targeting)
+			if entry.Unaimed {
+				require.NotContains(t, content, "Affects:", "the Target line already says what an unaimed spell falls on")
+			} else {
+				require.Contains(t, content, "Target: "+test.choice.PlayerLabel())
+				require.Contains(t, content, "Affects: "+spellScopeLabel(test.scope))
+			}
 			require.Contains(t, content, strings.Join(strings.Fields(entry.Description), " "))
 			require.Contains(t, content, "Where: "+entry.Contexts)
 			require.Positive(t, dialog.browser.pages, "overflow is accessible through detail paging")
-			if test.choice == references.TargetPartyMember || test.choice == references.TargetCombatPartyMember {
-				require.Contains(t, content, "Final confirmation spends MP and one mixture; cancelling beforehand is free.")
-			}
+			require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Enter] "+test.enter)
 		}
 	}
 }

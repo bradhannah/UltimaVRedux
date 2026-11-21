@@ -1,29 +1,22 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/internal/party_state"
+	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 const (
-	healerTreatmentStartPercentX    = 0.30
-	healerTreatmentEndPercentX      = 0.70
-	healerTreatmentStartPercentY    = 0.22
-	healerTreatmentEndPercentY      = 0.78
-	healerTreatmentHeaderRatio      = 0.16
-	healerTreatmentFooterRatio      = 0.20
-	healerTreatmentMinimumInset     = 6
-	healerTreatmentLineSpacing      = 1.12
-	healerTreatmentMaximumBodyLines = 8
-	healerTreatmentMinimumTextChars = 8
-	healerTreatmentFooterLines      = 1
+	healerWillRefuse = "The healer will refuse."
+	healerHPRow      = "HP"
+	healerMaxHPRow   = "Max HP"
+	healerLevelRow   = "Level"
 )
 
 var _ Widget = (*HealerTreatmentDialog)(nil)
@@ -42,11 +35,7 @@ type HealerTreatmentDialog struct {
 	cancelled bool
 	pending   *game_state.HealerServiceRequest
 
-	frame *merchantModalFrame
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window *amountWindow
 }
 
 // NewHealerTreatmentDialog creates a centered keyboard-only approval modal.
@@ -66,19 +55,9 @@ func NewHealerTreatmentDialog(config HealerTreatmentDialogConfig) *HealerTreatme
 		dismissed: false,
 		cancelled: false,
 		pending:   nil,
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             healerTreatmentPlacement(),
-			headerRatio:           healerTreatmentHeaderRatio,
-			footerRatio:           healerTreatmentFooterRatio,
-			minimumInset:          healerTreatmentMinimumInset,
-			lineSpacingMultiplier: healerTreatmentLineSpacing,
-			footerMinimumLines:    healerTreatmentFooterLines,
-		}),
-		headerOutput: nil,
-		bodyOutput:   nil,
-		footerOutput: nil,
+		window:    newAmountWindow(),
 	}
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -88,9 +67,7 @@ func (d *HealerTreatmentDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update confirms or cancels the treatment approval.
@@ -125,9 +102,7 @@ func (d *HealerTreatmentDialog) ConsumePendingRequest() (game_state.HealerServic
 
 // GetBounds returns the centered modal bounds.
 func (d *HealerTreatmentDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the modal.
@@ -139,66 +114,99 @@ func (d *HealerTreatmentDialog) IsDismissed() bool { return d.dismissed }
 // Dismiss closes the modal without approving treatment.
 func (d *HealerTreatmentDialog) Dismiss() { d.dismissed = true }
 
-func (d *HealerTreatmentDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing:      healerTreatmentLineSpacing,
-		maximumBodyLines: healerTreatmentMaximumBodyLines,
-		footerLines:      healerTreatmentFooterLines,
-		minimumChars:     healerTreatmentMinimumTextChars,
-		fixedBody:        false,
-	})
-	d.populateOutputs()
-}
-
-func (d *HealerTreatmentDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
-	}
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text("Approve "+healerServiceDisplayName(d.intent.Request.Service), DialogHeaderColor).Done()
-	d.bodyOutput.Reset()
+// step describes the window: the service and who it is for in the title, what it
+// changes as rows, and what it costs. A party that cannot pay still sends the
+// request, which the healer refuses, so Enter stays and says what it will do.
+func (d *HealerTreatmentDialog) step() amountStep {
+	service := d.intent.Request.Service
+	step := emptyAmountStep()
+	step.verb = service.String()
+	charge, kind, affordable := d.quote()
+	paid := kind == game_state.HealerChargePaid
 	if d.intent.IsAll() {
-		d.populateAllBody()
+		step.title = service.String() + " All"
+		step.unit = healerAllRecipients(d.intent.AllService.RecipientCount)
 	} else {
-		d.populateRecipientBody()
+		step.title = service.String() + " " + d.intent.Recipient.Name
 	}
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, "[Enter] Confirm   [Esc] Back", d.frame.footerText.Dx())
+	if paid && !affordable {
+		step.verb += tavernAnyway
+		step.notes = shortOfGoldNotes("It costs", charge, int(d.intent.Gold), healerWillRefuse)
+
+		return step
+	}
+	if !d.intent.IsAll() {
+		step.rows, step.notes = healerEffect(service, *d.intent.Recipient)
+	}
+	if paid {
+		step.rows = append(step.rows, amountRow{
+			label: amountGoldRow, have: int(d.intent.Gold), then: int(d.intent.Gold) - charge,
+		})
+
+		return step
+	}
+	step.notes = append(step.notes, amountNote{text: freeCareText(kind), tone: amountPlain})
+
+	return step
 }
 
-func (d *HealerTreatmentDialog) populateRecipientBody() {
-	recipient := d.intent.Recipient
-	projection := recipient.Treatments[int(d.intent.Request.Service)]
-	d.bodyOutput.AppendLine().Yellow("Target: ").White(recipient.Name).Done()
-	d.bodyOutput.AppendLine().
-		White(healerProjectionText(d.intent.Request.Service, *recipient, projection)).
-		WordWrap().Done()
-	priceText, priceColor := healerChargeText(d.intent.Service, d.intent.Gold)
-	d.bodyOutput.AppendLine().Text(priceText, priceColor).Done()
+// quote gives the price, how it is charged and whether the party can pay it.
+func (d *HealerTreatmentDialog) quote() (int, game_state.HealerChargeKind, bool) {
+	if d.intent.IsAll() {
+		all := d.intent.AllService
+
+		return int(all.Charge), all.ChargeKind, all.Affordable
+	}
+	one := d.intent.Service
+
+	return int(one.Charge), one.ChargeKind, one.Affordable
 }
 
-func (d *HealerTreatmentDialog) populateAllBody() {
-	count := d.intent.AllService.RecipientCount
-	label := "party members"
+func freeCareText(kind game_state.HealerChargeKind) string {
+	if kind == game_state.HealerChargeCharitable {
+		return "Charitable care. No payment."
+	}
+
+	return "Free care. No payment."
+}
+
+func healerAllRecipients(count int) string {
 	if count == 1 {
-		label = "party member"
+		return "1 party member needs it"
 	}
-	d.bodyOutput.AppendLine().Yellow("Target: ").Whitef("Roster order (%d)", count).Done()
-	d.bodyOutput.AppendLine().Whitef("%s: up to %d %s.", d.intent.Request.Service, count, label).Done()
-	priceText, priceColor := healerAllChargeText(d.intent.AllService, d.intent.Gold)
-	d.bodyOutput.AppendLine().Text(priceText, priceColor).Done()
+
+	return fmt.Sprintf("%d party members need it", count)
 }
 
-func healerTreatmentPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: healerTreatmentStartPercentX,
-		EndPercentX:   healerTreatmentEndPercentX,
-		StartPercentY: healerTreatmentStartPercentY,
-		EndPercentY:   healerTreatmentEndPercentY,
+// healerEffect gives the rows a treatment changes and a note for a status change.
+func healerEffect(service references.HealerService, recipient game_state.HealerRecipientState,
+) ([]amountRow, []amountNote) {
+	projection := recipient.Treatments[int(service)]
+	var rows []amountRow
+	if service == references.HealerResurrect && projection.LevelAfter != recipient.Level {
+		rows = append(rows, amountRow{label: healerLevelRow, have: int(recipient.Level), then: int(projection.LevelAfter)})
+	}
+	if service != references.HealerCure {
+		rows = append(rows, amountRow{label: healerHPRow, have: int(recipient.HP), then: int(projection.HPAfter)})
+		if projection.MaxHPAfter != recipient.MaxHP {
+			rows = append(rows, amountRow{
+				label: healerMaxHPRow, have: int(recipient.MaxHP), then: int(projection.MaxHPAfter),
+			})
+		}
+	}
+	switch {
+	case recipient.Status != projection.StatusAfter:
+		return rows, []amountNote{{
+			text: fmt.Sprintf("%s becomes %s.", healerStatusName(recipient.Status),
+				healerStatusName(projection.StatusAfter)),
+			tone: amountPlain,
+		}}
+	case projection.StatusAfter != party_state.Good:
+		return rows, []amountNote{{
+			text: "Still " + healerStatusName(projection.StatusAfter) + ".", tone: amountPlain,
+		}}
+	default:
+		return rows, nil
 	}
 }
 

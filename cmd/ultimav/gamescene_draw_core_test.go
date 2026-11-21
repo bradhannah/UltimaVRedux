@@ -234,3 +234,33 @@ func TestStatusBandReplacesLegacyAvatarPathAndStaysInStaticDrawBlock(t *testing.
 	})
 	assert.True(t, found)
 }
+
+// The cinematic map's frame is part of the scene. Drawn after the dialogs it cut
+// through any window opened over the map, such as the ending's recovery choice.
+func TestCinematicMapFrameIsDrawnUnderTheDialogs(t *testing.T) {
+	file, err := parser.ParseFile(token.NewFileSet(), "gamescene_draw_core.go", nil, 0)
+	require.NoError(t, err)
+	calls := map[string]token.Pos{}
+	ast.Inspect(file, func(node ast.Node) bool {
+		function, ok := node.(*ast.FuncDecl)
+		if !ok || function.Name.Name != "Draw" {
+			return true
+		}
+		ast.Inspect(function.Body, func(child ast.Node) bool {
+			call, ok := child.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			if selector, ok := call.Fun.(*ast.SelectorExpr); ok {
+				calls[selector.Sel.Name] = call.Pos()
+			}
+
+			return true
+		})
+
+		return false
+	})
+	require.Contains(t, calls, "drawCinematicMapBorder")
+	require.Contains(t, calls, "drawDialogs")
+	assert.Less(t, calls["drawCinematicMapBorder"], calls["drawDialogs"])
+}

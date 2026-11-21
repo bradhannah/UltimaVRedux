@@ -24,19 +24,19 @@ func TestTavernShopDialogLocationTabsCanonicalRowsAndBrightActiveMode(t *testing
 	}{
 		{
 			name: "mutton ale rations", state: testTavernState(references.TavernMenuMuttonAleRations),
-			information: "[C]hat", shortcut: ebiten.KeyC, wantOrderRows: []string{"Mutton", "Ale", "Rations"},
+			information: "Chat", shortcut: ebiten.KeyC, wantOrderRows: []string{"Mutton", "Ale", "Rations"},
 		},
 		{
 			name: "wine cheese", state: testTavernState(references.TavernMenuWineCheese),
-			information: "[T]alk", shortcut: ebiten.KeyT, wantOrderRows: []string{"Cheese", "Wine"},
+			information: "Talk", shortcut: ebiten.KeyT, wantOrderRows: []string{"Cheese", "Wine"},
 		},
 		{
 			name: "rum boar", state: testTavernState(references.TavernMenuRumBoar),
-			information: "[H]elp", shortcut: ebiten.KeyH, wantOrderRows: []string{"Boar", "Rum"},
+			information: "Help", shortcut: ebiten.KeyH, wantOrderRows: []string{"Boar", "Rum"},
 		},
 		{
 			name: "stout fruit provisions", state: testTavernState(references.TavernMenuStoutFruitProvisions),
-			information: "[A]dvice", shortcut: ebiten.KeyA,
+			information: "Advice", shortcut: ebiten.KeyA,
 			wantOrderRows: []string{"Fruit", "Stout", "Provisions"},
 		},
 	}
@@ -46,12 +46,12 @@ func TestTavernShopDialogLocationTabsCanonicalRowsAndBrightActiveMode(t *testing
 			dialog := newTestTavernShopDialog(keyboard, test.state, nil)
 
 			require.Equal(t, TavernShopOrder, dialog.GetMode())
-			require.Contains(t, dialog.GetModeHeaderText(), "[O]rder")
+			require.Contains(t, dialog.GetModeHeaderText(), "Order")
 			require.Contains(t, dialog.GetModeHeaderText(), test.information)
+			require.NotContains(t, dialog.GetModeHeaderText(), "[", "the tab titles carry no key letters")
+			require.Equal(t, []shopTab{{"Order", true}, {test.information, false}}, dialog.tabs())
+			require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[Tab] Order or "+test.information)
 			require.Equal(t, test.wantOrderRows, tavernOrderRowNames(dialog.GetOrderRows()))
-			colors := dialog.modeTabColors()
-			require.Equal(t, DialogLabelColor, colors[TavernShopOrder])
-			require.Equal(t, DialogEmptyColor, colors[TavernShopConversation])
 			require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[Enter] Order")
 			require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[Esc] Leave")
 			workspace := compactTavernText(dialog.GetWorkspaceText())
@@ -61,11 +61,8 @@ func TestTavernShopDialogLocationTabsCanonicalRowsAndBrightActiveMode(t *testing
 
 			pressTavernShopKey(dialog, keyboard, test.shortcut)
 			require.Equal(t, TavernShopConversation, dialog.GetMode())
-			require.NotContains(t, dialog.GetModeHeaderText(), "[O]rder")
+			require.Equal(t, []shopTab{{"Order", false}, {test.information, true}}, dialog.tabs())
 			require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[Tab/Esc] Back to Order")
-			colors = dialog.modeTabColors()
-			require.Equal(t, DialogValueColor, colors[TavernShopOrder])
-			require.Equal(t, DialogControlHintColor, colors[TavernShopConversation])
 			require.Contains(t, compactTavernText(dialog.GetWorkspaceText()), "becomes available after an order")
 			pressTavernShopKey(dialog, keyboard, ebiten.KeyLeft)
 			require.Equal(t, TavernShopOrder, dialog.GetMode())
@@ -324,12 +321,10 @@ func TestTavernShopDialogMealDrinkWineProvisionAndEscapePaths(t *testing.T) {
 		pressTavernActionKey(action, keyboard, ebiten.KeyRight)
 		require.Equal(t, 2, action.GetProvisionPackCount())
 		body := compactTavernText(action.GetBodyText())
-		require.Contains(t, body, "FOOD 50 -> 100")
-		require.Contains(t, body, "PRICE EACH / TOTAL 30 / 60 GOLD")
-		require.Contains(t, body, "GOLD 1000 -> 940")
+		require.Contains(t, body, "Food 50 +50 100 Gold 1000 -60 940")
 		pressTavernActionKey(action, keyboard, ebiten.KeyM)
 		require.Equal(t, intent.Provision.MaximumUsefulPacks, action.GetProvisionPackCount())
-		require.Contains(t, compactTavernText(action.GetBodyText()), "Only 33 of 99 packs can currently be paid for.")
+		require.Contains(t, compactTavernText(action.GetBodyText()), "The gold pays for only 33 packs.")
 		pressTavernActionKey(action, keyboard, ebiten.KeyEnter)
 		request, ok := action.ConsumePendingRequest()
 		require.True(t, ok)
@@ -612,13 +607,21 @@ func testTavernProvisionApprovals(
 		total := purchased * quote.PricePerPack
 		foodAfter := uint16(min(9999, int(quote.FoodBefore)+purchased*int(quote.Provision.PackQuantity)))
 		outcome := game_state.TavernProvisionCompleted
-		if purchased < packCount {
+		charity := false
+		switch {
+		case purchased == 0 && quote.FoodBefore < 3:
+			outcome, charity = game_state.TavernProvisionCharityEjection, true
+		case purchased == 0:
+			outcome = game_state.TavernProvisionEjection
+		case foodAfter == 9999:
+			outcome = game_state.TavernProvisionSaturated
+		case purchased < packCount:
 			outcome = game_state.TavernProvisionPartial
 		}
 		approvals[packCount-1] = game_state.TavernProvisionApproval{
 			PackCount: packCount, PurchasedPacks: purchased, Outcome: outcome,
 			TotalCost: total, GoldAfterPurchases: quote.GoldBefore - uint16(total),
-			FoodAfter: foodAfter, ActualFood: foodAfter - quote.FoodBefore,
+			FoodAfter: foodAfter, ActualFood: foodAfter - quote.FoodBefore, CharityPossible: charity,
 		}
 	}
 

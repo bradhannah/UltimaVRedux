@@ -1054,7 +1054,8 @@ func TestDungeonHoleUpZeroAndSpaceCancelRetainedCommand(t *testing.T) {
 		name string
 		keys []ebiten.Key
 	}{
-		{name: "zero", keys: []ebiten.Key{ebiten.Key0, ebiten.KeyEnter}},
+		// Zero cancels at once, as Space does: the hours are stepped, not typed and entered.
+		{name: "zero", keys: []ebiten.Key{ebiten.Key0}},
 		{name: "space", keys: []ebiten.Key{ebiten.KeySpace}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -1257,23 +1258,17 @@ func TestDungeonMixSuccessRetainsCycleUntilMixerCloses(t *testing.T) {
 	pressDungeonInputKey(t, scene, ebiten.KeyEnter)
 	pressDungeonInputKey(t, scene, ebiten.Key1)
 	pressDungeonInputKey(t, scene, ebiten.KeyEnter)
+	// A plain success opens no result box: the mixer returns to its list and stays open.
 	for range 10 {
 		state.ElapsedMs += 20
 		require.NoError(t, scene.Update(nil))
-		if mixingDialog.IsAwaitingConfirmation() {
-			break
-		}
-	}
-	require.True(t, mixingDialog.IsAwaitingConfirmation())
-	pressDungeonInputKey(t, scene, ebiten.KeyEscape)
-	for range 10 {
-		state.ElapsedMs += 20
-		require.NoError(t, scene.Update(nil))
-		if !mixingDialog.IsAwaitingConfirmation() {
-			break
-		}
+		_, box := scene.dialogStack.PeekTopModalDialog().(*widgets.OverlayDialog)
+		require.False(t, box, "a plain success opens no result box")
 	}
 	require.False(t, mixingDialog.IsAwaitingConfirmation())
+	require.Same(t, mixingDialog, scene.dialogStack.PeekTopModalDialog())
+	assert.Equal(t, spellsBefore+1, state.PartyState.Inventory.Spells.Get(references.InLor))
+	assert.False(t, state.IsAtDungeonCommandBoundary(), "the command cycle is held while the mixer is open")
 	scene.keyboard.SetAllowKeyPressImmediately()
 	pressDungeonInputKey(t, scene, ebiten.KeyEscape)
 	assert.True(t, mixingDialog.IsDismissed())
@@ -1305,6 +1300,7 @@ func TestDungeonFailedMixCompletesAfterTrapEffects(t *testing.T) {
 	pressDungeonInputKey(t, scene, ebiten.KeyA)
 	pressDungeonInputKey(t, scene, ebiten.KeyN)
 	pressDungeonInputKey(t, scene, ebiten.KeyEnter)
+	pressDungeonInputKey(t, scene, ebiten.KeyTab) // The Experiment tab, where the recipe can be spoiled.
 	pressDungeonInputKey(t, scene, ebiten.KeySpace)
 	pressDungeonInputKey(t, scene, ebiten.Key1)
 	pressDungeonInputKey(t, scene, ebiten.KeyEnter)

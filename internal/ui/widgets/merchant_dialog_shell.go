@@ -62,10 +62,6 @@ type MerchantDialogShellConfig struct {
 	MerchantSprite *ebiten.Image
 }
 
-// merchantQuantityFooter is the shared quantity approval guidance. Up/Down
-// silently alias Left/Right in every quantity approval.
-const merchantQuantityFooter = "[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back"
-
 // merchantLeaveFooter is the shared acknowledgement when a shop can only be left.
 const merchantLeaveFooter = "[Enter/Esc] Leave"
 
@@ -557,7 +553,7 @@ func parseMerchantFooterGuidance(guidance string) [][]ControlHint {
 func appendControlGuidance(output *text.Output, guidance string, width int) {
 	for _, hints := range parseMerchantFooterGuidance(guidance) {
 		if len(hints) == 0 {
-			appendControlHintRow(output.AppendLine().WithAlignment(etext.AlignCenter), nil, controlHintSeparator).Done()
+			appendControlHintRow(output.AppendLine().WithAlignment(etext.AlignCenter), nil, controlHintSeparator, nil).Done()
 		}
 		PackControlHints(output, hints, width, etext.AlignCenter)
 	}

@@ -29,13 +29,29 @@ type CastRequest struct {
 	MoonPhase datetime.MoonPhase   // Selected destination phase for TargetMoonPhase.
 }
 
+// SpellRefusal names the refusals a screen words for itself. Any other refusal
+// is described by ErrorMsg alone.
+type SpellRefusal int
+
+// Refusals the Cast list explains in its own sentence.
+const (
+	SpellRefusalOther SpellRefusal = iota
+	SpellRefusalNoMagic
+	SpellRefusalNotHere
+	SpellRefusalNotUntilVictory
+	SpellRefusalNoneMixed
+	SpellRefusalNoMP
+	SpellRefusalLevelTooLow
+)
+
 // SpellValidationResult contains the result of spell validation.
 // Used by the spell casting workflow to determine how to proceed.
 type SpellValidationResult struct {
 	Valid     bool   // Whether the spell can be cast
 	ErrorMsg  string // Error message if invalid (empty if valid)
 	SpellInfo *references.SpellInfo
-	IsAbsorb  bool // Whether magic was absorbed (special case for sound)
+	IsAbsorb  bool         // Whether magic was absorbed (special case for sound)
+	Refusal   SpellRefusal // Which refusal, when a screen words the reason itself
 }
 
 // ValidateAndConsumeSpellResources validates a spell cast request and consumes resources.
@@ -120,7 +136,7 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 		return SpellValidationResult{ErrorMsg: "Invalid caster!"}
 	}
 	if !caster.CanCastSpells() {
-		return SpellValidationResult{Valid: false, ErrorMsg: SpellNoMagicAbilityMessage}
+		return SpellValidationResult{Valid: false, ErrorMsg: SpellNoMagicAbilityMessage, Refusal: SpellRefusalNoMagic}
 	}
 	unlimitedResources := g.DebugOptions.UnlimitedCastingResources && caster.GetMaxMp() > 0
 
@@ -132,7 +148,7 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 	// Check spell context (overworld, town, dungeon, combat)
 	currentContext := g.GetCurrentSpellContext()
 	if !spellInfo.Context.HasContext(currentContext) {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!", Refusal: SpellRefusalNotHere}
 	}
 	if !IsImplementedSpellInContext(request.Spell, currentContext) {
 		return SpellValidationResult{Valid: false, ErrorMsg: SpellNotImplementedMessage}
@@ -148,32 +164,32 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 		return SpellValidationResult{Valid: false, ErrorMsg: "Absorbed!", IsAbsorb: true}
 	}
 	if currentContext == references.ContextCombat && request.Spell == references.VasMani && !g.CombatScene.Victory {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Not until victory!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not until victory!", Refusal: SpellRefusalNotUntilVictory}
 	}
 	if currentContext == references.ContextCombat && request.Spell == references.InPor &&
 		g.CombatScene.ExitContext != CombatExitSurface {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!", Refusal: SpellRefusalNotHere}
 	}
 	if !unlimitedResources && caster.GetCurrentMp() == 0 {
-		return SpellValidationResult{Valid: false, ErrorMsg: SpellNoMPMessage}
+		return SpellValidationResult{Valid: false, ErrorMsg: SpellNoMPMessage, Refusal: SpellRefusalNoMP}
 	}
 
 	// Check mixed spell count
 	mixedCount := g.PartyState.Inventory.Spells.Get(request.Spell)
 	if !unlimitedResources && mixedCount == 0 {
-		return SpellValidationResult{Valid: false, ErrorMsg: "None mixed!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "None mixed!", Refusal: SpellRefusalNoneMixed}
 	}
 
 	// Check MP - cost equals circle number
 	circle := spellInfo.Circle
 	if !unlimitedResources && int(caster.GetCurrentMp()) < circle {
-		return SpellValidationResult{Valid: false, ErrorMsg: SpellMPTooLowMessage}
+		return SpellValidationResult{Valid: false, ErrorMsg: SpellMPTooLowMessage, Refusal: SpellRefusalNoMP}
 	}
 
 	// Check caster level - must be >= spell circle.
 	// REDUX DEVIATION: SPELL-0001: circle study lifts the limit by one; ref:PROGRESS-0005.
 	if !g.DebugOptions.BypassSpellLevelRestrictions && caster.SpellCircleLimit() < circle {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Level too low!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Level too low!", Refusal: SpellRefusalLevelTooLow}
 	}
 	if validateTarget && !g.isPreparedSpellEffectTargetValid(request) {
 		message := "Invalid target!"

@@ -107,8 +107,8 @@ func (d *ReadyEquipmentDialog) appendEquippedRatings(equipment references.Equipm
 		label string
 		value int
 	}{
-		{"Attack", equipment.GetAttackValue()},
-		{"Defense", equipment.GetDefenseValue()},
+		{ratingAttack, equipment.GetAttackValue()},
+		{ratingDefense, equipment.GetDefenseValue()},
 	} {
 		if rating.value != 0 {
 			d.detailOutput.AppendLine().Text(rating.label+": ", DialogLabelColor).

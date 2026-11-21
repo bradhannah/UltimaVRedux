@@ -53,11 +53,10 @@ func (t TargetingType) String() string {
 }
 
 // PlayerLabel says how the caster aims the spell, in a player's words. String
-// keeps the plain names that logs and the Workbench use.
+// keeps the plain names that logs and the Workbench use. A spell with no aiming
+// step has no aim to describe; SpellTargetLabel says what it falls on instead.
 func (t TargetingType) PlayerLabel() string {
 	switch t {
-	case TargetAutomatic:
-		return "No aim needed"
 	case TargetCombatPartyMember:
 		return "A companion in the fight"
 	case TargetAdjacentTile:
@@ -68,8 +67,50 @@ func (t TargetingType) PlayerLabel() string {
 		return "A square you pick"
 	case TargetPartyMember, TargetDirection, TargetMoonPhase:
 		return t.String() // Already a player's word.
+	case TargetAutomatic:
+		return t.String() // Never shown: SpellTargetLabel answers for an unaimed spell.
 	default:
 		return t.String()
+	}
+}
+
+// SpellTargetLabel is the spell details' Target line for one context, in a
+// player's words: how the spell is aimed there or, for a spell cast with no
+// aiming step, who or what it falls on.
+func SpellTargetLabel(spell Spell, context SpellContext) string {
+	if selection := GetSpellTargetingProfile(spell, context).Selection; selection != TargetAutomatic {
+		return selection.PlayerLabel()
+	}
+	//nolint:exhaustive // Only spells that can be cast with no aiming step are listed.
+	switch spell {
+	case InQuasCorp, InVasPorYlem, QuasAnWis:
+		return "All foes"
+	case AnXenCorp:
+		return "All undead foes"
+	case WisQuas:
+		return "All unseen foes"
+	case AnTym:
+		return "All but the party"
+	case InAn:
+		return "All magic, yours too"
+	case RelTym, InLor, VasLor, InSanct, UusPor, DesPor:
+		return "The whole party"
+	case InXenMani:
+		return "The party's food"
+	case SanctLor, InPor: // In Por needs no aim only in battle, where it moves its caster.
+		return "The caster"
+	case InWis:
+		return "Where you stand"
+	case InQuasWis:
+		return "The area around you"
+	case WisAnYlem:
+		return "The walls around you"
+	case KalXen, InBetXen, KalXenCorp:
+		return "Somewhere on the battlefield"
+	case AnSanct, AnGrav, InFlamGrav, InNoxGrav, InZuGrav, InSanctGrav:
+		return "The square ahead" // Unaimed only in a dungeon, where they follow the party's facing.
+	default:
+		panic("spell target label: an unaimed spell has no label")
 	}
 }
 
@@ -189,8 +230,9 @@ func (c SpellContext) String() string {
 	return result
 }
 
-// PlayerLabel says where the spell may be cast, in a player's words. String keeps
-// the plain names that logs and the Workbench use.
+// PlayerLabel says where the spell may be cast, in a player's words and as a
+// place: "In battle", "On the overworld or in town". String keeps the plain
+// names that logs and the Workbench use.
 func (c SpellContext) PlayerLabel() string {
 	if c == ContextAll {
 		return "Anywhere"
@@ -198,8 +240,54 @@ func (c SpellContext) PlayerLabel() string {
 	if c == ContextNonCombat {
 		return "Outside battle"
 	}
+	label := joinSpellPlaces(c.places(true))
 
-	return c.String()
+	return strings.ToUpper(label[:1]) + label[1:]
+}
+
+// OnlyLabel says the same to a caster standing in the wrong place, after
+// "Cannot be cast here:": "battle only", "overworld or town".
+func (c SpellContext) OnlyLabel() string {
+	if c == ContextNonCombat {
+		return "not in battle"
+	}
+	places := c.places(false)
+	if len(places) == 1 {
+		return places[0] + " only"
+	}
+
+	return joinSpellPlaces(places)
+}
+
+// places names each permitted context, bare ("town") or as a place ("in town").
+func (c SpellContext) places(placed bool) []string {
+	names := [...][2]string{
+		{"overworld", "on the overworld"}, {"town", "in town"}, {"dungeon", "in a dungeon"}, {"battle", "in battle"},
+	}
+	form := 0
+	if placed {
+		form = 1
+	}
+	var places []string
+	for bit, name := range names {
+		if c&(SpellContext(1)<<bit) != 0 {
+			places = append(places, name[form])
+		}
+	}
+
+	return places
+}
+
+func joinSpellPlaces(places []string) string {
+	last := len(places) - 1
+	if last < 0 {
+		return "nowhere"
+	}
+	if last == 0 {
+		return places[0]
+	}
+
+	return strings.Join(places[:last], ", ") + " or " + places[last]
 }
 
 // HasContext returns true if the spell context includes the specified context

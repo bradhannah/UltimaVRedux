@@ -4,27 +4,10 @@ import (
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
-)
-
-const (
-	reagentPurchaseStartPercentX    = 0.27
-	reagentPurchaseEndPercentX      = 0.73
-	reagentPurchaseStartPercentY    = 0.12
-	reagentPurchaseEndPercentY      = 0.88
-	reagentPurchaseHeaderRatio      = 0.12
-	reagentPurchaseFooterRatio      = 0.17
-	reagentPurchaseMinimumInset     = 6
-	reagentPurchaseLineSpacing      = 1.12
-	reagentPurchaseMaximumBodyLines = 13
-	reagentPurchaseMinimumTextChars = 8
-	reagentPurchaseFooterLines      = 2
 )
 
 var _ Widget = (*ReagentPurchaseDialog)(nil)
@@ -46,11 +29,7 @@ type ReagentPurchaseDialog struct {
 	dismissed   bool
 	cancelled   bool
 	pending     *game_state.ReagentPurchaseRequest
-
-	frame        *merchantModalFrame
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window      *amountWindow
 }
 
 // NewReagentPurchaseDialog creates a centered keyboard-only quantity modal.
@@ -69,19 +48,9 @@ func NewReagentPurchaseDialog(config ReagentPurchaseDialogConfig) *ReagentPurcha
 		dismissed:   false,
 		cancelled:   false,
 		pending:     nil,
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             reagentPurchasePlacement(),
-			headerRatio:           reagentPurchaseHeaderRatio,
-			footerRatio:           reagentPurchaseFooterRatio,
-			minimumInset:          reagentPurchaseMinimumInset,
-			lineSpacingMultiplier: reagentPurchaseLineSpacing,
-			footerMinimumLines:    reagentPurchaseFooterLines,
-		}),
-		headerOutput: nil,
-		bodyOutput:   nil,
-		footerOutput: nil,
+		window:      newAmountWindow(),
 	}
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -91,9 +60,7 @@ func (d *ReagentPurchaseDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update processes quantity selection, confirmation, and cancellation.
@@ -101,7 +68,6 @@ func (d *ReagentPurchaseDialog) Update() {
 	if d.dismissed {
 		return
 	}
-	d.ensureLayout()
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
 		d.cancelled = true
 		d.Dismiss()
@@ -123,18 +89,10 @@ func (d *ReagentPurchaseDialog) Update() {
 }
 
 func (d *ReagentPurchaseDialog) handleQuantityInput() bool {
-	key, owned := d.pollQuantityInput()
-	if key == nil {
-		return owned
-	}
-	switch *key { //nolint:exhaustive // The quantity helper returns only this dialog's configured keys.
-	case ebiten.KeyM:
-		d.setBundleCount(uint16(len(d.quote.ApprovalViews))) //nolint:gosec // Valid reagent quotes contain at most 99 views.
-	case ebiten.KeyLeft, ebiten.KeyUp:
-		d.setBundleCount(max(uint16(1), d.bundleCount-1))
-	case ebiten.KeyRight, ebiten.KeyDown:
-		maximum := uint16(len(d.quote.ApprovalViews)) //nolint:gosec // Valid quotes contain at most 99 views.
-		d.setBundleCount(min(maximum, d.bundleCount+1))
+	count, owned := d.pollAmount(int(d.bundleCount), len(d.quote.ApprovalViews))
+	if count != int(d.bundleCount) {
+		d.bundleCount = uint16(count) //nolint:gosec // Valid reagent quotes contain at most 99 views.
+		d.window.set(d.step())
 	}
 
 	return owned
@@ -158,9 +116,7 @@ func (d *ReagentPurchaseDialog) GetApprovalView() game_state.ReagentPurchaseAppr
 
 // GetBounds returns the centered opaque modal bounds.
 func (d *ReagentPurchaseDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the modal without confirmation.
@@ -175,83 +131,26 @@ func (d *ReagentPurchaseDialog) Dismiss() {
 	d.dismissed = true
 }
 
-func (d *ReagentPurchaseDialog) setBundleCount(count uint16) {
-	if count == d.bundleCount {
-		return
-	}
-	d.bundleCount = count
-	d.populateOutputs()
-}
-
-func (d *ReagentPurchaseDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: reagentPurchaseLineSpacing, maximumBodyLines: reagentPurchaseMaximumBodyLines,
-		footerLines: reagentPurchaseFooterLines, minimumChars: reagentPurchaseMinimumTextChars, fixedBody: false,
-	})
-	d.populateOutputs()
-}
-
-func (d *ReagentPurchaseDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
-	}
+// step describes the amount window for the bundle count chosen.
+func (d *ReagentPurchaseDialog) step() amountStep {
 	approval := d.GetApprovalView()
-	d.headerOutput.Reset()
-	header := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	if d.preview {
-		header.Text("PREVIEW - ", DialogStatusWarningColor)
+	step := emptyAmountStep()
+	step.title, step.preview = amountBuyVerb+" "+approval.ReagentName, d.preview
+	step.unit = bundleUnitPrice(approval.PricePerBundle, int(approval.BundleQuantity))
+	step.noun, step.verb = "Bundles", amountBuyVerb
+	step.count, step.most = int(approval.BundleCount), int(approval.MaxBundles)
+	step.rows = []amountRow{
+		{label: amountCarriedRow, have: int(approval.QuantityBefore), then: int(approval.QuantityAfter)},
+		{label: amountGoldRow, have: int(approval.GoldBefore), then: int(approval.GoldAfterPayment)},
 	}
-	header.Text("Purchase "+approval.ReagentName, DialogHeaderColor).Done()
-
-	d.bodyOutput.Reset()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("Bundles (before theft)").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White("<   ").Yellowf("%d", approval.BundleCount).White("   >").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGrayf("of %d max", approval.MaxBundles).Done()
-	d.bodyOutput.AppendLine().Whitef("%d %s per bundle", approval.BundleQuantity, approval.ReagentName).Done()
-	d.bodyOutput.AppendLine().LightGray("Requested quantity: ").Whitef("%d", approval.RequestedQuantity).Done()
-	d.bodyOutput.AppendLine().LightGray("Inventory: ").Cyanf("%d", approval.QuantityBefore).
-		White(" -> ").LightGreenf("%d", approval.QuantityAfter).Done()
-	d.bodyOutput.AppendLine().LightGray("Maximum receipt: ").LightGreenf("%d", approval.ActualReceipt).Done()
-	d.bodyOutput.AppendLine().LightGray("Price per bundle: ").Yellowf("%d gold", approval.PricePerBundle).Done()
-	d.bodyOutput.AppendLine().LightGray("Total price: ").Yellowf("%d gold", approval.TotalPrice).Done()
-	d.bodyOutput.AppendLine().LightGray("Gold: ").Cyanf("%d", approval.GoldBefore).
-		White(" -> ").LightGreenf("%d", approval.GoldAfterPayment).Done()
+	if d.quote.ApprovalViews[len(d.quote.ApprovalViews)-1].PaidOverflow {
+		step.reserve = 1
+	}
 	if approval.PaidOverflow {
-		d.bodyOutput.AppendLine().Textf(
-			"%d %s will not fit.",
-			DialogStatusWarningColor,
-			approval.OverflowQuantity,
-			reagentOverflowNoun(approval.OverflowQuantity),
-		).WordWrap().Done()
-		d.bodyOutput.AppendLine().Text(
-			"Full bundle prices apply.", DialogStatusWarningColor,
-		).Done()
+		step.notes = overflowNote(int(approval.OverflowQuantity))
 	}
 
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, merchantQuantityFooter, d.frame.footerText.Dx())
-}
-
-func reagentOverflowNoun(quantity uint16) string {
-	if quantity == 1 {
-		return "reagent"
-	}
-
-	return "reagents"
-}
-
-func reagentPurchasePlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: reagentPurchaseStartPercentX,
-		EndPercentX:   reagentPurchaseEndPercentX,
-		StartPercentY: reagentPurchaseStartPercentY,
-		EndPercentY:   reagentPurchaseEndPercentY,
-	}
+	return step
 }
 
 func emptyReagentPurchaseRequest() game_state.ReagentPurchaseRequest {

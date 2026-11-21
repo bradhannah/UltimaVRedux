@@ -56,6 +56,14 @@ func TestLordBritishFinaleSuccessWorkflowReachesRetainedCertificate(t *testing.T
 	assert.Nil(t, scene.miniMapScene)
 	assert.False(t, scene.gameState.EventQueueManager.HasWorkflow(lordBritishFinaleWorkflow))
 	assert.False(t, scene.gameState.EventQueueManager.HasActiveWorkflows())
+	for _, stray := range []ebiten.Key{ebiten.KeySpace, ebiten.KeyA, ebiten.KeyEscape, ebiten.KeyUp} {
+		scene.keyboard.SimulateKeyPress(stray)
+		assert.Equal(t, finaleInputNone, scene.updateLordBritishFinaleInput(),
+			"a stray key must not dismiss the record of the game")
+	}
+	assert.Equal(t, finaleSuccessCertificate, presentation.mode)
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
+	assert.Equal(t, finaleInputReturnToMainMenu, scene.updateLordBritishFinaleInput(), "only Enter leaves it")
 	assert.False(t, scene.inputBlocked)
 	assert.False(t, scene.gameState.CanAcceptGameplayCommands())
 	gateTile, ok := scene.gameState.LordBritishFinaleTile(presentation.review.BoxMoongatePosition)
@@ -387,6 +395,11 @@ func TestFinaleCertificateAcknowledgementReturnsToMainMenu(t *testing.T) {
 	}
 
 	scene.keyboard.SimulateKeyPress(ebiten.KeySpace)
+	require.NoError(t, scene.Update(game))
+	assert.Same(t, scene, game.currentScene, "a stray key leaves the certificate up")
+	assert.False(t, scene.disposed)
+
+	scene.keyboard.SimulateKeyPress(ebiten.KeyEnter)
 	require.NoError(t, scene.Update(game))
 
 	assert.Same(t, replacement, game.currentScene)

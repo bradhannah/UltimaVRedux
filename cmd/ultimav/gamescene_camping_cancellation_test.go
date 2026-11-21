@@ -33,7 +33,7 @@ func enterCampingDuration(t *testing.T, scene *GameScene, update func()) {
 	t.Helper()
 	for range 100 {
 		update()
-		if _, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.InputBox); ok {
+		if _, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.HoursPrompt); ok {
 			for _, key := range []ebiten.Key{ebiten.Key1, ebiten.KeyEnter} {
 				scene.keyboard.SimulateKeyPress(key)
 				update()

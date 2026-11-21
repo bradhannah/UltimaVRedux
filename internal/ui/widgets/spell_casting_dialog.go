@@ -3,6 +3,7 @@ package widgets
 import (
 	"fmt"
 	"image"
+	"math"
 	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -45,19 +46,20 @@ func NewSpellCastingDialog(keyboard *input.Keyboard, party *party_state.PartySta
 		panic("SpellCastingDialog: keyboard, party and validation are required")
 	}
 	//nolint:exhaustruct_v5 // Optional intents and selection state start empty; layout initializes presentation.
-	d := &SpellCastingDialog{keyboard: keyboard, partyState: party, currentContext: context,
+	dialog := &SpellCastingDialog{keyboard: keyboard, partyState: party, currentContext: context,
 		browser: newSpellBrowser(catalog), validate: validate}
-	d.browser.ready = d.spellAvailable
-	d.ensureLayout()
+	dialog.browser.ready, dialog.browser.readyFirst = dialog.spellAvailable, true
+	dialog.browser.refilter()
+	dialog.view.entry = dialog.appendEntry
+	dialog.ensureLayout()
 
-	return d
+	return dialog
 }
 
 func (d *SpellCastingDialog) ensureLayout() {
 	width, height := display.GetManager().GetCurrentSize()
 	d.view.layout(width, height)
-	statusHeight := d.view.lineHeight*spellBrowserRowLines + d.view.padding
-	d.view.configureDetails(d.browser, d.controls(), statusHeight, d.appendCastDetails)
+	d.view.configureDetails(d.browser, d.writeFooter)
 }
 
 // RefreshCatalog retains the filter, caster and selected identity after mixing.
@@ -81,9 +83,7 @@ func (d *SpellCastingDialog) Update() {
 		return
 	}
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter) || d.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter) {
-		if !d.browser.searching || d.browser.current() != nil {
-			d.attemptCast()
-		}
+		d.attemptCast()
 
 		return
 	}
@@ -110,7 +110,7 @@ func (d *SpellCastingDialog) handleMixShortcut() bool {
 		return false
 	}
 	if d.currentContext == references.ContextCombat {
-		d.notice = "Cannot mix during combat."
+		d.notice = "Cannot mix during battle."
 	} else if spell := d.GetSelectedSpell(); spell != references.InvalidSpell {
 		d.pendingMixSpell = &spell
 	}
@@ -119,7 +119,7 @@ func (d *SpellCastingDialog) handleMixShortcut() bool {
 }
 
 // handleCasterKeys changes an unlocked caster with Tab/Shift+Tab, or with a
-// party digit while not searching. It reports whether the caster key was used.
+// caster's party digit while not searching. It reports whether the key was used.
 func (d *SpellCastingDialog) handleCasterKeys() bool {
 	if d.casterSelectionLocked {
 		return false
@@ -145,7 +145,8 @@ func (d *SpellCastingDialog) handleCasterKeys() bool {
 	return false
 }
 
-// Draw renders the shared catalog with a caster strip and fixed action status.
+// Draw renders the shared catalog under the casters. Whether Enter will work is
+// the first line of the selected spell's details.
 func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 	if d.isDismissed {
 		return
@@ -153,67 +154,220 @@ func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
 	view := &d.view
 	view.drawFrame(screen)
-	header := view.headerRect.Inset(view.padding)
-	prepareSpellOutput(view.title, header)
-	view.title.AppendLine().Text("CAST", DialogHeaderColor).Done()
-	if caster := d.getSelectedCaster(); caster != nil {
-		line := appendSpellField(view.title.AppendLine(), spellCasterLabel, caster.GetNameAsString())
-		line.Text("   ", DialogValueColor)
-		appendSpellField(line, "Level", strconv.Itoa(int(caster.Level))).Text("   ", DialogValueColor)
-		appendSpellField(line, "MP", fmt.Sprintf("%d / %d", caster.GetCurrentMp(), caster.GetMaxMp())).Done()
-	}
-	drawSpellOutput(screen, view.title, header, 0, spellBrowserRowLines)
+	d.drawHeader(screen)
 	view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
 	view.drawList(screen, d.browser, view.listRect.Inset(view.padding), d.spellAvailable)
-	detail := view.detailRect.Inset(view.padding)
-	statusHeight := view.lineHeight * spellBrowserRowLines
-	status := image.Rect(detail.Min.X, detail.Max.Y-statusHeight, detail.Max.X, detail.Max.Y)
 	view.drawDetails(screen, d.browser)
-	d.drawStatus(screen, status)
 	view.drawFooter(screen)
 	view.finishFrame(screen)
 }
 
-func (d *SpellCastingDialog) appendCastDetails(output *text.Output) {
-	output.AppendLine().Text("Final confirmation spends MP and one mixture; cancelling beforehand is free.",
-		DialogControlHintColor).WordWrap().Done()
-	if d.currentContext == references.ContextCombat {
-		output.AppendLine().Text("Cancelling before final confirmation preserves the combat action.",
-			DialogControlHintColor).WordWrap().Done()
+// drawHeader names the screen and the chosen caster's level and MP, and under
+// them everyone who can cast.
+func (d *SpellCastingDialog) drawHeader(screen *ebiten.Image) {
+	view := &d.view
+	header := view.headerRect.Inset(view.padding)
+	prepareSpellOutput(view.title, header)
+	view.title.AppendLine().Text("CAST", DialogHeaderColor).Done()
+	drawSpellOutput(screen, view.title, header, 0, 1)
+	caster := d.getSelectedCaster()
+	if caster == nil {
+		return
 	}
+	level, magic := strconv.Itoa(int(caster.Level)), fmt.Sprintf("%d / %d", caster.GetCurrentMp(), caster.GetMaxMp())
+	width, _ := view.title.Font.MeasureString("Level: " + level + "   MP: " + magic)
+	facts := header
+	facts.Min.X = max(header.Min.X, header.Max.X-int(math.Ceil(width)))
+	prepareSpellOutput(view.title, facts)
+	line := appendSpellField(view.title.AppendLine(), "Level", level).Text("   ", DialogValueColor)
+	appendSpellField(line, "MP", magic).Done()
+	drawSpellOutput(screen, view.title, facts, 0, 1)
+	d.drawCasters(screen, image.Rect(header.Min.X, header.Max.Y-view.lineHeight, header.Max.X, header.Max.Y))
+}
+
+// drawCasters lists the members who can cast, each with their place in the
+// party, the chosen one on the tab plate. In battle the caster is whoever's turn
+// it is, so the row only names them.
+func (d *SpellCastingDialog) drawCasters(screen *ebiten.Image, rect image.Rectangle) {
+	view := &d.view
+	letter, _ := view.font.MeasureString("M")
+	left := rect.Min.X + int(math.Ceil(letter))
+	if d.casterSelectionLocked {
+		rect.Min.X = left
+		prepareSpellOutput(view.casters, rect)
+		view.casters.AppendLine().Text(d.getSelectedCaster().GetNameAsString(), DialogValueColor).
+			Text(", whose turn it is", DialogControlHintColor).Done()
+		drawSpellOutput(screen, view.casters, rect, 0, 1)
+
+		return
+	}
+	places := d.casters()
+	labels, total := make([]string, len(places)), 0.0
+	for index, place := range places {
+		labels[index] = strconv.Itoa(place+1) + " " + d.partyState.GetCharacter(place).GetNameAsString()
+		width, _ := view.font.MeasureString(labels[index])
+		total += math.Ceil(width)
+	}
+	// Six casters with long names fit only with a narrower gap.
+	gap := casterGapLetters
+	for gap > 1 && total+letter*float64(gap*(len(places)-1)+casterGapLetters) > float64(rect.Dx()) {
+		gap--
+	}
+	unit, fontHeight := getClassicUIPixelUnit(view.width, view.height), int(math.Ceil(view.casters.GetFontHeight()))
+	for index, place := range places {
+		width, _ := view.font.MeasureString(labels[index])
+		cell := image.Rect(left, rect.Min.Y, left+int(math.Ceil(width)), rect.Max.Y)
+		textColor := DialogTabColor
+		if place == d.selectedCasterIdx {
+			textColor = DialogActiveTabText
+			DrawActiveTabPlate(screen, cell, width, cell.Min.Y, fontHeight, unit)
+		}
+		prepareSpellOutput(view.casters, cell)
+		view.casters.AppendLine().Text(labels[index], textColor).Done()
+		drawSpellOutput(screen, view.casters, cell, 0, 1)
+		left = cell.Max.X + int(math.Ceil(letter))*gap
+	}
+}
+
+// casters are the party places of the members who can cast now, in party order.
+func (d *SpellCastingDialog) casters() []int {
+	var places []int
+	for place := range zStatsDossierCharacterSelectors {
+		if d.canCast(place) {
+			places = append(places, place)
+		}
+	}
+
+	return places
+}
+
+// canCast applies the game's rule for who may be chosen to cast: a member of
+// the party whose class has magic and who is fit to act.
+func (d *SpellCastingDialog) canCast(place int) bool {
+	if !d.partyState.HasCharacter(place) {
+		return false
+	}
+	member := d.partyState.GetCharacter(place)
+
+	return member.IsInParty() && member.CanCastSpells() && (member.IsGood() || member.IsPoisoned())
+}
+
+// appendEntry writes what a caster needs to know: whether Enter will work and
+// why not, then what the spell does, what it costs and what it is aimed at.
+// Recipes and stock belong to Mix and Z-Stats.
+func (d *SpellCastingDialog) appendEntry(output *text.Output, spell game_state.ZStatsSpell) {
+	d.appendStatus(output.AppendLine(), spell).WordWrap().Done()
+	output.AppendLine().Text(spell.Description, DialogValueColor).WordWrap().Done()
+	appendSpellField(output.AppendLine(), "Prepared", strconv.Itoa(int(spell.Prepared))).Done()
+	line := appendSpellField(output.AppendLine(), "Circle", strconv.Itoa(spell.Circle)).Text("   ", DialogValueColor)
+	appendSpellField(line, "Costs", strconv.Itoa(spell.MPCost)+" MP").Done()
+	appendSpellAim(output, spell)
+}
+
+// appendStatus is the line under the spell's name. A refusal is a sentence with
+// its reason in the red that reads on black.
+func (d *SpellCastingDialog) appendStatus(line *text.LineBuilder, spell game_state.ZStatsSpell) *text.LineBuilder {
+	if d.notice != "" {
+		return line.Text(d.notice, DialogWarningColor)
+	}
+	result := d.check(references.Spell(spell.ID))
+	if result.Valid {
+		return line.Text("Ready to cast.", DialogLabelColor)
+	}
+	line.Text(d.refusal(spell, result), DialogWarningColor)
+	mixable := usefulSpellMixCount(spell)
+	if result.Refusal == game_state.SpellRefusalNoneMixed && mixable > 0 && d.currentContext != references.ContextCombat {
+		AppendControlHints(line.Text(" ", DialogControlHintColor), fmt.Sprintf("[Ctrl+M] Mix up to %d", mixable))
+	}
+
+	return line
+}
+
+// refusal says why the selected caster cannot cast the spell here, with the
+// figure that matters. A refusal with no sentence of its own keeps the game's words.
+func (d *SpellCastingDialog) refusal(spell game_state.ZStatsSpell, result game_state.SpellValidationResult) string {
+	if result.IsAbsorb {
+		return "Magic is absorbed here."
+	}
+	caster := d.getSelectedCaster()
+	switch result.Refusal {
+	case game_state.SpellRefusalNoMagic:
+		return caster.GetNameAsString() + " has no magical ability."
+	case game_state.SpellRefusalNotHere:
+		where := references.GetSpellInfo(references.Spell(spell.ID)).Context
+		if where.HasContext(d.currentContext) {
+			return "Cannot be cast here."
+		}
+
+		return "Cannot be cast here: " + where.OnlyLabel() + "."
+	case game_state.SpellRefusalNotUntilVictory:
+		return "Not until the battle is won."
+	case game_state.SpellRefusalNoneMixed:
+		return "None prepared."
+	case game_state.SpellRefusalNoMP:
+		return fmt.Sprintf("Not enough MP: costs %d, %s has %d.",
+			spell.MPCost, caster.GetNameAsString(), caster.GetCurrentMp())
+	case game_state.SpellRefusalLevelTooLow:
+		return fmt.Sprintf("%s cannot cast the %s Circle yet.", caster.GetNameAsString(), circleOrdinal(spell.Circle))
+	case game_state.SpellRefusalOther:
+		return result.ErrorMsg
+	default:
+		panic("SpellCastingDialog: unknown spell refusal")
+	}
+}
+
+func circleOrdinal(circle int) string {
+	irregular := [...]string{"1st", "2nd", "3rd"}
+	if circle >= 1 && circle <= len(irregular) {
+		return irregular[circle-1]
+	}
+
+	return strconv.Itoa(circle) + "th"
+}
+
+// check asks the rules whether the selected caster may begin casting the spell.
+// Targeting follows selection, so no target is part of the question.
+func (d *SpellCastingDialog) check(spell references.Spell) game_state.SpellValidationResult {
+	var request game_state.CastRequest
+	request.Spell, request.CasterIdx = spell, d.selectedCasterIdx
+
+	return d.validate(request)
+}
+
+// entersWorkflow reports whether Enter hands the spell on. Absorption feedback
+// is workflow-owned, so an absorbed cast still goes through.
+func (d *SpellCastingDialog) entersWorkflow(spell references.Spell) bool {
+	result := d.check(spell)
+
+	return result.Valid || result.IsAbsorb
 }
 
 func (d *SpellCastingDialog) spellAvailable(spell game_state.ZStatsSpell) bool {
-	//nolint:exhaustruct_v5 // List readiness validates prerequisites without selecting a target or spending resources.
-	result := d.validate(game_state.CastRequest{Spell: references.Spell(spell.ID), CasterIdx: d.selectedCasterIdx})
-
-	return result.Valid
+	return d.check(references.Spell(spell.ID)).Valid
 }
 
-func (d *SpellCastingDialog) drawStatus(screen *ebiten.Image, rect image.Rectangle) {
-	d.prepareStatus(rect)
-	drawSpellOutput(screen, d.view.status, rect, 0, d.view.status.GetPanelContentLineCount())
-}
+// enterAction names what Enter leads to for the spell here, so the key itself
+// says whether this press spends the mixture or opens a step that can be left.
+func (d *SpellCastingDialog) enterAction(spell references.Spell) string {
+	inBattle := d.currentContext == references.ContextCombat
+	switch references.GetSpellTargetingProfile(spell, d.currentContext).Selection {
+	case references.TargetAutomatic:
+		return "Cast now"
+	case references.TargetPartyMember, references.TargetCombatPartyMember:
+		return "Choose who"
+	case references.TargetMoonPhase:
+		return "Name the phase"
+	case references.TargetDirection, references.TargetAdjacentTile:
+		if !inBattle {
+			return "Choose direction"
+		}
 
-func (d *SpellCastingDialog) prepareStatus(rect image.Rectangle) {
-	output := d.view.status
-	prepareSpellOutput(output, rect)
-	valid, message := d.getSpellValidationStatus()
-	statusColor := DialogStatusWarningColor
-	if valid {
-		message, statusColor = "Ready to cast", DialogStatusOKColor
-	} else if message == "None mixed!" {
-		message = "Prepare a mixture first."
+		return spellAimAction
+	case references.TargetCombatantCrosshair, references.TargetTileCrosshair:
+		return spellAimAction
+	default:
+		panic("SpellCastingDialog: unknown spell targeting")
 	}
-	if d.notice != "" {
-		message = d.notice
-		statusColor = DialogStatusWarningColor
-	}
-	line := output.AppendLine().Text(message, statusColor)
-	if !valid && d.notice == "" && message == "Prepare a mixture first." && d.currentContext != references.ContextCombat {
-		AppendControlHints(line.Text(controlHintSeparator, DialogControlHintColor), "[Ctrl+M] Mix")
-	}
-	line.WordWrap().Done()
 }
 
 // Dismiss closes the selector; its workflow removes the exact modal instance.
@@ -254,83 +408,56 @@ func (d *SpellCastingDialog) ConsumePendingCastRequest() game_state.CastRequest 
 	return request
 }
 
-func (d *SpellCastingDialog) getSpellValidationStatus() (bool, string) {
-	if d.GetSelectedSpell() == references.InvalidSpell {
-		return false, "No spell selected"
-	}
-	//nolint:exhaustruct_v5 // Targeting is collected by the workflow after this prerequisite check.
-	result := d.validate(game_state.CastRequest{Spell: d.GetSelectedSpell(), CasterIdx: d.selectedCasterIdx})
-
-	return result.Valid, result.ErrorMsg
-}
+// attemptCast hands a spell that can be cast to the workflow. A refused spell
+// stays put: the line under its name already says why.
 func (d *SpellCastingDialog) attemptCast() {
-	d.notice = ""
-	if d.GetSelectedSpell() == references.InvalidSpell {
-		d.notice = "No spell selected."
-
+	spell := d.GetSelectedSpell()
+	if spell == references.InvalidSpell {
 		return
 	}
-	//nolint:exhaustruct_v5 // Targeting follows selection; absorption feedback remains workflow-owned.
-	request := game_state.CastRequest{Spell: d.GetSelectedSpell(), CasterIdx: d.selectedCasterIdx}
-	result := d.validate(request)
-	if !result.Valid && !result.IsAbsorb {
-		d.notice = result.ErrorMsg
-
-		return
+	if d.entersWorkflow(spell) {
+		var request game_state.CastRequest
+		request.Spell, request.CasterIdx = spell, d.selectedCasterIdx
+		d.pendingCastRequest = &request
 	}
-	d.pendingCastRequest = &request
 }
+
 func (d *SpellCastingDialog) selectCaster(index int) {
-	if d.casterSelectionLocked || index < 0 || index >= 6 || !d.partyState.HasCharacter(index) {
+	if d.casterSelectionLocked || !d.canCast(index) {
 		return
 	}
-	caster := d.partyState.GetCharacter(index)
-	if caster.IsInParty() && caster.IsAlive() {
-		d.selectedCasterIdx = index
-		d.notice = ""
-		d.browser.refilter() // Ready depends on who is casting.
-	}
+	d.selectedCasterIdx = index
+	d.notice = ""
+	d.browser.refilter() // What can be cast depends on who is casting.
 }
 
-// SetInitialCaster restores the workflow's previously selected caster.
-func (d *SpellCastingDialog) SetInitialCaster(index int) { d.selectCaster(index) }
+// SetInitialCaster restores the workflow's previously selected caster and opens
+// the list on the first spell that caster can cast.
+func (d *SpellCastingDialog) SetInitialCaster(index int) {
+	d.selectCaster(index)
+	d.browser.selected = 0
+}
 
-// LockCasterSelection restricts combat casting to the active actor. In battle the
-// list then opens on what that actor can cast right now, so spells that are
-// mixed but beyond them are out of the way; with nothing ready it opens on every
-// known spell rather than an empty list.
+// LockCasterSelection restricts combat casting to the active actor, whose
+// castable spells then head the list.
 func (d *SpellCastingDialog) LockCasterSelection(index int) {
 	if index < 0 || index >= 6 {
 		panic("SpellCastingDialog: invalid caster index")
 	}
 	d.selectedCasterIdx, d.casterSelectionLocked = index, true
-	if d.currentContext != references.ContextCombat {
-		d.browser.refilter()
-
-		return
-	}
-	d.browser.filterMode = spellFilterReady
 	d.browser.refilter()
-	if len(d.browser.filtered) == 0 {
-		d.browser.filterMode = spellFilterAll
-		d.browser.refilter()
-	}
+	d.browser.selected = 0
 }
 func (d *SpellCastingDialog) cycleCaster(direction int) {
 	if d.casterSelectionLocked {
 		return
 	}
-	for step := 1; step <= zStatsDossierCharacterSelectors; step++ {
+	for step := 1; step < zStatsDossierCharacterSelectors; step++ {
 		index := (d.selectedCasterIdx + direction*step + zStatsDossierCharacterSelectors) % zStatsDossierCharacterSelectors
-		if d.partyState.HasCharacter(index) {
-			caster := d.partyState.GetCharacter(index)
-			if caster.IsInParty() && caster.IsAlive() {
-				d.selectedCasterIdx = index
-				d.notice = ""
-				d.browser.refilter() // Ready depends on who is casting.
+		if d.canCast(index) {
+			d.selectCaster(index)
 
-				return
-			}
+			return
 		}
 	}
 }

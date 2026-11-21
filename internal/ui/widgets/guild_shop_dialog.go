@@ -462,7 +462,7 @@ func (d *GuildShopDialog) configureStatusOutput() {
 func (d *GuildShopDialog) drawCatalog(screen *ebiten.Image) {
 	drawMerchantPane(screen, d.catalogBounds, d.pixelUnit())
 
-	headings := [...]string{"Item", "Bundle", "Owned", "Price"}
+	headings := [...]string{"Item", "Bundle", "Owned", shopHeadingPrice}
 	for index, heading := range headings {
 		d.drawCatalogCell(screen, d.catalogHeader, d.catalogColumns[index], heading, DialogLabelColor, etext.AlignCenter)
 	}

@@ -7,6 +7,9 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
+// GetHours returns the hours of rest currently chosen.
+func (p *HoursPrompt) GetHours() int { return p.hours }
+
 // GetMode returns the active Buy or Sell table.
 func (d *ArmsShopDialog) GetMode() ArmsShopMode { return d.mode }
 
@@ -177,11 +180,7 @@ func (d *HealerShopDialog) IsPreview() bool { return d.preview }
 
 // GetBodyText returns the target, effect, and charge presentation.
 func (d *HealerTreatmentDialog) GetBodyText() string {
-	if d.bodyOutput == nil {
-		return ""
-	}
-
-	return d.bodyOutput.GetOutputStr(false)
+	return d.window.body.GetOutputStr(false)
 }
 
 // GetIntent returns the detached approval data displayed by the modal.
@@ -487,11 +486,7 @@ func (d *TavernResultDialog) GetView() TavernResultView { return d.view }
 
 // GetBodyText returns the rich result body for focused tests.
 func (d *TavernResultDialog) GetBodyText() string {
-	if d.bodyOutput == nil {
-		return ""
-	}
-
-	return d.bodyOutput.GetOutputStr(false)
+	return d.window.body.GetOutputStr(false)
 }
 
 // HasPendingTopicIntent reports whether workflow must ask authority to match raw input.

@@ -719,24 +719,22 @@ func (d *QuestJournalDialog) appendNoteSearchEntries() {
 		if note.Done {
 			searchable += " Done"
 		}
-		source := section.Name + " - " + fmt.Sprintf("%d-%d-%d", note.RecordedAt.Month, note.RecordedAt.Day,
-			note.RecordedAt.Year)
+		lines := []questJournalSearchLine{{label: "", value: note.Text}, {label: journalLabelSection, value: section.Name}}
 		if note.Place != "" {
-			source += " - " + note.Place
+			lines = append(lines, questJournalSearchLine{label: journalLabelPlace, value: note.Place})
 		}
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
 			tab: QuestJournalNotesTab, row: -1, noteID: note.ID, mapNote: false, title: note.ListTitle(),
-			text: strings.ToLower(searchable), source: source, body: body, snippet: "",
+			text: strings.ToLower(searchable), lines: lines, label: "", snippet: "",
 		})
 	}
 	for _, note := range d.notesView.mapNotes {
 		body := strings.TrimSpace(note.Label + " " + note.Description)
-		source := fmt.Sprintf("%s - Map note - %d-%d-%d", journal.NoteSectionPlacesName, note.RecordedAt.Month,
-			note.RecordedAt.Day, note.RecordedAt.Year)
+		lines := []questJournalSearchLine{{label: "", value: note.Description}}
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
 			tab: QuestJournalNotesTab, row: -1, noteID: note.ID, mapNote: true, title: mapNoteTitle(note),
-			text: strings.ToLower(body + " " + journal.NoteSectionPlacesName + " Map"), source: source, body: body,
-			snippet: "",
+			text: strings.ToLower(body + " " + journal.NoteSectionPlacesName + " Map"), lines: lines,
+			label: "", snippet: "",
 		})
 	}
 }

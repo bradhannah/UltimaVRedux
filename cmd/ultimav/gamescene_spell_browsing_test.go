@@ -231,6 +231,7 @@ func TestCastMixCancellationAndFailureResumeParent(t *testing.T) {
 				return ok
 			})
 			if failed {
+				press(ebiten.KeyTab) // The Experiment tab: swap Sulfurous Ash for Ginseng.
 				press(ebiten.KeySpace)
 				press(ebiten.KeyDown)
 				press(ebiten.KeySpace)

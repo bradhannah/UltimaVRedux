@@ -3,7 +3,6 @@ package widgets
 import (
 	"fmt"
 	"image"
-	stdcolor "image/color"
 	"math"
 	"strings"
 	"unicode"
@@ -347,6 +346,12 @@ func (d *TavernShopDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
 	d.shell.DrawBackground(screen)
 	d.shell.DrawCommonRegions(screen)
+	row := 0
+	if d.preview {
+		row = 1
+	}
+	drawShopTabPlate(screen, d.modeOutput, d.modeBounds, getClassicUIPixelUnit(d.lastScreenWidth, d.lastScreenHeight),
+		row, "", d.tabs())
 	d.modeOutput.DrawPanelContent(
 		screen,
 		image.Pt(d.modeBounds.Min.X, verticallyCenteredOutputY(d.modeBounds, d.modeOutput)),
@@ -720,11 +725,6 @@ func (d *TavernShopDialog) GetTopicInput() string {
 	}
 
 	return string(d.topicInput)
-}
-
-// GetInformationTabLabel returns the exact location-specific persistent mode label.
-func (d *TavernShopDialog) GetInformationTabLabel() string {
-	return fmt.Sprintf("[%c]%s", d.state.Menu.Information.Key, d.state.Menu.Information.Name[1:])
 }
 
 // GetShell returns the shared merchant shell.
@@ -1163,16 +1163,15 @@ func (d *TavernShopDialog) populateModeOutput() {
 		d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter).
 			Text("PREVIEW", DialogStatusWarningColor).Done()
 	}
-	colors := d.modeTabColors()
-	orderLabel := "[O]rder"
-	informationLabel := d.GetInformationTabLabel()
-	if d.mode == TavernShopConversation {
-		orderLabel = "Order"
-		informationLabel = strings.NewReplacer("[", "", "]", "").Replace(informationLabel)
+	appendShopTabs(d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter), d.tabs())
+}
+
+// tabs lists the Order and information pages, the open one on the plate.
+func (d *TavernShopDialog) tabs() []shopTab {
+	return []shopTab{
+		{"Order", d.mode == TavernShopOrder},
+		{d.state.Menu.Information.Name, d.mode == TavernShopConversation},
 	}
-	d.modeOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(orderLabel, colors[TavernShopOrder]).
-		Text("    "+informationLabel, colors[TavernShopConversation]).Done()
 }
 
 func (d *TavernShopDialog) populateBodyOutput() {
@@ -1300,23 +1299,6 @@ func (d *TavernShopDialog) orderRowPrice(item TavernOrderItem) string {
 	}
 }
 
-func (d *TavernShopDialog) modeTabColors() [tavernShopModeCount]stdcolor.Color {
-	colors := [tavernShopModeCount]stdcolor.Color{DialogValueColor, DialogEmptyColor}
-	if d.state.CustomerEligible {
-		colors[TavernShopConversation] = DialogValueColor
-	}
-	switch {
-	case d.mode == TavernShopOrder:
-		colors[TavernShopOrder] = DialogLabelColor
-	case d.state.CustomerEligible:
-		colors[TavernShopConversation] = DialogLabelColor
-	default:
-		colors[TavernShopConversation] = DialogControlHintColor
-	}
-
-	return colors
-}
-
 func (d *TavernShopDialog) syncPresentation() {
 	d.shell.RefreshShop(d.state.Merchant, d.state.Gold, d.latestExchange, d.footerGuidance())
 	d.populateOutputs()
@@ -1326,12 +1308,12 @@ func (d *TavernShopDialog) footerGuidance() string {
 	switch d.phase {
 	case TavernShopBrowse:
 		if d.mode == TavernShopOrder {
-			back := "Leave"
+			back := shopTitleLeave
 			if d.subflow == TavernOrderWinePicker {
 				back = "Back to menu"
 			}
 
-			return "[Up/Down] Select  [Enter] Order\n[Tab] Conversation  [Esc] " + back
+			return "[Up/Down] Select  [Enter] Order\n[Tab] Order or " + d.state.Menu.Information.Name + "  [Esc] " + back
 		}
 		if !d.state.CustomerEligible {
 			return "[Tab/Esc] Back to Order"

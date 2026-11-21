@@ -64,9 +64,12 @@ func (d *ReadyEquipmentDialog) populateCharacterOutput(layout readyCharacterHead
 		name := FitDialogLine(char.GetNameAsString(), d.titleFont, layout.name.Dx())
 		d.titleOutput.AppendLine().Text(name, DialogHeaderColor).Done()
 		used := char.GetTotalEquippedStrRequirement()
-		d.charOutput.AppendLine().Text("Current equipment: ", DialogLabelColor).
-			Textf("%d of %d Strength", DialogValueColor, used, char.Strength).
-			Textf(" (%d remaining)", DialogValueColor, int(char.Strength)-used).Done()
+		line := d.charOutput.AppendLine().Text("Strength in use: ", DialogLabelColor).
+			Textf("%d of %d", DialogValueColor, used, char.Strength)
+		if over := used - int(char.Strength); over > 0 {
+			line.Textf("   %d over", DialogWarningColor, over)
+		}
+		line.Done()
 	} else {
 		d.titleOutput.AppendLine().Text("CHARACTER", DialogHeaderColor).Done()
 		d.charOutput.AppendLine().Text("[No character]", DialogEmptyColor).Done()

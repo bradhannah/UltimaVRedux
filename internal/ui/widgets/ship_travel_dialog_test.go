@@ -16,19 +16,19 @@ func TestShipTravelDialogDisplaysAndConfirmsExactReviewedTravel(t *testing.T) {
 	intent := ShipTravelIntent{Review: state.Travel, Preview: true}
 	keyboard := newWidgetTestKeyboard(0)
 	dialog := NewShipTravelDialog(ShipTravelDialogConfig{Keyboard: keyboard, Intent: intent})
-	body := compactShipText(dialog.GetBodyText())
+	body := compactShipText(dialog.window.flatText())
 
-	require.Equal(t, "PREVIEW - Harbour Escort", compactShipText(dialog.GetTitleText()))
-	require.Contains(t, body, "Harbour: Jhelom Harbour")
+	require.Equal(t, "PREVIEW - Escort the Frigate", compactShipText(dialog.GetTitleText()))
+	require.Contains(t, body, "To Jhelom Harbour")
 	require.Contains(t, body, "Berth: Pending arrival")
-	require.Contains(t, body, "Vessel: Frigate")
 	require.Contains(t, body, "Travel time: 3 minutes")
-	require.Contains(t, body, "leave town beside the vessel")
-	require.Equal(t, "[Enter] Travel   [Esc] Back", dialog.GetFooterGuidance())
+	require.Contains(t, body, "The party leaves town beside it.")
+	require.Equal(t, "[Enter] Travel [Esc] Back", compactShipText(dialog.GetFooterGuidance()))
+	requireAmountWindowHoldsItsText(t, dialog.window, "travel")
 	require.Equal(t, intent, dialog.GetIntent())
 	require.True(t, dialog.IsPreview())
 
-	visible := strings.ToLower(body + " " + dialog.GetFooterGuidance())
+	visible := strings.ToLower(body)
 	for _, forbidden := range shipDialogForbiddenDetails() {
 		require.NotContains(t, visible, forbidden)
 	}
@@ -91,8 +91,8 @@ func TestShipTravelDialogSemanticBackingAndResizePreserveReview(t *testing.T) {
 	require.Equal(t, lowBody, compactShipText(dialog.GetBodyText()))
 	require.Equal(t, intent, dialog.GetIntent())
 	requireImageRegionContainsColor(t, screen, dialog.GetBodyBounds(), MerchantDialogBackgroundColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlKeyColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlHintColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlKeyColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlHintColor)
 }
 
 func pressShipTravelKey(dialog *ShipTravelDialog, keyboard *input.Keyboard, key ebiten.Key) {

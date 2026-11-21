@@ -1,32 +1,16 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"math"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
-)
-
-const (
-	shipModalHeaderRatio      = 0.13
-	shipModalFooterRatio      = 0.16
-	shipModalMinimumInset     = 5
-	shipModalLineSpacing      = 1.08
-	shipModalMaximumBodyLines = 12
-	shipModalFooterLines      = 2
-	shipModalMinimumTextChars = 8
-	shipPurchaseStartPercentX = 0.25
-	shipPurchaseEndPercentX   = 0.75
-	shipPurchaseStartPercentY = 0.12
-	shipPurchaseEndPercentY   = 0.88
 )
 
 var _ Widget = (*ShipPurchaseDialog)(nil)
@@ -46,11 +30,7 @@ type ShipPurchaseDialog struct {
 	dismissed bool
 	cancelled bool
 	pending   *game_state.ShipPurchaseRequest
-	frame     *merchantModalFrame
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window    *amountWindow
 }
 
 // NewShipPurchaseDialog creates a centered keyboard-only purchase approval.
@@ -62,19 +42,16 @@ func NewShipPurchaseDialog(config ShipPurchaseDialogConfig) *ShipPurchaseDialog 
 	dialog := &ShipPurchaseDialog{
 		quantityInput: newQuantityInput(config.Keyboard, config.Keyboard.IsKeyHeld,
 			ebiten.KeyM, ebiten.KeyUp, ebiten.KeyDown),
-		keyboard:     config.Keyboard,
-		intent:       config.Intent,
-		quantity:     1,
-		dismissed:    false,
-		cancelled:    false,
-		pending:      nil,
-		frame:        newShipMerchantModalFrame(shipPurchasePlacement()),
-		headerOutput: nil,
-		bodyOutput:   nil,
-		footerOutput: nil,
+		keyboard:  config.Keyboard,
+		intent:    config.Intent,
+		quantity:  1,
+		dismissed: false,
+		cancelled: false,
+		pending:   nil,
+		window:    newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -84,9 +61,7 @@ func (d *ShipPurchaseDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update confirms or cancels the reviewed request after release debounce.
@@ -115,31 +90,24 @@ func (d *ShipPurchaseDialog) Update() {
 }
 
 func (d *ShipPurchaseDialog) handleQuantityInput() bool {
-	key, owned := d.pollQuantityInput()
-	if key == nil {
+	if !d.choosesQuantity() {
+		_, owned := d.pollQuantityInput()
+
 		return owned
 	}
-	if d.intent.Quote.Action != game_state.ShipPurchaseLoadSkiff || len(d.intent.Quote.ApprovalViews) <= 1 {
-		return owned
-	}
-	switch *key { //nolint:exhaustive // The quantity helper returns only this dialog's configured keys.
-	case ebiten.KeyM:
-		d.setQuantity(len(d.intent.Quote.ApprovalViews))
-	case ebiten.KeyLeft, ebiten.KeyUp:
-		d.setQuantity(max(1, d.quantity-1))
-	case ebiten.KeyRight, ebiten.KeyDown:
-		d.setQuantity(min(len(d.intent.Quote.ApprovalViews), d.quantity+1))
+	quantity, owned := d.pollAmount(d.quantity, len(d.intent.Quote.ApprovalViews))
+	if quantity != d.quantity {
+		d.quantity = quantity
+		d.window.set(d.step())
 	}
 
 	return owned
 }
 
-func (d *ShipPurchaseDialog) setQuantity(quantity int) {
-	if quantity == d.quantity {
-		return
-	}
-	d.quantity = quantity
-	d.populateOutputs()
+// choosesQuantity reports that this is skiffs going aboard a frigate, more than
+// one of which can be had.
+func (d *ShipPurchaseDialog) choosesQuantity() bool {
+	return d.intent.Quote.Action == game_state.ShipPurchaseLoadSkiff && len(d.intent.Quote.ApprovalViews) > 1
 }
 
 // ConsumePendingPurchaseRequest returns and clears the one comparison-only request.
@@ -158,20 +126,9 @@ func (d *ShipPurchaseDialog) GetApprovalView() game_state.ShipPurchaseApprovalVi
 	return d.intent.Quote.ApprovalViews[d.quantity-1]
 }
 
-// GetFooterGuidance returns the keyboard-only approval controls.
-func (d *ShipPurchaseDialog) GetFooterGuidance() string {
-	if d.intent.Quote.Action == game_state.ShipPurchaseLoadSkiff && len(d.intent.Quote.ApprovalViews) > 1 {
-		return merchantQuantityFooter
-	}
-
-	return "[Enter] Confirm   [Esc] Back"
-}
-
 // GetBounds returns the centered modal bounds.
 func (d *ShipPurchaseDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the approval.
@@ -186,64 +143,46 @@ func (d *ShipPurchaseDialog) Dismiss() {
 	d.dismissed = true
 }
 
-func (d *ShipPurchaseDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = newShipMerchantModalOutputs(d.frame)
-	d.populateOutputs()
-}
-
-func (d *ShipPurchaseDialog) populateOutputs() {
-	quote := d.intent.Quote
-	approval := d.GetApprovalView()
-	title := "Purchase " + shipVehicleName(quote.VehicleType)
-	if quote.Action == game_state.ShipPurchaseLoadSkiff {
-		title = "Purchase Skiffs"
-	}
-	d.headerOutput.Reset()
-	titleLine := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	if d.intent.Preview {
-		titleLine.Text("PREVIEW - ", DialogStatusWarningColor)
-	}
-	titleLine.Text(title, DialogHeaderColor).Done()
-	body := d.bodyOutput
-	body.Reset()
-	body.AppendLine().LightGray("Vessel: ").White(shipVehicleName(quote.VehicleType)).Done()
-	body.AppendLine().LightGray("Action: ").Yellow(shipActionLabel(quote.Action)).Done()
-	body.AppendLine().LightGray("Dock: ").White(d.intent.HarbourName).Done()
+// step describes the approval window: the vessel, its price, and what the party's
+// gold and the frigate's skiffs will be.
+func (d *ShipPurchaseDialog) step() amountStep {
+	quote, approval := d.intent.Quote, d.GetApprovalView()
+	step := emptyAmountStep()
+	step.preview, step.verb = d.intent.Preview, amountBuyVerb
+	step.title = amountBuyVerb + " " + shipVehicleName(quote.VehicleType)
+	delivered := amountNote{text: "Delivered to " + d.intent.HarbourName + ".", tone: amountPlain}
+	gold := amountRow{label: amountGoldRow, have: int(approval.GoldBefore), then: int(approval.GoldAfterPayment)}
 	switch quote.Action {
 	case game_state.ShipPurchaseCreateFrigate:
-		body.AppendLine().LightGray("Included skiffs: ").Cyanf("%d", shipShopFrigateSkiffs).Done()
-	case game_state.ShipPurchaseLoadSkiff:
-		body.AppendLine().LightGray("Skiffs aboard: ").Cyanf(
-			"%d/%d", quote.Berth.SkiffCount, game_state.ShipShopMaximumSkiffs,
-		).Done()
-		body.AppendLine().LightGray("Quantity: ").White("<   ").Yellowf("%d", approval.Quantity).
-			White("   >").Done()
-		body.AppendLine().LightGray("If completed: ").LightGreenf(
-			"%d/%d", approval.SkiffCountAfter, game_state.ShipShopMaximumSkiffs,
-		).Done()
+		step.unit = fmt.Sprintf("With %d skiffs aboard", shipShopFrigateSkiffs)
+		step.rows, step.notes = []amountRow{gold}, []amountNote{delivered}
 	case game_state.ShipPurchaseCreateStandaloneSkiff:
-		body.AppendLine().LightGray("Included skiffs: ").Cyan("1 standalone").Done()
+		step.rows, step.notes = []amountRow{gold}, []amountNote{delivered}
+	case game_state.ShipPurchaseLoadSkiff:
+		step.title = amountBuyVerb + " Skiffs"
+		step.unit = bundleUnitPrice(approval.UnitPrice, 1)
+		step.noun, step.count, step.most = "Skiffs", approval.Quantity, len(quote.ApprovalViews)
+		step.rows = []amountRow{
+			{label: "Aboard", have: quote.Berth.SkiffCount, then: approval.SkiffCountAfter}, gold,
+		}
+		if quote.ApprovalViews[len(quote.ApprovalViews)-1].SkiffCountAfter == game_state.ShipShopMaximumSkiffs {
+			step.reserve = 1
+		}
+		if approval.SkiffCountAfter == game_state.ShipShopMaximumSkiffs {
+			step.notes = []amountNote{{text: "The frigate will then be full.", tone: amountPlain}}
+		}
 	default:
-		panic("ShipPurchaseDialog.populateOutputs: unknown action")
+		panic("ShipPurchaseDialog.step: unknown action")
 	}
-	if quote.Action == game_state.ShipPurchaseLoadSkiff {
-		body.AppendLine().LightGray("Unit price: ").Yellowf("%d gold", approval.UnitPrice).Done()
-		body.AppendLine().LightGray("Total: ").Yellowf("%d gold", approval.TotalPrice).Done()
-	} else {
-		body.AppendLine().LightGray("Price: ").Yellowf("%d gold", approval.TotalPrice).Done()
+	if !approval.Affordable {
+		// Asking without the gold is still a real request: the shipwright refuses
+		// and the talk ends (MERCH-0008), so Enter stays and says what it will do.
+		step.noun, step.rows, step.reserve, step.verb = "", nil, 0, "Ask anyway"
+		step.notes = shortOfGoldNotes("It costs", approval.TotalPrice, int(approval.GoldBefore),
+			"Asking anyway ends the talk.")
 	}
-	if approval.Affordable {
-		body.AppendLine().LightGray("Party gold: ").Cyanf("%d", approval.GoldBefore).
-			White(" -> ").LightGreenf("%d", approval.GoldAfterPayment).Done()
-	} else {
-		body.AppendLine().LightGray("Party gold: ").Cyanf("%d", approval.GoldBefore).Done()
-		body.AppendLine().Textf("Need %d gold.", DialogStatusWarningColor, approval.TotalPrice).Done()
-	}
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
+
+	return step
 }
 
 func validateShipPurchaseIntent(intent ShipPurchaseIntent) {
@@ -330,31 +269,4 @@ func validateShipApprovalGold(approval game_state.ShipPurchaseApprovalView) {
 	if approval.GoldAfterPayment != expectedAfter {
 		panic("ShipPurchaseDialog: approval gold consequence is inconsistent")
 	}
-}
-
-func shipPurchasePlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: shipPurchaseStartPercentX,
-		EndPercentX:   shipPurchaseEndPercentX,
-		StartPercentY: shipPurchaseStartPercentY,
-		EndPercentY:   shipPurchaseEndPercentY,
-	}
-}
-
-func newShipMerchantModalFrame(placement sprites.PercentBasedPlacement) *merchantModalFrame {
-	return newMerchantModalFrame(merchantModalFrameConfig{
-		placement:             placement,
-		headerRatio:           shipModalHeaderRatio,
-		footerRatio:           shipModalFooterRatio,
-		minimumInset:          shipModalMinimumInset,
-		lineSpacingMultiplier: shipModalLineSpacing,
-		footerMinimumLines:    shipModalFooterLines,
-	})
-}
-
-func newShipMerchantModalOutputs(frame *merchantModalFrame) (*text.Output, *text.Output, *text.Output) {
-	return frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: shipModalLineSpacing, maximumBodyLines: shipModalMaximumBodyLines,
-		footerLines: shipModalFooterLines, minimumChars: shipModalMinimumTextChars, fixedBody: true,
-	})
 }

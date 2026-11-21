@@ -196,8 +196,10 @@ approval forms share plain Left/Right quantity input: one immediate step, a
 300 ms initial hold delay, then nominal 120 ms repeats quantized to widget updates.
 Release stops repetition; fresh taps and direction changes do not inherit gameplay
 movement delay. Modified or conflicting quantity keys are suppressed through
-release. Guild, Reagent and Ship retain Up/Down as one-shot aliases; maximum/All
-shortcuts also remain one-shot. Quantity holds never confirm a purchase, including
+release. Guild, Reagent and Ship retain Up/Down as one-shot aliases; maximum ("Most")
+shortcuts also remain one-shot. Digits type the amount in all five and in the rest
+prompt: a second digit joins the first while the number stays within the most, and
+otherwise starts the number again. Quantity holds never confirm a purchase, including
 Enter pressed during an adjustment. Covering, returning to or removing a modal,
 and application focus suspension, require held controls to release before use by
 the next owner. Quote bounds and transaction commitment remain family-owned. See
@@ -483,8 +485,10 @@ Help also appears in Escape. It lists context-specific command purposes, next
 inputs, unavailable reasons, and Shift+J without puzzle answers. It is a detached
 keyboard-only modal: opening/browsing/closing adds no gameplay time, RNG draw,
 or combat action and does not begin a dungeon cycle. It cannot intercept a
-secondary prompt or an input-owning workflow. Physical-keyboard acceptance
-remains separate from injected-input coverage.
+secondary prompt or an input-owning workflow. Its hint row lists only Tab, Up/Down
+and Esc; Shift+Up/Down, PgUp/PgDn, Space and Home/End keep paging but are not
+hinted. Right now names each unavailable command under its Commands-page reason.
+Physical-keyboard acceptance remains separate from injected-input coverage.
 
 `InputState` is defined in `cmd/ultimav/gamescene.go`.
 
@@ -514,9 +518,21 @@ selection into No One, following the original rule in
 [CAMP-0001](../gamefacts/CAMPING_MECHANICS.md#camp-0001). Escape cancels setup,
 a recorded deviation from that rule.
 
-Cast gathers required targets/directions before final confirmation spends MP and
-one mixture. Cancellation before that boundary preserves resources, gameplay
+Cast gathers any target or direction a spell needs before it spends MP and one
+mixture. A spell with no aiming step has nothing to gather, so Enter in the
+list commits it; the list's Enter hint says which case applies ("Cast now"
+against "Choose who", "Choose direction", "Aim" or "Name the phase").
+Cancellation before commitment preserves resources, gameplay
 time, combat action, and gameplay RNG, including party-member target selection.
+Every prompt that follows the list says so where it matters, ending
+`[Esc] Cancel, nothing spent`: the party picker (`Mani: who is it for?`), the
+direction box (`In Por: which way?`) and the battle aiming rows
+(`[Arrows/keypad] Aim`, then `[Enter] Cast   [Esc] Cancel, nothing spent`, the
+same for a square, a creature or a direction). Once a spell is chosen its name
+joins the `Cast...` row of the message window. Outside battle a spell that
+simply works reports there as well (`Light!`, `Healed 12!`) and opens no box.
+A cast that fails or does nothing, anything to read such as In Wis's
+coordinates, and every result in battle keep their box.
 Later effect failure does not refund committed costs.
 
 Interaction transcript text prompts normally use Escape to cancel. Blackthorn
@@ -633,10 +649,12 @@ modal has no number-key shortcuts or mouse handling. It emits a detached item
 identity only, and the owning workflow revalidates current inventory before
 mutation. All contexts show every owned identity in the existing Use categories,
 including an inventory containing only unavailable items. `UnavailableReason`
-blocks activation independently of effect-applicability warnings. Unavailable
-rows use muted text and a `[No]` marker with an explicit legend; selected rows
-retain contrast. Enter shows the specific restriction on the first detail page
-without dismissing or dispatching. Warning-only consumables remain selectable.
+blocks activation independently of effect-applicability warnings. Usable
+items are listed first (stable order) and the list opens on the first of them;
+unavailable rows follow with muted text and a `[No]` marker, and the title carries
+no legend. The footer's Enter stays `[Enter] Use`, dimmed whole when the selected
+item cannot be used. Enter shows the specific restriction, in `DialogWarningColor`,
+on the first detail page without dismissing or dispatching. Warning-only consumables remain selectable.
 Normal details combine concise handling/current state with atmospheric lore;
 there are no separate mechanical pages before lore. Page hints/counts appear
 only for overflow. Ownership does not reveal mysterious powers, ritual recipes
@@ -771,8 +789,8 @@ Cast and Z-stats Spells reserve `Ctrl+M` locally for preparing the selected spel
 outside those modals the existing music shortcut remains unchanged. Ctrl chords
 are consumed before syllable/free-text input and held keys cannot bleed into the
 next owner. The shared finder also uses `/` search, `Ctrl+O` to cycle All known /
-Prepared / Mixable filtering (Cast adds Ready, the spells its caster can cast
-now, and cycles Ready / Prepared / All known / Mixable),
+Prepared / Mixable filtering (Cast, which lists the spells its caster can cast
+now first, cycles All known / Ready / Prepared),
 and Space detail paging outside search. While searching, Space enters text;
 Escape returns to browse mode for paging while retaining the selected spell.
 An incompatible older syllable prefix is cleared rather than selecting a different
@@ -781,7 +799,7 @@ with no resource, command-time, or combat-action commitment. No function keys ar
 required.
 
 Cast awaits the reusable Mix sequence inside its own workflow. The underlying
-selector is suspended until Mix's receipt/trap steps and command completion
+selector is suspended until Mix's result-box/trap steps and command completion
 finish. On the surface, Mix pays one ordinary command cycle; a later cancelled
 Cast adds none. In a dungeon, the uncharged Cast token completes before Mix
 starts its normal precharged full cycle. Resuming Cast reserves a fresh deferred
@@ -794,8 +812,11 @@ Opening a spell finder, choosing a recipe and editing quantity never consumes
 resources. Enter in preparation transfers a typed request to `ExecuteMixing`,
 which validates quantity and current selected-reagent stocks before deduction.
 Incorrect recipes still spend the confirmed ingredients and resolve the normal
-trap sequence before returning. Workflow finalizers remove the exact owned Mix
-and receipt instances, including shutdown while a parent Cast remains mounted.
+trap sequence before returning. A plain success opened with `M` is acknowledged
+at once and the dialog returns to its own list, so nothing waits on a key; a
+shortcut mix and a newly learned recipe show a result box first. Workflow
+finalizers remove the exact owned Mix and result-box instances, including
+shutdown while a parent Cast remains mounted.
 
 ## Primary To Secondary Transition
 
@@ -878,8 +899,9 @@ shared original ordinary/spell direction-reader behavior:
 The six ordinary combat prompts show `Arrows; Space: Pass; Esc: Cancel`;
 combat Help distinguishes free cancellation from paid Pass.
 Cast details use the resolved context targeting profile rather than base spell
-metadata. Cast guidance describes final-confirmation MP/mixture commitment and
-free cancellation beforehand, including preservation of the combat action.
+metadata. Cast's Enter hint names the selected spell's next step, and Help
+states that casting spends MP and a mixture and that cancelling beforehand is
+free, including preservation of the combat action.
 Ready labels come from the authoritative preview: Equip, Unready,
 no change, or the blocking reason.
 

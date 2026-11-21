@@ -35,6 +35,11 @@ func (g *GameScene) thenSpellMixSession(session *spellMixSession) event_queue.Se
 				session.outcome = g.gameState.ExecuteMixing(session.dialog.ConsumePendingMixRequest())
 				if session.outcome.Success {
 					g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundMagic)
+				}
+				// A plain success goes straight back to Mix's list, which reports it on
+				// its header. A newly learned recipe, and a mix opened from Cast or
+				// Z-stats with no Mix list to return to, keep the result box.
+				if session.outcome.Success && session.dialog.NeedsResultBox() {
 					session.receipt = widgets.NewOverlayDialog(g.buildMixConfirmationMessage(session.outcome)).
 						WithSizing(widgets.SizingAutoFitDefault).WithPosition(widgets.PositionScreenCenter).
 						WithEffects(widgets.EffectsNone).WithContentAlignment(widgets.ContentAlignCenter).
@@ -155,6 +160,8 @@ func (g *GameScene) thenChooseSpell(state *spellCastingWorkflowState) event_queu
 				if state.spellDialog.HasPendingCastRequest() {
 					state.pendingRequest = state.spellDialog.ConsumePendingCastRequest()
 					state.hasRequest = true
+					// "Cast...In Lor": the message window names the spell before its result.
+					g.appendToCurrentRowStr(references.GetSpellName(state.pendingRequest.Spell))
 					state.targetingProfile = references.GetSpellTargetingProfile(state.pendingRequest.Spell, g.gameState.GetCurrentSpellContext())
 				}
 				state.spellDialog.Dismiss()

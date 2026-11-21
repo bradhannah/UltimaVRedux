@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+// readyOtherStrength is the Strength the rest of the loadout would use once the
+// item is readied: everything except the item itself.
+func readyOtherStrength(item *availableEquipment) int {
+	return item.Preview.Resulting.Strength - item.Equipment.GetStrengthRequired()
+}
+
 func (d *ReadyEquipmentDialog) appendStrengthBudget(item *availableEquipment) {
 	preview := item.Preview
 	cost := item.Equipment.GetStrengthRequired()
@@ -18,7 +24,7 @@ func (d *ReadyEquipmentDialog) appendStrengthBudget(item *availableEquipment) {
 	if cost > 0 {
 		itemCost = "-" + strconv.Itoa(cost)
 	}
-	otherCost := preview.Resulting.Strength - cost
+	otherCost := readyOtherStrength(item)
 	other := strconv.Itoa(otherCost)
 	if otherCost > 0 {
 		other = "-" + other

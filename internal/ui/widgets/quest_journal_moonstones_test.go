@@ -188,7 +188,7 @@ func TestQuestJournalMoonstoneSearchOnlyCurrentMeasuredPublicFacts(t *testing.T)
 	d.setSearchQuery(references.FormatBritannianCoordinates(151, 173))
 	require.Len(t, d.searchResults, 1)
 	result := d.searchEntries[d.searchResults[0]]
-	assert.Contains(t, result.body, "Last-observed placement")
+	assert.Equal(t, "Last-observed placement", result.label, "the matching line is shown with its label")
 	// A compact detail viewport forces the matching survey onto a later page.
 	d.layout.detailRect.Max.Y = d.layout.detailRect.Min.Y + 7*d.rowHeight()
 	d.openSearchResult()

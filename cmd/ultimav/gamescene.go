@@ -381,8 +381,8 @@ type transientActionFeedback struct {
 
 // openConfigurationDialog creates and displays the player configuration dialog.
 func (g *GameScene) openConfigurationDialog() {
-	// Configuration can use the complete gameplay pane while leaving the right rail visible.
-	placement := gameScreenPercents
+	// Configuration is a full dialog and covers the whole window, like the Journal and Help.
+	placement := sprites.PercentBasedPlacement{StartPercentX: 0, EndPercentX: 1, StartPercentY: 0, EndPercentY: 1}
 
 	// Declare dialog variable first so it can be captured in closure
 	var configurationDialog *ConfigurationDialog

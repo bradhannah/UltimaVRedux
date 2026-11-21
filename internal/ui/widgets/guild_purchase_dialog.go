@@ -1,37 +1,16 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
-	"math"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
-)
-
-const (
-	guildPurchaseStartPercentX    = 0.28
-	guildPurchaseEndPercentX      = 0.72
-	guildPurchaseStartPercentY    = 0.14
-	guildPurchaseEndPercentY      = 0.86
-	guildPurchaseHeaderRatio      = 0.11
-	guildPurchaseFooterRatio      = 0.17
-	guildPurchaseMinimumInset     = 6
-	guildPurchaseLineSpacing      = 1.12
-	guildPurchaseMaximumLines     = 12
-	guildPurchaseMinimumTextChars = 8
-	guildPurchaseFooterLines      = 2
-	guildPurchaseTotalLines       = 2
-	guildPurchaseCenterDivisor    = 2
-	guildPurchaseDoubleInset      = 2
 )
 
 var _ Widget = (*GuildPurchaseDialog)(nil)
@@ -53,15 +32,7 @@ type GuildPurchaseDialog struct {
 	dismissed   bool
 	cancelled   bool
 	pending     *game_state.GuildPurchaseRequest
-
-	frame       *merchantModalFrame
-	totalBounds image.Rectangle
-	totalText   image.Rectangle
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	totalOutput  *text.Output
-	footerOutput *text.Output
+	window      *amountWindow
 }
 
 // NewGuildPurchaseDialog creates a centered keyboard-only quantity modal.
@@ -75,12 +46,9 @@ func NewGuildPurchaseDialog(config GuildPurchaseDialogConfig) *GuildPurchaseDial
 	}
 
 	bundleCount := uint16(0)
-	footerLines := 1
 	if config.Quote.MaxBundles > 0 {
 		bundleCount = 1
-		footerLines = guildPurchaseFooterLines
 	}
-	var emptyBounds image.Rectangle
 	dialog := &GuildPurchaseDialog{
 		quantityInput: newQuantityInput(config.Keyboard, config.Keyboard.IsKeyHeld,
 			ebiten.KeyM, ebiten.KeyUp, ebiten.KeyDown),
@@ -91,22 +59,9 @@ func NewGuildPurchaseDialog(config GuildPurchaseDialogConfig) *GuildPurchaseDial
 		dismissed:   false,
 		cancelled:   false,
 		pending:     nil,
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             guildPurchasePlacement(),
-			headerRatio:           guildPurchaseHeaderRatio,
-			footerRatio:           guildPurchaseFooterRatio,
-			minimumInset:          guildPurchaseMinimumInset,
-			lineSpacingMultiplier: guildPurchaseLineSpacing,
-			footerMinimumLines:    footerLines,
-		}),
-		totalBounds:  emptyBounds,
-		totalText:    emptyBounds,
-		headerOutput: nil,
-		bodyOutput:   nil,
-		totalOutput:  nil,
-		footerOutput: nil,
+		window:      newAmountWindow(),
 	}
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -116,27 +71,7 @@ func (d *GuildPurchaseDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
-	if d.quote.MaxBundles > 0 {
-		vector.StrokeLine(
-			screen,
-			float32(d.totalBounds.Min.X),
-			float32(d.totalBounds.Min.Y),
-			float32(d.totalBounds.Max.X),
-			float32(d.totalBounds.Min.Y),
-			float32(d.frame.pixelUnit()),
-			DialogRuleLightColor,
-			false,
-		)
-		d.totalOutput.DrawPanelContent(
-			screen,
-			image.Pt(d.totalText.Min.X, verticallyCenteredOutputY(d.totalText, d.totalOutput)),
-			d.totalText.Dx(),
-			etext.AlignCenter,
-		)
-	}
+	d.window.draw(screen)
 }
 
 // Update processes keyboard-only quantity, confirmation, and cancellation input.
@@ -144,7 +79,6 @@ func (d *GuildPurchaseDialog) Update() {
 	if d.dismissed {
 		return
 	}
-	d.ensureLayout()
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
 		d.cancelled = true
 		d.Dismiss()
@@ -154,7 +88,12 @@ func (d *GuildPurchaseDialog) Update() {
 	if d.quote.MaxBundles == 0 {
 		return
 	}
-	if d.handleQuantityInput() {
+	count, owned := d.pollAmount(int(d.bundleCount), int(d.quote.MaxBundles))
+	if count != int(d.bundleCount) {
+		d.bundleCount = uint16(count) //nolint:gosec // pollAmount stays within the quote's small maximum.
+		d.window.set(d.step())
+	}
+	if owned {
 		return
 	}
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter) ||
@@ -166,23 +105,6 @@ func (d *GuildPurchaseDialog) Update() {
 		d.pending = &request
 		d.Dismiss()
 	}
-}
-
-func (d *GuildPurchaseDialog) handleQuantityInput() bool {
-	key, owned := d.pollQuantityInput()
-	if key == nil {
-		return owned
-	}
-	switch *key { //nolint:exhaustive // The quantity helper returns only this dialog's configured keys.
-	case ebiten.KeyM:
-		d.setBundleCount(d.quote.MaxBundles)
-	case ebiten.KeyLeft, ebiten.KeyUp:
-		d.setBundleCount(max(uint16(1), d.bundleCount-1))
-	case ebiten.KeyRight, ebiten.KeyDown:
-		d.setBundleCount(min(d.quote.MaxBundles, d.bundleCount+1))
-	}
-
-	return owned
 }
 
 // ConsumePendingPurchaseRequest returns and clears the one confirmed request.
@@ -201,9 +123,7 @@ func (d *GuildPurchaseDialog) ConsumePendingPurchaseRequest() (game_state.GuildP
 
 // GetBounds returns the nested modal's centered outer bounds.
 func (d *GuildPurchaseDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the modal without confirmation.
@@ -222,144 +142,54 @@ func (d *GuildPurchaseDialog) Dismiss() {
 	d.dismissed = true
 }
 
-func (d *GuildPurchaseDialog) setBundleCount(count uint16) {
-	if count == d.bundleCount {
-		return
+// step describes the amount window for the bundle count chosen, or says why no
+// bundle can be bought.
+func (d *GuildPurchaseDialog) step() amountStep {
+	quote := d.quote
+	step := emptyAmountStep()
+	step.title, step.verb = amountBuyVerb+" "+guildProvisionName(quote.Provision), amountBuyVerb
+	step.unit = bundleUnitPrice(quote.PricePerBundle, int(quote.BundleQuantity))
+	if quote.MaxBundles == 0 {
+		step.refused, step.notes = true, guildRefusalNotes(quote)
+
+		return step
 	}
-	d.bundleCount = count
-	d.populateOutputs()
+	step.pitch = quotedGuildPitch(d.pitch)
+	step.noun, step.count, step.most = "Bundles", int(d.bundleCount), int(quote.MaxBundles)
+	step.rows = []amountRow{
+		{label: amountCarriedRow, have: int(quote.QuantityBefore), then: int(projectedGuildQuantity(quote, d.bundleCount))},
+		{label: amountGoldRow, have: int(quote.Gold), then: int(quote.Gold) - quote.PricePerBundle*int(d.bundleCount)},
+	}
+	if guildOverflow(quote, quote.MaxBundles) > 0 {
+		step.reserve = 1
+	}
+	if lost := guildOverflow(quote, d.bundleCount); lost > 0 {
+		step.notes = overflowNote(lost)
+	}
+
+	return step
 }
 
-func (d *GuildPurchaseDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	// The total strip is carved from the body first, so the body fits what remains.
-	_, d.totalOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: guildPurchaseLineSpacing,
-		MaxLines: guildPurchaseTotalLines, MaxChars: guildPurchaseMinimumTextChars,
-	})
-	d.calculateBodyTextLayout()
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: guildPurchaseLineSpacing, maximumBodyLines: guildPurchaseMaximumLines,
-		footerLines: guildPurchaseFooterLines, minimumChars: guildPurchaseMinimumTextChars, fixedBody: false,
-	})
-	if d.quote.MaxBundles > 0 {
-		d.totalOutput.SetMaxCharsPerLine(max(guildPurchaseMinimumTextChars,
-			d.totalOutput.Font.CharsForWidth(max(1, d.totalText.Dx()))))
-	}
-	d.populateOutputs()
+// guildOverflow is how many of the bundles' goods will not fit in the pack.
+func guildOverflow(quote game_state.GuildOfferQuote, bundleCount uint16) int {
+	return int(quote.QuantityBefore) + int(quote.BundleQuantity)*int(bundleCount) -
+		int(projectedGuildQuantity(quote, bundleCount))
 }
 
-func (d *GuildPurchaseDialog) calculateBodyTextLayout() {
-	var emptyBounds image.Rectangle
-	d.frame.bodyText = insetRectangle(d.frame.bodyBounds, d.frame.inset)
-	d.totalBounds = emptyBounds
-	d.totalText = emptyBounds
-	if d.quote.MaxBundles == 0 {
-		return
+// guildRefusalNotes says, with its figures, why not even one bundle can be bought.
+func guildRefusalNotes(quote game_state.GuildOfferQuote) []amountNote {
+	if quote.QuantityBefore >= party_state.ItemQuantitySmallMax {
+		return []amountNote{
+			{text: "No room. The party carries", tone: amountWarning},
+			{text: fmt.Sprintf("%d, the most it can.", quote.QuantityBefore), tone: amountWarning},
+		}
 	}
 
-	totalHeight := int(math.Ceil(d.totalOutput.GetTotalHeightForLines(guildPurchaseTotalLines))) +
-		d.frame.inset*guildPurchaseDoubleInset
-	totalHeight = min(totalHeight, d.frame.bodyText.Dy())
-	d.totalBounds = image.Rect(
-		d.frame.bodyText.Min.X,
-		d.frame.bodyText.Max.Y-totalHeight,
-		d.frame.bodyText.Max.X,
-		d.frame.bodyText.Max.Y,
-	)
-	d.totalText = insetRectangle(d.totalBounds, d.frame.inset)
-	d.frame.bodyText = image.Rect(
-		d.frame.bodyText.Min.X,
-		d.frame.bodyText.Min.Y,
-		d.frame.bodyText.Max.X,
-		max(d.frame.bodyText.Min.Y, d.totalBounds.Min.Y-d.frame.inset),
-	)
-}
-
-func (d *GuildPurchaseDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.totalOutput == nil || d.footerOutput == nil {
-		return
-	}
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(strings.ToUpper("Purchase "+guildProvisionName(d.quote.Provision)), DialogHeaderColor).
-		Done()
-
-	d.bodyOutput.Reset()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White(quotedGuildPitch(d.pitch)).WordWrap().Done()
-	d.bodyOutput.AppendLine().White("").Done()
-	if d.quote.MaxBundles == 0 {
-		note, _ := guildSelectionNote(d.quote)
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			White(guildUnavailableMerchantResponse(d.quote)).WordWrap().Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text(note, DialogStatusWarningColor).Done()
-	} else {
-		projected := projectedGuildQuantity(d.quote, d.bundleCount)
-		totalPrice := d.quote.PricePerBundle * int(d.bundleCount)
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("BUNDLES (BEFORE THEFT)").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			White("<   ").Yellowf("%d", d.bundleCount).White("   >").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGrayf("of %d", d.quote.MaxBundles).Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Whitef("%d %s", d.quote.BundleQuantity, strings.ToUpper(guildProvisionName(d.quote.Provision))).
-			LightGray(" per bundle").Done()
-		d.bodyOutput.AppendLine().White("").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray(strings.ToUpper(guildProvisionName(d.quote.Provision))+"  ").
-			Cyanf("%d", d.quote.QuantityBefore).
-			White("  ->  ").
-			LightGreenf("%d", projected).
-			Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			LightGray("GOLD  ").
-			Cyanf("%d", d.quote.Gold).
-			White("  ->  ").
-			LightGreenf("%d", int(d.quote.Gold)-totalPrice).
-			Done()
-	}
-	d.totalOutput.Reset()
-	if d.quote.MaxBundles > 0 {
-		totalPrice := d.quote.PricePerBundle * int(d.bundleCount)
-		d.totalOutput.AppendLine().WithAlignment(etext.AlignCenter).Yellow("TOTAL PRICE").Done()
-		d.totalOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Yellowf("%d", totalPrice).White(" GOLD").Done()
-	}
-	d.populateFooterOutput()
-}
-
-func (d *GuildPurchaseDialog) populateFooterOutput() {
-	d.footerOutput.Reset()
-	guidance := "[Esc] Back"
-	if d.quote.MaxBundles > 0 {
-		guidance = merchantQuantityFooter
-	}
-	appendControlGuidance(d.footerOutput, guidance, d.frame.footerText.Dx())
+	return shortOfGoldNotes("A bundle costs", quote.PricePerBundle, int(quote.Gold))
 }
 
 func quotedGuildPitch(pitch string) string {
 	return `"` + strings.Trim(strings.TrimSpace(pitch), `"`) + `"`
-}
-
-func guildUnavailableMerchantResponse(quote game_state.GuildOfferQuote) string {
-	if quote.QuantityBefore >= party_state.ItemQuantitySmallMax {
-		return `"Thou canst carry no more ` + strings.ToLower(guildProvisionName(quote.Provision)) + `."`
-	}
-
-	return `"Thou hast not enough gold for even one bundle."`
-}
-
-func guildPurchasePlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: guildPurchaseStartPercentX,
-		EndPercentX:   guildPurchaseEndPercentX,
-		StartPercentY: guildPurchaseStartPercentY,
-		EndPercentY:   guildPurchaseEndPercentY,
-	}
 }
 
 func validateGuildPurchaseQuote(quote game_state.GuildOfferQuote) {

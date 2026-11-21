@@ -23,9 +23,16 @@ type questJournalSearchEntry struct {
 	mapNote bool
 	title   string
 	text    string
-	source  string
-	body    string
+	lines   []questJournalSearchLine
+	label   string
 	snippet string
+}
+
+// questJournalSearchLine is one labelled line of an entry; the line that matched
+// is the one a result shows under its title.
+type questJournalSearchLine struct {
+	label string
+	value string
 }
 
 func (d *QuestJournalDialog) buildSearchEntries() {
@@ -70,9 +77,11 @@ func (d *QuestJournalDialog) appendCuratedSearchEntries() {
 			title := d.listRowText(row)
 			var searchable strings.Builder
 			searchable.WriteString(title)
+			var lines []questJournalSearchLine
 			// Only rendered, discovery-gated values enter the index, never semantic IDs.
 			for _, line := range d.detailLines() {
-				if line.value == questJournalNotLearned || tab == QuestJournalMoonstonesTab && moonstonePlaceholder(line.value) {
+				if line.header || line.value == questJournalNotLearned ||
+					tab == QuestJournalMoonstonesTab && moonstonePlaceholder(line.value) {
 					continue
 				}
 				searchable.WriteByte(' ')
@@ -80,11 +89,11 @@ func (d *QuestJournalDialog) appendCuratedSearchEntries() {
 					searchable.WriteString(line.label + ": ")
 				}
 				searchable.WriteString(line.value)
+				lines = append(lines, questJournalSearchLine{label: line.label, value: line.value})
 			}
-			source := questJournalTabTitle(tab)
 			d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
 				tab: tab, row: row, noteID: 0, mapNote: false, title: title, text: strings.ToLower(searchable.String()),
-				source: source, body: searchable.String(), snippet: "",
+				lines: lines, label: "", snippet: "",
 			})
 		}
 		d.selections[tab] = selected
@@ -96,8 +105,8 @@ func (d *QuestJournalDialog) appendConversationSearchEntries() {
 	for row, exchange := range d.lastConversation.Exchanges {
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
 			tab: QuestJournalConversationTab, row: row, noteID: 0, mapNote: false, title: exchange.Title(),
-			text:   strings.ToLower(exchange.SearchText()),
-			source: exchange.Speaker + " - " + exchange.Location, body: journalSnippetSource(exchange), snippet: "",
+			text:  strings.ToLower(exchange.SearchText()),
+			lines: exchangeSearchLines(exchange), label: "", snippet: "",
 		})
 	}
 	for row, index := range d.visibleExcerpts {
@@ -108,8 +117,8 @@ func (d *QuestJournalDialog) appendConversationSearchEntries() {
 		}
 		d.searchEntries = append(d.searchEntries, questJournalSearchEntry{
 			tab: QuestJournalExcerptsTab, row: row, noteID: 0, mapNote: false, title: excerptTitle(exchange),
-			text:   strings.ToLower(searchable),
-			source: exchange.Speaker + " - " + exchange.Location, body: journalSnippetSource(exchange), snippet: "",
+			text:  strings.ToLower(searchable),
+			lines: exchangeSearchLines(exchange), label: "", snippet: "",
 		})
 	}
 }
@@ -163,8 +172,8 @@ func (d *QuestJournalDialog) setSearchQuery(query string) {
 		if index == selected {
 			d.searchSelection = len(d.searchResults)
 		}
-		d.searchEntries[index].snippet = journalSearchSnippet(entry.body, query,
-			d.font.CharsForWidth(d.searchResultTextRect().Dx()))
+		d.searchEntries[index].label, d.searchEntries[index].snippet = journalSearchLine(entry.lines, query,
+			d.font.CharsForWidth(d.searchResultTextRect().Dx()-d.searchSnippetIndent()))
 		d.searchResults = append(d.searchResults, index)
 	}
 }
@@ -215,6 +224,13 @@ func (d *QuestJournalDialog) searchResultTextRect() image.Rectangle {
 	content.Max.X -= max(d.layout.padding*questJournalPaneInsetMultiplier, int(math.Ceil(d.font.TextFace.Size)))
 
 	return content
+}
+
+// searchSnippetIndent is two letters; the matched line's capacity shrinks by as much.
+func (d *QuestJournalDialog) searchSnippetIndent() int {
+	width, _ := d.font.MeasureString(journalSnippetIndentText)
+
+	return int(math.Ceil(width))
 }
 
 func (d *QuestJournalDialog) searchStatus() string {
@@ -292,10 +308,14 @@ func (d *QuestJournalDialog) drawSearch(screen *ebiten.Image) {
 			d.drawJournalMatchLine(screen, titleRect, title, d.searchQuery, rowColor, index == d.searchSelection)
 		}
 		d.drawSingleLine(screen, categoryRect, category, categoryColor)
-		sourceRect := image.Rect(rect.Min.X, titleRect.Max.Y, rect.Max.X, titleRect.Max.Y+d.rowHeight())
-		d.drawJournalMatchLine(screen, sourceRect, entry.source, d.searchQuery, categoryColor, index == d.searchSelection)
-		snippetRect := image.Rect(rect.Min.X, sourceRect.Max.Y, rect.Max.X, rect.Max.Y)
-		d.drawJournalMatchLine(screen, snippetRect, entry.snippet, d.searchQuery, rowColor, index == d.searchSelection)
+		// The matched line is indented and quiet so the title stands out from it.
+		snippetColor := DialogControlHintColor
+		if index == d.searchSelection {
+			snippetColor = rowColor
+		}
+		snippetRect := image.Rect(rect.Min.X+d.searchSnippetIndent(), titleRect.Max.Y, rect.Max.X, rect.Max.Y)
+		d.drawJournalMatchLine(screen, snippetRect, entry.snippetText(), d.searchQuery, snippetColor,
+			index == d.searchSelection)
 	}
 	d.drawScrollIndicators(screen, content, start, end, len(d.searchResults), rowHeight)
 }

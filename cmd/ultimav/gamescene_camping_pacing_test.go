@@ -64,19 +64,19 @@ func beginPhysicalOneHourCamp(t *testing.T, scene *GameScene, held map[ebiten.Ke
 	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.KeyH, func() bool {
 		return scene.gameState.EventQueueManager.HasWorkflow(workflow)
 	})
-	var duration *widgets.InputBox
+	var duration *widgets.HoursPrompt
 	for range 200 {
 		update()
-		if dialog, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.InputBox); ok {
+		if dialog, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.HoursPrompt); ok {
 			duration = dialog
 			break
 		}
 	}
 	require.NotNil(t, duration, "camping did not reach duration input")
 	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.Key1, func() bool {
-		return duration.GetText() == "1"
+		return duration.GetHours() == 1
 	})
-	require.Equal(t, "1", duration.GetText())
+	require.Equal(t, 1, duration.GetHours())
 	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.KeyEnter, func() bool {
 		return !scene.dialogStack.ContainsWidgetInstance(duration)
 	})

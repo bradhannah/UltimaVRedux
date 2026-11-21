@@ -437,6 +437,8 @@ func TestZStatsDossierDialogDetailsUseCatalogPortraitsAndExcludeReadiness(t *tes
 	dialog.prepareCharacterStats()
 	characterText := dialog.detailOutput.GetOutputStr(false)
 	require.Contains(t, dialog.summaryOutput.GetOutputStr(false), "Avatar")
+	require.Regexp(t, `Level: \d+\s+XP: \d+`, dialog.summaryOutput.GetOutputStr(false))
+	require.NotContains(t, dialog.summaryOutput.GetOutputStr(false), "Level / XP")
 	require.Contains(t, characterText, "READY TO ADVANCE")
 	require.Contains(t, characterText, "HP:")
 	require.Contains(t, characterText, "MP:")
@@ -451,20 +453,24 @@ func TestZStatsDossierDialogDetailsUseCatalogPortraitsAndExcludeReadiness(t *tes
 	require.NotContains(t, characterText, "Highest spell")
 	dialog.prepareCharacterItemDetail()
 	require.Contains(t, dialog.summaryOutput.GetOutputStr(false), "Leather Helm")
-	characterItemBody := dialog.detailOutput.GetOutputStr(false)
+	characterItemBody := dialog.summaryOutput.GetOutputStr(false) + dialog.detailOutput.GetOutputStr(false)
 	require.Contains(t, characterItemBody, "Strength required")
-	require.Contains(t, characterItemBody, "Hands required: One")
+	for _, nothing := range []string{"Hands required", "Range", "Abilities: None"} {
+		require.NotContains(t, characterItemBody, nothing, "a helm has no %s to state", nothing)
+	}
+	require.NotContains(t, dialog.summaryOutput.GetOutputStr(false), "Category", "the slot label already says Helm")
+	require.NotContains(t, dialog.summaryOutput.GetOutputStr(false), "Attack")
 
 	dialog.switchTab(ZStatsDossierArmoryTab)
 	dialog.prepareArmoryDetail(dialog.layout.globalDetailRect)
 	armorySummary := dialog.summaryOutput.GetOutputStr(false)
 	require.Contains(t, armorySummary, "Available / Readied")
 	require.NotContains(t, armorySummary, "Selected character")
-	armoryBody := dialog.detailOutput.GetOutputStr(false)
+	armoryBody := dialog.summaryOutput.GetOutputStr(false) + dialog.detailOutput.GetOutputStr(false)
 	require.Contains(t, armoryBody, "Attack:")
-	require.Contains(t, armoryBody, "Defense:")
 	require.Contains(t, armoryBody, "Strength required:")
-	require.Contains(t, armoryBody, "Range:")
+	require.NotContains(t, armoryBody, "Defense:")
+	require.NotContains(t, armoryBody, "Range:")
 	require.Contains(t, armoryBody, "Hands required: One")
 
 	dialog.switchTab(ZStatsDossierSpellsTab)
@@ -719,6 +725,25 @@ func testZStatsDossier() game_state.ZStatsDossier {
 			{ID: 3, Category: "Quest Item", Name: "Unowned", Quantity: 0},
 			{ID: 4, Category: "Other", Name: "Ordinary", Quantity: 1},
 		},
+	}
+}
+
+func TestZStatsDossierDialogWeaponStatesItsHandsRangeAndSlotCategory(t *testing.T) {
+	dossier := testZStatsDossier()
+	dossier.Characters[0].Equipped[2] = game_state.ZStatsEquippedItem{
+		Slot: "Hand 1", ItemID: references.Bow.ID(), Name: "Bow", Category: "Weapon", Attack: 10, Range: 7,
+		StrengthRequired: 8, TwoHanded: true, RequiresAmmo: true, AmmoName: "Arrows",
+	}
+	dialog := newTestZStatsDossierDialog(dossier, newWidgetTestKeyboard(0))
+	dialog.tabSelections[ZStatsDossierCharacterTab] = 2
+	dialog.prepareCharacterItemDetail()
+	summary := dialog.summaryOutput.GetOutputStr(false)
+	body := summary + dialog.detailOutput.GetOutputStr(false)
+	require.Contains(t, summary, "Category: Weapon", "Hand 1 does not say Weapon")
+	require.Contains(t, summary, "Attack: 10")
+	require.NotContains(t, summary, "Defense", "a defense of nothing is left out")
+	for _, fact := range []string{"Range: 7", "Hands required: Two", "Ammo: Arrows"} {
+		require.Contains(t, body, fact)
 	}
 }
 

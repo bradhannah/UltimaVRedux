@@ -1,7 +1,10 @@
 package widgets
 
 import (
+	"image/color"
+
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
 )
@@ -149,9 +152,33 @@ func (d *DialogStack) UpdateNonBlockingDialogs() {
 
 // Draw renders all dialogs from bottom to top without allocating a snapshot.
 func (d *DialogStack) Draw(screen *ebiten.Image) {
-	for _, entry := range d.entries {
+	top, modals := -1, 0
+	for index, entry := range d.entries {
+		if entry.isModal {
+			top = index
+			modals++
+		}
+	}
+	for index, entry := range d.entries {
+		// A window opened on top of another is the one being answered: everything
+		// behind it is shaded so that it reads as waiting. A window alone over the
+		// play screen shades nothing.
+		if index == top && modals > 1 {
+			drawBackdropShade(screen)
+		}
 		entry.widget.Draw(screen)
 	}
+}
+
+// backdropShadeAlpha is how dark the screen behind a window on top of another is
+// made, of 255: enough that it recedes, while it can still be read.
+const backdropShadeAlpha = 150
+
+// drawBackdropShade darkens everything drawn so far with one flat shade.
+func drawBackdropShade(screen *ebiten.Image) {
+	bounds := screen.Bounds()
+	vector.FillRect(screen, float32(bounds.Min.X), float32(bounds.Min.Y), float32(bounds.Dx()), float32(bounds.Dy()),
+		color.RGBA{R: 0, G: 0, B: 0, A: backdropShadeAlpha}, false)
 }
 
 func (d *DialogStack) mustNotContain(widget Widget) {

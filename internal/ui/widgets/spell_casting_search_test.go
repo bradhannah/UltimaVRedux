@@ -43,8 +43,8 @@ func TestSpellBrowserSearchAndSyllables(t *testing.T) {
 	}
 	state.PartyState.Inventory.Spells.Set(references.AnNox, 2)
 	dialog.RefreshCatalog(state.CurrentSpellCatalog())
-	// From All known, Ctrl+O steps through Mixable and Ready to Prepared.
-	for _, filter := range []spellBrowserFilter{spellFilterMixable, spellFilterReady, spellFilterPrepared} {
+	// From All known, Ctrl+O steps through Ready to Prepared.
+	for _, filter := range []spellBrowserFilter{spellFilterReady, spellFilterPrepared} {
 		press(ebiten.KeyControl, ebiten.KeyO)
 		require.Equal(t, filter, dialog.browser.filterMode)
 	}
