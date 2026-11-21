@@ -69,7 +69,7 @@ func TestZStatsSpellSummaryStaysFixedWhileOnlyOverflowBodyPages(t *testing.T) {
 			require.Contains(t, summary, "Circle: 1")
 			require.Contains(t, summary, "MP cost: 1")
 			require.Contains(t, summary, "Prepared: 2")
-			require.Contains(t, dialog.detailOutput.GetOutputStr(false), "Formula: candidate")
+			require.Contains(t, dialog.detailOutput.GetOutputStr(false), "Formula: Untested")
 			_, top, _ := dialog.catalogDetailRects(dialog.layout.globalDetailRect)
 			before := make([]byte, top.Dx()*top.Dy()*4)
 			screen.SubImage(top).(*ebiten.Image).ReadPixels(before)

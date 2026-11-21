@@ -94,13 +94,13 @@ func (d *ReagentMixingDialog) letters(count int) int {
 // tab or amount never moves it.
 func (d *ReagentMixingDialog) layoutWindow() {
 	view := &d.view
-	width := d.letters(mixWindowColumns) + view.padding*spellBrowserRowLines
+	width := d.letters(mixWindowColumns) + (view.padding+view.inset)*spellBrowserRowLines
 	left := (view.width - width) / spellBrowserRowLines
-	content := image.Rect(left+view.padding, 0, left+width-view.padding, view.height)
+	content := image.Rect(left+view.padding+view.inset, 0, left+width-view.padding-view.inset, view.height)
 	bodyLines := max(mixRecipeHead+len(d.rows(mixTabRecipe)),
 		mixExperimentHead+len(d.rows(mixTabExperiment))+d.populateCandidates(content))
 	heights := [...]int{view.headerRect.Dy(), d.paneHeight(mixStatusLines), d.paneHeight(bodyLines),
-		d.paneHeight(mixFooterLines)}
+		d.paneHeight(mixFooterLines) + view.inset*(mixFooterLines-1)}
 	top := view.height
 	for _, height := range heights {
 		top -= height
@@ -142,7 +142,7 @@ func (d *ReagentMixingDialog) drawWindow(screen *ebiten.Image) {
 	view, window := &d.view, &d.window
 	unit := getClassicUIPixelUnit(view.width, view.height)
 	fillClassicPaneBackgrounds(screen, window.frames, unit, pkgcolor.DialogBackground.RGBA())
-	header := window.header.Inset(view.padding)
+	header := view.inner(window.header, true)
 	prepareSpellOutput(view.title, header)
 	view.title.AppendLine().Text("MIX REAGENTS", DialogHeaderColor).Done()
 	label := FitDialogLine(d.spell.Name+" - "+d.spell.EffectLabel, view.title.Font, header.Dx())
@@ -158,7 +158,7 @@ func (d *ReagentMixingDialog) drawWindow(screen *ebiten.Image) {
 // the top line.
 func (d *ReagentMixingDialog) drawStatus(screen *ebiten.Image, unit int) {
 	view := &d.view
-	rect := d.window.status.Inset(view.padding)
+	rect := view.inner(d.window.status, false)
 	fontHeight := int(math.Ceil(view.heading.GetFontHeight()))
 	left := rect.Min.X + d.letters(1)
 	for _, tab := range d.tabs() {
@@ -221,7 +221,7 @@ func (d *ReagentMixingDialog) missingSentence() string {
 		return fmt.Sprintf("Cannot mix: no %s.", missing[0])
 	}
 
-	return fmt.Sprintf("Cannot mix: lacks %d ingredients.", max(1, len(missing)))
+	return fmt.Sprintf("Insufficient reagents: %d short!", max(1, len(missing)))
 }
 
 // mixInk is the colour of each kind of text on a line. The white selection bar
@@ -258,7 +258,7 @@ func (d *ReagentMixingDialog) drawLine(screen *ebiten.Image, rect image.Rectangl
 
 func (d *ReagentMixingDialog) drawBody(screen *ebiten.Image) {
 	view := &d.view
-	content := d.window.body.Inset(view.padding)
+	content := view.inner(d.window.body, false)
 	amount := d.amount()
 	next := func() image.Rectangle {
 		line := image.Rect(content.Min.X, content.Min.Y, content.Max.X, content.Min.Y+view.lineHeight)
@@ -339,7 +339,7 @@ func (d *ReagentMixingDialog) drawIngredient(screen *ebiten.Image, rect image.Re
 // is what it takes, and otherwise has the next row.
 func (d *ReagentMixingDialog) drawWindowFooter(screen *ebiten.Image) {
 	view := &d.view
-	rect := d.window.footer.Inset(view.padding)
+	rect := view.inner(d.window.footer, false)
 	prepareSpellOutput(view.footer, rect)
 	amount := d.amount()
 	if d.tab == mixTabExperiment {

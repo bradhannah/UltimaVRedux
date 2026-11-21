@@ -47,9 +47,9 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 		action, status string
 	}{
 		{references.Dagger, "Ready", "Ready to equip"},
-		{references.LeatherHelm, "Unready", "Ready to unready"},
+		{references.LeatherHelm, "Unready", "Enter removes it"},
 		{references.Arrows, "No change", "No equipment change"},
-		{references.ChainCoif, "Review replacement", "Review removed items before replacing"},
+		{references.ChainCoif, "Review replacement", "Replacing removes other items"},
 	} {
 		found := false
 		for index, item := range dialog.availableItems {

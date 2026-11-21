@@ -20,7 +20,7 @@ func TestAtlasUnmeasuredSelectionNeverDrawsOrCentersAnySite(t *testing.T) {
 			before := view
 			dialog.handleKey(ebiten.KeyEnter)
 			require.Equal(t, before, view, kind)
-			require.Contains(t, dialog.status, "Measure this place")
+			require.Contains(t, dialog.status, "Take a sextant reading there")
 			require.Contains(t, atlasFieldsText(dialog.detailFields()), "Coordinates: Not measured")
 			_, visible := dialog.atlasMarkerCenter(entry)
 			require.False(t, visible)

@@ -91,6 +91,9 @@ type ItemSelectionDialogConfig struct {
 	SpriteSheet *sprites.SpriteSheet
 	OnSelect    func(game_state.UseableItemInfo)
 	OnCancel    func()
+	// LastUsed is the item picked last time. The dialog opens on it, in its own
+	// category, while it is still listed; otherwise at the top.
+	LastUsed *game_state.UseableItemInfo
 }
 
 type itemSelectionLayout struct {
@@ -164,8 +167,29 @@ func NewItemSelectionDialog(config ItemSelectionDialogConfig) *ItemSelectionDial
 	}
 	dialog.organizeItems()
 	dialog.ensureLayout()
+	dialog.openOnItem(config.LastUsed)
 
 	return dialog
+}
+
+// openOnItem puts the cursor on item in its own category. An item no longer
+// listed leaves the dialog on its first row.
+func (d *ItemSelectionDialog) openOnItem(item *game_state.UseableItemInfo) {
+	if item == nil {
+		return
+	}
+	same := func(other game_state.UseableItemInfo) bool {
+		return other.Name == item.Name && other.Category == item.Category
+	}
+	category := widgetCategoryForUseItem(item.Category)
+	inCategory, inAll := slices.IndexFunc(d.itemsByCategory[category], same), slices.IndexFunc(d.allItems, same)
+	active := slices.Index(d.categories, category)
+	if inCategory < 0 || inAll < 0 || active < 0 {
+		return
+	}
+	d.selections[category], d.selections[ItemCategoryAll] = inCategory, inAll
+	d.activeCategory = active
+	d.clampAllSelections()
 }
 
 // organizeItems lists what can be used now first, then what cannot, each group
@@ -488,7 +512,6 @@ func (d *ItemSelectionDialog) ensureLayout() {
 func (d *ItemSelectionDialog) rebuildOutputs() {
 	config := FontConfig{
 		Size:                  FontSizeTitle,
-		LineSpacing:           0,
 		LineSpacingMultiplier: itemDialogLineSpacingMultiplier,
 		MaxLines:              1,
 		MaxChars:              itemDialogMinimumTextChars,
@@ -853,11 +876,11 @@ func (d *ItemSelectionDialog) drawDetailHeader(screen *ebiten.Image, item game_s
 
 func (d *ItemSelectionDialog) drawFooter(screen *ebiten.Image) {
 	content := d.footerContentRect()
-	hints := []ControlHint{{hintKeyTabCycle, labelCategory}}
+	hints := []ControlHint{{hintKeyTabCycle, hintActionSection}}
 	if len(d.detailPages()) > 1 {
-		hints = append(hints, ControlHint{hintKeySpace, "Details"})
+		hints = append(hints, ControlHint{hintKeySpace, hintActionDetails})
 	}
-	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{hintKeyShiftPage, hintActionPage},
+	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{hintKeyShiftPage, hintActionListPage},
 		ControlHint{hintKeyEnter, "Use"}, ControlHint{hintKeyEsc, "Cancel"})
 	item := d.selectedItem()
 	d.footerOutput.Reset()

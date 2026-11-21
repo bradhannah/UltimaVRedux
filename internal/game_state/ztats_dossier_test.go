@@ -43,9 +43,9 @@ func TestCurrentZStatsDossierIncludesCompleteZeroQuantityCatalogs(t *testing.T) 
 	assertCompleteZeroZStatsInventory(t, dossier.Magic.Scrolls)
 	require.Equal(t, []string{"Food", "Gold", "Keys", "Gems", "Torches", "Skull Keys"}, zStatsProvisionNames(dossier.Provisions))
 	expectedDescriptionTerms := map[string][]string{
-		"Food":       {"three times a day", "starves"},
-		"Gold":       {"goods", "payments"},
-		"Keys":       {"Jimmy", "failure breaks one"},
+		"Food":       {"through the day", "starves"},
+		"Gold":       {"goods", "tolls"},
+		"Keys":       {"Jimmy", "key that fails breaks"},
 		"Gems":       {"from above", "dungeon level", "one gem"},
 		"Torches":    {"Lights the dark", "less time in a dungeon"},
 		"Skull Keys": {"In Ex Por", "magically locked door"},

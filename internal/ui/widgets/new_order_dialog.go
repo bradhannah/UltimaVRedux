@@ -243,7 +243,7 @@ func (d *NewOrderDialog) viewOptions() []CharacterSelectionOption {
 		}
 		if option.CharacterIndex == d.firstSelectedIndex {
 			option.State = CharacterSelectionLocked
-			option.Details = []string{"This is the locked first selection.", "Choose another companion to complete the swap."}
+			option.Details = []string{"Swap " + option.Name + " with whom?", "Choose another companion to complete the swap."}
 
 			continue
 		}
@@ -262,13 +262,11 @@ func (d *NewOrderDialog) viewOptions() []CharacterSelectionOption {
 func (d *NewOrderDialog) activeSwapConsequence(first, second CharacterSelectionOption) string {
 	switch d.activeSlot {
 	case first.CharacterIndex:
-		return "The active slot remains fixed; " + second.Name + " becomes active."
+		return second.Name + " is now the active player."
 	case second.CharacterIndex:
-		return "The active slot remains fixed; " + first.Name + " becomes active."
-	case -1:
-		return "The all-party active selection remains unchanged."
+		return first.Name + " is now the active player."
 	default:
-		return "The active member remains unchanged."
+		return "The active player is unchanged."
 	}
 }
 

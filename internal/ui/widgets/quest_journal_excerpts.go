@@ -17,7 +17,13 @@ import (
 )
 
 // questJournalExcerptStorageUnavailable is shown when an excerpt action has no storage callback.
-const questJournalExcerptStorageUnavailable = "Excerpt storage unavailable."
+const questJournalExcerptStorageUnavailable = questJournalNotesCannotSave
+
+// Shared wordings for a note or kept line that cannot be written.
+const (
+	questJournalNotesCannotSave = "Notes cannot be saved right now."
+	questJournalNotebookFull    = "Notebook full. Delete a note to write another."
+)
 
 func cloneJournalExchanges(exchanges []journal.Exchange) []journal.Exchange {
 	result := make([]journal.Exchange, len(exchanges))
@@ -197,9 +203,9 @@ func (d *QuestJournalDialog) handleExcerptManagementInput() bool {
 
 func (d *QuestJournalDialog) excerptResult(excerpts []journal.Exchange, err error, success string) {
 	if err != nil {
-		d.excerptStatus = "Excerpt operation failed."
+		d.excerptStatus = "Could not keep that."
 		if errors.Is(err, journal.ErrNotebookFull) {
-			d.excerptStatus = "Notebook full; delete to free space."
+			d.excerptStatus = questJournalNotebookFull
 		}
 
 		return
@@ -371,7 +377,8 @@ func (d *QuestJournalDialog) exchangeFooterGuidance() string {
 		reference = "  [Ctrl+R] Rune reference"
 	}
 
-	return "[Up/Down] Exchange  " + paging + action + reference + "  [/] Search  [Tab/Shift+Tab] Tab  [Esc/Shift+J] Close"
+	return "[Up/Down] Exchange  " + paging + action + reference +
+		"  [/] Search  [Tab/Shift+Tab] Section  [Esc/Shift+J] Close"
 }
 
 func (d *QuestJournalDialog) hasRunicExchange() bool {

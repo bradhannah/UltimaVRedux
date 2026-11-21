@@ -73,7 +73,7 @@ func (e noteSentenceError) Error() string { return string(e) }
 // notesMessage turns a notebook error into a sentence for the player.
 func notesMessage(err error) string {
 	if errors.Is(err, journal.ErrNotesFull) {
-		return fmt.Sprintf("Notebook full: %d notes. Delete one to write another.", journal.MaxNotes)
+		return "Notebook full. Delete a note to write another."
 	}
 	message := strings.TrimPrefix(err.Error(), journal.ErrInvalidNotes.Error()+": ")
 	if message == "" {

@@ -58,7 +58,7 @@ func TestNewOrderShowsExactSwapAndActiveSlotPreview(t *testing.T) {
 		{Label: "Iolo", Value: "2 -> 3"},
 		{Label: "Shamino", Value: "3 -> 2"},
 	}, option.Facts)
-	assert.Contains(t, option.Details[0], "Shamino becomes active")
+	assert.Contains(t, option.Details[0], "Shamino is now the active player")
 }
 
 func TestNewOrderSwapSpaceAndEscapeBehavior(t *testing.T) {

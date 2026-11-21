@@ -62,7 +62,7 @@ func TestSpellDetailPagingUsesRealContentInBothDialogs(t *testing.T) {
 				require.False(t, hasPendingRequest())
 				press(ebiten.KeyDown)
 				require.Greater(t, browser.pages, 1)
-				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Next detail page")
+				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Details")
 				pages, capacity := browser.pages, view.detailCapacity
 				lines := strings.Split(view.body.GetOutputStr(false), "\n")
 				require.Greater(t, len(lines), 40, "source paragraphs must actually wrap")
@@ -102,7 +102,7 @@ func TestSpellDetailPagingUsesRealContentInBothDialogs(t *testing.T) {
 				press(ebiten.KeyEscape)
 				press(ebiten.KeyDown)
 				require.Greater(t, browser.pages, 1)
-				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Next detail page")
+				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Details")
 				browser.refresh(catalog[:1])
 				prepare()
 				require.Equal(t, 1, browser.pages)
@@ -171,7 +171,7 @@ func TestMixSpacePagesTheListAndTicksInTheExperiment(t *testing.T) {
 	require.False(t, dialog.HasPendingMixRequest())
 	press(ebiten.KeyEscape)
 	require.False(t, dialog.preparing)
-	require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Space] Next detail page")
+	require.Contains(t, dialog.view.footer.GetOutputStr(false), "[Space] Details")
 }
 
 func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
@@ -197,7 +197,7 @@ func TestSpellPagingResizeThresholdIsStableWithWrappingFooter(t *testing.T) {
 				require.Empty(t, view.pageIndicator.GetOutputStr(false))
 			} else {
 				require.Greater(t, pages, 1)
-				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Next detail page")
+				require.Contains(t, view.footer.GetOutputStr(false), "[Space] Details")
 				require.Greater(t, view.footer.GetPanelContentLineCount(), 1)
 				browser.page = pages - 1
 			}

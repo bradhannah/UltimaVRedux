@@ -77,6 +77,26 @@ func TestItemSelectionDialogOnlyBuildsNonEmptyTabsIncludingKeys(t *testing.T) {
 	assert.NotContains(t, dialog.categories, ItemCategoryMoonstone)
 }
 
+func TestItemSelectionDialogOpensOnLastUsedItemWhileItIsListed(t *testing.T) {
+	setItemDialogTestResolution(t, 1280, 720)
+	items := []game_state.UseableItemInfo{
+		testUseItem("Crown", game_state.UseItemCategoryQuest, references.Crown),
+		testUseItem("Blue", game_state.UseItemCategoryPotion, references.Blue),
+		testUseItem("Yellow", game_state.UseItemCategoryPotion, references.Yellow),
+	}
+	config := testItemSelectionConfig(newWidgetTestKeyboard(0), items)
+	config.LastUsed = &items[2]
+	dialog := NewItemSelectionDialog(config)
+	require.Equal(t, ItemCategoryPotion, dialog.currentCategory())
+	require.Equal(t, "Yellow", dialog.selectedItem().Name)
+
+	gone := testUseItem("Red", game_state.UseItemCategoryPotion, references.Red)
+	config.LastUsed = &gone
+	dialog = NewItemSelectionDialog(config)
+	require.Equal(t, ItemCategoryAll, dialog.currentCategory())
+	require.Equal(t, "Crown", dialog.selectedItem().Name)
+}
+
 func TestItemSelectionDialogNavigationPreservesPerTabSelectionAndScroll(t *testing.T) {
 	setItemDialogTestResolution(t, 320, 200)
 	items := make([]game_state.UseableItemInfo, 0, 42)

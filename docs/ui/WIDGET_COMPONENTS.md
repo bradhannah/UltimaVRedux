@@ -184,7 +184,7 @@ Guardians, `AtlasEntry.PlotPosition` accepts only a recorded survey. Personal
 notes and registered parked vessels use their own explicit point authorities;
 none use supplied artwork as a fallback. The detached entry has no alternate
 `ChartPosition` field. Enter on an unmeasured row explains
-`Measure this place to locate it from the list.` without
+`Take a sextant reading there to place it on the Map.` without
 changing camera or zoom. A later eligible local reading earns the interactive pin.
 
 The 34-row supplied directory is distinct from the **27 static supplied symbols**:
@@ -977,7 +977,7 @@ MERCH-0012 to MERCH-0014): the window says so and Enter reads "Order anyway" or
 "Ask anyway". Gold shown is before any theft by Faulinei, which the receipt
 reports afterwards. The receipt (`tavern_result_dialog.go`) is the same window
 with Food and Gold rows showing what the order did, grey notes for the detail and
-the price when the gold row differs from it, a red line for what Faulinei took, the
+the price when the gold row differs from it, a red line for the gold that was stolen, the
 keeper's word (red when the order was refused or ended), and the one-key footer
 "[Enter/Esc] Continue".
 
@@ -1358,7 +1358,7 @@ Cast/Mix detail paging is measured from wrapped content and final pane bounds,
 including headings, Cast's status line, and the footer.
 Layout first measures without a paging hint; genuine overflow then reserves the
 indicator and conditional hint together. Multipage details show **Page X/Y** and
-advertise **[Space] Next detail page** only in browse mode. Selection, refresh,
+advertise **[Space] Details** only in browse mode. Selection, refresh,
 mode changes, and resize recompute this before drawing, keeping the page, hint,
 and displayed rows synchronized without shrinking typography.
 

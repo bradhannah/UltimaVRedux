@@ -32,9 +32,14 @@ const (
 	hintKeyShiftPage = "Shift+Up/Down"
 	hintActionClose  = "Close"
 	hintActionItem   = "Item"
-	hintActionPage   = "Page"
-	hintActionSearch = "Search"
-	hintActionSelect = "Select"
+	// Words for keys that mean the same thing everywhere: Space is more about
+	// the selected row, Shift+Up/Down a page of the list, Tab the next group.
+	hintActionDetails  = "Details"
+	hintActionListPage = "List page"
+	hintActionSection  = "Section"
+	hintActionSpell    = "Spell"
+	hintActionSearch   = "Search"
+	hintActionSelect   = "Select"
 )
 
 // controlHintSeparator separates complete hints within one physical row. A
@@ -187,7 +192,7 @@ func (h *staticViewerHint) draw(screen *ebiten.Image, artwork image.Rectangle, h
 	if h.output == nil || h.width != width {
 		h.width = width
 		_, h.output = GetScaledFontWithOutputForWidth(FontConfig{Size: FontSizeBody,
-			MaxLines: staticViewerHintLines, MaxChars: staticViewerHintChars, LineSpacing: 0,
+			MaxLines: staticViewerHintLines, MaxChars: staticViewerHintChars,
 			LineSpacingMultiplier: staticViewerHintLineSpacing}, width)
 	}
 	h.output.Reset()

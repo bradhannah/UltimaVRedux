@@ -210,7 +210,13 @@ func (d *ZStatsDossierDialog) Update() {
 	if d.handleSpellFilterShortcut() || d.handleDetailPageShortcut() || d.handleListNavigationShortcut() {
 		return
 	}
-	d.keyboard.IsKeyPressedAndRegister(ebiten.KeyZ)
+	// Z closes the dossier it opened. On the Spells tab the spell browser has
+	// already taken Z as an initial (Zu) or as search text, so it never reaches here.
+	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyZ) {
+		d.Dismiss()
+
+		return
+	}
 	d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter)
 	d.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter)
 }
@@ -601,21 +607,18 @@ func (d *ZStatsDossierDialog) ensureLayout() {
 	d.spellView.layout(screenWidth, screenHeight)
 	d.bodyFont, d.rowOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
 		MaxLines:              zStatsDossierDetailMaxLines,
 		MaxChars:              zStatsDossierMinimumTextChars,
 	})
 	d.titleFont, d.titleOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  zStatsDossierTitleFontSize,
-		LineSpacing:           0,
 		LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
 		MaxLines:              1,
 		MaxChars:              zStatsDossierMinimumTextChars,
 	})
 	_, d.tabOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
 		MaxLines:              1,
 		MaxChars:              zStatsDossierMinimumTextChars,
@@ -928,7 +931,7 @@ func (d *ZStatsDossierDialog) appendCharacterStats(
 	}
 	switch {
 	case !character.CanCast:
-		d.appendDetailPairTo(output, "Highest spell", "Cannot cast", DialogValueColor)
+		d.appendDetailPairTo(output, "Highest Circle", "none", DialogValueColor)
 	case character.CircleStudied:
 		d.appendDetailPairTo(
 			output,
@@ -939,7 +942,7 @@ func (d *ZStatsDossierDialog) appendCharacterStats(
 	case character.HighestUsableSpellCircle != character.Level:
 		d.appendDetailPairTo(
 			output,
-			"Spell circle cap",
+			"Highest Circle",
 			strconv.Itoa(character.HighestUsableSpellCircle),
 			DialogValueColor,
 		)
@@ -1729,7 +1732,7 @@ func (d *ZStatsDossierDialog) prepareFooter() image.Rectangle {
 	}
 	d.footerOutput.Reset()
 	searching := d.activeTab == ZStatsDossierSpellsTab && d.spellBrowser.searching
-	hints := []ControlHint{{hintKeyTabCycle, "Section"}}
+	hints := []ControlHint{{hintKeyTabCycle, hintActionSection}}
 	switch d.activeTab {
 	case ZStatsDossierCharacterTab:
 		hints = append(hints, ControlHint{"Left/Right/1-6", "Character"}, ControlHint{hintKeyUpDown, "Equipment"})
@@ -1740,18 +1743,21 @@ func (d *ZStatsDossierDialog) prepareFooter() image.Rectangle {
 			hints = append(hints, ControlHint{"A-Z/Backspace", "Initials"}, ControlHint{"/", hintActionSearch})
 		}
 		hints = append(hints, ControlHint{"Ctrl+O", "Filter"}, ControlHint{"Ctrl+M", "Mix"},
-			ControlHint{hintKeyUpDown, "Spell"})
+			ControlHint{hintKeyUpDown, hintActionSpell})
 	case ZStatsDossierProvisionsTab, ZStatsDossierArmoryTab, ZStatsDossierReagentsTab,
 		ZStatsDossierPotionsTab, ZStatsDossierScrollsTab, ZStatsDossierItemsTab:
 		hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem})
 	}
-	hints = append(hints, ControlHint{hintKeyShiftPage, "List page"})
+	hints = append(hints, ControlHint{hintKeyShiftPage, hintActionListPage})
 	if d.detailPageCount() > 1 && !searching {
-		hints = append(hints, ControlHint{hintKeySpace, hintActionPage})
+		hints = append(hints, ControlHint{hintKeySpace, hintActionDetails})
 	}
 	escape := ControlHint{hintKeyEsc, hintActionClose}
-	if searching {
+	switch {
+	case searching:
 		escape.Action = "Leave search"
+	case d.activeTab != ZStatsDossierSpellsTab:
+		escape.Key = "Esc/Z" // On the Spells tab Z is a spell initial.
 	}
 	PackControlHints(d.footerOutput, append(hints, escape), textRect.Dx(), etext.AlignCenter)
 

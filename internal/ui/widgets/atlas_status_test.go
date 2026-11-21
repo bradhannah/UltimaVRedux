@@ -31,7 +31,7 @@ func TestAtlasStatusCompleteAtEveryPreset(t *testing.T) {
 				screen = ebiten.NewImageWithOptions(dialog.positionRect.Union(dialog.statusRect), nil)
 				t.Cleanup(screen.Dispose)
 			}
-			for _, reason := range []string{"Night only: 19:00-05:59.", "Use on the world map.",
+			for _, reason := range []string{"Only at night!", "Use on the world map.",
 				"Unavailable underground.", "No sextant carried."} {
 				dialog.Refresh(journal.AtlasDossier{FixUnavailable: reason})
 				dialog.status = reason
@@ -52,7 +52,7 @@ func TestAtlasStatusCompleteAtEveryPreset(t *testing.T) {
 				"Within Lord British's Castle", "Within Blackthorn's Castle"} {
 				fix := journal.SurveyedLocation{Measured: true, Location: journal.SiteLocation{X: 255, Y: 255}}
 				dialog.Refresh(journal.AtlasDossier{CurrentFix: fix, FixContext: context})
-				dialog.status = "Measure this place to locate it from the list."
+				dialog.status = "Take a sextant reading there to place it on the Map."
 				dialog.buildPositionStatus()
 				if screen != nil {
 					screen.Clear()
@@ -114,14 +114,14 @@ func assertAtlasStatusFits(t *testing.T, dialog *AtlasDialog, screen *ebiten.Ima
 func TestAtlasStatusRelayoutAfterResize(t *testing.T) {
 	setQuestJournalTestResolution(t, 1280, 720)
 	view := NewAtlasViewState()
-	dialog := NewAtlasDialog(journal.AtlasDossier{FixUnavailable: "Night only: 19:00-05:59."},
+	dialog := NewAtlasDialog(journal.AtlasDossier{FixUnavailable: "Only at night!"},
 		nil, newWidgetTestKeyboard(0), &view, func() {})
 	before := dialog.positionRect
 	setQuestJournalTestResolution(t, 1920, 1080)
 	dialog.ensureLayout()
 	require.NotEqual(t, before, dialog.positionRect)
 	dialog.buildPositionStatus()
-	require.Equal(t, "POSITION UNAVAILABLE Night only: 19:00-05:59.", atlasStatusWords(dialog.position))
+	require.Equal(t, "POSITION UNAVAILABLE Only at night!", atlasStatusWords(dialog.position))
 	dialog.Refresh(journal.AtlasDossier{CurrentFix: journal.SurveyedLocation{Measured: true}, FixContext: "Within this settlement"})
 	dialog.buildPositionStatus()
 	require.Contains(t, atlasStatusWords(dialog.position), "Within this settlement")

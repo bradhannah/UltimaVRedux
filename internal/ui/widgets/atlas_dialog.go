@@ -281,7 +281,7 @@ func (d *AtlasDialog) centerOnSelection() {
 	if position, ok := d.entries[d.selection].PlotPosition(); ok {
 		d.center(position)
 	} else {
-		d.status = "Measure this place to locate it from the list."
+		d.status = "Take a sextant reading there to place it on the Map."
 	}
 }
 
@@ -316,11 +316,11 @@ func (d *AtlasDialog) ensureLayout() {
 		return
 	}
 	d.width, d.height = w, h
-	config := FontConfig{Size: FontSizeBody, LineSpacing: 0,
+	config := FontConfig{Size: FontSizeBody,
 		LineSpacingMultiplier: 1.15, MaxLines: journal.MaxAtlasNoteDescriptionRunes + 32, MaxChars: 128}
 	d.font, d.details = GetScaledFontWithOutput(config)
 	_, d.footer = GetScaledFontWithOutput(config)
-	_, d.header = GetScaledFontWithOutput(FontConfig{Size: FontSizeTitle, LineSpacing: 0,
+	_, d.header = GetScaledFontWithOutput(FontConfig{Size: FontSizeTitle,
 		LineSpacingMultiplier: config.LineSpacingMultiplier, MaxLines: 1, MaxChars: config.MaxChars})
 	config.MaxLines = 4
 	_, d.row = GetScaledFontWithOutput(config)
@@ -495,7 +495,7 @@ func (d *AtlasDialog) overviewFields() [][2]string {
 	case d.view.Labels == AtlasLabelsNone:
 		fields = append(fields, [2]string{"", "Labels hidden. L shows labels."})
 	case visible == 0:
-		fields = append(fields, [2]string{"", "No mapped places in view. 0 World."})
+		fields = append(fields, [2]string{"", atlasEmptyViewText})
 	default:
 		fields = append(fields, [2]string{"", fmt.Sprintf("Showing all %d visible labels.", visible)})
 	}
@@ -547,6 +547,9 @@ func (d *AtlasDialog) drawDetails(screen *ebiten.Image) {
 	}
 }
 
+// atlasEmptyViewText marks the detail row drawn with a key hint for the World key.
+const atlasEmptyViewText = "Nothing mapped in view. [0] World"
+
 func (d *AtlasDialog) prepareDetails() (int, int) {
 	d.details.Reset()
 	for _, field := range d.detailFields() {
@@ -556,6 +559,12 @@ func (d *AtlasDialog) prepareDetails() (int, int) {
 			continue
 		}
 		line := d.details.AppendLine()
+		if field[0] == "" && field[1] == atlasEmptyViewText {
+			line.Text("Nothing mapped in view. ", DialogValueColor).
+				Text("[0]", DialogControlKeyColor).Text(" World", DialogControlHintColor).Done()
+
+			continue
+		}
 		if field[0] != "" {
 			line.Text(field[0]+": ", DialogLabelColor)
 		}
@@ -574,7 +583,7 @@ func (d *AtlasDialog) prepareDetails() (int, int) {
 	}
 	d.row.Reset()
 	d.row.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(d.detailRect.Dx())))
-	AppendControlHints(d.row.AppendLine(), fmt.Sprintf("%d/%d   [Space] More", d.detailPage+1, pages)).Done()
+	AppendControlHints(d.row.AppendLine(), fmt.Sprintf("[Space] Details %d/%d", d.detailPage+1, pages)).Done()
 
 	return capacity, pages
 }

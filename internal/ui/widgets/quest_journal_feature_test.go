@@ -308,12 +308,12 @@ func TestQuestJournalSharedFooterPolicy(t *testing.T) {
 		item := NewItemSelectionDialog(ItemSelectionDialogConfig{
 			Keyboard: newWidgetTestKeyboard(0), OnSelect: func(game_state.UseableItemInfo) {}, OnCancel: func() {},
 		})
-		rows := packedFooterRows(item.font, "[Tab/Shift+Tab] Category   [Space] Details\n"+
-			"[Up/Down] Item   [Shift+Up/Down] Page   [Enter] Use   [Esc] Cancel", item.footerContentRect().Dx())
+		rows := packedFooterRows(item.font, "[Tab/Shift+Tab] Section   [Space] Details\n"+
+			"[Up/Down] Item   [Shift+Up/Down] List page   [Enter] Use   [Esc] Cancel", item.footerContentRect().Dx())
 		require.LessOrEqual(t, len(rows), itemDialogFooterLines, "%v", size)
 		guidance := strings.Join(rows, "\n")
-		require.Contains(t, guidance, "[Shift+Up/Down] Page")
-		require.Contains(t, guidance, "Category")
+		require.Contains(t, guidance, "[Shift+Up/Down] List page")
+		require.Contains(t, guidance, "Section")
 		require.Contains(t, guidance, "Cancel")
 		for _, line := range strings.Split(guidance, "\n") {
 			width, _ := item.font.MeasureString(line)

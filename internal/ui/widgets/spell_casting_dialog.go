@@ -155,8 +155,8 @@ func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 	view := &d.view
 	view.drawFrame(screen)
 	d.drawHeader(screen)
-	view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
-	view.drawList(screen, d.browser, view.listRect.Inset(view.padding), d.spellAvailable)
+	view.drawSearch(screen, d.browser, view.inner(view.searchRect, false))
+	view.drawList(screen, d.browser, view.inner(view.listRect, true), d.spellAvailable)
 	view.drawDetails(screen, d.browser)
 	view.drawFooter(screen)
 	view.finishFrame(screen)
@@ -166,7 +166,7 @@ func (d *SpellCastingDialog) Draw(screen *ebiten.Image) {
 // them everyone who can cast.
 func (d *SpellCastingDialog) drawHeader(screen *ebiten.Image) {
 	view := &d.view
-	header := view.headerRect.Inset(view.padding)
+	header := view.inner(view.headerRect, true)
 	prepareSpellOutput(view.title, header)
 	view.title.AppendLine().Text("CAST", DialogHeaderColor).Done()
 	drawSpellOutput(screen, view.title, header, 0, 1)

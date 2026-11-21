@@ -197,8 +197,8 @@ func (d *AtlasDialog) layoutPositionStatus(right, margin int) {
 		d.position.AppendLine().Text(context, DialogValueColor).Done()
 		positionLines = max(positionLines, 2+d.position.GetPanelContentLineCount())
 	}
-	for _, reason := range []string{"Night only: 19:00-05:59.", "Use on the world map.",
-		"Unavailable underground.", "No sextant carried.", "Measure this place to locate it from the list.",
+	for _, reason := range []string{"Only at night!", "Use on the world map.",
+		"Unavailable underground.", "No sextant carried.", "Take a sextant reading there to place it on the Map.",
 		"Selected place label shown.", "Selected place label hidden.", "Zoom in to pan."} {
 		d.row.Reset()
 		d.row.AppendLine().Text(reason, DialogControlHintColor).Done()

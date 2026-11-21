@@ -28,8 +28,11 @@ const (
 	spellBrowserDetailCapacity = 512
 	spellBrowserCountGap       = 4
 	spellBrowserPaddingDivisor = 160
+	spellBrowserInsetDivisor   = 3 // The inset is a third of a letter.
+	spellBrowserTopInsets      = 2 // The header and the list start under the top line.
 	spellBrowserListRatio      = 0.40
 	spellInventoryLimit        = 99
+	spellFormulaUnknown        = "Unknown"
 )
 
 type spellBrowserFilter int
@@ -390,7 +393,7 @@ type spellFooter func(output *text.Output, width int, paged bool)
 func packedSpellFooter(controls []ControlHint) spellFooter {
 	return func(output *text.Output, width int, paged bool) {
 		if paged {
-			controls = append(controls, ControlHint{hintKeySpace, "Next detail page"})
+			controls = append(controls, ControlHint{hintKeySpace, hintActionDetails})
 		}
 		PackControlHints(output, controls, width, etext.AlignStart)
 	}
@@ -417,6 +420,21 @@ type spellPresentation struct {
 	footerRect                     image.Rectangle
 	frames                         []image.Rectangle
 	padding, lineHeight            int
+	// inset keeps text a third of a letter off its frame: at the sides of every
+	// pane and under the top line of the header, list and details.
+	inset int
+}
+
+// inner is the room for text inside a pane's frame. top also leaves the inset
+// under the top line, where a heading would otherwise touch it.
+func (p *spellPresentation) inner(pane image.Rectangle, top bool) image.Rectangle {
+	rect := pane.Inset(p.padding)
+	rect.Min.X, rect.Max.X = rect.Min.X+p.inset, rect.Max.X-p.inset
+	if top {
+		rect.Min.Y += p.inset
+	}
+
+	return rect
 }
 
 func (p *spellPresentation) layout(width, height int) {
@@ -428,12 +446,14 @@ func (p *spellPresentation) layout(width, height int) {
 	}
 	p.width, p.height = width, height
 	p.font, p.row = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
+		Size: FontSizeBody, LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
 		MaxLines: spellBrowserRowLines, MaxChars: spellBrowserTextCapacity,
 	})
 	spacing := p.row.GetLineSpacing()
 	p.lineHeight = max(1, int(math.Ceil(spacing)))
 	p.padding = max(zStatsDossierMinimumPadding, width/spellBrowserPaddingDivisor)
+	letter, _ := p.font.MeasureString("M")
+	p.inset = max(1, int(math.Round(letter/spellBrowserInsetDivisor)))
 	p.count = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.indicator = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.body = text.NewOutput(p.font, spacing, spellBrowserDetailCapacity, spellBrowserTextCapacity)
@@ -443,14 +463,20 @@ func (p *spellPresentation) layout(width, height int) {
 	p.matches = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.casters = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
 	p.pageIndicator = text.NewOutput(p.font, spacing, 1, spellBrowserTextCapacity)
-	p.footer = text.NewOutput(p.font, spacing, spellBrowserFooterLines*spellBrowserRowLines, spellBrowserTextCapacity)
+	// The two hint rows stand a little apart.
+	p.footer = text.NewOutput(p.font, spacing+float64(p.inset),
+		spellBrowserFooterLines*spellBrowserRowLines, spellBrowserTextCapacity)
 	_, p.title = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeTitle, LineSpacing: 0, LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
+		Size: FontSizeTitle, LineSpacingMultiplier: zStatsDossierLineSpacingMultiplier,
 		MaxLines: spellBrowserRowLines, MaxChars: spellBrowserTextCapacity,
 	})
 	marginX, marginY := int(float64(width)*zStatsDossierDefaultMarginX), int(float64(height)*zStatsDossierDefaultMarginY)
+	// The window grows by what the two top insets and the gap between two hint
+	// rows take, so the list and details keep their rows and lines.
+	marginY -= (spellBrowserTopInsets*p.inset + p.inset + 1) / spellBrowserRowLines
 	rect := image.Rect(marginX, marginY, width-marginX, height-marginY)
-	headerHeight := int(math.Ceil(p.title.GetTotalHeightForLines(spellBrowserRowLines))) + p.padding*spellBrowserRowLines
+	headerHeight := int(math.Ceil(p.title.GetTotalHeightForLines(spellBrowserRowLines))) +
+		p.padding*spellBrowserRowLines + p.inset
 	searchHeight := p.lineHeight*spellBrowserRowLines + p.padding*spellBrowserRowLines
 	footerHeight := int(math.Ceil(p.footer.GetTotalHeightForLines(1))) + p.padding*spellBrowserRowLines
 	p.headerRect = image.Rect(rect.Min.X, rect.Min.Y, rect.Max.X, rect.Min.Y+headerHeight)
@@ -467,7 +493,7 @@ func (p *spellPresentation) layout(width, height int) {
 // configureControls measures the styled hint rows before row capacity is computed.
 // Detail paging is shown only when Space actually pages details in this mode.
 func (p *spellPresentation) configureControls(footer spellFooter, detailPaging bool) {
-	rect := p.footerRect.Inset(p.padding)
+	rect := p.inner(p.footerRect, false)
 	prepareSpellOutput(p.footer, rect)
 	footer(p.footer, rect.Dx(), detailPaging)
 	height := int(math.Ceil(p.footer.GetTotalHeightForLines(p.footer.GetPanelContentLineCount())))
@@ -680,9 +706,17 @@ func appendSpellMetrics(output *text.Output, spell game_state.ZStatsSpell, warni
 }
 
 func appendSpellFormula(output *text.Output, spell game_state.ZStatsSpell, warning stdcolor.Color) {
-	formula := spell.FormulaState
-	if !spell.Hidden && formula == string(game_state.SpellFormulaConfirmed) {
-		formula = "Book of Lore"
+	var formula string
+	switch spell.FormulaState {
+	case string(game_state.SpellFormulaConfirmed):
+		formula = "Known"
+		if !spell.Hidden {
+			formula = "Book of Lore"
+		}
+	case string(game_state.SpellFormulaUncertain):
+		formula = "Untested"
+	default:
+		formula = spellFormulaUnknown
 	}
 	appendSpellField(output.AppendLine(), "Formula", formula).WordWrap().Done()
 	if len(spell.Reagents) == 0 && len(spell.ReagentCandidates) == 0 {
@@ -771,12 +805,12 @@ func (p *spellPresentation) configureDetails(browser *spellBrowser, footer spell
 		prepareSpellOutput(p.pageIndicator, p.detailPageRect)
 		p.pageIndicator.AppendLine().Textf("Page %d/%d", DialogControlHintColor, browser.page+1, browser.pages).Done()
 	}
-	list := p.listRect.Inset(p.padding)
+	list := p.inner(p.listRect, true)
 	browser.visible = max(1, (list.Dy()-p.lineHeight)/spellRowHeight(p.row))
 }
 
 func (p *spellPresentation) measureDetails(browser *spellBrowser, paged bool) {
-	rect := p.detailRect.Inset(p.padding)
+	rect := p.inner(p.detailRect, true)
 	spell := browser.current()
 	prepareSpellOutput(p.body, rect)
 	if spell == nil {
@@ -804,7 +838,7 @@ func (p *spellPresentation) drawDetails(screen *ebiten.Image, browser *spellBrow
 	if spell == nil {
 		return
 	}
-	rect := p.detailRect.Inset(p.padding)
+	rect := p.inner(p.detailRect, true)
 	prepareSpellOutput(p.heading, rect)
 	p.heading.AppendLine().Text(FitDialogLine(spell.Name, p.font, rect.Dx()), DialogHeaderColor).Done()
 	p.heading.AppendLine().Text(FitDialogLine(spell.EffectLabel, p.font, rect.Dx()), DialogControlHintColor).Done()
@@ -831,6 +865,6 @@ func cloneSpellCatalog(catalog []game_state.ZStatsSpell) []game_state.ZStatsSpel
 }
 
 func (p *spellPresentation) drawFooter(screen *ebiten.Image) {
-	rect := p.footerRect.Inset(p.padding)
+	rect := p.inner(p.footerRect, false)
 	drawSpellOutput(screen, p.footer, rect, 0, p.footer.GetPanelContentLineCount())
 }
