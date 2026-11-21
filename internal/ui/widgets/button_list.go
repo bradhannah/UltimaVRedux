@@ -24,7 +24,7 @@ const (
 	buttonListRowGapUnits            = 1
 	buttonListRowVerticalPadUnits    = 1
 	buttonListDescriptionRows        = 4
-	buttonListDescriptionSpacing     = 1.2
+	buttonListLineSpacing            = 1.2
 	buttonListFooterLines            = 2
 	buttonListFooterTopText          = "[Arrows] Select   [Enter] Choose"
 	buttonListReadHint               = "[Shift+Up/Down] Read   "
@@ -335,7 +335,7 @@ func (b *ButtonListModal) initializeLayoutOutputs(width int) {
 	_, b.descriptionOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeBody,
 		LineSpacing:           0,
-		LineSpacingMultiplier: buttonListDescriptionSpacing,
+		LineSpacingMultiplier: buttonListLineSpacing,
 		MaxLines:              max(1, utf8.RuneCountInString(b.description)+1),
 		MaxChars:              1,
 	}, width)
@@ -347,10 +347,11 @@ func (b *ButtonListModal) initializeLayoutOutputs(width int) {
 		MaxLines:              1,
 		MaxChars:              1,
 	}, width)
+	// The two hint rows get the description's leading: at one-to-one they touched.
 	_, b.footerOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeBody,
 		LineSpacing:           0,
-		LineSpacingMultiplier: 0,
+		LineSpacingMultiplier: buttonListLineSpacing,
 		MaxLines:              buttonListFooterLines,
 		MaxChars:              1,
 	}, width)
