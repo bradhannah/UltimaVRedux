@@ -32,13 +32,14 @@ func (g *GameState) CheckBridgeTrollEncounter() *BridgeTrollEncounterResult {
 	}
 }
 
-// CalculateTrollToll uses the first active Good or Poisoned character.
-// The toll is 99 minus three times Strength; edited values are not clamped.
+// CalculateTrollToll uses the first active Good or Poisoned character, or the
+// caught character when none is Good or Poisoned (for example when every awake
+// member is Charmed; the original then reads a stale index). The toll is 99 minus three times Strength; edited values are not clamped.
 // Strength 10, 20, 30 and 35 yield 69, 39, 9 and -6 respectively. ref:ENV-0004
-func (g *GameState) CalculateTrollToll() int {
+func (g *GameState) CalculateTrollToll(caught *party_state.PlayerCharacter) int {
 	character := g.trollTollCharacter()
 	if character == nil {
-		panic("CalculateTrollToll called without an active Good or Poisoned character")
+		character = caught
 	}
 
 	return 99 - (3 * int(character.Strength))

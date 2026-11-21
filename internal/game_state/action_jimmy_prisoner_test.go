@@ -105,6 +105,17 @@ func TestJimmyPrisonerRequiresKeyBeforeDexterityCheck(t *testing.T) {
 	assert.Equal(t, []int{1}, fixture.callbacks.TimeAdvanced())
 }
 
+func TestJimmyPrisonerWithNoEligibleMemberSpendsNoKey(t *testing.T) {
+	fixture := newJimmyPrisonerFixture(t)
+
+	result := fixture.state.ActionJimmySmallMapWithCharacter(references.Up, nil)
+
+	assert.False(t, result)
+	assert.Equal(t, uint16(3), fixture.state.PartyState.Inventory.Provisions.Keys.Get())
+	assert.False(t, fixture.state.PartyState.IsNPCDead(references.Britain, fixture.prisonerSlot))
+	assert.Equal(t, []string{"No characters available!"}, fixture.callbacks.Messages)
+}
+
 func TestJimmyPrisonerLookupIsFloorAware(t *testing.T) {
 	fixture := newJimmyPrisonerFixture(t)
 	decoySlot := prisonerTestAlternateSlot(fixture.prisonerSlot)
