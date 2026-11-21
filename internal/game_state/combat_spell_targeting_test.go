@@ -63,13 +63,13 @@ func TestCombatActionTargetingBeginsRejectEveryExistingActionOwner(t *testing.T)
 			test.own(gs.CombatScene)
 
 			assert.False(t, gs.BeginCombatAttack())
-			assert.Equal(t, "Cannot cast now!", gs.BeginCombatSpellTargeting(CastRequest{
+			assert.Equal(t, "Thou canst not cast now!", gs.BeginCombatSpellTargeting(CastRequest{
 				Spell: references.VasFlam, CasterIdx: casterIdx,
 			}).ErrorMsg)
-			assert.Equal(t, "Cannot cast now!", gs.BeginCombatAdjacentSpellTargeting(CastRequest{
+			assert.Equal(t, "Thou canst not cast now!", gs.BeginCombatAdjacentSpellTargeting(CastRequest{
 				Spell: references.AnYlem, CasterIdx: casterIdx,
 			}).ErrorMsg)
-			assert.Equal(t, "Cannot cast now!", gs.BeginCombatConeTargeting(CastRequest{
+			assert.Equal(t, "Thou canst not cast now!", gs.BeginCombatConeTargeting(CastRequest{
 				Spell: references.InZu, CasterIdx: casterIdx,
 			}).ErrorMsg)
 		})

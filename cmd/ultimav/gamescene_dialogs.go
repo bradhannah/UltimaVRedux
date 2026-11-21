@@ -138,7 +138,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 				activeCaster := g.gameState.PartyState.GetCharacter(activeIdx)
 				if activeCaster == nil || !activeCaster.IsAlive() {
 					state.noOneCanCast = true
-					g.showTemporaryCastFailure("Active combatant cannot cast!")
+					g.showTemporaryCastFailure("Thou canst not cast now!")
 
 					return
 				}
@@ -830,7 +830,7 @@ func (g *GameScene) applyMixTrapEffects(q *event_queue.SequentialEventBuilder, t
 // toggleMusic toggles background music on/off
 func (g *GameScene) toggleMusic() {
 	if g.audioManager == nil {
-		g.addRowStr("Audio system not available")
+		g.addRowStr("No music available")
 
 		return
 	}
@@ -838,7 +838,7 @@ func (g *GameScene) toggleMusic() {
 	// Get current music manager
 	musicManager := g.audioManager.GetMusicManager()
 	if musicManager == nil {
-		g.addRowStr("Music system not available")
+		g.addRowStr("No music available")
 
 		return
 	}
@@ -846,16 +846,16 @@ func (g *GameScene) toggleMusic() {
 	// A deliberate quiet interval is still enabled music.
 	if musicManager.IsEnabled() {
 		musicManager.SetEnabled(false)
-		g.addRowStr("Music OFF")
+		g.addRowStr("Music Off")
 	} else {
 		musicManager.SetEnabled(true)
 		// Start music for current location
 		currentLocation := g.gameState.MapState.PlayerLocation.Location
 		err := musicManager.PlayMusicForLocation(currentLocation)
 		if err != nil {
-			g.addRowStr("Failed to start music")
+			g.addRowStr("The music would not start")
 		} else {
-			g.addRowStr("Music ON")
+			g.addRowStr("Music On")
 		}
 	}
 }

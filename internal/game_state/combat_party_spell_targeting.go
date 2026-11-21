@@ -28,10 +28,10 @@ func (g *GameState) IsCombatPartySpellTargeting() bool {
 // BeginCombatPartySpellTargeting focuses the exact caster without commitment.
 func (g *GameState) BeginCombatPartySpellTargeting(request CastRequest) SpellValidationResult {
 	if g.CombatScene == nil || g.CombatScene.hasPlayerActionOwner() {
-		return SpellValidationResult{ErrorMsg: "Cannot cast now!"}
+		return SpellValidationResult{ErrorMsg: "Thou canst not cast now!"}
 	}
 	if references.GetSpellTargetingProfile(request.Spell, references.ContextCombat).Selection != references.TargetCombatPartyMember {
-		return SpellValidationResult{ErrorMsg: "Invalid target!"}
+		return SpellValidationResult{ErrorMsg: "Nothing there!"}
 	}
 	validation := g.ValidateSpellTargetingPrerequisites(request)
 	if !validation.Valid {
@@ -155,19 +155,19 @@ func (g *GameState) ReviewCombatPartySpellRecipient() CombatPartySpellPreview {
 	}
 	switch targeting.Request.Spell { //nolint:exhaustive // Only the four party-recipient spells enter this selector.
 	case references.Mani, references.VasMani:
-		preview.Consequence = "Heals wounds; does not cure poison."
+		preview.Consequence = "Heals wounds, not poison."
 		if preview.HP == preview.MaxHP {
-			preview.Consequence = "Full health - no additional healing. Casting still costs the spell."
+			preview.Consequence = "No need of this art! The spell would still be spent."
 		}
 	case references.AnNox:
-		preview.Consequence = "Cures poison; HP is unchanged."
+		preview.Consequence = "Cures poison, not wounds."
 		if !pc.IsPoisoned() {
-			preview.Consequence = "Not poisoned - no effect. Casting still costs the spell."
+			preview.Consequence = "Not poisoned: no effect! The spell would still be spent."
 		}
 	case references.AnZu:
 		preview.Consequence = "Awakens the first eligible sleeping copy."
 		if !pc.IsAsleep() {
-			preview.Consequence = "Not asleep - no effect. Casting still costs the spell."
+			preview.Consequence = "Not asleep: no effect! The spell would still be spent."
 
 			break
 		}

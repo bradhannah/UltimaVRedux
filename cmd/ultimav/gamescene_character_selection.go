@@ -89,7 +89,7 @@ func (g *GameScene) populateCharacterSelectionOption(
 			Label: "Dexterity", Value: strconv.FormatUint(uint64(character.Dexterity), 10),
 		})
 		if option.State == widgets.CharacterSelectionAvailable {
-			option.Details = []string{"Dexterity governs the physical lock attempt. A failed attempt breaks one key."}
+			option.Details = []string{"Dexterity decides it. Fail, and the key breaks!"}
 		}
 	case characterSelectionSearch:
 		populateActorOption(option, character)
@@ -97,7 +97,7 @@ func (g *GameScene) populateCharacterSelectionOption(
 			Label: "Intelligence", Value: strconv.FormatUint(uint64(character.Intelligence), 10),
 		})
 		if option.State == widgets.CharacterSelectionAvailable {
-			option.Details = []string{"Intelligence governs surface chest inspection."}
+			option.Details = []string{"Intelligence decides it."}
 		}
 	case characterSelectionLook:
 		populateActorOption(option, character)
@@ -107,7 +107,7 @@ func (g *GameScene) populateCharacterSelectionOption(
 	case characterSelectionFountain:
 		populateActorOption(option, character)
 		if option.State == widgets.CharacterSelectionAvailable {
-			option.Details = []string{"Drinking from this surface fountain is refreshing but has no gameplay effect."}
+			option.Details = []string{"Refreshing... and nothing more."}
 		}
 	case characterSelectionGuard:
 		populateGuardOption(option, character)
@@ -131,9 +131,9 @@ func (g *GameScene) populateCasterOption(
 	case !isCharacterActorEligible(character):
 		markCharacterUnavailable(option, characterActorUnavailableReason(character))
 	case !character.CanCastSpells():
-		markCharacterUnavailable(option, "This class has no magical ability.")
+		markCharacterUnavailable(option, "No magical ability!")
 	case character.GetCurrentMp() == 0 && !g.gameState.DebugOptions.UnlimitedCastingResources:
-		markCharacterUnavailable(option, "No M.P. remains.")
+		markCharacterUnavailable(option, "M.P. too low!")
 	default:
 		option.Details = []string{"Ready to choose a spell."}
 	}
@@ -146,7 +146,7 @@ func populateSpellTargetOption(
 ) {
 	option.Facts = []widgets.CharacterSelectionFact{hpSelectionFact(character)}
 	spellName := references.GetSpellName(spell)
-	resourceWarning := "Confirmation consumes the mixed spell and M.P., even with no effect."
+	resourceWarning := "The spell and M.P. are spent even with no effect!"
 	//nolint:exhaustive // Only party-target spells with distinct consequences need specialized guidance.
 	switch spell {
 	case references.AnNox:
@@ -190,40 +190,38 @@ func populatePotionTargetOption(
 	if potion == references.Yellow {
 		option.Health = characterSelectionHealth(character)
 	}
-	consumption := "The potion is consumed when this target is confirmed."
-	ready, effect := potionTargetEffect(character, potion, dungeonUse)
-	name := characterSelectionPotionName(potion) + " potion " + effect + "."
-	if ready {
-		option.Details = []string{name, consumption}
-	} else {
-		markCharacterWarning(option, name, "The intended effect will not apply.", consumption)
+	// The Use list has already shown what the potion is for. This window adds
+	// only what depends on who drinks it; the pane is too small for more.
+	spent := "The potion is spent either way."
+	switch {
+	case !potionTakesEffect(character, potion, dungeonUse):
+		markCharacterWarning(option, "No noticeable effect on "+character.GetNameAsString()+" now!", spent)
+	case potion == references.White:
+		option.Details = []string{"It does not matter who drinks it.", spent}
+	default:
+		option.Details = []string{spent}
 	}
 }
 
-func potionTargetEffect(
+// potionTakesEffect reports whether the potion would do anything for this member now.
+func potionTakesEffect(
 	character *party_state.PlayerCharacter,
 	potion references.Potion,
 	dungeonUse bool,
-) (bool, string) {
+) bool {
 	switch potion {
 	case references.Blue:
-		return character.IsAsleep(), "awakens a sleeping character"
+		return character.IsAsleep()
 	case references.Yellow:
-		return !character.IsDead(), "heals a living character by 1-30 HP"
+		return !character.IsDead()
 	case references.Red:
-		return character.IsPoisoned(), "cures poison"
-	case references.Green:
-		return character.IsGood(), "poisons a character in Good status"
-	case references.Orange:
-		return character.IsGood(), "puts a character in Good status to sleep"
+		return character.IsPoisoned()
+	case references.Green, references.Orange:
+		return character.IsGood()
 	case references.Purple, references.Black:
-		return false, "has no noticeable effect outside combat"
+		return false
 	case references.White:
-		if dungeonUse {
-			return false, "has no noticeable effect in a dungeon"
-		}
-
-		return true, "has a field effect that does not depend on the chosen character"
+		return !dungeonUse
 	default:
 		panic("unknown potion")
 	}
@@ -235,7 +233,7 @@ func populateResurrectionOption(
 ) {
 	option.Facts = []widgets.CharacterSelectionFact{hpSelectionFact(character)}
 	option.Health = characterSelectionHealth(character)
-	consumption := "The scroll is consumed when this target is confirmed."
+	consumption := "The scroll is spent once chosen."
 	if character.IsDead() {
 		option.Details = []string{
 			"The scroll resurrects this character at one HP.",
@@ -276,7 +274,7 @@ func populateGuardOption(option *widgets.CharacterSelectionOption, character *pa
 	}
 	switch {
 	case character.IsGood():
-		option.Details = []string{"Standing guard means no rest HP or MP recovery."}
+		option.Details = []string{"Whoever stands guard gets no rest, and recovers nothing."}
 	case character.IsPoisoned():
 		markCharacterWarning(option, "A poisoned member cannot keep watch.", "Choosing them camps without a watch.")
 	default:
@@ -309,7 +307,7 @@ func characterSelectionNoOneOption() widgets.CharacterSelectionOption {
 		State:          widgets.CharacterSelectionAvailable,
 		Details: []string{
 			"The party camps without a watch.",
-			"Sleeping members may enter an ambush asleep.",
+			"With none posted, an ambush may find all asleep!",
 		},
 	}
 }
@@ -321,18 +319,11 @@ func isCharacterActorEligible(character *party_state.PlayerCharacter) bool {
 }
 
 func characterActorUnavailableReason(character *party_state.PlayerCharacter) string {
-	switch character.GetStatus() {
-	case party_state.Good, party_state.Poisoned:
-		return "This character cannot perform this action."
-	case party_state.Sleep:
-		return "This character is asleep and cannot act."
-	case party_state.Dead:
-		return "This character is dead and cannot act."
-	case party_state.Charmed:
-		return "This character is charmed and cannot act."
-	default:
-		return "This character cannot perform this action."
+	if isCharacterActorEligible(character) {
+		return character.GetNameAsString() + " cannot do this!"
 	}
+
+	return character.GetNameAsString() + " is incapacitated!"
 }
 
 func characterSelectionStatus(status party_state.CharacterStatus) string {

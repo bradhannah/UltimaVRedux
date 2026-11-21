@@ -81,7 +81,7 @@ func TestAtlasSuppliedBaselineAndSettlementFilter(t *testing.T) {
 	}
 	require.Empty(t, state.atlasLandmarks)
 	state.PartyState.Inventory.QuestItems.Set(references.Sextant, 1)
-	require.Equal(t, "Night only: 19:00-05:59.", state.CurrentAtlasDossier().FixUnavailable)
+	require.Equal(t, "Only at night!", state.CurrentAtlasDossier().FixUnavailable)
 }
 
 func TestAtlasProjectionPrivacyAndIndependentSurvey(t *testing.T) {

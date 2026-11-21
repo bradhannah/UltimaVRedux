@@ -901,7 +901,7 @@ func (g *GameState) processWandererCharacter(
 		LeadingBlank: true,
 		Segments: []MessageSegment{
 			{Text: "\"", Style: MessageQuotation},
-			{Text: fmt.Sprintf("Awake %s and feel restored!", char.GetNameAsString()), Style: MessageSpoken},
+			{Text: fmt.Sprintf("Awake, %s, and feel restored!", char.GetNameAsString()), Style: MessageSpoken},
 			{Text: "\"", Style: MessageQuotation},
 		},
 	})
@@ -915,7 +915,7 @@ func (g *GameState) processWandererCharacter(
 	if outcome.LevelAfter < outcome.LevelBefore {
 		g.SystemCallbacks.Message.AppendStyledMessage(StyledMessage{
 			Segments: []MessageSegment{{
-				Text:  fmt.Sprintf("%s's level is corrected to %d.", char.GetNameAsString(), outcome.LevelAfter),
+				Text:  fmt.Sprintf("Thou art now level %d.", outcome.LevelAfter),
 				Style: MessageSpoken,
 			}},
 		})

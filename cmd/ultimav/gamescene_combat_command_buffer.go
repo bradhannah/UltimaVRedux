@@ -139,11 +139,11 @@ func (g *GameScene) capturePendingCombatCommand() {
 	case cancel:
 		g.clearPendingCombatCommand()
 		if hadIntent {
-			g.output.AddText("Pending command cleared.")
+			g.output.AddText("Queued command dropped.")
 		}
 	case unsupported:
 		g.clearPendingCombatCommand()
-		g.output.AddText("Command not queued; pending command cleared.")
+		g.output.AddText("Command not queued; queued command dropped.")
 	case hasWinner:
 		state.pending = pendingCombatCommand{active: true, key: winner, opportunity: projection.Opportunity}
 	}

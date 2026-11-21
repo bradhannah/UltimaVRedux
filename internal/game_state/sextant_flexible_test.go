@@ -219,7 +219,7 @@ func TestFlexibleSextantStatusReasonsAndOriginalAstronomy(t *testing.T) {
 		reason   string
 	}{
 		{references.Britain, 0, 19, "Use on the world map."},
-		{references.BritanniaUnderworld, 0, 12, "Night only: 19:00-05:59."},
+		{references.BritanniaUnderworld, 0, 12, "Only at night!"},
 		{references.BritanniaUnderworld, -1, 19, "Unavailable underground."},
 		{references.Deceit, 0, 19, "Unavailable underground."},
 		{references.Ararat, 0, 19, "Unavailable underground."},

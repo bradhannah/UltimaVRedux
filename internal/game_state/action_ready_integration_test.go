@@ -176,8 +176,8 @@ func TestApplyReadyEquipmentUsesFirstAvailableGenericHand(t *testing.T) {
 		{name: "both empty shield uses hand0", hand0: references.NoEquipment, hand1: references.NoEquipment, candidate: references.SmallShield, wantSlot: references.SlotWeapon},
 		{name: "empty hand0 wins", hand0: references.NoEquipment, hand1: references.Dagger, candidate: references.SmallShield, wantSlot: references.SlotWeapon},
 		{name: "occupied hand0 uses hand1", hand0: references.SmallShield, hand1: references.NoEquipment, candidate: references.Dagger, wantSlot: references.SlotShield},
-		{name: "two handed hand0 needs confirmation", hand0: references.Halberd, hand1: references.NoEquipment, candidate: references.SmallShield, wantError: "Review and confirm the equipment replacement first."},
-		{name: "both occupied need confirmation", hand0: references.Dagger, hand1: references.SmallShield, candidate: references.LongSword, wantError: "Review and confirm the equipment replacement first."},
+		{name: "two handed hand0 needs confirmation", hand0: references.Halberd, hand1: references.NoEquipment, candidate: references.SmallShield, wantError: "Confirm the swap first!"},
+		{name: "both occupied need confirmation", hand0: references.Dagger, hand1: references.SmallShield, candidate: references.LongSword, wantError: "Confirm the swap first!"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -244,7 +244,7 @@ func TestApplyReadyEquipmentTwoHandedRequiresBothHandsAndUsesOnlyHand0(t *testin
 		character.SetEquippedItem(occupiedSlot, references.Dagger)
 		state.PartyState.Inventory.Equipment.Set(references.Halberd, 1)
 		_, err = state.ApplyReadyEquipment(readyTransaction(request, character, references.Halberd))
-		require.EqualError(t, err, "Review and confirm the equipment replacement first.")
+		require.EqualError(t, err, "Confirm the swap first!")
 		assert.Equal(t, references.Dagger, character.GetEquippedItem(occupiedSlot))
 		assert.Equal(t, uint16(1), state.PartyState.Inventory.Equipment.Get(references.Halberd))
 	}
@@ -257,10 +257,10 @@ func TestApplyReadyEquipmentRejectsOccupiedNonHandSlotsWithoutMutation(t *testin
 		candidate references.Equipment
 		message   string
 	}{
-		{slot: references.SlotHelm, readied: references.LeatherHelm, candidate: references.ChainCoif, message: "Review and confirm the equipment replacement first."},
-		{slot: references.SlotArmour, readied: references.ClothArmour, candidate: references.LeatherArmour, message: "Review and confirm the equipment replacement first."},
-		{slot: references.SlotRing, readied: references.RingProtection, candidate: references.RingRegeneration, message: "Review and confirm the equipment replacement first."},
-		{slot: references.SlotAmulet, readied: references.Ankh, candidate: references.SpikedCollar, message: "Review and confirm the equipment replacement first."},
+		{slot: references.SlotHelm, readied: references.LeatherHelm, candidate: references.ChainCoif, message: "Confirm the swap first!"},
+		{slot: references.SlotArmour, readied: references.ClothArmour, candidate: references.LeatherArmour, message: "Confirm the swap first!"},
+		{slot: references.SlotRing, readied: references.RingProtection, candidate: references.RingRegeneration, message: "Confirm the swap first!"},
+		{slot: references.SlotAmulet, readied: references.Ankh, candidate: references.SpikedCollar, message: "Confirm the swap first!"},
 	}
 	for _, test := range tests {
 		t.Run(test.slot.String(), func(t *testing.T) {

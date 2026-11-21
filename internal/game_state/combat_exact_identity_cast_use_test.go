@@ -87,7 +87,7 @@ func TestCombatCastRejectsExactIncapacitatedOrUncontrolledClone(t *testing.T) {
 			})
 
 			require.False(t, result.Valid)
-			assert.Equal(t, "Invalid caster!", result.ErrorMsg)
+			assert.Equal(t, "Thou canst not cast now!", result.ErrorMsg)
 			assert.Equal(t, mpBefore, character.GetCurrentMp())
 			assert.Equal(t, uint16(1), state.PartyState.Inventory.Spells.Get(references.InXenMani))
 			assert.Equal(t, commitBefore, state.CastUseCommitSequence())
@@ -107,7 +107,7 @@ func TestNonCombatCastStillUsesSharedRosterSleep(t *testing.T) {
 	})
 
 	require.False(t, result.Valid)
-	assert.Equal(t, "Invalid caster!", result.ErrorMsg)
+	assert.Equal(t, "Thou canst not cast now!", result.ErrorMsg)
 	assert.Equal(t, uint16(1), state.PartyState.Inventory.Spells.Get(references.InXenMani))
 }
 

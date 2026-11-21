@@ -159,7 +159,7 @@ func combatPickupText(event game_state.CombatPickupEvent) string {
 	case event.Result.Succeeded:
 		return "PICKUP: " + event.ActorName + ": " + event.Result.Message
 	default:
-		return "PICKUP FAILED: " + event.ActorName + ": " + event.Result.Message
+		return event.ActorName + " cannot take it: " + event.Result.Message
 	}
 }
 
@@ -174,14 +174,16 @@ func combatLootRevealText(reveal game_state.CombatLootReveal) string {
 func (g *GameScene) appendCombatPickup(event game_state.CombatPickupEvent) {
 	line := g.newCombatEventLine()
 	if event.Result.Acquired == 0 {
-		label, labelColor := "PICKUP FAILED: ", ucolor.CombatReportWarning
 		if event.Result.Succeeded {
 			// A borrowed wall torch changes the map and the party's light
 			// without adding stock, so it is a pickup, not a failure.
-			label, labelColor = "PICKUP: ", ucolor.CombatReportLoot
+			line.Text("PICKUP: ", ucolor.CombatReportLoot).
+				Text(event.ActorName+": ", widgets.DialogLabelColor).Text(event.Result.Message, widgets.DialogValueColor).Done()
+
+			return
 		}
-		line.Text(label, labelColor).
-			Text(event.ActorName+": ", widgets.DialogLabelColor).Text(event.Result.Message, widgets.DialogValueColor).Done()
+		line.Text(event.ActorName, widgets.DialogLabelColor).Text(" cannot take it: ", ucolor.CombatReportWarning).
+			Text(event.Result.Message, widgets.DialogValueColor).Done()
 
 		return
 	}

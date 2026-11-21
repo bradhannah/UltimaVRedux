@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	// keyPressDelay = 120
 	keyPressDelay = 165
 )
 
@@ -531,7 +530,7 @@ func (g *GameScene) handleActivePlayerSelection(key ebiten.Key) bool {
 			g.gameState.SelectCombatPlayer(-1)
 		} else {
 			g.gameState.ClearActivePlayer()
-			g.gameState.SystemCallbacks.Message.AddRowStr("All party members active")
+			g.gameState.SystemCallbacks.Message.AddRowStr("Set active player: None!")
 		}
 
 		return true
@@ -545,12 +544,13 @@ func (g *GameScene) handleActivePlayerSelection(key ebiten.Key) bool {
 		switch {
 		case g.gameState.IsInCombat() && g.gameState.CombatScene != nil:
 			if !g.gameState.SelectCombatPlayer(characterIndex) {
-				g.gameState.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Character %d not available", keyNumber))
+				g.gameState.SystemCallbacks.Message.AddRowStr("Set active player: Invalid!")
 			}
 		case g.gameState.SetActivePlayer(characterIndex):
-			g.gameState.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Character %d active", keyNumber))
+			g.gameState.SystemCallbacks.Message.AddRowStr(
+				"Set active player: " + g.gameState.PartyState.GetCharacter(characterIndex).GetNameAsString())
 		default:
-			g.gameState.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Character %d not available", keyNumber))
+			g.gameState.SystemCallbacks.Message.AddRowStr("Set active player: Invalid!")
 		}
 
 		return true

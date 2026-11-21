@@ -94,7 +94,7 @@ func TestCombatSoloResetBriefPressAndHoldThroughUpdate(t *testing.T) {
 			after, eligible := scene.gameState.ProjectCombatSoloReset()
 			require.True(t, eligible)
 			require.Equal(t, boundary, after)
-			require.Equal(t, []string{"Round-robin mode"}, callbacks.Messages)
+			require.Equal(t, []string{"Set active player: None!"}, callbacks.Messages)
 			require.Empty(t, callbacks.CommandPrompts)
 			require.Zero(t, scene.dialogStack.Count())
 			if !hold {
@@ -104,7 +104,7 @@ func TestCombatSoloResetBriefPressAndHoldThroughUpdate(t *testing.T) {
 			}
 			finishCombatSoloResetWait(t, scene)
 			require.Equal(t, game_state.CombatTurnIdentity{IsPartyMember: true, EntityIndex: 0}, scene.gameState.CombatScene.GetCurrentTurnIdentity())
-			require.Equal(t, 1, strings.Count(strings.Join(callbacks.Messages, "\n"), "Round-robin mode"))
+			require.Equal(t, 1, strings.Count(strings.Join(callbacks.Messages, "\n"), "Set active player: None!"))
 			require.Equal(t, PrimaryInput, scene.secondaryKeyState)
 			require.ErrorIs(t, scene.gameState.CompleteScheduledCombatStep(boundary.Step.Token), game_state.ErrCombatPresentationDuplicate)
 		})
@@ -236,5 +236,5 @@ func TestCombatSoloResetAlreadyAllPartyIsSilentAndReleasesHold(t *testing.T) {
 	require.Empty(t, callbacks.Messages)
 	require.Empty(t, callbacks.CombatEvents)
 	finishCombatSoloResetWait(t, scene)
-	require.NotContains(t, callbacks.Messages, "Round-robin mode")
+	require.NotContains(t, callbacks.Messages, "Set active player: None!")
 }
