@@ -54,6 +54,9 @@ func (g *GameState) resolveDoomMirrorAbsorption() bool {
 	g.SystemCallbacks.Message.AddRowStr(
 		g.PartyState.GetCharacter(identity.EntityIndex).GetNameAsString() + " is absorbed!",
 	)
+	// The original follows the message with its rising vanishing tone as the
+	// mirror takes the member; Redux plays its absorb cue. See ref:DNG-0015.
+	g.SystemCallbacks.Audio.PlaySoundEffect(SoundAbsorb)
 
 	return true
 }

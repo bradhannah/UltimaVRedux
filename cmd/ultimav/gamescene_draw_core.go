@@ -230,13 +230,15 @@ func (g *GameScene) Draw(screen *ebiten.Image) {
 
 	g.drawRunicReference(screen)
 
-	// draw the dialogs - but stacked on top of each other
-	// All MessageDialog instances are now managed via dialog stack (no persistent messageDialog)
-	g.drawDialogs(screen)
-
+	// The cinematic map's frame belongs to the scene, so it goes under the dialogs:
+	// drawn after them it cut through any window opened over the map.
 	if usesCinematicSplit {
 		g.drawCinematicMapBorder(screen)
 	}
+
+	// draw the dialogs - but stacked on top of each other
+	// All MessageDialog instances are now managed via dialog stack (no persistent messageDialog)
+	g.drawDialogs(screen)
 
 	// Render the game scene debug info
 	if !isDungeon && !usesCinematicSplit && g.showRendererDiagnostics() {

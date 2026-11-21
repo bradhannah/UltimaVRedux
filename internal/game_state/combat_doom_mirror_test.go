@@ -32,6 +32,7 @@ func TestDoomMirrorAbsorbsOnlyActingPCInVerifiedFinalRoom(t *testing.T) {
 	assert.True(t, state.CombatScene.IsPartyMemberActive(1))
 	assert.Equal(t, CombatExitDoomMirror, state.CombatScene.ExitRoute)
 	assert.Contains(t, callbacks.Messages, "Avatar is absorbed!")
+	assert.True(t, callbacks.SoundEffectWasPlayed(SoundAbsorb), "being taken by the mirror is heard as well as read")
 	assert.Empty(t, callbacks.CombatConclusions)
 }
 
@@ -97,6 +98,7 @@ func TestDoomMirrorRequiresVerifiedRoomAndGeometry(t *testing.T) {
 			assert.Equal(t, turnQueueActive, entry.status)
 			assert.Equal(t, CombatExitNone, state.CombatScene.ExitRoute)
 			assert.False(t, state.HasPendingLordBritishFinale())
+			assert.False(t, callbacks.SoundEffectWasPlayed(SoundAbsorb))
 			assert.Empty(t, callbacks.CombatConclusions)
 		})
 	}
