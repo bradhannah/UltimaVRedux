@@ -197,7 +197,9 @@ approval forms share plain Left/Right quantity input: one immediate step, a
 Release stops repetition; fresh taps and direction changes do not inherit gameplay
 movement delay. Modified or conflicting quantity keys are suppressed through
 release. Guild, Reagent and Ship retain Up/Down as one-shot aliases; maximum ("Most")
-shortcuts also remain one-shot. Quantity holds never confirm a purchase, including
+shortcuts also remain one-shot. Digits type the amount in all five and in the rest
+prompt: a second digit joins the first while the number stays within the most, and
+otherwise starts the number again. Quantity holds never confirm a purchase, including
 Enter pressed during an adjustment. Covering, returning to or removing a modal,
 and application focus suspension, require held controls to release before use by
 the next owner. Quote bounds and transaction commitment remain family-owned. See

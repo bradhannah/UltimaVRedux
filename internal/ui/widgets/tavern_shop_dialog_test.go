@@ -321,12 +321,10 @@ func TestTavernShopDialogMealDrinkWineProvisionAndEscapePaths(t *testing.T) {
 		pressTavernActionKey(action, keyboard, ebiten.KeyRight)
 		require.Equal(t, 2, action.GetProvisionPackCount())
 		body := compactTavernText(action.GetBodyText())
-		require.Contains(t, body, "FOOD 50 -> 100")
-		require.Contains(t, body, "PRICE EACH / TOTAL 30 / 60 GOLD")
-		require.Contains(t, body, "GOLD 1000 -> 940")
+		require.Contains(t, body, "Food 50 +50 100 Gold 1000 -60 940")
 		pressTavernActionKey(action, keyboard, ebiten.KeyM)
 		require.Equal(t, intent.Provision.MaximumUsefulPacks, action.GetProvisionPackCount())
-		require.Contains(t, compactTavernText(action.GetBodyText()), "Only 33 of 99 packs can currently be paid for.")
+		require.Contains(t, compactTavernText(action.GetBodyText()), "The gold pays for only 33 packs.")
 		pressTavernActionKey(action, keyboard, ebiten.KeyEnter)
 		request, ok := action.ConsumePendingRequest()
 		require.True(t, ok)
@@ -609,13 +607,21 @@ func testTavernProvisionApprovals(
 		total := purchased * quote.PricePerPack
 		foodAfter := uint16(min(9999, int(quote.FoodBefore)+purchased*int(quote.Provision.PackQuantity)))
 		outcome := game_state.TavernProvisionCompleted
-		if purchased < packCount {
+		charity := false
+		switch {
+		case purchased == 0 && quote.FoodBefore < 3:
+			outcome, charity = game_state.TavernProvisionCharityEjection, true
+		case purchased == 0:
+			outcome = game_state.TavernProvisionEjection
+		case foodAfter == 9999:
+			outcome = game_state.TavernProvisionSaturated
+		case purchased < packCount:
 			outcome = game_state.TavernProvisionPartial
 		}
 		approvals[packCount-1] = game_state.TavernProvisionApproval{
 			PackCount: packCount, PurchasedPacks: purchased, Outcome: outcome,
 			TotalCost: total, GoldAfterPurchases: quote.GoldBefore - uint16(total),
-			FoodAfter: foodAfter, ActualFood: foodAfter - quote.FoodBefore,
+			FoodAfter: foodAfter, ActualFood: foodAfter - quote.FoodBefore, CharityPossible: charity,
 		}
 	}
 

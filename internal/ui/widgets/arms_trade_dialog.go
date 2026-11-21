@@ -6,27 +6,15 @@ import (
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 const (
-	armsTradeStartPercentX    = 0.28
-	armsTradeEndPercentX      = 0.72
-	armsTradeStartPercentY    = 0.16
-	armsTradeEndPercentY      = 0.84
-	armsTradeHeaderRatio      = 0.13
-	armsTradeFooterRatio      = 0.17
-	armsTradeMinimumInset     = 5
-	armsTradeLineSpacing      = 1.1
-	armsTradeMaximumBodyLines = 12
-	armsTradeFooterLines      = 3 // Quantity/Sell All wraps once before the explicit confirm/back row.
-	armsTradeMinimumTextChars = 8
+	armsAmountNoun    = "Quantity"
+	armsRefusalFooter = "[Enter/Esc] Acknowledge"
 )
 
 var _ Widget = (*ArmsTradeDialog)(nil)
@@ -75,14 +63,7 @@ type ArmsTradeDialog struct {
 	dismissed bool
 	cancelled bool
 	pending   *ArmsTradeRequest
-
-	amountLine int // The body line holding the amount row, or -1.
-
-	frame *merchantModalFrame
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window    *amountWindow
 }
 
 // NewArmsTradeDialog creates a centered keyboard-only transaction modal.
@@ -101,26 +82,21 @@ func NewArmsTradeDialog(config ArmsTradeDialogConfig) *ArmsTradeDialog {
 		validateArmsFinalizedText("sale offer", config.Prose.Offer)
 	}
 
-	dialog := &ArmsTradeDialog{ //nolint:exhaustruct_v5 // Layout, output and result fields initialize on demand.
-		keyboard:   config.Keyboard,
-		intent:     config.Intent,
-		prose:      config.Prose,
-		quantity:   1,
-		refusal:    refusal,
-		amountLine: -1,
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             armsTradePlacement(),
-			headerRatio:           armsTradeHeaderRatio,
-			footerRatio:           armsTradeFooterRatio,
-			minimumInset:          armsTradeMinimumInset,
-			lineSpacingMultiplier: armsTradeLineSpacing,
-			footerMinimumLines:    armsTradeFooterLines,
-		}),
+	dialog := &ArmsTradeDialog{
+		// M is the shared Most key; A remains the former Sell all alias.
+		quantityInput: newQuantityInput(config.Keyboard, config.Keyboard.IsKeyHeld,
+			ebiten.KeyM, ebiten.KeyA, ebiten.KeyUp, ebiten.KeyDown),
+		keyboard:  config.Keyboard,
+		intent:    config.Intent,
+		prose:     config.Prose,
+		quantity:  1,
+		refusal:   refusal,
+		dismissed: false,
+		cancelled: false,
+		pending:   nil,
+		window:    newAmountWindow(),
 	}
-	// M is the shared Max key; A remains the former Sell all alias.
-	dialog.quantityInput = newQuantityInput(config.Keyboard, config.Keyboard.IsKeyHeld,
-		ebiten.KeyM, ebiten.KeyA, ebiten.KeyUp, ebiten.KeyDown)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -130,10 +106,7 @@ func (d *ArmsTradeDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.fillBodyLine(screen, d.bodyOutput, d.amountLine)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update handles quantity adjustment, confirmation, acknowledgment, and cancellation.
@@ -141,7 +114,6 @@ func (d *ArmsTradeDialog) Update() {
 	if d.dismissed {
 		return
 	}
-	d.ensureLayout()
 	if d.refusal != ArmsTradeNoRefusal {
 		if d.enterPressed() || d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
 			d.Dismiss()
@@ -182,35 +154,9 @@ func (d *ArmsTradeDialog) GetIntent() ArmsTradeIntent { return d.intent }
 // GetRefusalKind returns the local no-request refusal classification.
 func (d *ArmsTradeDialog) GetRefusalKind() ArmsTradeRefusalKind { return d.refusal }
 
-// GetFooterGuidance returns only controls valid for this trade.
-func (d *ArmsTradeDialog) GetFooterGuidance() string {
-	if d.refusal != ArmsTradeNoRefusal {
-		return "[Enter/Esc] Acknowledge"
-	}
-	if d.intent.Mode == ArmsShopBuy && d.intent.BuyQuote.AmmoRefill {
-		return "[Enter] Buy   [Esc] Back"
-	}
-
-	return "[Left/Right] Quantity   [M] Most\n[Enter] " + d.intent.Mode.String() + "   [Esc] Back"
-}
-
-// onlyOneAmount reports that Left/Right and M have nothing to choose between.
-func (d *ArmsTradeDialog) onlyOneAmount() bool {
-	if d.refusal != ArmsTradeNoRefusal {
-		return false
-	}
-	if d.intent.Mode == ArmsShopBuy {
-		return d.intent.BuyQuote.MaxQuantity <= 1
-	}
-
-	return d.intent.SellQuote.MaxQuantity <= 1
-}
-
 // GetBounds returns the centered modal bounds.
 func (d *ArmsTradeDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape dismissed the modal.
@@ -226,21 +172,15 @@ func (d *ArmsTradeDialog) Dismiss() {
 }
 
 func (d *ArmsTradeDialog) handleQuantityInput() bool {
-	key, owned := d.pollQuantityInput()
-	if key == nil {
-		return owned
-	}
 	if d.intent.Mode == ArmsShopBuy && d.intent.BuyQuote.AmmoRefill {
+		_, owned := d.pollQuantityInput()
+
 		return owned
 	}
-	maximum := d.maximumQuantity()
-	switch *key { //nolint:exhaustive // The quantity helper returns only this dialog's configured keys.
-	case ebiten.KeyM, ebiten.KeyA:
-		d.setQuantity(maximum)
-	case ebiten.KeyLeft, ebiten.KeyUp:
-		d.setQuantity(max(uint16(1), d.quantity-1))
-	case ebiten.KeyRight, ebiten.KeyDown:
-		d.setQuantity(min(maximum, d.quantity+1))
+	quantity, owned := d.pollAmount(int(d.quantity), int(d.maximumQuantity()))
+	if quantity != int(d.quantity) {
+		d.quantity = uint16(quantity) //nolint:gosec // pollAmount stays within the quote's small maximum.
+		d.window.set(d.step())
 	}
 
 	return owned
@@ -252,14 +192,6 @@ func (d *ArmsTradeDialog) maximumQuantity() uint16 {
 	}
 
 	return d.intent.SellQuote.MaxQuantity
-}
-
-func (d *ArmsTradeDialog) setQuantity(quantity uint16) {
-	if quantity == d.quantity {
-		return
-	}
-	d.quantity = quantity
-	d.populateOutputs()
 }
 
 func (d *ArmsTradeDialog) makeRequest() ArmsTradeRequest {
@@ -279,95 +211,49 @@ func (d *ArmsTradeDialog) enterPressed() bool {
 		d.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter)
 }
 
-func (d *ArmsTradeDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.buildOutputs()
-	if d.refusal == ArmsTradeNoRefusal {
-		// The amount step's window is as tall as its content, pitch included.
-		d.frame.fitBodyLines(d.bodyOutput.GetPanelContentLineCount())
-		d.buildOutputs()
-	}
-}
-
-func (d *ArmsTradeDialog) buildOutputs() {
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: armsTradeLineSpacing, maximumBodyLines: armsTradeMaximumBodyLines,
-		footerLines: armsTradeFooterLines, minimumChars: armsTradeMinimumTextChars, fixedBody: false,
-	})
-	d.populateOutputs()
-}
-
-func (d *ArmsTradeDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
-	}
-	equipment := d.intent.Equipment()
-	d.amountLine = -1
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(d.intent.Mode.String()+" "+equipment.String(), DialogHeaderColor).Done()
-	d.bodyOutput.Reset()
+// step describes the amount window for the quantity chosen.
+func (d *ArmsTradeDialog) step() amountStep {
+	step := emptyAmountStep()
+	step.title = d.intent.Mode.String() + " " + d.intent.Equipment().String()
+	step.verb = d.intent.Mode.String()
 	switch {
 	case d.refusal != ArmsTradeNoRefusal:
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			White(quoteArmsProse(d.prose.Refusal)).WordWrap().Done()
-		d.bodyOutput.AppendLine().White("").Done()
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text(armsRefusalLabel(d.refusal), DialogStatusWarningColor).Done()
+		step.pitch = quoteArmsProse(d.prose.Refusal)
+		step.notes = []amountNote{{text: armsRefusalLabel(d.refusal), tone: amountVerdict}}
+		step.footer = armsRefusalFooter
 	case d.intent.Mode == ArmsShopBuy:
-		d.populateBuyBody()
+		d.describeBuy(&step)
 	default:
-		d.populateSellBody()
+		d.describeSell(&step)
 	}
-	d.populateFooter()
+
+	return step
 }
 
-func (d *ArmsTradeDialog) populateBuyBody() {
+func (d *ArmsTradeDialog) describeBuy(step *amountStep) {
 	quote := d.intent.BuyQuote
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White(quoteArmsProse(d.prose.Pitch)).WordWrap().Done()
-	d.bodyOutput.AppendLine().White("").Done()
-	total := quote.UnitPrice * int(d.quantity)
-	amount := shopAmount{
-		label: "Quantity", count: int(d.quantity), most: int(max(uint16(1), quote.MaxQuantity)),
-		price: fmt.Sprintf("%d gold each", quote.UnitPrice), goods: quote.Equipment.String(),
-		goodsNow: int(quote.QuantityBefore), goodsThen: int(quote.QuantityBefore) + int(d.quantity),
-		goldNow: int(quote.Gold), goldThen: int(quote.Gold) - total, theftAfter: true,
-	}
+	step.pitch = quoteArmsProse(d.prose.Pitch)
+	step.unit = bundleUnitPrice(quote.UnitPrice, 1)
+	step.noun, step.count, step.most = armsAmountNoun, int(d.quantity), int(d.maximumQuantity())
+	carried := int(quote.QuantityBefore) + int(d.quantity)
 	if quote.AmmoRefill {
-		amount.label, amount.goodsThen = "", int(party_state.ItemQuantitySmallMax)
-		amount.price = fmt.Sprintf("Refills to %d for %d gold", party_state.ItemQuantitySmallMax, total)
+		step.noun, carried = "", int(party_state.ItemQuantitySmallMax)
+		step.unit = fmt.Sprintf("%d gold to refill to %d", quote.UnitPrice, carried)
 	}
-	d.amountLine = appendShopAmount(d.bodyOutput, amount)
+	step.rows = []amountRow{
+		{label: amountCarriedRow, have: int(quote.QuantityBefore), then: carried},
+		{label: amountGoldRow, have: int(quote.Gold), then: int(quote.Gold) - quote.UnitPrice*int(d.quantity)},
+	}
 }
 
-func (d *ArmsTradeDialog) populateSellBody() {
+func (d *ArmsTradeDialog) describeSell(step *amountStep) {
 	quote := d.intent.SellQuote
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White(quoteArmsProse(d.prose.Offer)).WordWrap().Done()
-	d.bodyOutput.AppendLine().White("").Done()
-	total := quote.UnitOffer * int(d.quantity)
-	d.amountLine = appendShopAmount(d.bodyOutput, shopAmount{
-		label: "Quantity", count: int(d.quantity), most: int(quote.MaxQuantity),
-		price: fmt.Sprintf("%d gold each", quote.UnitOffer), goods: quote.Equipment.String(),
-		goodsNow: int(quote.QuantityBefore), goodsThen: int(quote.QuantityBefore) - int(d.quantity),
-		goldNow: int(quote.Gold), goldThen: int(quote.Gold) + total, theftAfter: false,
-	})
-}
-
-func (d *ArmsTradeDialog) populateFooter() {
-	d.footerOutput.Reset()
-	appendAmountGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx(), d.onlyOneAmount())
-}
-
-func armsTradePlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: armsTradeStartPercentX,
-		EndPercentX:   armsTradeEndPercentX,
-		StartPercentY: armsTradeStartPercentY,
-		EndPercentY:   armsTradeEndPercentY,
+	step.pitch = quoteArmsProse(d.prose.Offer)
+	step.unit = bundleUnitPrice(quote.UnitOffer, 1)
+	step.noun, step.count, step.most = armsAmountNoun, int(d.quantity), int(quote.MaxQuantity)
+	step.rows = []amountRow{
+		{label: amountCarriedRow, have: int(quote.QuantityBefore), then: int(quote.QuantityBefore) - int(d.quantity)},
+		{label: amountGoldRow, have: int(quote.Gold), then: int(quote.Gold) + quote.UnitOffer*int(d.quantity)},
 	}
 }
 

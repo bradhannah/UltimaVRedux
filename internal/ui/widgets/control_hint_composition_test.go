@@ -40,21 +40,18 @@ func TestArmsAndAcknowledgementActualOutputsUseControlColours(t *testing.T) {
 	quote := game_state.ArmsSellQuote{Equipment: references.Dagger, BasePrice: 50, UnitOffer: 40,
 		Gold: 500, QuantityBefore: 5, MaxQuantity: 3, Sellable: true}
 	dialog := newTestArmsTradeDialog(newWidgetTestKeyboard(0), ArmsTradeIntent{Mode: ArmsShopSell, SellQuote: quote})
-	dialog.populateFooter()
-	width, _ := dialog.footerOutput.Font.MeasureString(strings.Split(dialog.GetFooterGuidance(), "\n")[0])
-	t.Logf("footer first line width %.1f, pane %d, measured characters %d", width,
-		dialog.frame.footerText.Dx(), dialog.footerOutput.Font.CharsForWidth(dialog.frame.footerText.Dx()))
-	_, keys := dialog.footerOutput.FirstPanelLineWithColor(0, dialog.footerOutput.GetPanelContentLineCount(), DialogControlKeyColor)
-	_, hints := dialog.footerOutput.FirstPanelLineWithColor(0, dialog.footerOutput.GetPanelContentLineCount(), DialogControlHintColor)
+	footer, frame := dialog.window.footer, dialog.window.frame
+	_, keys := footer.FirstPanelLineWithColor(0, footer.GetPanelContentLineCount(), DialogControlKeyColor)
+	_, hints := footer.FirstPanelLineWithColor(0, footer.GetPanelContentLineCount(), DialogControlHintColor)
 	require.True(t, keys)
 	require.True(t, hints)
-	require.Contains(t, strings.Join(strings.Fields(dialog.footerOutput.GetOutputStr(false)), " "), "[M] Most")
+	require.Contains(t, strings.Join(strings.Fields(footer.GetOutputStr(false)), " "), "[M] Most")
 	screen := ebiten.NewImage(1280, 720)
 	t.Cleanup(screen.Deallocate)
 	dialog.Draw(screen)
 	keyPixels, hintPixels := 0, 0
-	for y := dialog.frame.footerText.Min.Y; y < dialog.frame.footerText.Max.Y; y++ {
-		for x := dialog.frame.footerText.Min.X; x < dialog.frame.footerText.Max.X; x++ {
+	for y := frame.footerText.Min.Y; y < frame.footerText.Max.Y; y++ {
+		for x := frame.footerText.Min.X; x < frame.footerText.Max.X; x++ {
 			red, green, blue, _ := screen.At(x, y).RGBA()
 			if red == 65535 && green == red && blue == red {
 				keyPixels++

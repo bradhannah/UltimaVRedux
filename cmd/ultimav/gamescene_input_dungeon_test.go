@@ -1054,7 +1054,8 @@ func TestDungeonHoleUpZeroAndSpaceCancelRetainedCommand(t *testing.T) {
 		name string
 		keys []ebiten.Key
 	}{
-		{name: "zero", keys: []ebiten.Key{ebiten.Key0, ebiten.KeyEnter}},
+		// Zero cancels at once, as Space does: the hours are stepped, not typed and entered.
+		{name: "zero", keys: []ebiten.Key{ebiten.Key0}},
 		{name: "space", keys: []ebiten.Key{ebiten.KeySpace}},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {

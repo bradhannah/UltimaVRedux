@@ -920,11 +920,35 @@ for navigation, terminal/nonterminal refusals, duplicate suppression, and refres
 ### Merchant Quantity Controls
 
 `quantity_input.go` shares input ownership across five approval forms; each form
-retains its existing quote-derived bounds and request type. The Arms and Reagent
-amounts (`shop_amount_step.go`) show one amount row, the unit price, and a Have/Then
-table for the goods and gold; the line "Faulinei may take more." keeps the fact that
-the gold shown is before any theft by Faulinei (a purchase only). Their Left/Right
-and M hints dim when only one amount exists.
+retains its existing quote-derived bounds and request type. All five draw one
+window, `amount_window.go`, described by an `amountStep`: the item named once in
+the title with the price of one under it in grey; the keeper's own line first in
+the body, where the shop has one; the amount row; and a grid that reads across as
+a sum (`Have` in grey, the signed change, `Then`), with rows such as Carried,
+Food, Aboard and Gold. The window is fitted to that grid, 36 body letters wide
+and as tall as its lines, and keeps its size while the amount changes: a line is
+kept free for a warning that only some amounts bring. An approval with nothing to
+choose (a meal, a drink, information, a frigate, a lone skiff, an ammunition
+refill) is the same window without the amount row.
+
+The chosen number is drawn by `appendAmountStepper`, the one place that decides
+its look: the label yellow between its arrows, no selection bar, an arrow that
+cannot move drawn as unavailable, and the most in grey ("of 14"). Mix's "How
+many" row and the rest prompt (`hours_prompt.go`) use the same function. Digits
+type the amount: a second digit joins the first while the number stays within the
+most, and otherwise starts the number again; a digit that asks for none or for
+more than the most changes nothing. Enter names the amount ("Buy 3"). The amount
+keys dim when only one amount exists.
+
+Under the grid, the readable warning red says what an amount will not bring: goods
+past the most carried ("1 will not fit. The price stays."), or tavern packs the
+gold does not cover ("The gold pays for only 2 packs."). When not even one can be
+had the window gives the reason with its figures. The Guild then offers no Enter,
+as before. The Tavern and the shipwright still send the request, because asking
+without the gold is itself answered there (service or the talk ends; MERCH-0008,
+MERCH-0012 to MERCH-0014): the window says so and Enter reads "Order anyway" or
+"Ask anyway". Gold shown is before any theft by Faulinei, which the receipt
+reports afterwards.
 
 | Form | Repeating adjustment | Existing one-shot shortcuts / limits |
 |---|---|---|
@@ -932,7 +956,8 @@ and M hints dim when only one amount exists.
 | `GuildPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the quoted maximum, including the existing saturating final bundle. |
 | `ReagentPurchaseDialog` | Left/Right bundle count | Up/Down decrement/increment once; M selects the maximum supplied approval view. |
 | `ShipPurchaseDialog` | Left/Right loaded-skiff count | Up/Down decrement/increment once; M selects the maximum supplied approval view. Standalone vessel delivery remains one. |
-| `TavernActionDialog` | Left/Right ration-pack count | Up/Down decrement/increment once; M selects MaximumUsefulPacks; other Tavern approvals keep their existing controls. |
+| `TavernActionDialog` | Left/Right ration-pack count | Up/Down decrement/increment once; M selects MaximumUsefulPacks, which the gold may not cover; other Tavern approvals keep their existing controls. |
+| `HoursPrompt` | Left/Right hours of rest, 1 to 9 | Up/Down step once; Enter rests, Esc cancels, and in a dungeon 0 and Space cancel too. One grey line says about when the party would wake. Used for bed rest, camping and holing up. |
 
 A fresh plain Left/Right press steps immediately, then waits 300 ms before nominal
 120 ms repeats, quantized to Update ticks. Release stops repetition; rapid taps
@@ -1326,8 +1351,9 @@ and displayed rows synchronized without shrinking typography.
 - Direct Mix opens the finder. Enter chooses a spell without consuming anything
   and opens the quantity window; Enter there emits a `MixRequest`.
 - The quantity window has two tabs, changed with `Tab` and marked with the shared
-  active-tab plate. **Recipe** is for the recorded recipe: the amount row holds
-  the highlight, a `Prepared` row shows stock before and after, and a `USES`
+  active-tab plate. **Recipe** is for the recorded recipe: the amount row shows
+  the chosen number in yellow between its arrows, with no highlight bar (the shared
+  `appendAmountStepper`), a `Prepared` row shows stock before and after, and a `USES`
   table lists only the recipe's ingredients with `Have`, `Use` and `Left`. It has
   no tick boxes, so the mixture cannot be changed by accident. **Experiment**
   lists all eight ingredients with tick boxes, the recorded recipe ticked to

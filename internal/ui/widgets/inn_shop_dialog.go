@@ -83,7 +83,7 @@ const (
 func (a InnAction) String() string {
 	switch a {
 	case InnActionRest:
-		return "Rest"
+		return restActionLabel
 	case InnActionLeave:
 		return shopTitleLeave
 	case InnActionPickup:
@@ -1010,7 +1010,8 @@ func (d *InnShopDialog) populateModeOutput() {
 // tabs lists the Rest, Leave and Pick Up pages, the open one on the plate.
 func (d *InnShopDialog) tabs() []shopTab {
 	return []shopTab{
-		{"Rest", d.mode == InnShopRest}, {shopTitleLeave, d.mode == InnShopLeave}, {"Pick Up", d.mode == InnShopPickup},
+		{restActionLabel, d.mode == InnShopRest}, {shopTitleLeave, d.mode == InnShopLeave},
+		{"Pick Up", d.mode == InnShopPickup},
 	}
 }
 

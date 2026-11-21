@@ -62,10 +62,6 @@ type MerchantDialogShellConfig struct {
 	MerchantSprite *ebiten.Image
 }
 
-// merchantQuantityFooter is the shared quantity approval guidance. Up/Down
-// silently alias Left/Right in every quantity approval.
-const merchantQuantityFooter = "[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back"
-
 // merchantLeaveFooter is the shared acknowledgement when a shop can only be left.
 const merchantLeaveFooter = "[Enter/Esc] Leave"
 

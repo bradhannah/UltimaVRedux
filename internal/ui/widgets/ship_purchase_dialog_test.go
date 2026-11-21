@@ -19,61 +19,48 @@ func TestShipPurchaseDialogDisplaysVesselDockSkiffsAndPayment(t *testing.T) {
 		Keyboard: newWidgetTestKeyboard(0),
 		Intent:   intent,
 	})
-	title := compactShipText(dialog.GetTitleText())
-	body := compactShipText(dialog.GetBodyText())
+	flat := dialog.window.flatText()
 
-	require.Equal(t, "PREVIEW - Purchase Frigate", title)
-	require.Contains(t, body, "Vessel: Frigate")
-	require.Contains(t, body, "Action: Dispatch new frigate")
-	require.Contains(t, body, "Dock: Jhelom Harbour")
-	require.Contains(t, body, "Included skiffs: 2")
-	require.Contains(t, body, "Price: 600 gold")
-	require.Contains(t, body, "Party gold: 1000 -> 400")
-	require.NotContains(t, body, "Escort after purchase")
-	require.Equal(t, "[Enter] Confirm   [Esc] Back", dialog.GetFooterGuidance())
+	require.Equal(t, "PREVIEW - Buy Frigate With 2 skiffs aboard Have Then Gold 1000 -600 400 "+
+		"Delivered to Jhelom Harbour. [Enter] Buy [Esc] Back", flat)
 	require.True(t, dialog.IsPreview())
+	requireAmountWindowHoldsItsText(t, dialog.window, "frigate")
 
-	visible := strings.ToLower(strings.Join([]string{title, body, dialog.GetFooterGuidance()}, " "))
-	for _, forbidden := range shipDialogForbiddenDetails() {
+	visible := strings.ToLower(flat)
+	for _, forbidden := range append(shipDialogForbiddenDetails(), "vessel:", "action:", "dock:", "escort") {
 		require.NotContains(t, visible, forbidden)
 	}
 }
 
-func TestShipPurchaseDialogLoadSkiffAndUnaffordableRemainConfirmable(t *testing.T) {
+func TestShipPurchaseDialogLoadSkiffSteppingAndUnaffordableRemainConfirmable(t *testing.T) {
+	setMerchantShellTestResolution(t, 1280, 720)
 	state := testPendingFrigateShipShopState(true)
 	dialog := NewShipPurchaseDialog(ShipPurchaseDialogConfig{
 		Keyboard: newWidgetTestKeyboard(0),
 		Intent:   testShipPurchaseIntent(state, state.SkiffQuote, false),
 	})
-	body := compactShipText(dialog.GetBodyText())
-	require.Contains(t, body, "Action: Load skiffs aboard frigate")
-	require.Equal(t, "Purchase Skiffs", compactShipText(dialog.GetTitleText()))
-	require.Contains(t, body, "Skiffs aboard: 2/12")
-	require.Contains(t, body, "Quantity: < 1 >")
-	require.Contains(t, body, "If completed: 3/12")
-	require.Contains(t, body, "Unit price: 200 gold")
-	require.Contains(t, body, "Total: 200 gold")
-	require.NotContains(t, body, "Escort after purchase")
-	require.Equal(t, "[Left/Right] Quantity   [M] Max\n[Enter] Confirm   [Esc] Back",
-		dialog.GetFooterGuidance())
+	flat := dialog.window.flatText()
+	require.Contains(t, flat, "Buy Skiffs 200 gold each Skiffs < 1 > of 5")
+	require.Contains(t, flat, "Have Then Aboard 2 +1 3 Gold 1000 -200 800")
+	require.Contains(t, flat, "[Left/Right/0-9] Skiffs [M] Most [Enter] Buy 1 [Esc] Back")
 	pressShipPurchaseKey(dialog, dialog.keyboard, ebiten.KeyRight)
 	pressShipPurchaseKey(dialog, dialog.keyboard, ebiten.KeyRight)
 	require.Equal(t, 3, dialog.GetQuantity())
-	body = compactShipText(dialog.GetBodyText())
-	require.Contains(t, body, "If completed: 5/12")
-	require.Contains(t, body, "Total: 600 gold")
+	require.Contains(t, dialog.window.flatText(), "Aboard 2 +3 5 Gold 1000 -600 400")
+	pressShipPurchaseKey(dialog, dialog.keyboard, ebiten.Key2)
+	require.Equal(t, 2, dialog.GetQuantity(), "a digit types the amount")
 	pressShipPurchaseKey(dialog, dialog.keyboard, ebiten.KeyM)
 	require.Equal(t, 5, dialog.GetQuantity(), "maximum is bounded by the party's current gold")
+	requireAmountWindowHoldsItsText(t, dialog.window, "skiffs")
 
 	poor := testShipShopState()
 	setShipShopGold(&poor, 100)
 	intent := testShipPurchaseIntent(poor, poor.FrigateQuote, false)
 	keyboard := newWidgetTestKeyboard(0)
 	dialog = NewShipPurchaseDialog(ShipPurchaseDialogConfig{Keyboard: keyboard, Intent: intent})
-	body = compactShipText(dialog.GetBodyText())
-	require.Contains(t, body, "Party gold: 100")
-	require.Contains(t, body, "Need 600 gold.")
-	require.NotContains(t, body, "100 ->")
+	require.Equal(t, "Buy Frigate With 2 skiffs aboard Not enough gold. It costs 600 and the party has 100. "+
+		"Asking anyway ends the talk. [Enter] Ask anyway [Esc] Back", dialog.window.flatText())
+	requireAmountWindowHoldsItsText(t, dialog.window, "no gold")
 
 	pressShipPurchaseKey(dialog, keyboard, ebiten.KeyEnter)
 	require.True(t, dialog.IsDismissed())
@@ -129,8 +116,8 @@ func TestShipPurchaseDialogSemanticBackingAndResizePreserveContent(t *testing.T)
 	require.Equal(t, intent, dialog.GetIntent())
 	require.Equal(t, 3, dialog.GetQuantity())
 	requireImageRegionContainsColor(t, screen, dialog.GetBodyBounds(), MerchantDialogBackgroundColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlKeyColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlHintColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlKeyColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlHintColor)
 	pressShipPurchaseKey(dialog, keyboard, ebiten.KeyEnter)
 	request, ok := dialog.ConsumePendingPurchaseRequest()
 	require.True(t, ok)
@@ -199,7 +186,7 @@ func TestShipPurchaseDialogPhysicalFixedVesselsKeepReviewedRequest(t *testing.T)
 	state := testShipShopState()
 	setShipShopGold(&state, 100)
 	for _, quote := range []game_state.ShipPurchaseQuote{state.FrigateQuote, state.SkiffQuote} {
-		t.Run(shipActionLabel(quote.Action), func(t *testing.T) {
+		t.Run(shipVehicleName(quote.VehicleType), func(t *testing.T) {
 			keys := newPhysicalQuantityKeys()
 			intent := testShipPurchaseIntent(state, quote, false)
 			dialog := NewShipPurchaseDialog(ShipPurchaseDialogConfig{Keyboard: keys.keyboard, Intent: intent})

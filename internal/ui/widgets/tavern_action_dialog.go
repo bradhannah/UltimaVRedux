@@ -1,33 +1,22 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 const (
-	tavernActionStartPercentX    = 0.24
-	tavernActionEndPercentX      = 0.76
-	tavernActionStartPercentY    = 0.17
-	tavernActionEndPercentY      = 0.83
-	tavernActionHeaderRatio      = 0.15
-	tavernActionFooterRatio      = 0.18
-	tavernActionMinimumInset     = 5
-	tavernActionLineSpacing      = 1.08
-	tavernActionMaximumBodyLines = 18
-	tavernActionFooterLines      = 2
-	tavernActionMinimumTextChars = 8
-	tavernActionNormalFooter     = "[Enter] Confirm   [Esc] Back"
-	tavernActionWarningFooter    = "[Enter] Another Drink   [Esc] I've Had Enough"
-	tavernActionProvisionFooter  = "[Left/Right] Quantity   [M] Max\n[Enter] Buy   [Esc] Back"
+	tavernEndsService      = "Asking anyway ends service."
+	tavernOrderEndsService = "Ordering anyway ends service."
+	tavernCharityPossible  = "The keeper may spare 1 or 2 food."
+	tavernAnyway           = " anyway"
+	tavernOrderVerb        = "Order"
 )
 
 var _ Widget = (*TavernActionDialog)(nil)
@@ -51,11 +40,7 @@ type TavernActionDialog struct {
 	actionKeysReady bool
 	pending         *TavernActionRequest
 	provisionPacks  int
-
-	frame        *merchantModalFrame
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window          *amountWindow
 }
 
 // NewTavernActionDialog creates a compact approval from one fully detached intent union.
@@ -68,29 +53,21 @@ func NewTavernActionDialog(config TavernActionDialogConfig) *TavernActionDialog 
 	if isKeyPressed == nil {
 		isKeyPressed = config.Keyboard.IsKeyHeld
 	}
-	footerMinimumLines := 1
-	if config.Intent.Action == TavernActionProvision {
-		footerMinimumLines = tavernActionFooterLines
-	}
-	dialog := &TavernActionDialog{ //nolint:exhaustruct_v5 // Resolution-dependent display fields initialize on demand.
+	dialog := &TavernActionDialog{
 		quantityInput:   newQuantityInput(config.Keyboard, isKeyPressed, ebiten.KeyM, ebiten.KeyUp, ebiten.KeyDown),
 		keyboard:        config.Keyboard,
 		isKeyPressed:    isKeyPressed,
 		intent:          cloneTavernActionIntent(config.Intent),
-		provisionPacks:  config.Intent.PackCount,
 		visible:         true,
+		dismissed:       false,
+		cancelled:       false,
 		actionKeysReady: tavernActionControlsReleased(isKeyPressed),
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             tavernActionPlacement(),
-			headerRatio:           tavernActionHeaderRatio,
-			footerRatio:           tavernActionFooterRatio,
-			minimumInset:          tavernActionMinimumInset,
-			lineSpacingMultiplier: tavernActionLineSpacing,
-			footerMinimumLines:    footerMinimumLines,
-		}),
+		pending:         nil,
+		provisionPacks:  config.Intent.PackCount,
+		window:          newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -100,9 +77,7 @@ func (d *TavernActionDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || !d.IsVisible() {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update confirms one normal action, chooses warned Stop/Continue, or cancels.
@@ -153,32 +128,29 @@ func (d *TavernActionDialog) prepareActionKeys() bool {
 	return true
 }
 
+// updateProvisionQuantity steps or types the pack count. With no gold for even
+// one pack every count comes to the same thing, so there is none to choose.
 func (d *TavernActionDialog) updateProvisionQuantity() bool {
-	key, owned := d.pollQuantityInput()
-	if key == nil {
+	if d.noPackAffordable() {
+		_, owned := d.pollQuantityInput()
+
 		return owned
 	}
-	switch *key { //nolint:exhaustive // The quantity helper returns only this dialog's configured keys.
-	case ebiten.KeyLeft, ebiten.KeyUp:
-		d.setProvisionPackCount(d.provisionPacks - 1)
-	case ebiten.KeyRight, ebiten.KeyDown:
-		d.setProvisionPackCount(d.provisionPacks + 1)
-	case ebiten.KeyM:
-		d.setProvisionPackCount(d.intent.Provision.MaximumUsefulPacks)
+	packs, owned := d.pollAmount(d.provisionPacks, d.intent.Provision.MaximumUsefulPacks)
+	if packs != d.provisionPacks {
+		d.provisionPacks = packs
+		d.intent.PackCount = packs
+		d.intent.Request.Provision.PackCount = packs
+		d.window.set(d.step())
 	}
 
 	return owned
 }
 
-func (d *TavernActionDialog) setProvisionPackCount(packCount int) {
-	packCount = max(tavernMinimumProvisionPacks, min(d.intent.Provision.MaximumUsefulPacks, packCount))
-	if packCount == d.provisionPacks {
-		return
-	}
-	d.provisionPacks = packCount
-	d.intent.PackCount = packCount
-	d.intent.Request.Provision.PackCount = packCount
-	d.populateOutputs()
+func (d *TavernActionDialog) noPackAffordable() bool {
+	outcome := d.intent.Provision.Approvals[d.provisionPacks-1].Outcome
+
+	return outcome == game_state.TavernProvisionCharityEjection || outcome == game_state.TavernProvisionEjection
 }
 
 // ConsumePendingRequest returns and clears the exact approved comparison request.
@@ -192,23 +164,9 @@ func (d *TavernActionDialog) ConsumePendingRequest() (TavernActionRequest, bool)
 	return request, true
 }
 
-// GetFooterGuidance returns normal confirmation or explicit warning controls.
-func (d *TavernActionDialog) GetFooterGuidance() string {
-	if d.intent.Drink.Warning {
-		return tavernActionWarningFooter
-	}
-	if d.intent.Action == TavernActionProvision {
-		return tavernActionProvisionFooter
-	}
-
-	return tavernActionNormalFooter
-}
-
 // GetBounds returns the centered responsive modal bounds.
 func (d *TavernActionDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape returned to the parent without a request.
@@ -242,189 +200,132 @@ func (d *TavernActionDialog) cancel() {
 	d.Dismiss()
 }
 
-func (d *TavernActionDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: tavernActionLineSpacing, maximumBodyLines: tavernActionMaximumBodyLines,
-		footerLines: tavernActionFooterLines, minimumChars: tavernActionMinimumTextChars, fixedBody: false,
-	})
-	d.populateOutputs()
-}
-
-func (d *TavernActionDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
-	}
-	d.populateHeaderOutput()
-	d.populateBodyOutput()
-	d.populateFooterOutput()
-}
-
-func (d *TavernActionDialog) populateHeaderOutput() {
-	d.headerOutput.Reset()
-	title := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	if d.intent.Preview {
-		title.Text("PREVIEW - ", DialogStatusWarningColor)
-	}
-	switch {
-	case d.intent.Drink.Warning:
-		title.Text("One More Drink?", DialogHeaderColor).Done()
-	case d.intent.Action == TavernActionProvision:
-		title.Text("Purchase "+d.intent.Provision.Provision.Name, DialogHeaderColor).Done()
-	default:
-		title.Text("Approve "+d.intent.Action.String(), DialogHeaderColor).Done()
-	}
-}
-
-func (d *TavernActionDialog) populateBodyOutput() {
-	d.bodyOutput.Reset()
-	if d.intent.Preview {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text("PREVIEW: authority has not run.", DialogStatusWarningColor).Done()
-	}
+// step describes the approval window for this order: what it is, how its price
+// is made up, and what the party's gold and food will be.
+func (d *TavernActionDialog) step() amountStep {
+	step := emptyAmountStep()
+	step.preview = d.intent.Preview
 	switch d.intent.Action {
 	case TavernActionMeal:
-		d.populateMealBody()
+		d.describeMeal(&step)
 	case TavernActionDrink:
-		d.populateDrinkBody()
+		d.describeDrink(&step)
 	case TavernActionProvision:
-		d.populateProvisionBody()
+		d.describeProvision(&step)
 	case TavernActionInformation:
-		d.populateInformationBody()
+		d.describeInformation(&step)
 	case TavernActionStop, TavernActionUnknown:
-		panic("TavernActionDialog.populateOutputs: invalid standalone action")
+		panic("TavernActionDialog.step: invalid standalone action")
 	default:
-		panic("TavernActionDialog.populateOutputs: unknown action")
+		panic("TavernActionDialog.step: unknown action")
 	}
+
+	return step
 }
 
-func (d *TavernActionDialog) populateFooterOutput() {
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
-}
-
-func (d *TavernActionDialog) populateMealBody() {
+func (d *TavernActionDialog) describeMeal(step *amountStep) {
 	quote := d.intent.Meal
-	d.bodyOutput.AppendLine().Yellow("Meal: ").White(quote.Meal.Name).Done()
-	d.bodyOutput.AppendLine().Whitef("%d diners", quote.DinerCount).
-		LightGray(" x ").Yellowf("%d gold each", quote.Meal.BasePrice).Done()
-	d.bodyOutput.AppendLine().LightGray("Total: ").Yellowf("%d gold", quote.Charge).Done()
-	d.appendGoldProjection(quote.GoldBefore, quote.GoldAfterPayment, quote.Affordable, quote.Charge)
+	step.title, step.verb = tavernOrderVerb+" "+quote.Meal.Name, tavernOrderVerb
+	step.unit = fmt.Sprintf("%d gold each for %s", quote.Meal.BasePrice, countedNoun(quote.DinerCount, "diner"))
+	describeTavernPayment(step, quote.GoldBefore, quote.GoldAfterPayment, quote.Affordable, quote.Charge,
+		tavernOrderEndsService)
 }
 
-func (d *TavernActionDialog) populateDrinkBody() {
+func (d *TavernActionDialog) describeDrink(step *amountStep) {
 	quote := d.intent.Drink
-	if quote.Warning {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text(d.intent.DrinkWarning, DialogValueColor).WordWrap().Done()
-		d.bodyOutput.AppendLine().White("").Done()
-	}
-	name := quote.Drink.Name
+	step.title, step.verb = tavernOrderVerb+" "+quote.Drink.Name, tavernOrderVerb
+	step.unit = fmt.Sprintf("%d gold each for %s", quote.Drink.UnitPrice, countedNoun(quote.DinerCount, "drink"))
 	if quote.WineIndex != game_state.TavernOrdinaryDrinkWineIndex {
-		name = quote.Wine.Name
+		step.title, step.unit = tavernOrderVerb+" "+quote.Wine.Name, "By the bottle"
 	}
-	d.bodyOutput.AppendLine().Yellow("Drink: ").White(name).Done()
-	if quote.WineIndex == game_state.TavernOrdinaryDrinkWineIndex {
-		d.bodyOutput.AppendLine().Whitef("%d drinks", quote.DinerCount).
-			LightGray(" x ").Yellowf("%d gold each", quote.Drink.UnitPrice).Done()
-	} else {
-		d.bodyOutput.AppendLine().LightGray("Bottle price: ").Yellowf("%d gold", quote.Charge).Done()
+	if quote.Warning {
+		step.title, step.pitch = "One More Drink?", d.intent.DrinkWarning
+		step.verb, step.back = "Another Drink", "I've Had Enough"
 	}
-	d.bodyOutput.AppendLine().LightGray("Total: ").Yellowf("%d gold", quote.Charge).Done()
-	d.appendGoldProjection(quote.GoldBefore, quote.GoldAfterPayment, quote.Affordable, quote.Charge)
+	describeTavernPayment(step, quote.GoldBefore, quote.GoldAfterPayment, quote.Affordable, quote.Charge,
+		tavernOrderEndsService)
 }
 
-func (d *TavernActionDialog) populateProvisionBody() {
+func (d *TavernActionDialog) describeInformation(step *amountStep) {
+	quote := d.intent.Information
+	step.title, step.verb, step.pitch = "Buy Information", "Pay", d.intent.InformationPitch
+	describeTavernPayment(step, quote.GoldBefore, quote.GoldAfterPayment, quote.Affordable,
+		uint16(quote.Price), //nolint:gosec // Canonical topic price is validated and bounded.
+		tavernEndsService)
+}
+
+// describeTavernPayment gives the gold row of a payment the party can make. One
+// it cannot make is still a real request, which the keeper answers by ending
+// service (MERCH-0012 to MERCH-0014), so Enter stays and says what it will do.
+func describeTavernPayment(step *amountStep, before, after uint16, affordable bool, charge uint16, ends string) {
+	if affordable {
+		step.rows = []amountRow{{label: amountGoldRow, have: int(before), then: int(after)}}
+
+		return
+	}
+	if step.back == "" {
+		step.pitch = ""
+		step.verb += tavernAnyway
+	}
+	step.notes = shortOfGoldNotes("It costs", int(charge), int(before), ends)
+}
+
+func (d *TavernActionDialog) describeProvision(step *amountStep) {
 	quote := d.intent.Provision
 	approval := quote.Approvals[d.provisionPacks-1]
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text(d.intent.ProvisionPitch, DialogValueColor).WordWrap().Done()
-	d.bodyOutput.AppendLine().White("").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).LightGray("PACKS").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		White("<   ").Yellowf("%d", d.provisionPacks).White("   >").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGrayf("of %d useful", quote.MaximumUsefulPacks).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Whitef("%d food", quote.Provision.PackQuantity).LightGray(" per pack").Done()
-	d.bodyOutput.AppendLine().White("").Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("FOOD  ").Cyanf("%d", quote.FoodBefore).White("  ->  ").
-		LightGreenf("%d", approval.FoodAfter).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("PRICE EACH / TOTAL  ").Yellowf("%d / %d GOLD", quote.PricePerPack, approval.TotalCost).Done()
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		LightGray("GOLD  ").Cyanf("%d", quote.GoldBefore).White("  ->  ").
-		LightGreenf("%d", approval.GoldAfterPurchases).Done()
-	d.populateProvisionProjectionNote(approval)
+	step.title, step.verb = amountBuyVerb+" "+quote.Provision.Name, amountBuyVerb
+	step.unit = fmt.Sprintf("%d gold for a pack of %d food", quote.PricePerPack, quote.Provision.PackQuantity)
+	if d.noPackAffordable() {
+		consequences := []string{tavernEndsService}
+		if approval.CharityPossible {
+			consequences = append(consequences, tavernCharityPossible)
+		}
+		step.verb = "Ask" + tavernAnyway
+		step.notes = shortOfGoldNotes("A pack costs", quote.PricePerPack, int(quote.GoldBefore), consequences...)
+
+		return
+	}
+	step.pitch = d.intent.ProvisionPitch
+	step.noun, step.count, step.most = "Packs", d.provisionPacks, quote.MaximumUsefulPacks
+	step.rows = []amountRow{
+		{label: "Food", have: int(quote.FoodBefore), then: int(approval.FoodAfter)},
+		{label: amountGoldRow, have: int(quote.GoldBefore), then: int(approval.GoldAfterPurchases)},
+	}
+	for _, other := range quote.Approvals {
+		if len(tavernProvisionNotes(quote, other)) > 0 {
+			step.reserve = 1
+		}
+	}
+	step.notes = tavernProvisionNotes(quote, approval)
 }
 
-func (d *TavernActionDialog) populateProvisionProjectionNote(approval game_state.TavernProvisionApproval) {
-	switch approval.Outcome {
-	case game_state.TavernProvisionCompleted:
-		return
-	case game_state.TavernProvisionPartial:
-		d.bodyOutput.AppendLine().Textf(
-			"Only %d of %d packs can currently be paid for.",
-			DialogLabelColor,
-			approval.PurchasedPacks,
-			approval.PackCount,
-		).WordWrap().Done()
-	case game_state.TavernProvisionSaturated:
-		d.bodyOutput.AppendLine().Text(
-			"The order stops when carried food reaches 9999.", DialogLabelColor,
-		).WordWrap().Done()
-	case game_state.TavernProvisionCharityEjection:
-		d.bodyOutput.AppendLine().Text(
-			"No pack can be afforded. The keeper may offer 1-2 food before ending service.",
-			DialogStatusWarningColor,
-		).WordWrap().Done()
-	case game_state.TavernProvisionEjection:
-		d.bodyOutput.AppendLine().Text(
-			"No pack can be afforded; the keeper will end service.", DialogStatusWarningColor,
-		).WordWrap().Done()
-	case game_state.TavernProvisionOutcomeUnknown:
+// tavernProvisionNotes says what an order will not bring: packs the gold does not
+// cover, which the keeper leaves out (MERCH-0014), or food past the most carried.
+func tavernProvisionNotes(quote game_state.TavernProvisionQuote, approval game_state.TavernProvisionApproval,
+) []amountNote {
+	lost := approval.PurchasedPacks*int(quote.Provision.PackQuantity) - int(approval.ActualFood)
+	switch {
+	case approval.Outcome == game_state.TavernProvisionPartial:
+		return []amountNote{{
+			text: fmt.Sprintf("The gold pays for only %s.", countedNoun(approval.PurchasedPacks, "pack")),
+			tone: amountWarning,
+		}}
+	case approval.Outcome == game_state.TavernProvisionSaturated && lost > 0:
+		return overflowNote(lost)
+	case approval.Outcome == game_state.TavernProvisionOutcomeUnknown:
 		panic("TavernActionDialog: provision projection has no outcome")
 	default:
-		panic("TavernActionDialog: provision projection has unknown outcome")
+		return nil
 	}
 }
 
-func (d *TavernActionDialog) populateInformationBody() {
-	quote := d.intent.Information
-	d.bodyOutput.AppendLine().Text(d.intent.InformationPitch, DialogValueColor).WordWrap().Done()
-	d.bodyOutput.AppendLine().LightGray("Price: ").Yellowf("%d gold", quote.Price).Done()
-	d.appendGoldProjection(
-		quote.GoldBefore,
-		quote.GoldAfterPayment,
-		quote.Affordable,
-		uint16(quote.Price), //nolint:gosec // Canonical topic price is validated and bounded.
-	)
-}
-
-func (d *TavernActionDialog) appendGoldProjection(before, after uint16, affordable bool, charge uint16) {
-	if affordable {
-		d.bodyOutput.AppendLine().LightGray("Gold after payment: ").Cyanf("%d -> %d", before, after).Done()
-
-		return
+// countedNoun words a count with its noun, such as "1 diner" or "3 diners".
+func countedNoun(count int, noun string) string {
+	if count == 1 {
+		return "1 " + noun
 	}
-	d.bodyOutput.AppendLine().Textf(
-		"The party has %d gold and needs %d more.",
-		DialogStatusWarningColor,
-		before,
-		int(charge)-int(before),
-	).WordWrap().Done()
-}
 
-func tavernActionPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: tavernActionStartPercentX,
-		EndPercentX:   tavernActionEndPercentX,
-		StartPercentY: tavernActionStartPercentY,
-		EndPercentY:   tavernActionEndPercentY,
-	}
+	return fmt.Sprintf("%d %ss", count, noun)
 }
 
 func validateTavernActionIntent(intent TavernActionIntent) {

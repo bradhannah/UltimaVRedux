@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 
+	"github.com/bradhannah/UltimaVRedux/internal/datetime"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
@@ -18,6 +19,9 @@ import (
 
 // Dialog positioning constants
 const defaultMessageVertical = 0.7
+
+// longestRestHours is the longest rest the hours prompt offers: one digit, as the original asks.
+const longestRestHours = 9
 
 // Earthquake effect constants for shrine and dungeon sequences
 const (
@@ -414,42 +418,26 @@ func (g *GameScene) thenShowCampDurationInput(
 ) func(*event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 	return func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
 		var inputComplete bool
-		var inputDialog *widgets.InputBox
+		var inputDialog *widgets.HoursPrompt
 
 		return q.Then(func() {
-			// Create InputBox with sleep-specific configuration
-			pattern := "^[1-9]$"
-			if sourceCancellation {
-				pattern = "^[0-9]$"
-			}
-			builder := widgets.NewInputBox("How many hours?", nil, g.keyboard).
-				WithRegexValidation(pattern).
-				WithResultCallback(func(text string, wasSubmitted bool) {
+			inputDialog = widgets.NewHoursPrompt(widgets.HoursPromptConfig{
+				Keyboard: g.keyboard,
+				Most:     longestRestHours,
+				CenterX:  widgets.DialogHorizontalMapOnly.ToPercentage(),
+				CenterY:  defaultMessageVertical,
+				WakeTime: func(hours int) string {
+					wake := g.gameState.DateTime
+					wake.Advance(hours * datetime.MinutesPerHour)
+
+					return wake.GetTimeAsString()
+				},
+				ZeroCancels: sourceCancellation,
+				OnResult: func(hours int) {
 					inputComplete = true
-
-					// Parse hours from text (0 if cancelled or invalid)
-					if !wasSubmitted || text == "" {
-						onResult(0)
-
-						return
-					}
-
-					// Convert string to int (already validated by regex)
-					hours := 0
-					if len(text) > 0 {
-						hours = int(text[0] - '0') // Fast conversion for single digit
-					}
 					onResult(hours)
-				}).WithAutoReplace(true) // Auto-replace for single digit entry
-			if sourceCancellation {
-				builder.WithSpaceCancellation()
-			}
-			inputDialog = builder.
-				WithTextLines(2).
-				WithCharsPerLine(20). // Smaller than default for compact sleep dialog
-				WithHorizontalPosition(widgets.DialogHorizontalMapOnly).
-				WithVerticalPosition(defaultMessageVertical). // Bottom third positioning
-				Build()
+				},
+			})
 
 			g.dialogStack.PushModalDialog(inputDialog)
 		}).

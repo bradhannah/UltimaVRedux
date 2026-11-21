@@ -260,14 +260,15 @@ func (d *ReagentMixingDialog) drawBody(screen *ebiten.Image) {
 
 		return line
 	}
-	d.drawLine(screen, next(), d.tab == mixTabRecipe, func(line *text.LineBuilder, ink mixInk) {
+	// The amount has no selection bar on either tab: the chosen number is what stands out.
+	d.drawLine(screen, next(), false, func(line *text.LineBuilder, ink mixInk) {
 		line.Text(fmt.Sprintf(" %-*s", mixAmountColumn-1, "How many"), ink.label)
 		if amount == 0 {
 			line.Text("none possible", ink.value)
 
 			return
 		}
-		line.Text(fmt.Sprintf("<  %-3d>", amount), ink.value).Text(fmt.Sprintf("    of %d", d.maximum()), ink.hint)
+		appendAmountStepper(line, amount, d.maximum())
 	})
 	title := " INGREDIENTS"
 	if d.tab == mixTabRecipe {

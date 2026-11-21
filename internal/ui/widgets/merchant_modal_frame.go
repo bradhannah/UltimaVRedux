@@ -18,6 +18,8 @@ const (
 	merchantFitHalves         = 2.0
 	merchantFitInsetPair      = 2
 	merchantFitInsets         = 9 // Three panes' two insets each, the content's two, and one of slack.
+	merchantFitSideInsets     = 4 // The content's inset and the text's, on each side.
+	merchantHeaderNoteGap     = 0.2
 )
 
 type merchantModalFrameConfig struct {
@@ -41,7 +43,10 @@ type merchantModalFrame struct {
 	footerText   image.Rectangle
 	inset        int
 	fitLines     int // When positive, the window is only tall enough for this many body lines.
-	fitInset     int // The inset the full-size window would have, kept when it shrinks.
+	fitChars     int // When positive, the window is only wide enough for this many body letters.
+	fitInset     int // The inset the full-size window would have, kept when it is fitted.
+
+	headerNoteLines int // Body-size lines under the title, such as the price of one.
 
 	lastScreenWidth  int
 	lastScreenHeight int
@@ -66,18 +71,19 @@ func (f *merchantModalFrame) ensureLayout() bool {
 	}
 
 	f.lastScreenWidth, f.lastScreenHeight = width, height
-	f.fitLines = 0
+	f.fitLines, f.fitChars = 0, 0
 	f.layout()
 
 	return true
 }
 
-// fitBodyLines shrinks the window, about its centre, to hold exactly the given number
-// of body text lines with the header and footer at their least height, so that the
-// window never changes size while its content does. The caller then rebuilds its
-// outputs, whose body capacity follows the new height.
-func (f *merchantModalFrame) fitBodyLines(lines int) {
-	f.fitLines = lines
+// fit sizes the window, about its centre, to hold exactly the given number of body
+// text lines and body letters across, with the header and footer at their least
+// height, so that the window is as large as what it shows and never changes size
+// while its content does. The caller then rebuilds its outputs, whose capacity
+// follows the new size.
+func (f *merchantModalFrame) fit(lines, chars int) {
+	f.fitLines, f.fitChars = lines, chars
 	f.layout()
 }
 
@@ -88,20 +94,46 @@ func (f *merchantModalFrame) layout() {
 		full, interior := f.border.GetBounds(), f.border.GetInteriorBounds()
 		inset := max(f.config.minimumInset, min(interior.Dx(), interior.Dy())/merchantModalInsetDivisor)
 		f.fitInset = inset
-		lineSpacing := gametext.GetScaledNumberToResolution(
-			display.GetManager(), float64(FontSizeBody)*f.config.lineSpacingMultiplier)
+		lineSpacing := f.bodyLineSpacing()
 		body := scaledFontHeight(FontSizeBody) + float64(f.fitLines-1)*lineSpacing
 		footer := scaledFontHeight(FontSizeBody) + float64(f.config.footerMinimumLines-1)*lineSpacing
 		// Header, body and footer each carry two insets, the content one more pair,
 		// and one inset of slack absorbs rounding.
-		need := int(math.Ceil(scaledFontHeight(FontSizeTitle)+body+footer)) + inset*merchantFitInsets
-		outer := min(full.Dy(), need+full.Dy()-interior.Dy())
+		need := int(math.Ceil(f.headerTextHeight()+body+footer)) + inset*merchantFitInsets
+		outer := min(f.lastScreenHeight, need+full.Dy()-interior.Dy())
 		half := float64(outer) / float64(f.lastScreenHeight) / merchantFitHalves
 		centre := (placement.StartPercentY + placement.EndPercentY) / merchantFitHalves
 		placement.StartPercentY, placement.EndPercentY = centre-half, centre+half
+		if f.fitChars > 0 {
+			letter, _ := GetScaledFont(FontSizeBody).MeasureString("M")
+			// The text sits two insets in from each side of the interior; one pixel
+			// more keeps the last letter from being rounded away.
+			need = int(math.Ceil(letter*float64(f.fitChars))) + 1 + inset*merchantFitSideInsets
+			// The border's own margin is a share of the window, so it grows with it.
+			outer = min(f.lastScreenWidth, int(math.Ceil(float64(need*full.Dx())/float64(interior.Dx())))+1)
+			half = float64(outer) / float64(f.lastScreenWidth) / merchantFitHalves
+			centre = (placement.StartPercentX + placement.EndPercentX) / merchantFitHalves
+			placement.StartPercentX, placement.EndPercentX = centre-half, centre+half
+		}
 		f.border = NewOpaqueBorder(placement, BorderWidthStandard, MerchantDialogBackgroundColor)
 	}
 	f.calculateLayout()
+}
+
+func (f *merchantModalFrame) bodyLineSpacing() float64 {
+	return gametext.GetScaledNumberToResolution(
+		display.GetManager(), float64(FontSizeBody)*f.config.lineSpacingMultiplier)
+}
+
+// headerTextHeight is the title's height and that of any body-size lines under it,
+// which stand a little clear of the larger title.
+func (f *merchantModalFrame) headerTextHeight() float64 {
+	if f.headerNoteLines == 0 {
+		return scaledFontHeight(FontSizeTitle)
+	}
+
+	return scaledFontHeight(FontSizeTitle) + float64(f.headerNoteLines)*f.bodyLineSpacing() +
+		scaledFontHeight(FontSizeBody)*merchantHeaderNoteGap
 }
 
 func (f *merchantModalFrame) calculateLayout() {
@@ -113,13 +145,11 @@ func (f *merchantModalFrame) calculateLayout() {
 	content := insetRectangle(interior, f.inset)
 
 	fontHeight := scaledFontHeight(FontSizeBody)
-	lineSpacing := gametext.GetScaledNumberToResolution(
-		display.GetManager(),
-		float64(FontSizeBody)*f.config.lineSpacingMultiplier,
-	)
+	lineSpacing := f.bodyLineSpacing()
 	footerTextHeight := fontHeight + float64(f.config.footerMinimumLines-1)*lineSpacing
+	headerTextHeight := int(math.Ceil(f.headerTextHeight()))
 	headerHeight := max(
-		int(math.Ceil(scaledFontHeight(FontSizeTitle)))+f.inset*2,
+		headerTextHeight+f.inset*2,
 		int(float64(content.Dy())*f.config.headerRatio),
 	)
 	footerHeight := max(
@@ -127,7 +157,7 @@ func (f *merchantModalFrame) calculateLayout() {
 		int(float64(content.Dy())*f.config.footerRatio),
 	)
 	if f.fitLines > 0 {
-		headerHeight = int(math.Ceil(scaledFontHeight(FontSizeTitle))) + f.inset*merchantFitInsetPair
+		headerHeight = headerTextHeight + f.inset*merchantFitInsetPair
 		footerHeight = int(math.Ceil(footerTextHeight)) + f.inset*merchantFitInsetPair
 	}
 
@@ -205,12 +235,11 @@ func (f *merchantModalFrame) newOutputs(budget merchantModalTextBudget) (*gamete
 
 // drawOutputs draws the centred header, top-left body and centred footer text.
 func (f *merchantModalFrame) drawOutputs(screen *ebiten.Image, header, body, footer *gametext.Output) {
-	header.DrawPanelContent(
-		screen,
-		image.Pt(f.headerText.Min.X, verticallyCenteredOutputY(f.headerText, header)),
-		f.headerText.Dx(),
-		etext.AlignCenter,
-	)
+	headerTop := verticallyCenteredOutputY(f.headerText, header)
+	if f.headerNoteLines > 0 {
+		headerTop = f.headerText.Min.Y
+	}
+	header.DrawPanelContent(screen, image.Pt(f.headerText.Min.X, headerTop), f.headerText.Dx(), etext.AlignCenter)
 	body.DrawPanelContent(screen, f.bodyText.Min, f.bodyText.Dx(), etext.AlignStart)
 	footer.DrawPanelContent(
 		screen,
@@ -218,6 +247,24 @@ func (f *merchantModalFrame) drawOutputs(screen *ebiten.Image, header, body, foo
 		f.footerText.Dx(),
 		etext.AlignCenter,
 	)
+}
+
+// newHeaderNoteOutput creates the body-size output for the lines under the title.
+func (f *merchantModalFrame) newHeaderNoteOutput(lineSpacing float64) *gametext.Output {
+	font, output := GetScaledFontWithOutput(FontConfig{
+		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: lineSpacing,
+		MaxLines: max(1, f.headerNoteLines), MaxChars: 1,
+	})
+	output.SetMaxCharsPerLine(font.CharsForWidth(max(1, f.headerText.Dx())))
+
+	return output
+}
+
+// drawHeaderNote draws the lines under the title, against the foot of the header.
+func (f *merchantModalFrame) drawHeaderNote(screen *ebiten.Image, note *gametext.Output) {
+	height := int(math.Ceil(note.GetTotalHeightForLines(f.headerNoteLines)))
+	note.DrawPanelContent(screen, image.Pt(f.headerText.Min.X, f.headerText.Max.Y-height), f.headerText.Dx(),
+		etext.AlignCenter)
 }
 
 // drawMerchantPane fills a shop pane with the merchant background and draws its light frame.

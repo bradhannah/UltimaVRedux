@@ -52,21 +52,24 @@ func (d *ArmsShopDialog) GetSortBounds() image.Rectangle {
 
 // GetBodyText returns the current finalized prose and projections.
 func (d *ArmsTradeDialog) GetBodyText() string {
-	return outputText(d.bodyOutput)
+	return outputText(d.window.body)
+}
+
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *ArmsTradeDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
+}
+
+// flatText returns everything the window shows, title first, as single-spaced words.
+func (w *amountWindow) flatText() string {
+	return strings.Join(strings.Fields(strings.Join([]string{
+		outputText(w.header), outputText(w.unit), outputText(w.body), outputText(w.footer),
+	}, " ")), " ")
 }
 
 // GetBodyText returns the current quantity and projected-value presentation.
 func (d *GuildPurchaseDialog) GetBodyText() string {
-	return d.bodyOutput.GetOutputStr(false)
-}
-
-// GetFooterGuidance returns the exact keyboard guidance currently displayed.
-func (d *GuildPurchaseDialog) GetFooterGuidance() string {
-	if d.quote.MaxBundles > 0 {
-		return merchantQuantityFooter
-	}
-
-	return "[Esc] Back"
+	return outputText(d.window.body)
 }
 
 // HasPendingPurchaseIntent reports whether the workflow has an unconsumed selection intent.
@@ -407,12 +410,12 @@ func (d *QuestJournalDialog) GetDetailPage() int { return d.detailPage }
 
 // GetBodyText returns the selected supplied approval presentation.
 func (d *ReagentPurchaseDialog) GetBodyText() string {
-	return outputText(d.bodyOutput)
+	return outputText(d.window.body)
 }
 
-// GetFooterGuidance returns the exact keyboard guidance displayed by the modal.
+// GetFooterGuidance returns the keyboard guidance as displayed.
 func (d *ReagentPurchaseDialog) GetFooterGuidance() string {
-	return reagentPurchaseFooter
+	return outputText(d.window.footer)
 }
 
 // HasPendingPurchaseIntent reports whether the workflow has an unconsumed modal intent.
@@ -508,23 +511,24 @@ func (d *ShipPurchaseDialog) GetQuantity() int { return d.quantity }
 
 // GetTitleText returns the modal title.
 func (d *ShipPurchaseDialog) GetTitleText() string {
-	d.ensureLayout()
-
-	return d.headerOutput.GetOutputStr(false)
+	return outputText(d.window.header)
 }
 
 // GetBodyText returns the vessel, berth, skiff, and payment presentation.
 func (d *ShipPurchaseDialog) GetBodyText() string {
-	d.ensureLayout()
+	return outputText(d.window.body)
+}
 
-	return d.bodyOutput.GetOutputStr(false)
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *ShipPurchaseDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
 }
 
 // GetBodyBounds returns the semantically backed modal body.
 func (d *ShipPurchaseDialog) GetBodyBounds() image.Rectangle {
-	d.ensureLayout()
+	d.window.ensureLayout()
 
-	return d.frame.bodyBounds
+	return d.window.frame.bodyBounds
 }
 
 // HasPendingPurchaseIntent reports whether a purchase modal must be opened.
@@ -640,12 +644,17 @@ func (d *TavernActionDialog) HasPendingRequest() bool { return d.pending != nil 
 
 // GetTitleText returns the visible action title, including PREVIEW when applicable.
 func (d *TavernActionDialog) GetTitleText() string {
-	return outputText(d.headerOutput)
+	return outputText(d.window.header)
+}
+
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *TavernActionDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
 }
 
 // GetBodyText returns exact mode-specific approval presentation.
 func (d *TavernActionDialog) GetBodyText() string {
-	return outputText(d.bodyOutput)
+	return outputText(d.window.body)
 }
 
 // ShowWithoutAnimation makes a non-complete approval immediately visible.

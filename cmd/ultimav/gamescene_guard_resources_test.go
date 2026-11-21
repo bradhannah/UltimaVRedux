@@ -123,16 +123,16 @@ func openPhysicalGuardResourceDialog(
 	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.KeyH, func() bool {
 		return state.EventQueueManager.HasWorkflow(workflow)
 	})
-	var duration *widgets.InputBox
+	var duration *widgets.HoursPrompt
 	for range 200 {
 		update()
-		if dialog, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.InputBox); ok {
+		if dialog, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.HoursPrompt); ok {
 			duration = dialog
 			break
 		}
 	}
 	require.NotNil(t, duration)
-	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.Key1, func() bool { return duration.GetText() == "1" })
+	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.Key1, func() bool { return duration.GetHours() == 1 })
 	pressPhysicalCampingKeyUntil(t, scene, held, update, ebiten.KeyEnter, func() bool {
 		return !scene.dialogStack.ContainsWidgetInstance(duration)
 	})

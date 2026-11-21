@@ -19,10 +19,13 @@ func TestTavernActionDialogNormalActionsEmitExactRequestsUnchanged(t *testing.T)
 		intent TavernActionIntent
 		text   string
 	}{
-		{name: "meal", intent: testTavernMealIntent(t), text: "3 diners x 4 gold each"},
-		{name: "drink", intent: testTavernOrdinaryDrinkIntent(t), text: "3 drinks x 1 gold each"},
-		{name: "provisions", intent: testTavernProvisionIntent(t), text: "PACKS < 1 >"},
-		{name: "information", intent: testTavernInformationIntent(t), text: "Price: 50 gold"},
+		{name: "meal", intent: testTavernMealIntent(t), text: "Order Mutton 4 gold each for 3 diners " +
+			"Have Then Gold 1000 -12 988 [Enter] Order [Esc] Back"},
+		{name: "drink", intent: testTavernOrdinaryDrinkIntent(t), text: "Order Ale 1 gold each for 3 drinks " +
+			"Have Then Gold 1000 -3 997 [Enter] Order [Esc] Back"},
+		{name: "provisions", intent: testTavernProvisionIntent(t), text: "Packs < 1 > of "},
+		{name: "information", intent: testTavernInformationIntent(t), text: "Have Then Gold 1000 -50 950 " +
+			"[Enter] Pay [Esc] Back"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -30,12 +33,11 @@ func TestTavernActionDialogNormalActionsEmitExactRequestsUnchanged(t *testing.T)
 			dialog := NewTavernActionDialog(TavernActionDialogConfig{
 				Keyboard: keyboard, Intent: test.intent, IsKeyPressed: func(ebiten.Key) bool { return false },
 			})
-			require.Contains(t, compactTavernText(dialog.GetBodyText()), test.text)
-			wantFooter := tavernActionNormalFooter
+			require.Contains(t, dialog.window.flatText(), test.text)
+			requireAmountWindowHoldsItsText(t, dialog.window, test.name)
 			if test.intent.Action == TavernActionProvision {
-				wantFooter = tavernActionProvisionFooter
+				require.Contains(t, dialog.window.flatText(), "[Left/Right/0-9] Packs [M] Most [Enter] Buy 1 [Esc] Back")
 			}
-			require.Equal(t, wantFooter, dialog.GetFooterGuidance())
 			require.Equal(t, test.intent, dialog.GetIntent())
 			if test.intent.Action == TavernActionProvision {
 				detached := dialog.GetIntent()
@@ -66,12 +68,12 @@ func TestTavernActionDialogWarningUsesImmersiveEnterOrEscapeChoice(t *testing.T)
 		dialog := NewTavernActionDialog(TavernActionDialogConfig{
 			Keyboard: keyboard, Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
 		})
-		require.Equal(t, tavernActionWarningFooter, dialog.GetFooterGuidance())
-		body := compactTavernText(dialog.GetBodyText())
+		body := dialog.window.flatText()
+		require.Contains(t, body, "One More Drink? 1 gold each for 3 drinks")
 		require.Contains(t, body, "But haven't ye had enough to drink?")
-		require.Contains(t, body, "3 drinks x 1 gold each")
-		require.Contains(t, body, "Total: 3 gold")
-		require.Contains(t, body, "Gold after payment: 1000 -> 997")
+		require.Contains(t, body, "Have Then Gold 1000 -3 997")
+		require.Contains(t, body, "[Enter] Another Drink [Esc] I've Had Enough")
+		requireAmountWindowHoldsItsText(t, dialog.window, "warned drink")
 		require.NotContains(t, body, "smashed")
 		require.NotContains(t, body, "karma")
 		require.NotContains(t, body, "customer")
@@ -149,8 +151,8 @@ func TestTavernActionDialogInformationAppearsOnlyAfterAuthorityQuote(t *testing.
 	action := NewTavernActionDialog(TavernActionDialogConfig{
 		Keyboard: keyboard, Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
 	})
-	body := compactTavernText(action.GetBodyText())
-	require.Contains(t, body, "Price: 50 gold")
+	body := action.window.flatText()
+	require.Contains(t, body, "Buy Information I may know someone. Have Then Gold 1000 -50 950")
 	require.NotContains(t, body, "Recognized subject")
 	require.NotContains(t, body, "hone")
 	require.NotContains(t, body, "honesty", "approval exposes authority's recognized subject, not unmatched raw input")
@@ -184,8 +186,7 @@ func TestTavernActionDialogPreviewResponsiveSemanticFooterAndLifecycle(t *testin
 		Keyboard: newWidgetTestKeyboard(0), Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
 	})
 	require.True(t, dialog.IsPreview())
-	require.Contains(t, compactTavernText(dialog.GetTitleText()), "PREVIEW - Approve Meal")
-	require.Contains(t, compactTavernText(dialog.GetBodyText()), "PREVIEW: authority has not run")
+	require.Contains(t, compactTavernText(dialog.GetTitleText()), "PREVIEW - Order Mutton")
 	require.False(t, dialog.GetBounds().Empty())
 
 	requireKeyedGuidance(t, dialog.GetFooterGuidance())
@@ -211,10 +212,8 @@ func TestTavernActionDialogProvisionResizePreservesQuantityAndRequest(t *testing
 	lowBounds := dialog.GetBounds()
 	wantBody := dialog.GetBodyText()
 	require.Equal(t, 2, dialog.provisionPacks)
-	require.Equal(t, 2, dialog.frame.config.footerMinimumLines)
 
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	dialog.ensureLayout()
 	require.Greater(t, dialog.GetBounds().Dx(), lowBounds.Dx())
 	require.Equal(t, 2, dialog.provisionPacks)
 	require.Equal(t, wantBody, dialog.GetBodyText())
@@ -393,7 +392,8 @@ func TestTavernActionDialogNativeSubjectToOrderQuantityAndConfirmation(t *testin
 	require.Equal(t, state.Provision.MaximumUsefulPacks, action.GetProvisionPackCount())
 	require.Greater(t, action.GetProvisionPackCount(), int(state.Gold)/state.Provision.PricePerPack,
 		"maximum is useful packs, not affordable packs")
-	require.Contains(t, compactTavernText(action.GetBodyText()), "can currently be paid for")
+	require.Contains(t, action.window.flatText(), "The gold pays for only")
+	require.Contains(t, action.window.flatText(), "[Left/Right/0-9] Packs [M] Most [Enter] Buy ")
 	f.press(ebiten.KeyEnter)
 	request, ok := action.ConsumePendingRequest()
 	require.True(t, ok)
@@ -409,4 +409,73 @@ func TestTavernActionDialogNativeSubjectToOrderQuantityAndConfirmation(t *testin
 	require.Equal(t, state, f.dialog.GetState(), "widgets only emit the reviewed request")
 	require.Equal(t, pumps, f.field.pumps, "Order and quantity never revive the native Subject session")
 	require.True(t, f.rawStranded, "this path must not depend on restoring raw character delivery")
+}
+
+// An order the party cannot pay for is still a real request, which the keeper
+// answers by ending service: the window says so and Enter stays.
+func TestTavernActionDialogSaysWhatAnUnpaidOrderDoesAndStillSendsIt(t *testing.T) {
+	setMerchantShellTestResolution(t, 1280, 720)
+	poor := testTavernState(references.TavernMenuMuttonAleRations)
+	setTestTavernGold(&poor, 5)
+	tests := map[string]struct {
+		key  ebiten.Key
+		want string
+	}{
+		"meal": {key: ebiten.KeyM, want: "Order Mutton 4 gold each for 3 diners Not enough gold. It costs 12 and " +
+			"the party has 5. Ordering anyway ends service. [Enter] Order anyway [Esc] Back"},
+		"rations": {key: ebiten.KeyR, want: "Buy Rations 15 gold for a pack of 25 food Not enough gold. A pack " +
+			"costs 15 and the party has 5. Asking anyway ends service. [Enter] Ask anyway [Esc] Back"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			intent := testTavernIntentForOrderKey(t, poor, test.key)
+			if intent.Action == TavernActionProvision {
+				intent.ProvisionPitch = `"Fresh rations for the road."`
+			}
+			keyboard := newWidgetTestKeyboard(0)
+			dialog := NewTavernActionDialog(TavernActionDialogConfig{
+				Keyboard: keyboard, Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
+			})
+			require.Equal(t, test.want, dialog.window.flatText())
+			requireAmountWindowHoldsItsText(t, dialog.window, name)
+			pressTavernActionKey(dialog, keyboard, ebiten.KeyRight)
+			pressTavernActionKey(dialog, keyboard, ebiten.KeyEnter)
+			request, ok := dialog.ConsumePendingRequest()
+			require.True(t, ok, "the request still reaches the keeper")
+			require.Equal(t, intent.Request, request)
+		})
+	}
+
+	starving := testTavernState(references.TavernMenuMuttonAleRations)
+	starving.Food, starving.Provision.FoodBefore, starving.Meal.FoodBefore = 2, 2, 2
+	setTestTavernGold(&starving, 5)
+	intent := testTavernIntentForOrderKey(t, starving, ebiten.KeyR)
+	intent.ProvisionPitch = `"Fresh rations for the road."`
+	dialog := NewTavernActionDialog(TavernActionDialogConfig{
+		Keyboard: newWidgetTestKeyboard(0), Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
+	})
+	require.Contains(t, dialog.window.flatText(), "Asking anyway ends service. The keeper may spare 1 or 2 food.")
+	requireAmountWindowHoldsItsText(t, dialog.window, "charity")
+}
+
+// Packs past what the gold covers are left out by the keeper; the grid shows what
+// will be bought and one line says so, in a window that keeps its size.
+func TestTavernActionDialogProvisionSaysWhenTheGoldCoversFewerPacks(t *testing.T) {
+	setMerchantShellTestResolution(t, 1280, 720)
+	some := testTavernState(references.TavernMenuStoutFruitProvisions)
+	setTestTavernGold(&some, 70)
+	intent := testTavernIntentForOrderKey(t, some, ebiten.KeyP)
+	intent.ProvisionPitch = `"Fresh provisions for the road."`
+	keyboard := newWidgetTestKeyboard(0)
+	dialog := NewTavernActionDialog(TavernActionDialogConfig{
+		Keyboard: keyboard, Intent: intent, IsKeyPressed: func(ebiten.Key) bool { return false },
+	})
+	before := dialog.GetBounds()
+	require.NotContains(t, dialog.window.flatText(), "pays for only")
+	pressTavernActionKey(dialog, keyboard, ebiten.Key3)
+	flat := dialog.window.flatText()
+	require.Contains(t, flat, "Packs < 3 > of ")
+	require.Contains(t, flat, "Food 50 +50 100 Gold 70 -60 10 The gold pays for only 2 packs.")
+	require.Equal(t, before, dialog.GetBounds())
+	requireAmountWindowHoldsItsText(t, dialog.window, "partly paid")
 }

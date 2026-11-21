@@ -13,6 +13,7 @@ type quantityInput struct {
 	navigation
 	keyboard *input.Keyboard
 	tapKeys  []ebiten.Key
+	typed    int // Digits typed in a row, so that a second digit can join the first.
 }
 
 func newQuantityInput(keyboard *input.Keyboard, held func(ebiten.Key) bool, tapKeys ...ebiten.Key) quantityInput {
@@ -20,6 +21,7 @@ func newQuantityInput(keyboard *input.Keyboard, held func(ebiten.Key) bool, tapK
 		navigation: newNavigation(held),
 		keyboard:   keyboard,
 		tapKeys:    tapKeys,
+		typed:      0,
 	}
 	state.onDialogFocusChanged(true)
 
@@ -106,4 +108,46 @@ func (q *quantityInput) quantityModifierHeld() bool {
 	}
 
 	return false
+}
+
+// pollAmount turns this frame's amount keys into the amount they ask for, from one
+// to most. Left and Up take one off, Right and Down add one, any other tap key asks
+// for the most, and a digit types the amount: a second digit joins the first while
+// the number stays within the most, and otherwise starts the number again. A digit
+// that asks for none, or for more than the most, changes nothing. It reports whether
+// a key was owned, so that the caller does not also read Enter this frame.
+func (q *quantityInput) pollAmount(current, most int) (int, bool) {
+	key, owned := q.pollQuantityInput()
+	if key != nil {
+		q.typed = 0
+		if *key == ebiten.KeyLeft || *key == ebiten.KeyUp {
+			return max(1, current-1), true
+		}
+		if *key == ebiten.KeyRight || *key == ebiten.KeyDown {
+			return min(most, current+1), true
+		}
+
+		return most, true
+	}
+	if owned {
+		return current, true
+	}
+	digit := q.keyboard.IsNumberKeyPressedAndRegister()
+	if digit < 0 {
+		return current, false
+	}
+	const decimal = 10
+	joined := current*decimal + digit
+	switch {
+	case q.typed > 0 && joined <= most:
+		q.typed++
+
+		return joined, true
+	case digit > 0 && digit <= most:
+		q.typed = 1
+
+		return digit, true
+	default:
+		return current, true
+	}
 }
