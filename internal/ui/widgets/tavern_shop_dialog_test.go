@@ -298,11 +298,9 @@ func TestTavernShopDialogMealDrinkWineProvisionAndEscapePaths(t *testing.T) {
 		refreshed.CustomerEligible = true
 		dialog.ApplyResult(intent.Request, refreshed, TavernActionResultDisplay{
 			Action: TavernActionDrink, MerchantExchange: `"Ah, a fine choice, sir. Enjoy!"`,
-			Receipt: "The wine is served.", SuppressInlineReceipt: true,
 		})
 		require.Equal(t, TavernOrderMenu, dialog.GetOrderSubflow())
 		require.Contains(t, dialog.GetWorkspaceText(), "ORDER")
-		require.Empty(t, dialog.GetReceiptText())
 	})
 
 	t.Run("provision quantity modal", func(t *testing.T) {
@@ -332,7 +330,7 @@ func TestTavernShopDialogMealDrinkWineProvisionAndEscapePaths(t *testing.T) {
 		require.NotPanics(t, func() {
 			dialog.AcceptActionApproval(request)
 			dialog.ApplyResult(request, dialog.GetState(), TavernActionResultDisplay{
-				Action: TavernActionProvision, MerchantExchange: "Very well.", Receipt: "Provision test result.",
+				Action: TavernActionProvision, MerchantExchange: "Very well.",
 			})
 		})
 		require.Equal(t, TavernOrderMenu, dialog.GetOrderSubflow())
@@ -363,7 +361,6 @@ func TestTavernShopDialogWarnedStopReturnsToOrderAfterRefresh(t *testing.T) {
 	refreshed.CustomerEligible = true
 	dialog.ApplyResult(intent.StopRequest, refreshed, TavernActionResultDisplay{
 		Action: TavernActionStop, MerchantExchange: "A prudent choice.",
-		Receipt: "No payment was made.", SuppressInlineReceipt: true,
 	})
 	require.Equal(t, TavernShopOrder, dialog.GetMode())
 	require.Equal(t, TavernShopBrowse, dialog.GetPhase())
@@ -404,9 +401,7 @@ func TestTavernShopDialogInformationWorkflowFullRefreshTranscriptAndScroll(t *te
 			answer = longAnswer
 		}
 		dialog.ApplyResult(intent.Request, refreshed, TavernActionResultDisplay{
-			Action: TavernActionInformation, MerchantExchange: "I know someone.", Receipt: fmt.Sprintf(
-				"Information: payment 50; final gold %d; subject hone.", refreshed.Gold,
-			),
+			Action: TavernActionInformation, MerchantExchange: "I know someone.",
 			PaidInformation: &TavernTranscriptEntry{Question: question, Answer: answer},
 		})
 		require.Equal(t, TavernShopConversation, dialog.GetMode())
@@ -450,7 +445,7 @@ func TestTavernShopDialogInformationWorkflowFullRefreshTranscriptAndScroll(t *te
 	require.True(t, ok)
 	dialog.AcceptActionApproval(intent.Request)
 	dialog.ApplyResult(intent.Request, dialog.GetState(), TavernActionResultDisplay{
-		Action: TavernActionInformation, MerchantExchange: "No payment.", Receipt: "Insufficient gold result.",
+		Action: TavernActionInformation, MerchantExchange: "No payment.",
 	})
 	require.Len(t, dialog.GetTranscript(), 8)
 }

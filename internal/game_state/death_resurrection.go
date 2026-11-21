@@ -79,7 +79,7 @@ func (gs *GameState) ResurrectCharacterWithFullRecovery(index int) {
 // recalculateLevelFromExperience applies individual revival's repeated-halving formula.
 // See ref:RECOVERY-0002.
 func (gs *GameState) recalculateLevelFromExperience(char *party_state.PlayerCharacter) {
-	newLevel := resurrectionLevel(char.Exp)
+	newLevel := CalculateLevelFromExperience(char.Exp)
 	char.Level = newLevel
 
 	newMaxHP := uint16(newLevel) * 30

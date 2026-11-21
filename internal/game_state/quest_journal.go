@@ -42,8 +42,6 @@ type QuestJournalEventSource string
 const (
 	// QuestJournalSourceGameplay identifies an event committed by live gameplay.
 	QuestJournalSourceGameplay QuestJournalEventSource = "gameplay"
-	// QuestJournalSourceMigration identifies an event inferred from older authority.
-	QuestJournalSourceMigration QuestJournalEventSource = "migration"
 )
 
 // QuestJournalEvent is one detached semantic Chronicle event.

@@ -373,3 +373,42 @@ func lastCombatConditionEvent(t *testing.T, events []CombatEvent) CombatEvent {
 	t.Fatal("no combat condition event published")
 	return CombatEvent{}
 }
+
+func TestRegurgitatedPCLandsOnNearestFreeSquareWhenItsSquareWasTaken(t *testing.T) {
+	gs, _ := newBritainCombatTestState(t, 7)
+	clearCombatMonstersForTest(gs.CombatScene)
+	swallowed := CombatTurnIdentity{IsPartyMember: true, EntityIndex: 0}
+	stepper := CombatTurnIdentity{IsPartyMember: true, EntityIndex: 1}
+	for i := 2; i < len(gs.CombatScene.PartyActive); i++ {
+		gs.CombatScene.PartyActive[i] = false
+	}
+	// Find two horizontally adjacent squares the party can stand on.
+	var home, beside references.Position
+	for y := range references.Coordinate(references.YCombatMapTiles) {
+		for x := range references.Coordinate(references.XCombatMapTiles - 1) {
+			home, beside = references.Position{X: x, Y: y}, references.Position{X: x + 1, Y: y}
+			if gs.isCombatPositionValidForPC(&home, stepper) && gs.isCombatPositionValidForPC(&beside, stepper) {
+				break
+			}
+		}
+		if gs.isCombatPositionValidForPC(&home, stepper) && gs.isCombatPositionValidForPC(&beside, stepper) {
+			break
+		}
+	}
+	gs.CombatScene.SetPartyMemberPosition(0, home)
+	gs.CombatScene.SetPartyMemberPosition(1, beside)
+	gs.CombatScene.setCombatPCUnderground(swallowed, true)
+	// The original ignores swallowed members, so the other member may step onto the square.
+	gs.CombatScene.setCombatantPosition(stepper, home)
+
+	for seed := uint64(1); seed < 200 && gs.CombatScene.isCombatPCUnderground(swallowed); seed++ {
+		gs.SetRandomSeed(seed)
+		gs.processUndergroundPCTurnStart(swallowed)
+	}
+
+	require.False(t, gs.CombatScene.isCombatPCUnderground(swallowed))
+	landed := gs.CombatScene.GetCombatantPosition(swallowed)
+	assert.NotEqual(t, home, landed)
+	assert.Equal(t, home, gs.CombatScene.GetCombatantPosition(stepper))
+	assert.LessOrEqual(t, absoluteInt(int(landed.X-home.X))+absoluteInt(int(landed.Y-home.Y)), 2)
+}

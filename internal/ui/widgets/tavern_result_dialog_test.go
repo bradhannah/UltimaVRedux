@@ -28,7 +28,7 @@ func TestTavernResultDialogRendersSemanticPurchaseSummary(t *testing.T) {
 	lowBounds := dialog.GetBounds()
 	words := dialog.window.flatText()
 	require.Equal(t, "Meal Served Mutton Have Then Food 40 +3 43 Gold 100 -17 83 3 diners at 4 gold each "+
-		"Total: 12 gold. Faulinei took 5 more gold. The table is cleared. [Enter/Esc] Continue", words)
+		"Total: 12 gold. 5 more gold was stolen! The table is cleared. [Enter/Esc] Continue", words)
 
 	setResponsiveDialogTestResolution(t, 1280, 720)
 	screen := ebiten.NewImage(1280, 720)

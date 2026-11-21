@@ -434,12 +434,15 @@ deterministic; the position conveniences retain presentation-only wall time.
 `GameScene` owns multiple simultaneous tile dissolves:
 
 ```go
-id := g.StartTileDissolve(pos, spriteIndex, visual.DissolveModeReveal, true)
+id := g.StartTileDissolveWithOptions(TileDissolveOptions{
+    Position: pos, SpriteIndex: spriteIndex, Mode: visual.DissolveModeReveal,
+    OutlineColor: sprites.WhiteOutline, PositionMode: PositionModeWorld, RenderLayer: RenderLayerDefault,
+})
 g.UpdateTileDissolveProgress(id, progress)
 g.StopTileDissolve(id)
 ```
 
-Use `StartTileDissolveWithOptions` when the effect needs a fixed-grid position, a non-default outline, or `RenderLayerOverFade`. Store the returned ID and remove that exact instance. `StopAllTileDissolves` is reserved for scene-wide cleanup.
+`StartTileDissolveWithOptions` takes the fixed-grid or world position, the outline and `RenderLayerOverFade`. Store the returned ID and remove that exact instance. `StopAllTileDissolves` is reserved for scene-wide cleanup.
 
 ```go
 var dissolveID int
@@ -447,7 +450,10 @@ manager.Workflow("materialize_item").
     Priority(event_queue.PriorityNormal).
     Sequential().
     First(func() {
-        dissolveID = g.StartTileDissolve(pos, spriteIndex, visual.DissolveModeReveal, true)
+        dissolveID = g.StartTileDissolveWithOptions(TileDissolveOptions{
+            Position: pos, SpriteIndex: spriteIndex, Mode: visual.DissolveModeReveal,
+            OutlineColor: sprites.WhiteOutline, PositionMode: PositionModeWorld, RenderLayer: RenderLayerDefault,
+        })
     }).
     Animate(500, func(progress float32) {
         g.UpdateTileDissolveProgress(dissolveID, float64(progress))

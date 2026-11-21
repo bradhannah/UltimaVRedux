@@ -21,6 +21,7 @@ import (
 type ProvisionSummary struct {
 	ultimaFont          *text.UltimaFont
 	output              *text.Output
+	fields              [provisionFieldCount]provisionField
 	bounds              image.Rectangle
 	rowHeight           int
 	ammoLabelWidth      int
@@ -45,6 +46,11 @@ const (
 	provisionLabelGapAtReference    = 2
 	provisionFrameGutterAtReference = 2
 	provisionFrameGutterCount       = 2
+	provisionAmmoCellBase           = provisionResourceRows * provisionColumnCount
+	provisionCalendarCellBase       = provisionAmmoCellBase + provisionAmmoColumns
+	provisionCalendarCells          = 2
+	provisionCellFields             = 3
+	provisionFieldCount             = (provisionCalendarCellBase + provisionCalendarCells) * provisionCellFields
 )
 
 type provisionResource struct {
@@ -71,6 +77,11 @@ func NewProvisionSummaryForWidth(screenWidth int) *ProvisionSummary {
 	var summary ProvisionSummary
 	summary.rowHeight = ProvisionAmmoRowHeight(screenWidth)
 	summary.ultimaFont, summary.output = newMainScreenOutput(screenWidth, widgets.FontSizeHUD, provisionOutputMaxLines)
+	// Each fixed field keeps its own output and refills it only when its content
+	// changes, so an unchanged field reuses its cached layout every frame.
+	for slot := range summary.fields {
+		_, summary.fields[slot].output = newMainScreenOutput(screenWidth, widgets.FontSizeHUD, provisionOutputMaxLines)
+	}
 	summary.ammoLabelWidth = max(measuredProvisionWidth(summary.ultimaFont, "Ar"),
 		measuredProvisionWidth(summary.ultimaFont, "Qr"))
 	summary.ammoValueWidth = measuredProvisionWidth(summary.ultimaFont, "99")
@@ -131,17 +142,17 @@ func (p *ProvisionSummary) Draw(gameState *game_state.GameState, screen *ebiten.
 	for rowIndex, row := range resources {
 		cells := p.resourceCells(rows[rowIndex])
 		for column, resource := range row {
-			p.drawResource(screen, cells[column], resource)
+			p.drawResource(screen, rowIndex*provisionColumnCount+column, cells[column], resource)
 		}
 	}
 	ammunition := p.ammunitionCells(rows[provisionAmmoRow])
 	for column, resource := range provisionAmmunitionResources(gameState) {
-		p.drawResource(screen, ammunition[column], resource)
+		p.drawResource(screen, provisionAmmoCellBase+column, ammunition[column], resource)
 	}
 	date, clock := p.calendarCells(rows[provisionCalendarRow])
-	drawProvisionText(screen, p.output, date,
+	p.fields[provisionCalendarCellBase*provisionCellFields].draw(screen, date,
 		gameState.DateTime.GetDateAsString(), ucolor.UITextPrimary.RGBA(), etext.AlignCenter)
-	drawProvisionText(screen, p.output, clock,
+	p.fields[(provisionCalendarCellBase+1)*provisionCellFields].draw(screen, clock,
 		gameState.DateTime.GetTimeAsString(), ucolor.UITextPrimary.RGBA(), etext.AlignCenter)
 }
 
@@ -260,12 +271,43 @@ func (p *ProvisionSummary) calendarCells(bounds image.Rectangle) (image.Rectangl
 	return date, clock
 }
 
-func (p *ProvisionSummary) drawResource(screen *ebiten.Image, cell provisionCell, resource provisionResource) {
-	drawProvisionText(screen, p.output, cell.label, resource.label, resource.labelColor, etext.AlignEnd)
-	drawProvisionText(screen, p.output, cell.value, resource.value, resource.valueColor, etext.AlignStart)
+func (p *ProvisionSummary) drawResource(
+	screen *ebiten.Image, cellIndex int, cell provisionCell, resource provisionResource,
+) {
+	fields := p.fields[cellIndex*provisionCellFields : (cellIndex+1)*provisionCellFields]
+	fields[0].draw(screen, cell.label, resource.label, resource.labelColor, etext.AlignEnd)
+	fields[1].draw(screen, cell.value, resource.value, resource.valueColor, etext.AlignStart)
 	if resource.status != "" {
-		drawProvisionText(screen, p.output, cell.status, resource.status, resource.statusColor, etext.AlignStart)
+		fields[2].draw(screen, cell.status, resource.status, resource.statusColor, etext.AlignStart)
 	}
+}
+
+// provisionField is one fixed text field with its own output. It refills the output
+// only when the value, colour or alignment changes: Reset discards the layout cache.
+type provisionField struct {
+	output    *text.Output
+	value     string
+	rgba      [4]uint32
+	alignment etext.Align
+	filled    bool
+}
+
+func (f *provisionField) draw(
+	screen *ebiten.Image,
+	bounds image.Rectangle,
+	value string,
+	valueColor color.Color,
+	alignment etext.Align,
+) {
+	var rgba [4]uint32
+	rgba[0], rgba[1], rgba[2], rgba[3] = valueColor.RGBA()
+	if f.filled && f.value == value && f.rgba == rgba && f.alignment == alignment {
+		drawFilledProvisionText(screen, f.output, bounds, alignment)
+
+		return
+	}
+	drawProvisionText(screen, f.output, bounds, value, valueColor, alignment)
+	f.value, f.rgba, f.alignment, f.filled = value, rgba, alignment, true
 }
 
 func drawProvisionText(
@@ -276,11 +318,21 @@ func drawProvisionText(
 	valueColor color.Color,
 	alignment etext.Align,
 ) {
+	fillProvisionText(output, value, valueColor, alignment)
+	drawFilledProvisionText(screen, output, bounds, alignment)
+}
+
+func fillProvisionText(output *text.Output, value string, valueColor color.Color, alignment etext.Align) {
 	output.Reset()
 	// Layout measures the complete field. An M-based character estimate can
 	// otherwise wrap a numeric date that fits at a fractional display scale.
 	output.SetMaxCharsPerLine(max(1, len(value)))
 	output.AppendLine().Text(value, valueColor).WithAlignment(alignment).Done()
+}
+
+func drawFilledProvisionText(
+	screen *ebiten.Image, output *text.Output, bounds image.Rectangle, alignment etext.Align,
+) {
 	y := bounds.Min.Y + (bounds.Dy()-int(math.Ceil(output.GetFontHeight())))/provisionCenterDivisor
 	output.DrawPanelContent(screen, image.Pt(bounds.Min.X, y), bounds.Dx(), alignment)
 }

@@ -43,12 +43,12 @@ func TestMusicToggleDuringQuietIntervalStaysOffAcrossLocationChanges(t *testing.
 	require.Empty(t, manager.GetMusicManager().GetCurrentTrack())
 	scene.toggleMusic()
 	require.False(t, manager.GetMusicManager().IsEnabled())
-	require.Contains(t, scene.output.GetOutputStr(false), "Music OFF")
+	require.Contains(t, scene.output.GetOutputStr(false), "Music Off")
 	require.NoError(t, manager.PlayMusicForLocation(references.Deceit))
 	require.Empty(t, manager.GetMusicManager().GetCurrentTrack())
 	scene.toggleMusic()
 	require.True(t, manager.GetMusicManager().IsEnabled())
-	require.Contains(t, scene.output.GetOutputStr(false), "Music ON")
+	require.Contains(t, scene.output.GetOutputStr(false), "Music On")
 }
 
 func TestSceneCombatSelectsEngagementAndMaleeDuringExplorationQuiet(t *testing.T) {

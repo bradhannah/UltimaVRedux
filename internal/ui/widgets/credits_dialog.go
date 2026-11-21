@@ -86,7 +86,7 @@ func (d *CreditsDialog) ensureLayout() {
 		StartPercentY: creditsMargin, EndPercentY: 1 - creditsMargin,
 	})
 	font, metrics := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, MaxLines: 1, MaxChars: 1, LineSpacing: 0, LineSpacingMultiplier: creditsLineSpacing,
+		Size: FontSizeBody, MaxLines: 1, MaxChars: 1, LineSpacingMultiplier: creditsLineSpacing,
 	})
 	d.metrics = metrics
 	spacing := metrics.GetLineSpacing()

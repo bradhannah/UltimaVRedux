@@ -268,52 +268,6 @@ func (g *GameScene) startTileDissolveWithOptions(
 	return id
 }
 
-// StartTileDissolve creates and starts a new tile dissolve animation.
-// Returns the dissolve ID for later reference (progress updates, cleanup).
-//
-// This is a simplified API for basic world-coordinate dissolves.
-// For death scene or camping apparitions, use StartTileDissolveWithOptions().
-//
-// Parameters:
-//   - pos: World position to render the dissolving tile at
-//   - spriteIndex: The sprite to render during the dissolve
-//   - mode: DissolveModeReveal (transparent→opaque) or DissolveModeHide (opaque→transparent)
-//   - withOutline: Apply white outline for magical appearance
-//
-// Usage in event queue:
-//
-//	var dissolveID int
-//	q.Then(func() {
-//	    dissolveID = g.StartTileDissolve(pos, indexes.HorseRight, visual.DissolveModeReveal, true)
-//	}).
-//	Animate(500, func(progress float32) {
-//	    g.UpdateTileDissolveProgress(dissolveID, float64(progress))
-//	}).
-//	Then(func() {
-//	    g.StopTileDissolve(dissolveID)
-//	})
-func (g *GameScene) StartTileDissolve(
-	pos references.Position,
-	spriteIndex indexes.SpriteIndex,
-	mode visual.DissolveMode,
-	withOutline bool,
-) int {
-	// Convert to full options with defaults for backwards compatibility
-	outlineColor := sprites.NoOutline
-	if withOutline {
-		outlineColor = sprites.WhiteOutline
-	}
-
-	return g.StartTileDissolveWithOptions(TileDissolveOptions{
-		Position:     pos,
-		SpriteIndex:  spriteIndex,
-		Mode:         mode,
-		OutlineColor: outlineColor,
-		PositionMode: PositionModeWorld,  // Default: world coordinates
-		RenderLayer:  RenderLayerDefault, // Default: before fade
-	})
-}
-
 // UpdateTileDissolveProgress updates the progress of a dissolve animation by ID.
 // Progress should be 0.0 to 1.0:
 //   - For Reveal mode: 0.0 = fully transparent, 1.0 = fully opaque

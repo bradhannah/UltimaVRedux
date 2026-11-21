@@ -72,7 +72,7 @@ func TestAtlasReaderFocusFiltersAndNoStaleFix(t *testing.T) {
 	before = view
 	dialog.handleKey(ebiten.KeyEnter)
 	require.Equal(t, before, view, "unmeasured focus cannot consult private coordinates")
-	require.Contains(t, dialog.status, "Measure this place")
+	require.Contains(t, dialog.status, "Take a sextant reading there")
 	dossier.CurrentFix = journal.SurveyedLocation{Measured: true, Location: journal.SiteLocation{X: 7, Y: 9}}
 	dialog.Refresh(dossier)
 	dialog.handleKey(ebiten.KeyA)
@@ -189,7 +189,7 @@ func TestAtlasFocusSelectsAnEntryFromOutsideTheMap(t *testing.T) {
 	require.Equal(t, [2]string{"Journal note", "Hermit hut"}, dialog.detailFields()[0])
 
 	require.True(t, dialog.Focus("known", journal.AtlasPlaceFilter(journal.AtlasSettlements)+1))
-	require.Equal(t, "Measure this place to locate it from the list.", dialog.status,
+	require.Equal(t, "Take a sextant reading there to place it on the Map.", dialog.status,
 		"an unmeasured place is selected but never located")
 	require.False(t, dialog.Focus("missing", journal.AtlasAllPlaces))
 }

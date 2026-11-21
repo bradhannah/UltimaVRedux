@@ -226,10 +226,10 @@ func (d *QuestJournalDialog) drawShadowlordSprite(screen *ebiten.Image) {
 
 func (d *QuestJournalDialog) footerGuidance() string {
 	if d.runicReferenceOpen {
-		return "[Ctrl+R/Esc] Close rune reference  [Space/Shift+Space] Detail page  [Shift+J] Close Journal"
+		return "[Ctrl+R/Esc] Close rune reference  [Space/Shift+Space] Details  [Shift+J] Close Journal"
 	}
 	if d.activeTab == QuestJournalNotesTab && !d.searching {
-		tabs := "[Tab/Shift+Tab] Tab  "
+		tabs := "[Tab/Shift+Tab] Section  "
 		if d.notesOnly() {
 			tabs = ""
 		}
@@ -248,11 +248,11 @@ func (d *QuestJournalDialog) footerGuidance() string {
 
 	paging := ""
 	if pages := d.GetDetailPageCount(); pages > 1 {
-		paging = fmt.Sprintf("[Space] Detail %d/%d  ", d.detailPage+1, pages)
+		paging = fmt.Sprintf("[Space] Details %d/%d  ", d.detailPage+1, pages)
 	}
 
 	return "[Up/Down] Select  [Shift+Up/Down] List page  [/] Search  " +
-		"[Tab/Shift+Tab] Tab  " + paging + "[Esc/Shift+J] Close"
+		"[Tab/Shift+Tab] Section  " + paging + "[Esc/Shift+J] Close"
 }
 
 func drawModifierFooter(screen *ebiten.Image, content image.Rectangle, guidance string, output *text.Output) {

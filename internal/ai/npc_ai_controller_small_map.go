@@ -88,8 +88,6 @@ type NPCAIControllerSmallMap struct {
 	mapState *map_state.MapState
 	mapUnits map_units.MapUnits
 
-	positionOccupiedChance *map_units.XyOccupiedMap
-
 	// Dependency injection for deterministic RNG
 	rngProvider RNGProvider
 
@@ -126,9 +124,6 @@ func NewNPCAIControllerSmallMap(
 	npcsAiCont.mapState = mapState
 	npcsAiCont.rngProvider = rngProvider
 	npcsAiCont.deadChecker = deadChecker
-
-	xy := make(map_units.XyOccupiedMap)
-	npcsAiCont.positionOccupiedChance = &xy
 
 	npcsAiCont.mapUnits = make(map_units.MapUnits, 0, map_units.MaximumNpcsPerMap)
 
@@ -415,8 +410,6 @@ func (n *NPCAIControllerSmallMap) AdvanceNextTurnCalcAndMoveNPCsExcluding(exclud
 func (n *NPCAIControllerSmallMap) advanceNextTurnCalcAndMoveNPCs(excluded map_units.MapUnit) {
 	n.mapState.GetLayeredMapByCurrentLocation().ClearMapUnitTiles()
 	n.clearPendingNPCInteractions()
-	// n.updateAllNPCAiTypes()
-	n.positionOccupiedChance = n.mapUnits.CreateFreshXyOccupiedMap()
 
 	for _, mapUnit := range n.mapUnits {
 		if mapUnit == excluded {

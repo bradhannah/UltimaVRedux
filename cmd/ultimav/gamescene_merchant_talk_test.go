@@ -72,9 +72,8 @@ func TestManualGuildTalkPurchaseRepeatCloseOwnsOneMinute(t *testing.T) {
 	completeGuildPurchase(t, fixture, dialog, 1)
 	require.Same(t, dialog, fixture.scene.dialogStack.PeekTopModalDialog())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 1 bundle for %d gold. Keys: %d -> %d.",
+		"Bought: 1 bundle of keys for %d gold. Thou hast now %d.",
 		pricePerBundle,
-		keysBefore,
 		keysBefore+3,
 	), dialog.GetReceiptText())
 	require.Equal(t, strconv.Itoa(int(goldBefore)-pricePerBundle), dialog.GetShell().GetHeaderView().PartyGold)
@@ -87,9 +86,8 @@ func TestManualGuildTalkPurchaseRepeatCloseOwnsOneMinute(t *testing.T) {
 	require.Equal(t, goldBefore-uint16(pricePerBundle*2), fixture.state.PartyState.Inventory.Gold.Get())
 	require.Same(t, dialog, fixture.scene.dialogStack.PeekTopModalDialog())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 1 bundle for %d gold. Keys: %d -> %d.",
+		"Bought: 1 bundle of keys for %d gold. Thou hast now %d.",
 		pricePerBundle,
-		keysBefore+3,
 		keysBefore+6,
 	), dialog.GetReceiptText(), "the latest receipt replaces the prior exchange detail")
 	require.Equal(t, "\"Sold!\" says Braunam. \"What else, m'lord?\"", dialog.GetLatestExchange())
@@ -176,9 +174,8 @@ func TestGuildQuantityModalCommitsExactBatchRequestAndResult(t *testing.T) {
 	require.Equal(t, goldBefore-uint16(quote.PricePerBundle*3), fixture.state.PartyState.Inventory.Gold.Get())
 	require.Equal(t, "\"Sold!\" says Braunam. \"What else, m'lord?\"", dialog.GetLatestExchange())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 3 bundles for %d gold. Keys: %d -> %d.",
+		"Bought: 3 bundles of keys for %d gold. Thou hast now %d.",
 		quote.PricePerBundle*3,
-		keysBefore,
 		keysBefore+quote.BundleQuantity*3,
 	), dialog.GetReceiptText())
 	require.Equal(t, 1, fixture.scene.dialogStack.Count())
@@ -752,7 +749,7 @@ func TestHorseMerchantRoutePurchasesOneHorseAndOwnsOneManualMinute(t *testing.T)
 	completeHorsePurchase(t, fixture, dialog)
 
 	require.Equal(t, widgets.HorseShopSuccess, dialog.GetPhase())
-	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Purchased one horse for %d gold.", price))
+	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Bought: one horse for %d gold.", price))
 	require.Equal(t, uint16(500-price), fixture.state.PartyState.Inventory.Gold.Get())
 	require.Equal(t, horsesBefore+1, countHorseTalkVehicles(fixture.state.CurrentNPCAIController.GetNpcs()))
 	require.Empty(t, fixture.callbacks.TimeAdvanced())
@@ -1125,7 +1122,7 @@ func TestGuildResultProseUsesCapturedBuyer(t *testing.T) {
 	completeGuildPurchase(t, fixture, dialog, 1)
 	require.Equal(t, "\"Sold!\" says Braunam. \"What else, m'lady?\"", dialog.GetLatestExchange())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 1 bundle for %d gold. Keys: 10 -> 13.",
+		"Bought: 1 bundle of keys for %d gold. Thou hast now 13.",
 		pricePerBundle,
 	), dialog.GetReceiptText())
 
@@ -1147,7 +1144,7 @@ func TestGuildBatchReceiptSaturatesWithoutOverflowWarning(t *testing.T) {
 
 	require.Equal(t, uint16(99), fixture.state.PartyState.Inventory.Provisions.Keys.Get())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 2 bundles for %d gold. Keys: 94 -> 99.",
+		"Bought: 2 bundles of keys for %d gold. Thou hast now 99.",
 		pricePerBundle*2,
 	), dialog.GetReceiptText())
 	lowerReceipt := strings.ToLower(dialog.GetReceiptText())
@@ -1183,7 +1180,7 @@ func TestGuildBatchReceiptAppendsFaulineiTheft(t *testing.T) {
 	require.Equal(t, uint16(1000-quote.PricePerBundle*4)-expectedTheft,
 		fixture.state.PartyState.Inventory.Gold.Get())
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 4 bundles for %d gold. Torches: 5 -> 25. Faulinei took %d additional gold.",
+		"Bought: 4 bundles of torches for %d gold. Thou hast now 25. %d more gold was stolen!",
 		quote.PricePerBundle*4,
 		expectedTheft,
 	), dialog.GetReceiptText())
@@ -1369,7 +1366,7 @@ func TestManualArmsTalkRepeatedBatchBuySellModeSwitchesOwnOneMinute(t *testing.T
 	require.Equal(t, uint16(5), fixture.state.PartyState.Inventory.Equipment.Get(references.Bow))
 	require.Equal(t, uint16(1000-buyQuote.Value*3), fixture.state.PartyState.Inventory.Gold.Get())
 	require.Equal(t, fmt.Sprintf(
-		"Bought Bow x3 for %d gold. Carried: 2 -> 5.",
+		"Bought: Bow x3 for %d gold. Thou hast now 5.",
 		buyQuote.Value*3,
 	), shop.GetReceiptText())
 	require.Equal(t, uint16(5), armsBuyRow(t, shop, references.Bow).Quantity)
@@ -1393,7 +1390,7 @@ func TestManualArmsTalkRepeatedBatchBuySellModeSwitchesOwnOneMinute(t *testing.T
 	require.Equal(t, goldAfterSale, fixture.state.PartyState.Inventory.Gold.Get())
 	require.Equal(t, strconv.Itoa(int(goldAfterSale)), shop.GetShell().GetHeaderView().PartyGold)
 	require.Equal(t, fmt.Sprintf(
-		"Sold Bow x2 for %d gold. Carried: 6 -> 4.",
+		"Sold: Bow x2 for %d gold. Thou hast now 4.",
 		sellQuote.Value*2,
 	), shop.GetReceiptText())
 	require.Equal(t, uint16(4), armsSellRow(t, shop, references.Bow).Quantity)
@@ -1424,7 +1421,7 @@ func TestArmsAmmunitionPurchaseRefillsAndReportsAggregateResult(t *testing.T) {
 	require.True(t, trade.GetIntent().BuyQuote.AmmoRefill)
 	require.Equal(t, uint16(99), fixture.state.PartyState.Inventory.Equipment.Get(references.Arrows))
 	require.Equal(t, fmt.Sprintf(
-		"Bought Arrows x1 ammunition refill for %d gold. Carried: 5 -> 99; 94 ammunition added.",
+		"Bought: Arrows x1 ammunition refill for %d gold. Thou hast now 99.",
 		quote.Value,
 	), shop.GetReceiptText())
 	require.Equal(t, uint16(99), armsBuyRow(t, shop, references.Arrows).Quantity)
@@ -1467,7 +1464,7 @@ func TestArmsBuyCapacityRefusalReturnsToBuy(t *testing.T) {
 
 	require.False(t, trade.HasPendingRequest())
 	require.Equal(t, widgets.ArmsShopBuy, shop.GetMode())
-	require.Equal(t, "No Bow purchased: carried equipment capacity is full.", shop.GetReceiptText())
+	require.Equal(t, "No Bow bought: thou canst not carry any more!", shop.GetReceiptText())
 	refreshed := armsBuyRow(t, shop, references.Bow)
 	require.Equal(t, uint16(99), refreshed.Quantity)
 	require.Zero(t, refreshed.Maximum)
@@ -1492,7 +1489,7 @@ func TestArmsCurrentBuyBlockersUseMerchantRefusalsBeforeTradeModal(t *testing.T)
 
 		require.Equal(t, widgets.ArmsShopBrowse, shop.GetPhase())
 		require.Contains(t, shop.GetLatestExchange(), "Thou canst not carry any more")
-		require.Contains(t, strings.Join(strings.Fields(shop.GetDetailText()), " "), "carried quantity is already 99")
+		require.Contains(t, strings.Join(strings.Fields(shop.GetDetailText()), " "), "Thou canst not carry any more!")
 		require.Equal(t, 1, fixture.scene.dialogStack.Count())
 		shop.Dismiss()
 		pumpMerchantWorkflowUntil(t, fixture, func() bool {
@@ -1538,7 +1535,7 @@ func TestArmsInsufficientFundsRefusalEndsTalk(t *testing.T) {
 			})
 
 			require.False(t, shop.IsDismissed(), "authority refusal must remain visible")
-			require.Equal(t, "No Bow purchased: insufficient gold.", shop.GetReceiptText())
+			require.Equal(t, "No Bow bought: thou hast not enough gold!", shop.GetReceiptText())
 			require.Contains(t, shop.GetLatestExchange(), "Out with thee")
 			require.Equal(t, 1, fixture.scene.dialogStack.Count())
 			require.Same(t, shop, fixture.scene.dialogStack.PeekTopModalDialog())
@@ -1574,7 +1571,7 @@ func TestArmsSellRefusalTerminalAndNonterminalPolicies(t *testing.T) {
 				})
 
 				require.True(t, shop.IsDismissed())
-				require.Contains(t, shop.GetReceiptText(), "used ammunition is refused")
+				require.Contains(t, shop.GetReceiptText(), "We don't deal in used ammunition!")
 				require.Equal(t, uint16(5), fixture.state.PartyState.Inventory.Equipment.Get(references.Arrows))
 				require.Equal(t, []int{1}, fixture.callbacks.TimeAdvanced())
 			})
@@ -1597,7 +1594,7 @@ func TestArmsSellRefusalTerminalAndNonterminalPolicies(t *testing.T) {
 
 		require.Equal(t, widgets.ArmsShopSell, shop.GetMode())
 		require.False(t, shop.IsDismissed())
-		require.Equal(t, "No Jewel Shield sold: this equipment has no sale price.", shop.GetReceiptText())
+		require.Equal(t, "No Jewel Shield sold: \"That, I cannot buy from thee.\"", shop.GetReceiptText())
 		shop.Dismiss()
 		pumpMerchantWorkflowUntil(t, fixture, func() bool {
 			return !fixture.state.EventQueueManager.HasActiveWorkflows()
@@ -1622,7 +1619,7 @@ func TestArmsSellRefusalTerminalAndNonterminalPolicies(t *testing.T) {
 
 		require.Equal(t, widgets.ArmsShopSell, shop.GetMode())
 		require.False(t, shop.IsDismissed())
-		require.Equal(t, "No Long Sword sold: party gold cannot exceed 9999.", shop.GetReceiptText())
+		require.Equal(t, "No Long Sword sold: thou canst not carry any more gold!", shop.GetReceiptText())
 		require.Equal(t, "9999", shop.GetShell().GetHeaderView().PartyGold)
 		refreshed := armsSellRow(t, shop, references.LongSword)
 		require.Equal(t, uint16(2), refreshed.Quantity)
@@ -1788,11 +1785,9 @@ func TestManualReagentTalkRepeatedPurchasesRefreshWithinOneMinute(t *testing.T) 
 	require.Equal(t, strconv.Itoa(int(expectedGold)), shop.GetShell().GetHeaderView().PartyGold)
 	requireReagentDialogMatchesAuthority(t, fixture, shop, references.MerchantReagentYew)
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 2 bundles of Spider Silk: %d -> %d; received %d. Paid %d gold; final gold %d.",
-		quote.BundleQuantity,
-		expectedQuantity,
-		quote.BundleQuantity*2,
+		"Bought: 2 bundles of Spider Silk for %d gold. Thou hast now %d. Thou hast %d gold left.",
 		quote.PricePerBundle*2,
+		expectedQuantity,
 		expectedGold,
 	), shop.GetReceiptText())
 	require.Equal(t, "\"I thank thee!\" says Madam Pendra. \"Anything else?\"", shop.GetLatestExchange())
@@ -1895,7 +1890,7 @@ func TestReagentAggregatePurchaseRefreshesSaturationAndCompleteReceipt(t *testin
 	require.Equal(t, uint16(99), refreshed.QuantityBefore)
 	require.Equal(t, game_state.ReagentOfferBlockInventoryFull, refreshed.BlockReason)
 	require.Equal(t, fmt.Sprintf(
-		"Purchased 3 bundles of Blood Moss: 94 -> 99; received 5. Paid %d gold; final gold %d.",
+		"Bought: 3 bundles of Blood Moss for %d gold. Thou hast now 99. Thou hast %d gold left.",
 		quote.PricePerBundle*3,
 		100-quote.PricePerBundle*3,
 	), shop.GetReceiptText())
@@ -1925,8 +1920,8 @@ func TestReagentResultDisplayAppendsFaulineiTheftAndBalancesSpeech(t *testing.T)
 	require.Equal(t, "\"I thank thee!\" says Enlor. \"Anything else?\"", display.MerchantExchange)
 	require.Equal(t, 4, strings.Count(display.MerchantExchange, `"`))
 	require.Equal(t,
-		"Purchased 3 bundles of Blood Moss: 94 -> 99; received 5. Paid 39 gold; final gold 54. "+
-			"Faulinei took 7 additional gold.",
+		"Bought: 3 bundles of Blood Moss for 39 gold. Thou hast now 99. 7 more gold was stolen! "+
+			"Thou hast 54 gold left.",
 		display.Receipt,
 	)
 }
@@ -2164,7 +2159,7 @@ func TestShipFirstDeliveryDispatchReturnsToShowroom(t *testing.T) {
 			require.True(t, shop.GetState().Travel.PendingDelivery)
 			require.Equal(t, shop.GetState().Gold, shop.GetState().FrigateQuote.GoldBefore)
 			require.Equal(t, shop.GetState().Gold, shop.GetState().SkiffQuote.GoldBefore)
-			require.Contains(t, shop.GetReceiptText(), "dispatched to the harbour")
+			require.Contains(t, shop.GetReceiptText(), "It awaits thee in the harbour")
 			require.Empty(t, fixture.callbacks.TimeAdvanced())
 
 			pressMerchantDialogKey(fixture, ebiten.KeyEnter)
@@ -2329,7 +2324,7 @@ func TestShipPurchaseFundsStaleRefreshAndLoadedSkiffBoundaries(t *testing.T) {
 		require.Equal(t, uint16(1999), shop.GetState().Gold)
 		require.Equal(t, uint16(1999), shop.GetState().FrigateQuote.GoldBefore)
 		require.Equal(t, uint16(1999), shop.GetState().SkiffQuote.GoldBefore)
-		require.Contains(t, shop.GetReceiptText(), "manifest was refreshed")
+		require.Contains(t, shop.GetReceiptText(), "No frigate bought")
 		require.Empty(t, fixture.callbacks.TimeAdvanced())
 		pressMerchantDialogKey(fixture, ebiten.KeyEnter)
 		require.Equal(t, widgets.ShipShopBrowse, shop.GetPhase())
@@ -2358,7 +2353,7 @@ func TestShipPurchaseFundsStaleRefreshAndLoadedSkiffBoundaries(t *testing.T) {
 		require.Equal(t, 1, fixture.scene.dialogStack.Count())
 		require.Same(t, shop, fixture.scene.dialogStack.PeekTopModalDialog())
 		require.Equal(t, 3, frigate.GetVehicleDetails().GetSkiffQuantity())
-		require.Contains(t, shop.GetReceiptText(), "frigate skiffs: 2 -> 3")
+		require.Contains(t, shop.GetReceiptText(), "The frigate now carries 3.")
 		require.NotContains(t, shop.GetShell().GetFooterView().Guidance, "Continue shopping")
 		shop.Dismiss()
 		pumpMerchantWorkflowUntil(t, fixture, func() bool {
@@ -2610,7 +2605,7 @@ func TestInnRestNoVacancyBlocksBeforeApproval(t *testing.T) {
 	pressMerchantDialogKey(fixture, ebiten.KeyEnter)
 
 	require.Equal(t, widgets.InnShopBrowse, dialog.GetPhase())
-	require.Contains(t, strings.ToLower(dialog.GetInlineFeedback()), "no guest room")
+	require.Contains(t, strings.ToLower(dialog.GetInlineFeedback()), "no room available")
 	require.Equal(t, 1, fixture.scene.dialogStack.Count())
 	require.Equal(t, before, fixture.state.CurrentPartyRosterSnapshot())
 	require.Equal(t, dateBefore, fixture.state.DateTime)
@@ -2794,8 +2789,8 @@ func TestInnLeaveAndPickupRefreshSameModesWithExactTheftReceipt(t *testing.T) {
 	require.Equal(t, wantGold, fixture.state.PartyState.Inventory.Gold.Get())
 	require.Contains(t, dialog.GetReceiptText(), leftName+" has been returned to the party.")
 	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Paid %d gold.", charge))
-	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Another %d gold is missing.", wantTheft))
-	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("You have %d gold left.", wantGold))
+	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("%d more gold was stolen!", wantTheft))
+	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Thou hast %d gold left.", wantGold))
 	require.NotContains(t, dialog.GetReceiptText(), "Faulinei")
 	require.True(t, fixture.state.EventQueueManager.HasFeedback("inn_pickup_feedback"))
 

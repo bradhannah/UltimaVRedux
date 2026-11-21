@@ -184,10 +184,13 @@ func TestZStatsDossierDialogDismissalIsIdempotent(t *testing.T) {
 	config.OnDismiss = func() { dismissCalls++ }
 	dialog := NewZStatsDossierDialog(testZStatsDossier(), config)
 
+	dialog.switchTab(ZStatsDossierSpellsTab)
 	pressZStatsDossierKey(dialog, keyboard, ebiten.KeyZ)
-	require.False(t, dialog.IsDismissed())
-	pressZStatsDossierKey(dialog, keyboard, ebiten.KeyEscape)
-	require.True(t, dialog.IsDismissed())
+	require.False(t, dialog.IsDismissed(), "Z is a spell initial on the Spells tab")
+	require.Equal(t, "Z", dialog.spellBrowser.syllables)
+	dialog.switchTab(ZStatsDossierCharacterTab)
+	pressZStatsDossierKey(dialog, keyboard, ebiten.KeyZ)
+	require.True(t, dialog.IsDismissed(), "Z closes the dossier like Esc")
 	dialog.Dismiss()
 	require.Equal(t, 1, dismissCalls)
 }
@@ -505,7 +508,7 @@ func TestZStatsDossierDialogMagicUsesRedUnknownAndMeaningfulProvenance(t *testin
 	require.Contains(t, body, "Recipe: Unknown")
 	require.NotContains(t, body, "Learned from")
 	require.NotContains(t, body, "Learned on")
-	requireImageRegionContainsColor(t, screen, dialog.layout.globalDetailRect, pkgcolor.EGARed)
+	requireImageRegionContainsColor(t, screen, dialog.layout.globalDetailRect, pkgcolor.EGALightRed)
 
 	spell = &dialog.dossier.Magic.Spells[0]
 	spell.Hidden = true
@@ -543,7 +546,7 @@ func TestZStatsDossierDialogSpaceLoopsCapacityBoundDetailPagesAndSelectionResets
 	require.Contains(t, footer, "Tab")
 	require.Contains(t, footer, "[Up/Down]")
 	require.Contains(t, footer, "Space")
-	require.Contains(t, footer, "[Esc]")
+	require.Contains(t, footer, "[Esc")
 
 	pressZStatsDossierKey(dialog, keyboard, ebiten.KeySpace)
 	require.Equal(t, 1, dialog.detailPage)
@@ -584,7 +587,7 @@ func TestZStatsDossierDialogArmoryNamesAndSpellCounts(t *testing.T) {
 	require.Contains(t, footer, "A-Z/Backspace")
 	require.Contains(t, footer, "[Up/Down]")
 	require.NotContains(t, footer, "F1")
-	require.Contains(t, footer, "[Esc]")
+	require.Contains(t, footer, "[Esc")
 
 	dialog.switchTab(ZStatsDossierCharacterTab)
 	dialog.prepareFooter()
@@ -709,7 +712,7 @@ func testZStatsDossier() game_state.ZStatsDossier {
 		Magic: game_state.ZStatsMagicDossier{
 			Spells: []game_state.ZStatsSpell{{
 				ID: 0, SpriteIndex: indexes.SpriteIndex(260), Name: "In Lor", Syllables: "In Lor", Circle: 1, MPCost: 1, Prepared: 2,
-				Targeting: "None", Contexts: "All", FormulaState: "candidate",
+				Targeting: "None", Contexts: "All", FormulaState: "uncertain",
 				Reagents: []string{"Sulfurous Ash"}, ReagentCandidates: [][]string{{"Ginseng", "Garlic"}},
 				Hidden: true, LearningSourceKind: string(game_state.KnowledgeSourceDialogue),
 				LearningSource: "Mariah", LearningDate: "8-15-142",

@@ -116,8 +116,10 @@ func (setting gameplaySettingDefinition) detailLines() []string {
 func populateGameplayDetail(output *text.Output, setting gameplaySettingDefinition, value string) {
 	output.Reset()
 	output.AppendLine().Text(setting.label, widgets.DialogHeaderColor).WordWrap().Done()
+	output.AppendLine().Text("", widgets.DialogValueColor).WordWrap().Done()
 	for _, line := range setting.detailLines() {
 		output.AppendLine().Text(line, widgets.DialogValueColor).WordWrap().Done()
 	}
+	output.AppendLine().Text("", widgets.DialogValueColor).WordWrap().Done()
 	output.AppendLine().Text("Value: ", widgets.DialogLabelColor).Text(value, widgets.DialogValueColor).Done()
 }

@@ -162,7 +162,7 @@ func TestAtlasNoteIntentsOnlyRealNoteRowsAndNoCameraMutation(t *testing.T) {
 	dialog.handleKey(ebiten.KeyD)
 	require.Len(t, intents, 3)
 	dossier.CurrentFix = journal.SurveyedLocation{}
-	dossier.FixUnavailable = "Night only: 19:00-05:59."
+	dossier.FixUnavailable = "Only at night!"
 	dialog.Refresh(dossier)
 	dialog.handleKey(ebiten.KeyN)
 	require.Len(t, intents, 3)

@@ -44,7 +44,7 @@ func TestSaveSlotBrowserDisabledPrimaryRemainsSelectable(t *testing.T) {
 	require.Equal(t, 1, browser.GetSelectedIndex())
 	pressSaveSlotBrowserKey(browser, keyboard, ebiten.KeyEnter)
 	require.Zero(t, primaryCalls)
-	require.Contains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Select unavailable")
+	require.Contains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Cannot select this")
 }
 
 func TestSaveSlotBrowserDeleteHasNoBrowserAction(t *testing.T) {
@@ -130,7 +130,7 @@ func TestSaveSlotBrowserEmptyModels(t *testing.T) {
 	pressSaveSlotBrowserKey(browser, keyboard, ebiten.KeyEnter)
 	pressSaveSlotBrowserKey(browser, keyboard, ebiten.KeyDelete)
 	require.Zero(t, primaryCalls)
-	require.NotContains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Select unavailable")
+	require.NotContains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Cannot select this")
 	browser.ensureLayout()
 	notice := "This save changed since you opened the screen. Review the slot and try again."
 	browser.SetNotice(notice)
@@ -462,7 +462,7 @@ func TestSaveSlotBrowserWithNoNavigableRowsHasNoSelection(t *testing.T) {
 	require.Equal(t, -1, browser.GetSelectedIndex())
 	_, selected := browser.GetSelectedView()
 	require.False(t, selected)
-	require.NotContains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Select unavailable")
+	require.NotContains(t, browser.footerOutput.GetOutputStr(false), "[Enter] Cannot select this")
 	require.Contains(t, strings.Join(strings.Fields(browser.detailOutput.GetOutputStr(false)), " "), "No saved games to load.")
 }
 

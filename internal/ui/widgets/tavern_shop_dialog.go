@@ -172,12 +172,10 @@ type TavernTranscriptEntry struct {
 
 // TavernActionResultDisplay contains finalized workflow presentation after authority.
 type TavernActionResultDisplay struct {
-	Action                TavernAction
-	MerchantExchange      string
-	Receipt               string
-	PaidInformation       *TavernTranscriptEntry
-	SuppressInlineReceipt bool
-	Dismiss               bool
+	Action           TavernAction
+	MerchantExchange string
+	PaidInformation  *TavernTranscriptEntry
+	Dismiss          bool
 }
 
 // TavernShopDialogProse contains finalized merchant copy supplied by workflow.
@@ -650,10 +648,7 @@ func (d *TavernShopDialog) ApplyResult(
 	validateTavernResultDisplay(request, display)
 	d.applyState(refreshed)
 	d.latestExchange = display.MerchantExchange
-	d.receiptText = display.Receipt
-	if display.SuppressInlineReceipt {
-		d.receiptText = ""
-	}
+	d.receiptText = ""
 	d.inlineFeedback = ""
 	if display.PaidInformation != nil {
 		d.appendPaidTranscript(*display.PaidInformation)
@@ -1103,11 +1098,11 @@ func (d *TavernShopDialog) ensureLayout() {
 	d.lastScreenWidth, d.lastScreenHeight = width, height
 	d.shell.GetBounds()
 	_, d.modeOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: tavernShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: tavernShopLineSpacing,
 		MaxLines: tavernShopModeHeaderMaxLines, MaxChars: tavernShopMinimumTextChars,
 	})
 	d.bodyFont, d.bodyOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: tavernShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: tavernShopLineSpacing,
 		MaxLines: tavernShopMaximumBodyLines, MaxChars: tavernShopMinimumTextChars,
 	})
 	d.calculateLayout()
@@ -1323,9 +1318,9 @@ func (d *TavernShopDialog) footerGuidance() string {
 	case TavernShopAwaitingTopicQuote:
 		return "Checking subject"
 	case TavernShopAwaitingApproval:
-		return "Complete or cancel the Tavern action dialog"
+		return "Confirm or cancel."
 	case TavernShopAwaitingResult:
-		return "Processing Tavern action"
+		return ""
 	case TavernShopSessionError:
 		return merchantLeaveFooter
 	default:
@@ -1594,7 +1589,6 @@ func validateTavernInformationQuote(quote game_state.TavernInformationQuote, sta
 
 func validateTavernResultDisplay(request TavernActionRequest, display TavernActionResultDisplay) {
 	validateTavernFinalizedText("result exchange", display.MerchantExchange)
-	validateTavernFinalizedText("result receipt", display.Receipt)
 	if display.PaidInformation == nil {
 		return
 	}

@@ -31,7 +31,7 @@ func (h *EnvironmentalHazards) emitHazardResult(result *HazardResult, party *par
 	}
 	names := make([]string, 0, len(result.Affected))
 	for _, memberIndex := range result.Affected {
-		name := extractCharacterName(party.GetCharacter(memberIndex).Name[:])
+		name := party.GetCharacter(memberIndex).GetNameAsString()
 		if name != "" {
 			names = append(names, name)
 		}

@@ -117,7 +117,7 @@ func TestCombatSummaryNarrowViewportHeadingWrapAndTypography(t *testing.T) {
 	assert.Equal(t, viewport.Dx()-s.padding*2, dialog.bounds.Dx(), "width is capped to the supplied pane")
 	assert.Positive(t, s.outcomeTop, "heading falls back to separate lines without shrinking")
 	assert.Contains(t, dialog.heading.GetOutputStr(false), "Battle complete")
-	assert.Contains(t, s.outcomeOutput.GetOutputStr(false), "Battle lost")
+	assert.Contains(t, s.outcomeOutput.GetOutputStr(false), "Battle is lost!")
 	assert.GreaterOrEqual(t, s.outcomeTop, combatSummaryTextHeight(dialog.heading))
 	assert.Greater(t, dialog.rows[0].GetPanelContentLineCount(), 1)
 	assert.Contains(t, dialog.rows[0].GetOutputStr(false), "END")
@@ -140,9 +140,11 @@ func TestCombatSummaryNarrowViewportHeadingWrapAndTypography(t *testing.T) {
 	assert.True(t, label && value && header && keys && hints)
 	assert.NotEqual(t, DialogLabelColor, DialogValueColor)
 	// The ordinary width fits the structured left/right heading on one row.
+	// "Battle is lost!" no longer shares the heading row at 1280x720; "Victory" does.
 	setSummaryViewport(t, image.Rectangle{})
+	dialog = NewCombatSummaryDialog(game_state.CombatConclusion{Reason: game_state.CombatVictory}, newWidgetTestKeyboard(0), &sprites.SpriteSheet{}, func() {})
 	dialog.prepareSummary(image.Rect(0, 0, 1280, 720), image.Rect(0, 0, 960, 720))
-	assert.Zero(t, s.outcomeTop)
+	assert.Zero(t, dialog.summary.outcomeTop)
 }
 
 func TestCombatSummaryScrollReachesLongLastEntryAndResizes(t *testing.T) {

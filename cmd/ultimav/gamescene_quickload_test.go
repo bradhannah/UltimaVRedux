@@ -31,31 +31,29 @@ func quickLoadGameForTest(scene *GameScene, candidate Scene) (*Game, *playerSave
 func TestQuickLoadPhysicalChordReplacesAllNormalMapBoundaries(t *testing.T) {
 	for _, location := range []references.Location{references.Britain, references.BritanniaUnderworld, references.Deceit} {
 		for _, control := range []ebiten.Key{ebiten.KeyControlLeft, ebiten.KeyControlRight} {
-			for _, confirm := range []bool{true, false} {
-				t.Run(location.String()+"/"+control.String()+"/"+boolLabel(confirm), func(t *testing.T) {
-					scene, held, _, callbacks := newRunicReferenceTestScene(t, location)
-					setQuickSaveConfirmationForTest(scene, confirm)
-					candidate := &playerSaveTestScene{}
-					game, repository := quickLoadGameForTest(scene, candidate)
-					date, position, elapsed := scene.gameState.DateTime, scene.gameState.MapState.PlayerLocation, scene.gameState.ElapsedMs
-					randomBefore := scene.gameState.GetRNG().Calls()
-					callbacks.Reset()
-					held[control], held[ebiten.KeyQ], held[ebiten.KeyCapsLock] = true, true, true
-					require.NoError(t, scene.Update(game))
-					assert.Same(t, candidate, game.currentScene)
-					assert.Equal(t, uint64(2), game.DebugSceneGeneration())
-					assert.Equal(t, []player_save.SlotID{player_save.Slot06}, repository.loads)
-					assert.Empty(t, repository.saves)
-					assert.Equal(t, date, scene.gameState.DateTime)
-					assert.Equal(t, position, scene.gameState.MapState.PlayerLocation)
-					assert.Equal(t, elapsed, scene.gameState.ElapsedMs, "no outgoing update tail")
-					assert.Equal(t, randomBefore, scene.gameState.GetRNG().Calls())
-					assert.Empty(t, callbacks.TimeAdvanced())
-					assert.True(t, scene.gameState.IsAtDungeonCommandBoundary(), "quickload never creates a dungeon token")
-					assert.True(t, scene.disposed)
-					assert.Zero(t, scene.dialogStack.Count())
-				})
-			}
+			t.Run(location.String()+"/"+control.String(), func(t *testing.T) {
+				scene, held, _, callbacks := newRunicReferenceTestScene(t, location)
+				setQuickSaveConfirmationForTest(scene, false)
+				candidate := &playerSaveTestScene{}
+				game, repository := quickLoadGameForTest(scene, candidate)
+				date, position, elapsed := scene.gameState.DateTime, scene.gameState.MapState.PlayerLocation, scene.gameState.ElapsedMs
+				randomBefore := scene.gameState.GetRNG().Calls()
+				callbacks.Reset()
+				held[control], held[ebiten.KeyQ], held[ebiten.KeyCapsLock] = true, true, true
+				require.NoError(t, scene.Update(game))
+				assert.Same(t, candidate, game.currentScene)
+				assert.Equal(t, uint64(2), game.DebugSceneGeneration())
+				assert.Equal(t, []player_save.SlotID{player_save.Slot06}, repository.loads)
+				assert.Empty(t, repository.saves)
+				assert.Equal(t, date, scene.gameState.DateTime)
+				assert.Equal(t, position, scene.gameState.MapState.PlayerLocation)
+				assert.Equal(t, elapsed, scene.gameState.ElapsedMs, "no outgoing update tail")
+				assert.Equal(t, randomBefore, scene.gameState.GetRNG().Calls())
+				assert.Empty(t, callbacks.TimeAdvanced())
+				assert.True(t, scene.gameState.IsAtDungeonCommandBoundary(), "quickload never creates a dungeon token")
+				assert.True(t, scene.disposed)
+				assert.Zero(t, scene.dialogStack.Count())
+			})
 		}
 	}
 }
@@ -68,6 +66,7 @@ func TestQuickLoadUnderworldBoundary(t *testing.T) {
 	held := map[ebiten.Key]bool{ebiten.KeyControlLeft: true, ebiten.KeyQ: true}
 	scene.keyboard = input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return held[key] })
 	candidate := &playerSaveTestScene{}
+	setQuickSaveConfirmationForTest(scene, false)
 	game, repository := quickLoadGameForTest(scene, candidate)
 	before := state.DateTime
 	require.NoError(t, scene.Update(game))
@@ -87,6 +86,7 @@ func TestQuickLoadCombatDisposesFeedbackBeforePublishingNewScene(t *testing.T) {
 	scene.combatImpactEffects = []CombatImpactEffect{{Elapsed: 0.5}}
 	require.NotEmpty(t, scene.transientActionFeedback)
 	candidate := &playerSaveTestScene{}
+	setQuickSaveConfirmationForTest(scene, false)
 	game, repository := quickLoadGameForTest(scene, candidate)
 	finalizers := 0
 	state.EventQueueManager.TriggerFeedback("quickload_cleanup", event_queue.PriorityNormal, func(builder *event_queue.SequentialEventBuilder) {
@@ -120,6 +120,7 @@ func TestQuickLoadControlledMonsterTurn(t *testing.T) {
 	scene := newOwnedSurfaceCompletionTestScene(t, state)
 	held := attachCombatSoloResetUpdateInput(t, scene)
 	candidate := &playerSaveTestScene{}
+	setQuickSaveConfirmationForTest(scene, false)
 	game, repository := quickLoadGameForTest(scene, candidate)
 	before := snapshotBlockedCombatState(t, state)
 	held[ebiten.KeyControlLeft], held[ebiten.KeyQ] = true, true
@@ -132,6 +133,7 @@ func TestQuickLoadControlledMonsterTurn(t *testing.T) {
 func TestQuickLoadCanonicalReplacementShutsDownCombatContinuations(t *testing.T) {
 	scene, _, _ := newCombatDirectionUpdateScene(t, "first_actor")
 	candidate := &playerSaveTestScene{}
+	setQuickSaveConfirmationForTest(scene, false)
 	game, _ := quickLoadGameForTest(scene, candidate)
 	finalizers, completions := 0, 0
 	scene.gameState.EventQueueManager.Workflow("old_combat_owner").Priority(event_queue.PriorityNormal).
@@ -160,6 +162,7 @@ func TestQuickLoadFailurePreservesReadyCombatAndBufferedIntent(t *testing.T) {
 	require.True(t, eligible)
 	pending := pendingCombatCommand{active: true, key: ebiten.KeyG, opportunity: projection.Opportunity}
 	scene.transientCommandInput.pending = pending
+	setQuickSaveConfirmationForTest(scene, false)
 	game, repository := quickLoadGameForTest(scene, &playerSaveTestScene{preflightErr: errors.New("cannot activate")})
 	before := snapshotBlockedCombatState(t, state)
 	held[ebiten.KeyControlLeft], held[ebiten.KeyQ] = true, true
@@ -221,6 +224,7 @@ func TestQuickLoadBlockedChordCannotReviveAfterSecondaryOrModalCloses(t *testing
 			scene.now = func() time.Time { return now }
 			scene.startTime, scene.lastEffectsUpdate = now, now
 			scene.elapsedBaseMs = scene.gameState.ElapsedMs
+			setQuickSaveConfirmationForTest(scene, false)
 			game, repository := quickLoadGameForTest(scene, &playerSaveTestScene{})
 			focused, workflowActive := true, true
 			var dialog *widgets.OverlayDialog
@@ -285,6 +289,7 @@ func TestQuickLoadBlockedChordCannotReviveAfterSecondaryOrModalCloses(t *testing
 
 func TestQuickLoadHeldEnemyChordNeverLoadsAtLaterPlayerTurn(t *testing.T) {
 	scene, held := newBufferedCombatUpdateScene(t)
+	setQuickSaveConfirmationForTest(scene, false)
 	game, repository := quickLoadGameForTest(scene, &playerSaveTestScene{})
 	held[ebiten.KeyControlRight], held[ebiten.KeyQ] = true, true
 	require.NoError(t, scene.Update(game))
@@ -310,4 +315,36 @@ func TestQuickLoadHeldEnemyChordNeverLoadsAtLaterPlayerTurn(t *testing.T) {
 	held[ebiten.KeyControlLeft], held[ebiten.KeyQ] = true, true
 	require.NoError(t, scene.Update(game))
 	assert.Len(t, repository.loads, 1)
+}
+
+// With Confirm Quick Save on, Ctrl+Q asks first, as Q does before it saves:
+// N or Esc leaves the game alone, Y reloads the last slot.
+func TestQuickLoadAsksFirstWhenConfirmQuickSaveIsOn(t *testing.T) {
+	for _, answer := range []ebiten.Key{ebiten.KeyN, ebiten.KeyEscape, ebiten.KeyY} {
+		t.Run(answer.String(), func(t *testing.T) {
+			scene, held, _, callbacks := newRunicReferenceTestScene(t, references.Britain)
+			setQuickSaveConfirmationForTest(scene, true)
+			candidate := &playerSaveTestScene{}
+			game, repository := quickLoadGameForTest(scene, candidate)
+			held[ebiten.KeyControlLeft], held[ebiten.KeyQ] = true, true
+			require.NoError(t, scene.Update(game))
+			assert.Empty(t, repository.loads, "the question comes before the load")
+			assert.Equal(t, 1, scene.dialogStack.Count())
+			clear(held)
+			require.NoError(t, scene.Update(game))
+			assert.Empty(t, repository.loads)
+			held[answer] = true
+			require.NoError(t, scene.Update(game))
+			assert.Zero(t, scene.dialogStack.Count())
+			if answer == ebiten.KeyY {
+				assert.Equal(t, []player_save.SlotID{player_save.Slot06}, repository.loads)
+				assert.Contains(t, callbacks.Messages, "Load last save? Yes")
+
+				return
+			}
+			assert.Empty(t, repository.loads)
+			assert.Contains(t, callbacks.Messages, "Load last save? No")
+			assert.Same(t, scene, game.currentScene)
+		})
+	}
 }

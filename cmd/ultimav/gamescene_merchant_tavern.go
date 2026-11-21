@@ -19,11 +19,6 @@ var (
 	errTavernMerchantText          = errors.New("tavern merchant text is unavailable")
 )
 
-const (
-	tavernProvisionOutcomeComplete = "complete"
-	tavernProvisionOutcomePartial  = "partial"
-)
-
 type tavernShopWorkflowProse struct {
 	dialog         widgets.TavernShopDialogProse
 	rudeFarewell   string
@@ -111,7 +106,6 @@ func (g *GameScene) thenRunTavernShopAuthority(
 				IsWindowFocused:  g.commandInputFocused,
 				AppendInputChars: g.appendInputChars,
 			})
-			workflowState.tavernDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -365,7 +359,6 @@ func (g *GameScene) commitTavernAction(
 		panic("Tavern workflow cannot present an unknown result")
 	}
 	if resultView != nil {
-		display.SuppressInlineReceipt = true
 		display.Dismiss = false
 	}
 	dialog.ApplyResult(request, refreshed, display)
@@ -589,21 +582,12 @@ func resolveTavernMealResultDisplay(
 		return widgets.TavernActionResultDisplay{
 			Action:           widgets.TavernActionMeal,
 			MerchantExchange: prose.politeFarewell,
-			Receipt: fmt.Sprintf(
-				"Meal: listed charge %d; Faulinei theft %d; final gold %d; food %d -> %d; received %d.",
-				result.Charge, result.Theft, result.GoldAfterTheft,
-				result.FoodBefore, result.FoodAfter, result.ActualFood,
-			),
 		}
 	case game_state.TavernMealInsufficientFunds:
 		return widgets.TavernActionResultDisplay{
 			Action:           widgets.TavernActionMeal,
 			MerchantExchange: prose.rudeFarewell,
-			Receipt: fmt.Sprintf(
-				"Meal refused: listed charge %d; final gold %d; food %d.",
-				result.Charge, result.GoldAfterTheft, result.FoodAfter,
-			),
-			Dismiss: true,
+			Dismiss:          true,
 		}
 	case game_state.TavernMealOutcomeUnknown:
 		panic("Tavern meal result has no outcome")
@@ -654,12 +638,10 @@ func (g *GameScene) resolveTavernDrinkResultDisplay(
 
 		return widgets.TavernActionResultDisplay{
 			Action: widgets.TavernActionDrink, MerchantExchange: exchange,
-			Receipt: "The drinks are served.", SuppressInlineReceipt: true,
 		}
 	case game_state.TavernDrinkInsufficientFunds:
 		return widgets.TavernActionResultDisplay{
-			Action: widgets.TavernActionDrink, MerchantExchange: prose.rudeFarewell,
-			Receipt: "The party cannot afford the drinks.", SuppressInlineReceipt: true, Dismiss: true,
+			Action: widgets.TavernActionDrink, MerchantExchange: prose.rudeFarewell, Dismiss: true,
 		}
 	case game_state.TavernDrinkCancelled:
 		panic("Tavern approval emitted a cancelled drink request")
@@ -679,10 +661,8 @@ func resolveTavernStopResultDisplay(
 	}
 
 	return widgets.TavernActionResultDisplay{
-		Action:                widgets.TavernActionStop,
-		MerchantExchange:      prose.prudentChoice,
-		Receipt:               "The barkeeper nods approvingly.",
-		SuppressInlineReceipt: true,
+		Action:           widgets.TavernActionStop,
+		MerchantExchange: prose.prudentChoice,
 	}
 }
 
@@ -692,13 +672,6 @@ func (g *GameScene) resolveTavernProvisionResultDisplay(
 	prose tavernShopWorkflowProse,
 ) (widgets.TavernActionResultDisplay, error) {
 	display := widgets.TavernActionResultDisplay{Action: widgets.TavernActionProvision}
-	display.Receipt = fmt.Sprintf(
-		"Provisions: requested %d packs; purchased %d; outcome %s; listed charge %d (%d each); Faulinei theft %d; final gold %d; food %d -> %d; received %d.",
-		result.RequestedPacks, result.PurchasedPacks, tavernProvisionOutcomeName(result.Outcome),
-		result.TotalCost, result.PricePerPack, result.Theft, result.GoldAfterTheft,
-		result.FoodBefore, result.FoodAfter, result.ActualFood,
-	)
-
 	switch result.Outcome {
 	case game_state.TavernProvisionCompleted, game_state.TavernProvisionPartial,
 		game_state.TavernProvisionSaturated:
@@ -784,12 +757,7 @@ func (g *GameScene) resolveTavernInformationResultDisplay(
 		return widgets.TavernActionResultDisplay{
 			Action:           widgets.TavernActionInformation,
 			MerchantExchange: prose.answer + " says " + state.Merchant.OwnerName + ".",
-			Receipt: fmt.Sprintf(
-				"Information: payment %d; final gold %d; subject %s.",
-				result.Price, result.GoldAfterPayment, result.Topic.Key,
-			),
-			PaidInformation:       &widgets.TavernTranscriptEntry{Question: rawQuestion, Answer: prose.answer},
-			SuppressInlineReceipt: true,
+			PaidInformation:  &widgets.TavernTranscriptEntry{Question: rawQuestion, Answer: prose.answer},
 		}, nil
 	case game_state.TavernInformationInsufficientFunds:
 		merchantReferences, err := g.tavernMerchantReferences()
@@ -807,11 +775,7 @@ func (g *GameScene) resolveTavernInformationResultDisplay(
 		return widgets.TavernActionResultDisplay{
 			Action:           widgets.TavernActionInformation,
 			MerchantExchange: quoteMerchantConversation("Sorry, " + g.tavernBuyerHonorific(state) + strings.TrimSpace(misc)),
-			Receipt: fmt.Sprintf(
-				"Information refused: payment %d; final gold %d.",
-				result.Price, result.GoldAfterPayment,
-			),
-			Dismiss: true,
+			Dismiss:          true,
 		}, nil
 	case game_state.TavernInformationOutcomeUnknown:
 		panic("Tavern information result has no outcome")
@@ -844,25 +808,6 @@ func tavernPartySizeWord(size int) string {
 		return "six"
 	default:
 		return strconv.Itoa(size)
-	}
-}
-
-func tavernProvisionOutcomeName(outcome game_state.TavernProvisionOutcome) string {
-	switch outcome {
-	case game_state.TavernProvisionCompleted:
-		return tavernProvisionOutcomeComplete
-	case game_state.TavernProvisionPartial:
-		return tavernProvisionOutcomePartial
-	case game_state.TavernProvisionSaturated:
-		return "saturated"
-	case game_state.TavernProvisionCharityEjection:
-		return "charity ejection"
-	case game_state.TavernProvisionEjection:
-		return "ejection"
-	case game_state.TavernProvisionOutcomeUnknown:
-		return "unknown"
-	default:
-		panic("unknown Tavern provision outcome")
 	}
 }
 

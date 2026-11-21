@@ -153,6 +153,9 @@ func runApplication() error {
 	ebiten.SetWindowTitle("Ultima V Redux")
 	applyApplicationIcon()
 	ebiten.SetRunnableOnUnfocused(true)
+	// The player UI is keyboard-only, so the pointer is hidden while over the window.
+	// The browser Debug Workbench is a separate page and keeps its own pointer.
+	ebiten.SetCursorMode(ebiten.CursorModeHidden)
 	// Gameplay offers to save before a window close; Game.Update decides.
 	ebiten.SetWindowClosingHandled(true)
 

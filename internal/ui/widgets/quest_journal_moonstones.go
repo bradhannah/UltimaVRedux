@@ -18,7 +18,7 @@ const (
 	moonstoneUnconfirmed = "Not personally confirmed"
 	moonstoneUnmeasured  = "Not measured"
 	moonstoneUnrecorded  = "Not recorded"
-	moonstoneSurveyHelp  = "Requires a usable sextant at the site: Britannia surface, 19:00-05:59."
+	moonstoneSurveyHelp  = "Needs a sextant reading there, at night, on the surface."
 )
 
 func moonstonePlaceholder(value string) bool {

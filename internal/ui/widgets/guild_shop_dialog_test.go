@@ -239,7 +239,7 @@ func TestGuildShopDialogGuidanceUsesBracketedActionableKeys(t *testing.T) {
 	dialog.phase = GuildShopAwaitingQuantity
 	require.Equal(t, "Choose purchase quantity", dialog.footerGuidance())
 	dialog.phase = GuildShopAwaitingResult
-	require.Equal(t, "Processing purchase", dialog.footerGuidance())
+	require.Empty(t, dialog.footerGuidance())
 	dialog.phase = GuildShopError
 	require.Equal(t, "[Enter/Esc] Leave", dialog.footerGuidance())
 }

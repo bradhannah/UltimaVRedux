@@ -8,12 +8,6 @@ const (
 	// TributePerLivingMember is the gold required per living party member
 	// Formula: 10 gold × number of living party members
 	TributePerLivingMember = 10
-
-	// MinimumTribute is the minimum gold tribute (1 living party member)
-	MinimumTribute = 10
-
-	// MaximumTribute is the maximum gold tribute (6 living party members)
-	MaximumTribute = 60
 )
 
 // Jail Location Constants

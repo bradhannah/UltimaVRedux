@@ -259,6 +259,14 @@ monster-loyal sleepers use R(0,16)=16 instead. Monster-loyal underground rejecti
 precedes both wake/release RNG. Poison has no automatic tactical-turn HP tick;
 exploration poisoning is a separate update.
 
+**REDUX DEVIATION: COMBAT-0005 — regurgitated onto a taken square:** in the
+original, underground combatants are skipped when a square is tested, so another
+party member can step onto a swallowed member's square, and the escape clears the
+swallowed condition without moving anyone: two members then share one square.
+Redux keeps the original escape roll but, if the square is taken when the member
+escapes, places the member on the nearest free square (fewest steps, scanned from
+the top-left on ties) so combatants never share a square.
+
 A Chaos wielder is charmed and routed toward the party instead of receiving input.
 Gazer special hits sleep a target rather than damage it unless already asleep.
 Compound poison-ability hits test R(0,3)≠0 and replace ordinary damage with
@@ -559,8 +567,8 @@ party for the borrowed burn in LIGHT-0004, and a reachable plate follows
 KARMA-0006. Crops do not occur on combat maps. Tactical Open answers a
 footlocker ("It's open!") and a portcullis ("Too heavy!") before trying doors.
 Every such attempt spends the action. Redux's Battle Report labels a pickup that
-changed the map without adding stock `PICKUP`, reserving `PICKUP FAILED` for a
-refusal; the original prints only the command text.
+changed the map without adding stock `PICKUP`, reporting a
+refusal as "<name> cannot take it: <reason>"; the original prints only the command text.
 
 Redux deliberately stores an honest party-shared assessment per encounter-local
 chest instead of repeated fallible inspection reports. Known-safe Jimmy refuses

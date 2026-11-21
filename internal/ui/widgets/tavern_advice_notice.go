@@ -106,7 +106,7 @@ func (n *TavernAdviceNotice) ensureLayout() {
 	padding := getClassicUIPixelUnit(width, height) * tavernNoticePaddingUnits
 	textWidth := max(1, pane.Dx()-padding*tavernNoticeSides*tavernNoticeSides)
 	font, metrics := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: tavernShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: tavernShopLineSpacing,
 		MaxLines: 1, MaxChars: 1,
 	})
 	chars := max(1, font.CharsForWidth(textWidth))

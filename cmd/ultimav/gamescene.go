@@ -192,6 +192,8 @@ type GameScene struct {
 	appendInputChars                 func([]rune) []rune
 
 	debugMessage string
+	// lastUsedItem is the item last picked in Use. The picker opens on it again.
+	lastUsedItem *game_state.UseableItemInfo
 
 	gameState *game_state.GameState
 

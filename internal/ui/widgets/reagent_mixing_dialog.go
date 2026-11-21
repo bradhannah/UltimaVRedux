@@ -386,7 +386,7 @@ func (d *ReagentMixingDialog) Draw(screen *ebiten.Image) {
 	d.ensureLayout()
 	view := &d.view
 	view.drawFrame(screen)
-	header := view.headerRect.Inset(view.padding)
+	header := view.inner(view.headerRect, true)
 	prepareSpellOutput(view.title, header)
 	view.title.AppendLine().Text("MIX REAGENTS", DialogHeaderColor).Done()
 	switch {
@@ -398,8 +398,8 @@ func (d *ReagentMixingDialog) Draw(screen *ebiten.Image) {
 		view.title.AppendLine().Text(d.result, DialogStatusOKColor).Done()
 	}
 	drawSpellOutput(screen, view.title, header, 0, spellBrowserRowLines)
-	view.drawSearch(screen, d.browser, view.searchRect.Inset(view.padding))
-	view.drawList(screen, d.browser, view.listRect.Inset(view.padding), spellMixable)
+	view.drawSearch(screen, d.browser, view.inner(view.searchRect, false))
+	view.drawList(screen, d.browser, view.inner(view.listRect, true), spellMixable)
 	view.drawDetails(screen, d.browser)
 	view.drawFooter(screen)
 	view.finishFrame(screen)

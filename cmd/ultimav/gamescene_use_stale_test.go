@@ -138,7 +138,7 @@ func TestCombatWarningPotionStillCommitsAndCanSubstitute(t *testing.T) {
 		require.Len(t, items, 1)
 		require.False(t, items[0].AvailableNow)
 		require.Empty(t, items[0].UnavailableReason)
-		require.Contains(t, items[0].Warning, "still be consumed")
+		require.Contains(t, items[0].Warning, "spent all the same")
 		scene.combatMapInputHandler(ebiten.KeyU)
 		waitForTopModal[*widgets.ItemSelectionDialog](t, scene).HandleEnter()
 		drainDismissingOverlays(t, scene, "use_item_workflow")

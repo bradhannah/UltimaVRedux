@@ -21,6 +21,9 @@ func TestValidateInstallationRequiresExactInitialTemplates(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), files.InitGam) {
 		t.Fatalf("ValidateInstallation() error = %v, want missing %s", err, files.InitGam)
 	}
+	if got, want := PlainReason(err), files.InitGam+" is missing from it."; got != want {
+		t.Fatalf("PlainReason() = %q, want %q", got, want)
+	}
 
 	if err := os.WriteFile(filepath.Join(directory, files.InitGam), make([]byte, originalInitGamSize), 0o600); err != nil {
 		t.Fatal(err)
@@ -31,6 +34,9 @@ func TestValidateInstallationRequiresExactInitialTemplates(t *testing.T) {
 	err = ValidateInstallation(context.Background(), directory)
 	if err == nil || !strings.Contains(err.Error(), files.InitOol) {
 		t.Fatalf("ValidateInstallation() error = %v, want invalid %s", err, files.InitOol)
+	}
+	if got, want := PlainReason(err), files.InitOol+" is not the right size."; got != want {
+		t.Fatalf("PlainReason() = %q, want %q", got, want)
 	}
 }
 

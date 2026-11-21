@@ -94,7 +94,7 @@ func TestExcerptArchiveDeleteConfirmationAndErrorRollback(t *testing.T) {
 	pressQuestJournalKey(dialog, keyboard, ebiten.KeyA)
 	require.Equal(t, configuration.Excerpts, dialog.excerpts)
 	require.Equal(t, page, dialog.GetDetailPage(), "failed archive must not move the reader")
-	require.Contains(t, dialog.excerptStatus, "failed")
+	require.Contains(t, dialog.excerptStatus, "Could not keep that.")
 	pressQuestJournalKey(dialog, keyboard, ebiten.KeyD)
 	require.True(t, dialog.deletePending)
 	pressQuestJournalKey(dialog, keyboard, ebiten.KeyH)
@@ -127,7 +127,7 @@ func TestExcerptFullNotebookFeedbackPreservesKeptSnapshot(t *testing.T) {
 	dialog.switchTabBy(int(QuestJournalConversationTab))
 	pressQuestJournalKey(dialog, keyboard, ebiten.KeyK)
 	require.Equal(t, configuration.Excerpts, dialog.excerpts)
-	require.Contains(t, dialog.excerptStatus, "delete to free space")
+	require.Contains(t, dialog.excerptStatus, "Delete a note to write another")
 }
 
 func TestExcerptArchiveInputDoesNotCaptureSearchTypingOrUnfocusedInput(t *testing.T) {

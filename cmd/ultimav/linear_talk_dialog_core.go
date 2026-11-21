@@ -220,7 +220,6 @@ func (d *LinearTalkDialog) reflowTranscriptOutput() {
 	if d.Output == nil {
 		d.font, d.Output = widgets.GetScaledFontWithOutput(widgets.FontConfig{
 			Size:                  talkFontSize,
-			LineSpacing:           0,
 			LineSpacingMultiplier: talkLineSpacingMultiplier,
 			MaxLines:              maxLines,
 			MaxChars:              talkMaxCharsInput,
@@ -229,7 +228,6 @@ func (d *LinearTalkDialog) reflowTranscriptOutput() {
 	} else {
 		font, output := widgets.GetScaledFontWithOutput(widgets.FontConfig{
 			Size:                  talkFontSize,
-			LineSpacing:           0,
 			LineSpacingMultiplier: talkLineSpacingMultiplier,
 			MaxLines:              maxLines,
 			MaxChars:              talkMaxCharsInput,
@@ -322,7 +320,6 @@ func (d *LinearTalkDialog) finishResponsePresentation() {
 	// Handle errors
 	if d.currentResponse.Error != nil {
 		// we will not print the error - because it is not really an error
-		// d.Output.AddTextRaw(fmt.Sprintf(errorOutputFormat, d.currentResponse.Error))
 		return
 	}
 

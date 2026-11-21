@@ -557,7 +557,7 @@ func (g *GameScene) handleCombatAdjacentSpellTargetInput() {
 		target, valid, _ := g.gameState.CombatAdjacentSpellPreview()
 		spell := g.gameState.CombatScene.AdjacentSpellTargeting.Request.Spell
 		spellName := references.GetSpellName(spell)
-		prompt := spellName + " " + direction.GetDirectionCompassName() + " - invalid target"
+		prompt := spellName + " " + direction.GetDirectionCompassName() + " - Nothing there!"
 		if !g.gameState.CombatTerrainAllowsObjectDisplay(target) || valid {
 			prompt = spellName + " " + direction.GetDirectionCompassName() + " - Enter: cast, Esc: cancel"
 		}
@@ -590,7 +590,7 @@ func (g *GameScene) handleCombatAdjacentSpellTargetInput() {
 	case game_state.CombatAdjacentSpellTargetAwaitingDirection:
 		g.gameState.SystemCallbacks.UI.ShowActionFeedback("Choose an adjacent direction.", true)
 	case game_state.CombatAdjacentSpellTargetInvalid:
-		g.gameState.SystemCallbacks.UI.ShowActionFeedback("Invalid target.", true)
+		g.gameState.SystemCallbacks.UI.ShowActionFeedback("Nothing there!", true)
 	case game_state.CombatAdjacentSpellTargetValidationFailed:
 		g.secondaryKeyState = PrimaryInput
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("")

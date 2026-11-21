@@ -16,7 +16,7 @@ func TestAtlasNotesLeadTheListAndExplainTheirKeys(t *testing.T) {
 	screen := ebiten.NewImage(1280, 720)
 	t.Cleanup(screen.Deallocate)
 	empty := atlasCleanupDossier()
-	empty.FixUnavailable, empty.FixNeedsNight = "Night only: 19:00-05:59.", true
+	empty.FixUnavailable, empty.FixNeedsNight = "Only at night!", true
 	view := NewAtlasViewState()
 	view.Filters.Places = journal.AtlasNotePlaces
 	dialog := NewAtlasDialog(empty, nil, newWidgetTestKeyboard(0), &view, func() {})
@@ -29,7 +29,7 @@ func TestAtlasNotesLeadTheListAndExplainTheirKeys(t *testing.T) {
 	require.Contains(t, teaching, "Ctrl+N while exploring.")
 	require.Contains(t, teaching, "By day Configure, Flexible Sextant Use.")
 	dialog.drawNotesBar(screen)
-	require.Contains(t, dialog.row.GetOutputStr(false), "N: Night only: 19:00-05:59.",
+	require.Contains(t, dialog.row.GetOutputStr(false), "N: Only at night!",
 		"an unavailable key says why in words")
 
 	noted := atlasCleanupDossier()

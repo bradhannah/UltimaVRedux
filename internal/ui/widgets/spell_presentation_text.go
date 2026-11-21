@@ -73,7 +73,7 @@ func appendReagentMark(line *text.LineBuilder, checked, selected bool) *text.Lin
 
 func spellFinderControls(action, escape string, searching bool) []ControlHint {
 	controls := []ControlHint{
-		{hintKeyUpDown, "Browse"}, {hintKeyShiftPage, hintActionPage}, {spellFilterKey, spellFilterHint},
+		{hintKeyUpDown, hintActionSpell}, {hintKeyShiftPage, hintActionListPage}, {spellFilterKey, spellFilterHint},
 	}
 	if searching {
 		controls = append(controls, ControlHint{spellClearKey, spellClearSearch})
@@ -92,7 +92,7 @@ func (d *ReagentMixingDialog) controls() []ControlHint {
 		escape = spellBackAction
 	}
 
-	return spellFinderControls("Choose spell", escape, d.browser.searching)
+	return spellFinderControls(hintActionSelect, escape, d.browser.searching)
 }
 
 // spellHint is one hand-placed hint. off dims a key that cannot work now.
@@ -116,7 +116,7 @@ func appendSpellHints(line *text.LineBuilder, hints ...spellHint) {
 // Enter is named for the selected spell's next step and dimmed when it is refused.
 // The keys every list shares (Shift+Up/Down, Backspace, 1-6) work and are in Help.
 func (d *SpellCastingDialog) writeFooter(output *text.Output, _ int, paged bool) {
-	browse := []spellHint{{hintKeyUpDown, "Browse", false}}
+	browse := []spellHint{{hintKeyUpDown, "Spell", false}}
 	act := []spellHint{{hintKeyEnter, "Cast", true}}
 	if spell := d.browser.current(); spell != nil {
 		id := references.Spell(spell.ID)
@@ -139,6 +139,6 @@ func (d *SpellCastingDialog) writeFooter(output *text.Output, _ int, paged bool)
 	appendSpellHints(output.AppendLine(), browse...)
 	appendSpellHints(output.AppendLine(), append(act, spellHint{hintKeyEsc, escape, false})...)
 	if paged {
-		appendSpellHints(output.AppendLine(), spellHint{hintKeySpace, "Next detail page", false})
+		appendSpellHints(output.AppendLine(), spellHint{hintKeySpace, hintActionDetails, false})
 	}
 }

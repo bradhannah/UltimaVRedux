@@ -30,7 +30,7 @@ func TestCharacterSelectionCasterProfileExplainsEveryActor(t *testing.T) {
 	require.Len(t, options, 3)
 	assert.Equal(t, widgets.CharacterSelectionAvailable, selectionOption(t, options, 0).State)
 	assert.Equal(t, widgets.CharacterSelectionUnavailable, selectionOption(t, options, 1).State)
-	assert.Contains(t, selectionOption(t, options, 1).Details[0], "no magical ability")
+	assert.Contains(t, selectionOption(t, options, 1).Details[0], "No magical ability!")
 	assert.Equal(t, widgets.CharacterSelectionUnavailable, selectionOption(t, options, 2).State)
 	assert.Equal(t, "Asleep", selectionOption(t, options, 2).Status)
 }
@@ -65,7 +65,7 @@ func TestCharacterSelectionSpellProfilesKeepIneffectiveTargetsConfirmable(t *tes
 	assert.Equal(t, widgets.CharacterSelectionAvailable, selectionOption(t, options, 0).State)
 	assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, options, 1).State)
 	assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, options, 2).State)
-	assert.Contains(t, selectionOption(t, options, 1).Details[1], "Confirmation consumes")
+	assert.Contains(t, selectionOption(t, options, 1).Details[1], "spent even with no effect")
 }
 
 func TestCharacterSelectionStatusProjectionPreservesSpellEligibility(t *testing.T) {
@@ -109,7 +109,7 @@ func TestCharacterSelectionPotionProfileAllowsSleepingBlueTargetAndDefersConsump
 	assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, options, 0).State)
 	assert.Equal(t, widgets.CharacterSelectionAvailable, selectionOption(t, options, 1).State)
 	assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, options, 2).State)
-	assert.Contains(t, selectionOption(t, options, 1).Details[1], "confirmed")
+	assert.Equal(t, []string{"The potion is spent either way."}, selectionOption(t, options, 1).Details)
 }
 
 func TestCharacterSelectionPotionProfileWarnsAboutCombatOnlyFieldEffects(t *testing.T) {
@@ -122,7 +122,7 @@ func TestCharacterSelectionPotionProfileWarnsAboutCombatOnlyFieldEffects(t *test
 		})
 
 		assert.Equal(t, widgets.CharacterSelectionWarning, selectionOption(t, options, 0).State)
-		assert.Contains(t, selectionOption(t, options, 0).Details[0], "no noticeable effect outside combat")
+		assert.Contains(t, selectionOption(t, options, 0).Details[0], "No noticeable effect on")
 	}
 }
 

@@ -153,24 +153,24 @@ func (d *ReadyEquipmentDialog) initializeTypography() {
 	// Intentional compact typography: Ready's dense gear columns need the original
 	// 20-size body, not the 23-size main-screen body used by broader readers.
 	d.font, _ = GetScaledFontWithOutput(FontConfig{
-		Size:        FontSizeCompact,
-		MaxLines:    1,
-		MaxChars:    readyInitialChars,
-		LineSpacing: 0, LineSpacingMultiplier: 0,
+		Size:                  FontSizeCompact,
+		MaxLines:              1,
+		MaxChars:              readyInitialChars,
+		LineSpacingMultiplier: 0,
 	})
 
 	// The character name is the window title; panel headings are section labels.
 	d.titleFont, d.titleOutput = GetScaledFontWithOutput(FontConfig{
-		Size:        FontSizeTitle,
-		MaxLines:    1,
-		MaxChars:    readyInitialChars,
-		LineSpacing: 0, LineSpacingMultiplier: 0,
+		Size:                  FontSizeTitle,
+		MaxLines:              1,
+		MaxChars:              readyInitialChars,
+		LineSpacingMultiplier: 0,
 	})
 	_, d.sectionOutput = GetScaledFontWithOutput(FontConfig{
-		Size:        FontSizeBody,
-		MaxLines:    1,
-		MaxChars:    readyInitialChars,
-		LineSpacing: 0, LineSpacingMultiplier: 0,
+		Size:                  FontSizeBody,
+		MaxLines:              1,
+		MaxChars:              readyInitialChars,
+		LineSpacingMultiplier: 0,
 	})
 }
 
@@ -968,7 +968,7 @@ func (d *ReadyEquipmentDialog) appendStatusControls(action string, refused bool,
 	hints = append(hints, ControlHint{hintKeyUpDown, hintActionItem}, ControlHint{"H", "Hand"},
 		ControlHint{"B", "Strength"}, ControlHint{hintKeyEnter, action})
 	if d.detailPageCount() > 1 {
-		hints = append(hints, ControlHint{hintKeySpace, "Details"})
+		hints = append(hints, ControlHint{hintKeySpace, hintActionDetails})
 	}
 	hints = append(hints, ControlHint{hintKeyEsc, hintActionClose})
 	PackControlHintsDimming(d.statusOutput, hints, width, etext.AlignStart,
@@ -995,12 +995,12 @@ func (d *ReadyEquipmentDialog) selectionGuidance() (string, string, bool) {
 	switch item.Preview.Selection {
 	case game_state.ReadyEquipmentEquip:
 		if item.Preview.RequiresConfirmation() {
-			return "Review removed items before replacing", "Review replacement", false
+			return "Replacing removes other items", "Review replacement", false
 		}
 
 		return "Ready to equip", readyActionReady, false
 	case game_state.ReadyEquipmentUnready:
-		return "Ready to unready", readyActionUnready, false
+		return "Enter removes it", readyActionUnready, false
 	case game_state.ReadyEquipmentNoChange:
 		return "No equipment change", "No change", false
 	}

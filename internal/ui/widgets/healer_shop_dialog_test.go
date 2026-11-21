@@ -59,7 +59,7 @@ func TestHealerShopDialogResizePreservesSelectionPhaseAndIntent(t *testing.T) {
 	require.Equal(t, references.HealerCure, dialog.GetSelectedService())
 	require.Equal(t, 0, dialog.GetSelectedRecipient().CharacterIndex)
 	require.Equal(t, HealerShopAwaitingApproval, dialog.GetPhase())
-	require.Contains(t, dialog.GetDetailText(), "Approve or cancel")
+	require.Contains(t, dialog.GetDetailText(), "Confirm or cancel")
 	require.Less(t, dialog.GetDetailBounds().Dx(), fullDetail.Dx())
 	requireHealerStatusConsumesRemainingSpace(t, dialog)
 	intent, ok := dialog.ConsumePendingTreatmentIntent()

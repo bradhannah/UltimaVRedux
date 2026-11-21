@@ -280,14 +280,12 @@ func (b *SaveSlotBrowser) ensureLayout() {
 
 	_, b.titleOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeTitle,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              modalDialogTitleMaxChars,
 	})
 	b.bodyFont, b.rowOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: saveSlotBrowserBodyLineSpacing,
 		MaxLines:              saveSlotBrowserRowLines,
 		MaxChars:              saveSlotBrowserMinimumTextChars,
@@ -925,7 +923,7 @@ func (b *SaveSlotBrowser) populateFooterOutput() {
 	PackControlHints(b.footerOutput, navigation, width, etext.AlignCenter)
 	primary := b.primaryActionLabel
 	if view := b.selectedView(); view == nil || !view.PrimaryEnabled {
-		primary += " unavailable"
+		primary = "Cannot " + strings.ToLower(strings.Fields(primary)[0]) + " this"
 	}
 	PackControlHints(b.footerOutput, []ControlHint{{hintKeyEnter, primary}, cancel}, width, etext.AlignCenter)
 	if b.newestLegend != "" {

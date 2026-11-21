@@ -137,7 +137,7 @@ func TestGuildAndReagentOriginalPartialBatchReceipts(t *testing.T) {
 				completeReagentPurchase(t, fixture, shop, 2)
 				require.Equal(t, quote.BundleQuantity, fixture.state.PartyState.Inventory.Reagent.Get(quote.Reagent))
 				require.Contains(t, shop.GetReceiptText(), "Batch stopped: 1 of 2 bundles purchased.")
-				require.Contains(t, shop.GetReceiptText(), fmt.Sprintf("Paid %d gold", quote.PricePerBundle))
+				require.Contains(t, shop.GetReceiptText(), fmt.Sprintf("for %d gold", quote.PricePerBundle))
 				shop.Dismiss()
 			}
 			pumpMerchantWorkflowUntil(t, fixture, func() bool { return !fixture.state.EventQueueManager.HasActiveWorkflows() })

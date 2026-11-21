@@ -131,7 +131,7 @@ func (g *GameState) sextantUnavailableReason() string {
 			return "Invalid game hour."
 		}
 
-		return "Night only: 19:00-05:59."
+		return "Only at night!"
 	case SextantReady:
 		return ""
 	}

@@ -208,15 +208,15 @@ func (f *merchantModalFrame) newOutputs(budget merchantModalTextBudget) (*gamete
 	*gametext.Output,
 ) {
 	_, headerOutput := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeTitle, LineSpacing: 0, LineSpacingMultiplier: budget.lineSpacing,
+		Size: FontSizeTitle, LineSpacingMultiplier: budget.lineSpacing,
 		MaxLines: 1, MaxChars: budget.minimumChars,
 	})
 	bodyFont, bodyOutput := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: budget.lineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: budget.lineSpacing,
 		MaxLines: budget.maximumBodyLines, MaxChars: budget.minimumChars,
 	})
 	_, footerOutput := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: budget.lineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: budget.lineSpacing,
 		MaxLines: budget.footerLines, MaxChars: budget.minimumChars,
 	})
 	headerOutput.SetMaxCharsPerLine(max(budget.minimumChars,
@@ -252,7 +252,7 @@ func (f *merchantModalFrame) drawOutputs(screen *ebiten.Image, header, body, foo
 // newHeaderNoteOutput creates the body-size output for the lines under the title.
 func (f *merchantModalFrame) newHeaderNoteOutput(lineSpacing float64) *gametext.Output {
 	font, output := GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: lineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: lineSpacing,
 		MaxLines: max(1, f.headerNoteLines), MaxChars: 1,
 	})
 	output.SetMaxCharsPerLine(font.CharsForWidth(max(1, f.headerText.Dx())))

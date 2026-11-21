@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -28,6 +29,55 @@ var (
 	errRequiredFileSize = errors.New("required original-data file has an unexpected size")
 )
 
+type problemKind int
+
+const (
+	problemMissing problemKind = iota
+	problemWrongSize
+	problemUnreadable
+)
+
+// fileProblemError is a failure a player can cause: a required file that is missing,
+// of the wrong size or unreadable. Its text is the technical error; PlainReason
+// words it for the player.
+type fileProblemError struct {
+	name string
+	kind problemKind
+	err  error
+}
+
+func (p *fileProblemError) Error() string { return p.err.Error() }
+
+func (p *fileProblemError) Unwrap() error { return p.err }
+
+func statProblemKind(err error) problemKind {
+	if errors.Is(err, fs.ErrNotExist) {
+		return problemMissing
+	}
+
+	return problemUnreadable
+}
+
+// PlainReason says in plain words why an installation check failed, for the
+// problems a player can cause: a required file that is missing, of the wrong size
+// or unreadable. It returns "" for any other failure.
+func PlainReason(err error) string {
+	var problem *fileProblemError
+	if !errors.As(err, &problem) {
+		return ""
+	}
+	switch problem.kind {
+	case problemMissing:
+		return problem.name + " is missing from it."
+	case problemWrongSize:
+		return problem.name + " is not the right size."
+	case problemUnreadable:
+		return problem.name + " could not be read."
+	default:
+		panic("unknown installation problem kind")
+	}
+}
+
 // ValidateInstallation verifies an exact data directory without creating GPU
 // resources or active gameplay state.
 func ValidateInstallation(ctx context.Context, directory string) error {
@@ -40,10 +90,12 @@ func ValidateInstallation(ctx context.Context, directory string) error {
 	dataPath := files.Resolve(directory, files.DataOvl)
 	info, err := os.Stat(dataPath)
 	if err != nil {
-		return fmt.Errorf("required %s is unavailable: %w", files.DataOvl, err)
+		return &fileProblemError{name: files.DataOvl, kind: statProblemKind(err),
+			err: fmt.Errorf("required %s is unavailable: %w", files.DataOvl, err)}
 	}
 	if info.Size() != originalDataOvlSize {
-		return fmt.Errorf("%w: %s has size %d, expected %d", errDataOvlSize, files.DataOvl, info.Size(), originalDataOvlSize)
+		return &fileProblemError{name: files.DataOvl, kind: problemWrongSize,
+			err: fmt.Errorf("%w: %s has size %d, expected %d", errDataOvlSize, files.DataOvl, info.Size(), originalDataOvlSize)}
 	}
 	if err := validateRequiredCatalogue(ctx, directory); err != nil {
 		return err
@@ -137,10 +189,12 @@ func validateBoundedFile(ctx context.Context, directory, name string, maximumSiz
 	path := files.Resolve(directory, name)
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("required %s is unavailable: %w", name, err)
+		return &fileProblemError{name: name, kind: statProblemKind(err),
+			err: fmt.Errorf("required %s is unavailable: %w", name, err)}
 	}
 	if info.Size() <= 0 || info.Size() > maximumSize {
-		return fmt.Errorf("%w: %s has unsupported size %d", errRequiredFileSize, name, info.Size())
+		return &fileProblemError{name: name, kind: problemWrongSize,
+			err: fmt.Errorf("%w: %s has unsupported size %d", errRequiredFileSize, name, info.Size())}
 	}
 	//nolint:gosec // The player selects directory; name comes from the fixed required-file catalogue.
 	file, err := os.Open(path)
@@ -164,10 +218,12 @@ func validateExactFile(ctx context.Context, directory, name string, expectedSize
 	path := files.Resolve(directory, name)
 	info, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("required %s is unavailable: %w", name, err)
+		return &fileProblemError{name: name, kind: statProblemKind(err),
+			err: fmt.Errorf("required %s is unavailable: %w", name, err)}
 	}
 	if info.Size() != int64(expectedSize) {
-		return fmt.Errorf("%w: %s has size %d, expected %d", errRequiredFileSize, name, info.Size(), expectedSize)
+		return &fileProblemError{name: name, kind: problemWrongSize,
+			err: fmt.Errorf("%w: %s has size %d, expected %d", errRequiredFileSize, name, info.Size(), expectedSize)}
 	}
 	//nolint:gosec // The player selects directory; name is a fixed required filename.
 	file, err := os.Open(path)

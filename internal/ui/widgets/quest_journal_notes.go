@@ -428,7 +428,7 @@ func noteDate(at journal.GameTime) string {
 
 func (d *QuestJournalDialog) requestNotes(intent NotesIntent) {
 	if d.notesView.onIntent == nil {
-		d.SetNotesStatus("Notes are unavailable.")
+		d.SetNotesStatus(questJournalNotesCannotSave)
 
 		return
 	}
@@ -476,7 +476,7 @@ func (d *QuestJournalDialog) handleNotesNew(shift bool) {
 		return
 	}
 	if len(d.notesView.notes.Notes) >= journal.MaxNotes {
-		d.SetNotesStatus(fmt.Sprintf("Notebook full: %d notes. Delete one to write another.", journal.MaxNotes))
+		d.SetNotesStatus(questJournalNotebookFull)
 
 		return
 	}
@@ -635,7 +635,7 @@ func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 	}
 	paging := ""
 	if pages := d.GetDetailPageCount(); pages > 1 {
-		paging = fmt.Sprintf("[Space] Detail %d/%d  ", d.detailPage+1, pages)
+		paging = fmt.Sprintf("[Space] Details %d/%d  ", d.detailPage+1, pages)
 	}
 	common := d.showDoneHint() + "[Shift+N] New section  [/] Search  " + tabs + paging + "[Esc/Shift+J] Close"
 	row := d.selectedNotesRow()

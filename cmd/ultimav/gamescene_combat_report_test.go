@@ -61,7 +61,7 @@ func TestCombatGetUsesReportWithoutPopupOrPresentationTurn(t *testing.T) {
 	assert.Contains(t, scene.combatEventPlainText(entry), "Gold +38")
 	scene.combatMapGetSecondary(references.Down)
 	require.Equal(t, 3, scene.combatHUD.historyCount)
-	assert.Contains(t, scene.combatEventPlainText(scene.combatHUD.history[2]), "PICKUP FAILED")
+	assert.Contains(t, scene.combatEventPlainText(scene.combatHUD.history[2]), "cannot take it")
 	assert.Zero(t, scene.dialogStack.Count())
 }
 
@@ -225,6 +225,6 @@ func TestCombatPickupTextDistinguishesBorrowedTorchFromFailure(t *testing.T) {
 	}}
 
 	assert.Equal(t, "PICKUP: Mariah: Borrowed!", combatPickupText(borrowed))
-	assert.Equal(t, "PICKUP FAILED: Mariah: Nothing to get!", combatPickupText(refused))
+	assert.Equal(t, "Mariah cannot take it: Nothing to get!", combatPickupText(refused))
 	assert.Equal(t, "LOOT: Iolo collected Gold +38", combatPickupText(reportPickupEvent().Pickup))
 }

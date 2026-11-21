@@ -34,7 +34,7 @@ func FormatInnReceipt(display InnActionResultDisplay) string {
 	parts = append(parts, fmt.Sprintf("Paid %d gold.", display.ListedCharge))
 	if display.FaulineiTheft > 0 {
 		parts = append(parts, fmt.Sprintf(
-			"Another %d gold is missing. You have %d gold left.", display.FaulineiTheft, display.FinalGold,
+			"%d more gold was stolen! Thou hast %d gold left.", display.FaulineiTheft, display.FinalGold,
 		))
 	}
 

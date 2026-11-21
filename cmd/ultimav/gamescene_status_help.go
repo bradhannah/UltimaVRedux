@@ -9,7 +9,7 @@ func (g *GameScene) currentHelpStatus() widgets.HelpStatusView {
 	view := widgets.HelpStatusView{Worn: nil, Effects: nil, Food: g.gameState.PartyState.Inventory.Provisions.Food.Get()}
 	if g.gameState.CombatScene != nil {
 		view.Effects = append(view.Effects, widgets.StatusHelpEntry{
-			Name: "Possession resistance", Description: combatPossessionHelp, Tint: [3]float32{1, 1, 1},
+			Name: "Possession", Description: combatPossessionHelp, Tint: [3]float32{1, 1, 1},
 		})
 	}
 	for _, artifact := range g.gameState.GetWornArtifactStatuses() {

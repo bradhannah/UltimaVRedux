@@ -51,7 +51,7 @@ func (g *GameState) withUseItemGuidance(info UseableItemInfo, context UsageConte
 func (g *GameState) addPotionUseGuidance(info *UseableItemInfo, potion references.Potion, context UsageContext) {
 	info.Consumption = "Single use."
 	if !g.ReviewPotionUse(potion, context).EffectAvailable {
-		warnUseItemIneffective(info, "It may have no effect here, but will still be consumed.")
+		warnUseItemIneffective(info, "It may have no effect here, and is spent all the same.")
 	}
 }
 
@@ -64,12 +64,12 @@ func (g *GameState) addScrollUseGuidance(info *UseableItemInfo, scroll reference
 		}
 	case references.ScrollInManiCorp:
 		if !g.PartyState.HasDeadMembers() {
-			warnUseItemIneffective(info, "No companion is dead. An attempt still consumes the scroll.")
+			warnUseItemIneffective(info, "No one is dead! The scroll is spent all the same.")
 		}
 	case references.ScrollAnTym:
 		location := g.MapState.PlayerLocation.Location
 		if location == references.Stonegate || location == references.Doom {
-			warnUseItemIneffective(info, "It has no effect here, but will still be consumed.")
+			warnUseItemIneffective(info, "No effect here, and it is spent all the same.")
 		}
 	case references.ScrollVasLor, references.ScrollInSanct, references.ScrollInAn,
 		references.ScrollInQuasWis, references.ScrollKalXenCorp:

@@ -135,7 +135,7 @@ func TestZStatsPagingFooterFitsMinimumAndLargerSizes(t *testing.T) {
 				footer := dialog.footerOutput.GetOutputStr(false)
 				require.Contains(t, footer, "[Tab/Shift+Tab]")
 				require.Contains(t, footer, "[Shift+Up/Down]")
-				require.Contains(t, footer, "[Esc]")
+				require.Contains(t, footer, "[Esc")
 				require.LessOrEqual(t, dialog.footerOutput.GetTotalHeightForLines(
 					dialog.footerOutput.GetPanelContentLineCount()),
 					float64(dialog.layout.footerRect.Dy()-2*dialog.layout.padding))

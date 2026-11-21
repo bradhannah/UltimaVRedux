@@ -41,7 +41,7 @@ func TestReagentShopDialogUsesFullWorkspaceAndProjectionFreeCatalog(t *testing.T
 	assert.Contains(t, dialog.GetDetailText(), "Per bundle: 10 Ginseng for 20 gold.")
 	assert.Contains(t, dialog.GetDetailText(), "Max: 9 bundles.")
 	assert.NotContains(t, dialog.GetDetailText(), "->")
-	assert.Equal(t, "[Up/Down] Select   [Enter] Purchase   [Esc] Leave", dialog.GetShell().GetFooterView().Guidance)
+	assert.Equal(t, "[Up/Down] Select   [Enter] Buy   [Esc] Leave", dialog.GetShell().GetFooterView().Guidance)
 	requireReagentStatusConsumesRemainingSpace(t, dialog)
 }
 
@@ -77,7 +77,7 @@ func TestReagentShopDialogBlockedRowsRemainReadableAndEmitNoIntent(t *testing.T)
 
 	pressReagentShopKey(dialog, keyboard, ebiten.KeyDown)
 	assert.Equal(t, references.Garlic, dialog.GetSelectedReagent())
-	assert.Contains(t, compactReagentText(dialog.GetDetailText()), "inventory is full at 99")
+	assert.Contains(t, compactReagentText(dialog.GetDetailText()), "not carry any more Garlic")
 	nameColor, valueColor := reagentCatalogRowColors(dialog.selectedQuote(), true)
 	assert.Equal(t, DialogSelectedText, nameColor)
 	assert.Equal(t, DialogSelectedText, valueColor)

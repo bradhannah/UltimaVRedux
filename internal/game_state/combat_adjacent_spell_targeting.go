@@ -46,7 +46,7 @@ type CombatAdjacentSpellTargetResult struct {
 // See ref:SPELL-0006.
 func (g *GameState) BeginCombatAdjacentSpellTargeting(request CastRequest) SpellValidationResult {
 	if g.CombatScene == nil || g.CombatScene.hasPlayerActionOwner() {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Cannot cast now!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Thou canst not cast now!"}
 	}
 	activeIdx, active := g.activeCombatPartyMemberIndex()
 	if !active || request.CasterIdx != activeIdx {
@@ -57,7 +57,7 @@ func (g *GameState) BeginCombatAdjacentSpellTargeting(request CastRequest) Spell
 		return validation
 	}
 	if references.GetSpellTargetingProfile(request.Spell, references.ContextCombat).Selection != references.TargetAdjacentTile {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Spell not implemented!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!"}
 	}
 	g.CombatScene.AdjacentSpellTargeting = &CombatAdjacentSpellTargeting{
 		Caster:  g.CombatScene.GetCurrentTurnIdentity(),

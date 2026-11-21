@@ -61,7 +61,7 @@ type pendingCombatSpell struct {
 // See ref:SPELL-0001.
 func (g *GameState) BeginCombatSpellTargeting(request CastRequest) SpellValidationResult {
 	if g.CombatScene == nil || g.CombatScene.hasPlayerActionOwner() {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Cannot cast now!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Thou canst not cast now!"}
 	}
 
 	activeIdx, active := g.activeCombatPartyMemberIndex()
@@ -75,10 +75,10 @@ func (g *GameState) BeginCombatSpellTargeting(request CastRequest) SpellValidati
 	}
 	profile := references.GetSpellTargetingProfile(request.Spell, references.ContextCombat)
 	if profile.Selection != references.TargetCombatantCrosshair && profile.Selection != references.TargetTileCrosshair {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Invalid target!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Nothing there!"}
 	}
 	if !isCombatProjectileSpell(request.Spell) && !IsCombatFieldSpell(request.Spell) {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Spell not implemented!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!"}
 	}
 
 	casterIdentity := g.CombatScene.GetCurrentTurnIdentity()

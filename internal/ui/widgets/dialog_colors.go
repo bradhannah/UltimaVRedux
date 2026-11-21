@@ -99,7 +99,8 @@ var (
 	// DialogStatusWarningColor - Warning or error status messages
 	// Examples: "Cannot equip - strength too low", "Not enough gold"
 	// Visual role: Attention-grabbing, indicates a problem or blocker
-	DialogStatusWarningColor stdcolor.Color = color.EGARed
+	// Light red: dark EGA red is hard to read as text on black.
+	DialogStatusWarningColor stdcolor.Color = color.EGALightRed
 
 	// DialogControlKeyColor - Keyboard keys shown in control hints
 	// Examples: "[Space]", "[Esc]", "[Up/Down]", "[</>/1-6]"

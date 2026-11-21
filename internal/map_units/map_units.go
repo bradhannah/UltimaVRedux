@@ -5,12 +5,8 @@ import (
 	"github.com/bradhannah/UltimaVRedux/pkg/helpers"
 )
 
-type (
-	// MapUnits is the set of NPCs, enemies and vehicles placed on one map.
-	MapUnits []MapUnit
-	// XyOccupiedMap marks occupied tiles as [x][y]; see CreateFreshXyOccupiedMap.
-	XyOccupiedMap map[int]map[int]bool
-)
+// MapUnits is the set of NPCs, enemies and vehicles placed on one map.
+type MapUnits []MapUnit
 
 // ReplaceWith replaces a controller's units with the provided ordered instances.
 func (m *MapUnits) ReplaceWith(units []MapUnit) {
@@ -342,21 +338,4 @@ func (m *MapUnits) RemoveAllEnemies() int {
 // Used for Stonegate volcano trap - more definitive than hiding.
 func (m *MapUnits) ClearAllMapUnits() {
 	*m = (*m)[:0]
-}
-
-// CreateFreshXyOccupiedMap builds the occupancy map of visible, non-empty units, keyed by X then Y.
-func (m *MapUnits) CreateFreshXyOccupiedMap() *XyOccupiedMap {
-	occupiedMap := make(XyOccupiedMap)
-	for _, mapUnit := range *m {
-		if mapUnit.IsEmptyMapUnit() || !mapUnit.IsVisible() {
-			continue
-		}
-		_, exists := occupiedMap[int(mapUnit.Pos().X)]
-		if !exists {
-			occupiedMap[int(mapUnit.Pos().X)] = make(map[int]bool)
-		}
-		occupiedMap[int(mapUnit.Pos().X)][int(mapUnit.Pos().Y)] = true
-	}
-
-	return &occupiedMap
 }

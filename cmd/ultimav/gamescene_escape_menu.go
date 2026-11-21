@@ -69,7 +69,7 @@ func (g *GameScene) DoEscapeMenu(game *Game) {
 		// Wait for the opening key to release without delaying the next input.
 		g.keyboard.PrepareForTransition(0)
 	})
-	buttonList.AddButton("Back to Main Menu", func() {
+	buttonList.AddButton("Return to Main Menu", func() {
 		g.dialogStack.MustRemoveWidgetInstance(buttonList)
 		g.openEscapeDeparturePrompt(game, escapeDepartureMainMenu, "")
 	})

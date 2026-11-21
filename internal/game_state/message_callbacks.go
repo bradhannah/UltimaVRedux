@@ -1,7 +1,5 @@
 package game_state
 
-import "image/color"
-
 // MessageStyle identifies the semantic presentation of a message segment.
 type MessageStyle int
 
@@ -40,9 +38,6 @@ type MessageCallbacks struct {
 
 	// AppendStyledMessage presents a complete styled row without exposing its renderer.
 	AppendStyledMessage func(message StyledMessage)
-
-	// AddRowStrWithColor adds a single-color line with specified color (optional - may be nil)
-	AddRowStrWithColor func(message string, textColor color.Color)
 }
 
 // NewMessageCallbacks validates a complete named set of message capabilities.

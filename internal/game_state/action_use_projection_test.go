@@ -267,7 +267,7 @@ func TestUseWarningsDoNotBecomeActivationRestrictions(t *testing.T) {
 				(potion != references.White && context != UsageCombat)
 			require.Equal(t, !ineffective, item.AvailableNow)
 			if ineffective {
-				require.Contains(t, item.Warning, "still be consumed")
+				require.Contains(t, item.Warning, "spent all the same")
 			}
 		}
 	}

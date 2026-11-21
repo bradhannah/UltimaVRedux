@@ -751,28 +751,24 @@ func (m *SaveDescriptionEntryModal) ensureRendering(width, height int) {
 	})
 	m.font, m.fieldOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	})
 	_, m.promptOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	})
 	_, m.hintOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              saveDescriptionHintMaximumLines,
 		MaxChars:              1,
 	})
 	_, m.messageOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              saveDescriptionValidationLines,
 		MaxChars:              1,

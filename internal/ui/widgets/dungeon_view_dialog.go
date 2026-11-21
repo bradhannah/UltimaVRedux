@@ -142,7 +142,7 @@ func newDungeonViewOutput(screenWidth int) *utext.Output {
 	return newDungeonViewOutputSized(screenWidth, FontSizeCompact)
 }
 
-//nolint:exhaustruct_v5,mnd // A bounded text panel has room for wrapped headings and hints, even at compact widths.
+//nolint:mnd // A bounded text panel has room for wrapped headings and hints, even at compact widths.
 func newDungeonViewOutputSized(screenWidth int, size StandardFontSize) *utext.Output {
 	_, output := GetScaledFontWithOutputForWidth(FontConfig{
 		Size: size, LineSpacingMultiplier: 1.1, MaxLines: 16, MaxChars: 120,

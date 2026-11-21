@@ -1,7 +1,5 @@
 package game_state
 
-import "fmt"
-
 // SelectCombatPlayer handles numeric selection at a player-input boundary.
 // Combat selection must use encounter entries, not just the persistent roster:
 // a living party member can already have fled or entered the final mirror.
@@ -24,7 +22,7 @@ func (g *GameState) SelectCombatPlayer(index int) bool {
 
 	actor := combat.GetCurrentTurnIdentity()
 	combat.SetSoloMoveCharacter(index)
-	g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Character %d solo move", index+1))
+	g.SystemCallbacks.Message.AddRowStr("Set active player: " + g.PartyState.GetCharacter(index).GetNameAsString())
 	if !actor.IsPartyMember || actor.EntityIndex != index {
 		g.FinishCombatSelection()
 	}
@@ -38,7 +36,7 @@ func (g *GameState) clearCombatSoloSelection() {
 	}
 	g.ClearActivePlayer()
 	g.CombatScene.ClearSoloMoveMode()
-	g.SystemCallbacks.Message.AddRowStr("Round-robin mode")
+	g.SystemCallbacks.Message.AddRowStr("Set active player: None!")
 }
 
 func (g *GameState) canSelectCombatPlayer(index int) bool {

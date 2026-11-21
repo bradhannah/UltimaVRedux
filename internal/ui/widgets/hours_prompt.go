@@ -142,7 +142,7 @@ func (p *HoursPrompt) ensureLayout() {
 	padding := max(inputPromptMinimumPadding, p.pixelUnit*inputPromptPaddingUnits)
 	var font *text.UltimaFont
 	font, p.output = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: hoursPromptLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: hoursPromptLineSpacing,
 		MaxLines: hoursPromptLines, MaxChars: hoursPromptChars,
 	})
 	letter, _ := font.MeasureString("M")

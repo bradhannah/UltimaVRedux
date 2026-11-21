@@ -16,7 +16,7 @@ import (
 
 const (
 	doomRecoveryName        = "Pre-Doom Recovery"
-	doomRecoveryDescription = "Automatic recovery point immediately before entering Doom."
+	doomRecoveryDescription = "Saved automatically just before you entered Doom."
 	doomRunIDBytes          = 16
 )
 

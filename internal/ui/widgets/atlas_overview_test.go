@@ -136,7 +136,7 @@ func TestAtlasSuppliedDecorationCannotBecomeNamedSelection(t *testing.T) {
 		before := view
 		dialog.handleKey(ebiten.KeyEnter)
 		require.Equal(t, before, view)
-		require.Equal(t, "Measure this place to locate it from the list.", dialog.status)
+		require.Equal(t, "Take a sextant reading there to place it on the Map.", dialog.status)
 		require.Empty(t, dialog.mapCallouts())
 		require.Zero(t, dialog.mappedCount())
 		view.Filters.Places = journal.AtlasShrinePlaces

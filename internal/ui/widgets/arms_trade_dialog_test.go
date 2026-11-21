@@ -134,7 +134,7 @@ func TestArmsTradeDialogRefusalKindsNeverEmitRequests(t *testing.T) {
 					require.Equal(t, test.kind, dialog.GetRefusalKind())
 					require.Equal(t, test.terminal, dialog.GetRefusalKind().IsTerminal())
 					require.Contains(t, strings.ToLower(dialog.GetBodyText()), "cannot accept")
-					require.Contains(t, dialog.GetFooterGuidance(), "Acknowledge")
+					require.Contains(t, dialog.GetFooterGuidance(), "Continue")
 					require.NotContains(t, dialog.GetFooterGuidance(), "Sell All")
 					pressArmsTradeKey(dialog, keyboard, key)
 					require.True(t, dialog.IsDismissed())

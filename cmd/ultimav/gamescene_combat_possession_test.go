@@ -32,9 +32,9 @@ func TestCombatPossessionReportTypedTextAndNoHiddenControllerDisclosure(t *testi
 		{game_state.CombatEventPossessionResistance, 7, game_state.CombatPossessionReleaseNatural, "'s resistance grows stronger."},
 		{game_state.CombatEventPossessionResistance, 10, game_state.CombatPossessionReleaseNatural, " is close to breaking free!"},
 		{game_state.CombatEventPossessionRelease, 12, game_state.CombatPossessionReleaseNatural, " breaks free of the enchantment!"},
-		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerDefeated, " regains control as the controller is defeated!"},
-		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerEscaped, " regains control as the controller flees!"},
-		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerReplaced, " regains control as the transformed controller's hold breaks!"},
+		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerDefeated, " regains control as the possessor is defeated!"},
+		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerEscaped, " regains control as the possessor flees!"},
+		{game_state.CombatEventPossessionRelease, 8, game_state.CombatPossessionReleaseControllerReplaced, " regains control as the transformed possessor's hold breaks!"},
 	} {
 		event := game_state.CombatEvent{Kind: test.kind, Target: game_state.CombatFeedbackEntity{IsPartyMember: true, Index: actor.EntityIndex}, PossessionEpisodeID: 17, PossessionTurns: test.turns, PossessionReleaseReason: test.reason}
 		before := snapshotBlockedCombatState(t, state)
@@ -64,9 +64,9 @@ func TestCombatPossessionProgressAndHelpAreDetached(t *testing.T) {
 	view := scene.currentHelpStatus()
 	found := false
 	for _, entry := range view.Effects {
-		if entry.Name == "Possession resistance" {
+		if entry.Name == "Possession" {
 			found = true
-			for _, fragment := range []string{"own completed scheduled turns", "sleep", "captivity", "Time Stop", "Quickness", "intelligence", "turn 12", "An Xen Ex", "actual escape", "Daemon", "Chaos Sword"} {
+			for _, fragment := range []string{"breaks free in time", "An Xen Ex", "possessor is slain", "turned into a rat"} {
 				assert.Contains(t, entry.Description, fragment)
 			}
 		}

@@ -77,7 +77,7 @@ func TestSurfaceQuitSaveResultPreservesDestinationAndReportsFailures(t *testing.
 					assert.Equal(t, "reviewed", repository.records[player_save.Slot07].Revision)
 				}
 				if outcome == "no active slot" {
-					assert.Contains(t, dialog.GetMessage(), "Save or load a player slot first.")
+					assert.Contains(t, dialog.GetMessage(), "Save or load a game first.")
 					assert.Empty(t, repository.saves)
 				}
 				savesBefore := len(repository.saves)

@@ -113,7 +113,7 @@ func (g *GameScene) drawCombatPartySpellHUD(screen *ebiten.Image, turnBounds, ev
 	top.AppendLine().Text("CAST: ", widgets.DialogLabelColor).Text(references.GetSpellName(targeting.Request.Spell), widgets.DialogValueColor).WordWrap().Done()
 	top.AppendLine().Text("Caster: ", widgets.DialogLabelColor).Text(g.gameState.PartyState.GetCharacter(targeting.Caster.EntityIndex).GetNameAsString(), widgets.DialogValueColor).WordWrap().Done()
 	if !preview.Valid {
-		top.AppendLine().Text("No party recipient here.", widgets.DialogStatusWarningColor).WordWrap().Done()
+		top.AppendLine().Text("No one is there!", widgets.DialogStatusWarningColor).WordWrap().Done()
 		bottom.AppendLine().Text("Choose a visible party member.", widgets.DialogValueColor).WordWrap().Done()
 	} else {
 		top.AppendLine().Text("> ", widgets.DialogControlKeyColor).Text(preview.Name, widgets.DialogValueColor).WordWrap().Done()
@@ -135,7 +135,7 @@ func (g *GameScene) drawCombatPartySpellHUD(screen *ebiten.Image, turnBounds, ev
 		bottom.AppendLine().Text(preview.Consequence, widgets.DialogValueColor).WordWrap().Done()
 	}
 	bottom.AppendLine().Text("Cost: ", widgets.DialogLabelColor).Textf("%d MP + 1 mixture", widgets.DialogValueColor, references.GetSpellCircle(targeting.Request.Spell)).WordWrap().Done()
-	widgets.AppendControlHints(bottom.AppendLine(), "[Arrows/keypad] Aim   [Tab] Next recipient").WordWrap().Done()
+	widgets.AppendControlHints(bottom.AppendLine(), "[Arrows/keypad] Aim   [Tab] Next member").WordWrap().Done()
 	widgets.AppendControlHints(bottom.AppendLine(), "[Enter] Cast   [Esc] Cancel").WordWrap().Done()
 	top.DrawPanelContent(screen, turnBounds.Min, turnBounds.Dx(), etext.AlignStart)
 	if bottom != top {

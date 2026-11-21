@@ -271,7 +271,7 @@ func TestMixTopLineNamesWhatIsMissing(t *testing.T) {
 	dialog = NewReagentMixingDialog(newWidgetTestKeyboard(0), testMixCatalog(), reagents)
 	dialog.ChooseSpell(references.KalXen, true)
 	sentence, _ = dialog.topLine()
-	require.Equal(t, "Cannot mix: lacks 2 ingredients.", sentence)
+	require.Equal(t, "Insufficient reagents: 2 short!", sentence)
 }
 
 func TestMixTopLineStatesTheLossBeforeEnter(t *testing.T) {

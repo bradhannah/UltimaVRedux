@@ -128,7 +128,7 @@ func TestDungeonUseProjectionDescribesPreTargetConsumptionAndWhitePotionRejectio
 	woodenBox := requireUsableItem(t, items, references.WoodenBox)
 
 	assert.False(t, whitePotion.AvailableNow)
-	assert.Contains(t, whitePotion.Warning, "still be consumed")
+	assert.Contains(t, whitePotion.Warning, "spent all the same")
 	assert.Equal(t, "Single use.", resurrection.Consumption)
 	assert.False(t, shard.AvailableNow)
 	assert.Equal(t, "You cannot use it here.", shard.UnavailableReason)
@@ -208,7 +208,7 @@ func TestUseItemProjectionLimitsLocationFailureToNonCombatTimeStop(t *testing.T)
 	state.PartyState.Inventory.Scrolls.Set(references.ScrollAnTym, 1)
 	timeStop := requireUsableItem(t, state.GetUsableItemsForContext(UsageField), references.ScrollAnTym)
 	assert.False(t, timeStop.AvailableNow)
-	assert.Equal(t, "It has no effect here, but will still be consumed.", timeStop.Warning)
+	assert.Equal(t, "No effect here, and it is spent all the same.", timeStop.Warning)
 
 	for _, origin := range []references.Location{references.Stonegate, references.Doom} {
 		t.Run(origin.String()+" combat origin", func(t *testing.T) {

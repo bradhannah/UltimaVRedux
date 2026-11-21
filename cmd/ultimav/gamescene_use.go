@@ -73,7 +73,9 @@ func (g *GameScene) startUseWorkflow(context game_state.UsageContext, completeSu
 				Items:       gsItems,
 				Keyboard:    g.keyboard,
 				SpriteSheet: g.spriteSheet,
+				LastUsed:    g.lastUsedItem,
 				OnSelect: func(item game_state.UseableItemInfo) {
+					g.lastUsedItem = &item
 					if g.gameState.MapState.PlayerLocation != origin {
 						g.gameState.SystemCallbacks.UI.ShowActionFeedback("You cannot use that here.", true)
 
@@ -228,7 +230,9 @@ func (g *GameScene) StartDungeonUseWorkflow(token game_state.DungeonCommandCycle
 				Items:       gsItems,
 				Keyboard:    g.keyboard,
 				SpriteSheet: g.spriteSheet,
+				LastUsed:    g.lastUsedItem,
 				OnSelect: func(item game_state.UseableItemInfo) {
+					g.lastUsedItem = &item
 					selectedItem = &item
 				},
 				OnCancel: func() {},

@@ -37,6 +37,8 @@ const (
 	innShopPickupNumericColumn   = 2
 	innShopColumnName            = "NAME"
 	innShopColumnStatus          = "STATUS"
+	innShopColumnMayStay         = "MAY STAY?"
+	innNoRoomText                = "\"We have no room available.\" Pick up a guest first."
 	innStatusDead                = "Dead"
 	innStatusUnknown             = "Unknown"
 )
@@ -468,11 +470,11 @@ func (d *InnShopDialog) GetLeaveRowText(index int) [innShopLeaveColumns]string {
 		panic("InnShopDialog.GetLeaveRowText: index out of range")
 	}
 	row := d.state.LeaveRows[index]
-	eligibility := "Eligible"
+	eligibility := "May stay"
 	if !row.Eligible {
 		eligibility = innLeaveBlockLabel(row.BlockReason)
 	} else if innHasWarning(row.Warnings, game_state.InnWarningLastLivingMember) {
-		eligibility = "SEVERE WARNING"
+		eligibility = "Last one living"
 	}
 
 	return [innShopLeaveColumns]string{row.Identity.Name, innStatusName(row.Status), eligibility}
@@ -718,15 +720,15 @@ func (d *InnShopDialog) ensureLayout() {
 	d.lastScreenWidth, d.lastScreenHeight = width, height
 	d.shell.GetBounds()
 	_, d.modeOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: innShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: innShopLineSpacing,
 		MaxLines: innShopModeHeaderMaxLines, MaxChars: innShopMinimumTextChars,
 	})
 	d.rowFont, d.rowOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: innShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: innShopLineSpacing,
 		MaxLines: 1, MaxChars: innShopMinimumTextChars,
 	})
 	d.detailFont, d.detailOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: innShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: innShopLineSpacing,
 		MaxLines: innShopMaximumDetailLines, MaxChars: innShopMinimumTextChars,
 	})
 	d.calculateLayout()
@@ -840,7 +842,7 @@ func (d *InnShopDialog) configureMeasuredColumns() bool {
 	}
 	columnCount := innShopPickupColumns
 	if d.mode == InnShopLeave {
-		values[2] = []string{"ELIGIBILITY"}
+		values[2] = []string{innShopColumnMayStay}
 		values[3] = nil
 		columnCount = innShopLeaveColumns
 		for index := range d.state.LeaveRows {
@@ -922,7 +924,7 @@ func (d *InnShopDialog) drawRestCard(screen *ebiten.Image) {
 
 func (d *InnShopDialog) drawRosterTable(screen *ebiten.Image) {
 	drawMerchantPane(screen, d.tableBounds, d.pixelUnit())
-	headings := []string{innShopColumnName, innShopColumnStatus, "ELIGIBILITY"}
+	headings := []string{innShopColumnName, innShopColumnStatus, innShopColumnMayStay}
 	if d.mode == InnShopPickup {
 		headings = []string{innShopColumnName, innShopColumnStatus, "MONTHS", "CHARGE"}
 	}
@@ -1051,9 +1053,9 @@ func (d *InnShopDialog) populateRestDetail() {
 	d.detailOutput.AppendLine().LightGray("Nightly charge: ").Yellowf("%d gold", quote.Charge).Done()
 	if !quote.Affordable {
 		d.detailOutput.AppendLine().Textf(
-			"Gold %d; shortfall %d.", DialogStatusWarningColor,
-			quote.GoldBefore, int(quote.Charge)-int(quote.GoldBefore),
-		).Done()
+			"Thou hast not enough gold! %d short.", DialogStatusWarningColor,
+			int(quote.Charge)-int(quote.GoldBefore),
+		).WordWrap().Done()
 	}
 	d.detailOutput.AppendLine().LightGray("Wake: ").LightCyan(innWakeText(quote)).Done()
 	d.detailOutput.AppendLine().White("Living party members fully recover HP and class MP.").Done()
@@ -1078,19 +1080,20 @@ func (d *InnShopDialog) populateLeaveDetail() {
 	d.detailOutput.AppendLine().LightGray("Status: ").White(innStatusName(row.Status)).Done()
 	d.detailOutput.AppendLine().LightGreen("No charge today.").Done()
 	if rate, ok := trustedInnMonthlyRate(d.state); ok {
-		d.detailOutput.AppendLine().LightGray("Monthly rate: ").Yellowf("%d gold", rate).Done()
+		d.detailOutput.AppendLine().LightGray("Rate: ").Yellowf("%d gold", rate).
+			White(" per month, due at check-out.").WordWrap().Done()
 	}
 	switch {
 	case !row.Eligible:
 		d.detailOutput.AppendLine().Text(innLeaveBlockedText(row), DialogStatusWarningColor).WordWrap().Done()
 	case innHasWarning(row.Warnings, game_state.InnWarningLastLivingMember):
 		d.detailOutput.AppendLine().Text(
-			"SEVERE: this is the last living member. Leave remains confirmable.",
+			"This is thy last living companion. Thou canst still leave them here.",
 			DialogStatusWarningColor,
 		).WordWrap().Done()
 	default:
-		d.detailOutput.AppendLine().Text("Eligible. ", DialogDeltaPositive).
-			Text("Enter", DialogControlKeyColor).Text(" to review Leave.", DialogControlHintColor).Done()
+		d.detailOutput.AppendLine().Text("May stay. ", DialogDeltaPositive).
+			Text("Enter", DialogControlKeyColor).Text(" to go on.", DialogControlHintColor).Done()
 	}
 	d.appendInlineFeedback()
 }
@@ -1106,32 +1109,32 @@ func (d *InnShopDialog) populatePickupDetail() {
 	row := d.state.GuestRows[d.selectedPickup]
 	d.detailOutput.AppendLine().Text("PICK UP: "+row.Identity.Name, DialogHeaderColor).Done()
 	d.detailOutput.AppendLine().LightGray("Status: ").White(innStatusName(row.Status)).Done()
-	d.detailOutput.AppendLine().LightGray("Recorded / billable months: ").Whitef(
+	d.detailOutput.AppendLine().LightGray("Months stayed / to pay for: ").Whitef(
 		"%d / %d", row.MonthsAtInn, row.BilledMonths,
 	).Done()
 	if innHasWarning(row.Warnings, game_state.InnWarningMinimumMonthCharge) {
 		d.detailOutput.AppendLine().Text("Minimum charge is one month.", DialogLabelColor).Done()
 	}
-	d.detailOutput.AppendLine().LightGray("Monthly rate: ").Yellowf("%d gold", row.MonthlyRate).Done()
-	d.detailOutput.AppendLine().LightGray("Listed charge: ").Yellowf("%d gold", row.Charge).Done()
+	d.detailOutput.AppendLine().LightGray("Rate: ").Yellowf("%d gold", row.MonthlyRate).White(" per month.").Done()
+	d.detailOutput.AppendLine().Textf("\"That will be %d gold, please.\"", DialogValueColor, row.Charge).WordWrap().Done()
 	if !row.Affordable {
 		d.detailOutput.AppendLine().Textf(
-			"Gold %d; shortfall %d.", DialogStatusWarningColor,
-			row.GoldBefore, int(row.Charge)-int(row.GoldBefore),
-		).Done()
+			"Thou hast not enough gold! %d short.", DialogStatusWarningColor,
+			int(row.Charge)-int(row.GoldBefore),
+		).WordWrap().Done()
 	}
 	if !row.Confirmable || row.BlockReason != game_state.InnPickupBlockNone {
 		d.detailOutput.AppendLine().Text(innPickupBlockedText(row), DialogStatusWarningColor).WordWrap().Done()
 	} else {
 		if !row.Affordable {
 			d.detailOutput.AppendLine().Text(
-				"GUARD WARNING: confirmation with insufficient gold activates guards.",
+				"Agree without the gold, and the guards are called!",
 				DialogStatusWarningColor,
 			).WordWrap().Done()
 		}
 		if innHasWarning(row.Warnings, game_state.InnWarningPoisonDeath) {
 			d.detailOutput.AppendLine().Text(
-				row.Identity.Name+" is Poisoned and WILL DIE when picked up.",
+				row.Identity.Name+" is poisoned and will die when picked up.",
 				DialogStatusWarningColor,
 			).WordWrap().Done()
 		}
@@ -1146,7 +1149,7 @@ func (d *InnShopDialog) populateHelpDetail() {
 	d.detailOutput.AppendLine().White("Leaving costs nothing today and stores the companion at this Inn.").
 		WordWrap().Done()
 	d.detailOutput.AppendLine().White(
-		"At least one month is billed. The rate is recalculated when the companion is picked up.",
+		"At least one month is billed. The rate is worked out again at check-out.",
 	).
 		WordWrap().Done()
 	d.detailOutput.AppendLine().
@@ -1155,7 +1158,7 @@ func (d *InnShopDialog) populateHelpDetail() {
 		WordWrap().Done()
 	d.detailOutput.AppendLine().White("Dead guests remain stored. The active party must have room.").WordWrap().Done()
 	d.detailOutput.AppendLine().Text(
-		"Confirming without enough gold activates guards.", DialogStatusWarningColor,
+		"Agree without the gold, and the guards are called!", DialogStatusWarningColor,
 	).WordWrap().Done()
 }
 
@@ -1166,7 +1169,7 @@ func (d *InnShopDialog) appendPoisonWarnings(projections []game_state.InnCharact
 	}
 	d.detailOutput.AppendLine().Text("Poisoned: "+strings.Join(names, ", "), DialogStatusWarningColor).
 		WordWrap().Done()
-	d.detailOutput.AppendLine().Text("WILL DIE during Rest.", DialogStatusWarningColor).Done()
+	d.detailOutput.AppendLine().Text("Will die during Rest.", DialogStatusWarningColor).Done()
 }
 
 func (d *InnShopDialog) appendInlineFeedback() {
@@ -1188,14 +1191,14 @@ func (d *InnShopDialog) footerGuidance() string {
 	case InnShopBrowse:
 		const pages = "[R] Rest   [L] Leave   [P] Pick Up   [H] Help\n"
 		if d.mode == InnShopRest {
-			return pages + "[Enter] Review Rest   [Esc] Leave"
+			return pages + "[Enter] Review Rest   [Esc] Leave the inn"
 		}
 
-		return pages + "[Up/Down] Select   [Enter] Review   [Esc] Leave"
+		return pages + "[Up/Down] Select   [Enter] Review   [Esc] Leave the inn"
 	case InnShopAwaitingApproval:
-		return "Complete or cancel the Inn action dialog"
+		return "Confirm or cancel."
 	case InnShopAwaitingResult:
-		return "Processing Inn action"
+		return ""
 	case InnShopSessionError:
 		return merchantLeaveFooter
 	default:
@@ -1565,15 +1568,15 @@ func innStatusName(status party_state.CharacterStatus) string {
 func innLeaveBlockLabel(reason game_state.InnLeaveBlockReason) string {
 	switch reason {
 	case game_state.InnLeaveBlockAvatar:
-		return "Avatar stays"
+		return "Cannot stay"
 	case game_state.InnLeaveBlockDead:
 		return innStatusDead
 	case game_state.InnLeaveBlockMinimumParty:
-		return "Minimum party"
+		return "Party too small"
 	case game_state.InnLeaveBlockNoVacancy:
-		return "No vacancy"
+		return "No room available"
 	case game_state.InnLeaveBlockNone:
-		return "Eligible"
+		return "May stay"
 	default:
 		return "Blocked"
 	}
@@ -1582,7 +1585,7 @@ func innLeaveBlockLabel(reason game_state.InnLeaveBlockReason) string {
 func innRestBlockedText(reason game_state.InnRestBlockReason) string {
 	switch reason {
 	case game_state.InnRestBlockNoVacancy:
-		return "BLOCKED: no guest room is vacant. Pick Up a guest before Rest."
+		return innNoRoomText
 	case game_state.InnRestBlockNone:
 		return ""
 	default:
@@ -1593,13 +1596,13 @@ func innRestBlockedText(reason game_state.InnRestBlockReason) string {
 func innLeaveBlockedText(row game_state.InnLeaveRow) string {
 	switch row.BlockReason {
 	case game_state.InnLeaveBlockAvatar:
-		return row.Identity.Name + " is the Avatar and must remain in the active party."
+		return "Thy friends will not leave thee!"
 	case game_state.InnLeaveBlockDead:
-		return row.Identity.Name + " is Dead and cannot be left at the Inn."
+		return row.Identity.Name + " is dead and cannot be left at the inn."
 	case game_state.InnLeaveBlockMinimumParty:
 		return "At least one active party member must remain."
 	case game_state.InnLeaveBlockNoVacancy:
-		return "No guest room is vacant. Pick Up a guest before leaving a companion."
+		return innNoRoomText
 	case game_state.InnLeaveBlockNone:
 		return ""
 	default:
@@ -1610,7 +1613,7 @@ func innLeaveBlockedText(row game_state.InnLeaveRow) string {
 func innPickupBlockedText(row game_state.InnGuestRow) string {
 	switch row.BlockReason {
 	case game_state.InnPickupBlockDead:
-		return row.Identity.Name + " is Dead and remains stored at this Inn."
+		return row.Identity.Name + " is dead and remains stored at this inn."
 	case game_state.InnPickupBlockPartyFull:
 		return "The active party is full. Leave a companion before Pick Up."
 	case game_state.InnPickupBlockNone:

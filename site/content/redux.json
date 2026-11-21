@@ -32,42 +32,42 @@
     {
       "label": "Repeated Monster Division",
       "tag": "original",
-      "effect": "Original: surviving Slimes and Gargoyles can divide repeatedly. Off keeps Redux's one-child split limit; On restores repeated division."
+      "effect": "On: a Slime or Gargoyle that survives can divide again and again, as in the original. Off: each divides once, and its child never does."
     },
     {
       "label": "Remember Hidden Dungeon Discoveries",
       "tag": "helper",
-      "effect": "Remember discovered hidden doors and pits between visits. On keeps discoveries. Off resets them each fresh visit."
+      "effect": "On: hidden doors and pits you find stay found. Off: they are hidden again on your next visit."
     },
     {
       "label": "Show Subdued Unlit Dungeons",
       "tag": "original",
-      "effect": "Original: an unlit dungeon viewport is black. On shows subdued geometry without granting light; Off restores binary darkness."
+      "effect": "On: with no light you still make out dim walls and passages, but nothing is lit. Off: no light, no view, as in the original."
     },
     {
       "label": "Batch Merchant Theft",
       "tag": "original",
-      "effect": "On: one Faulinei theft per paid batch. Off: original theft per item, bundle or patient; theft can stop a batch early."
+      "effect": "On: when gold goes missing in a shop, it happens once for the whole purchase. Off: as in the original, once for each item, bundle or patient, which can cut a purchase short."
     },
     {
       "label": "Smooth Surface Movement",
       "tag": "look",
-      "effect": "Scroll while walking, riding, flying or boating. Mounts animate 25% faster. Gameplay timing, combat and dungeons are unchanged."
+      "effect": "On: the map glides as you walk, ride, fly or sail. Only the look changes; play, battles and dungeons run as before."
     },
     {
       "label": "Hidden Enemy Turns",
       "tag": "look",
-      "effect": "An enemy is hidden while invisible, under an arch or in the dark. On lists its coming turn in Turn Order as ??? unseen. Off leaves that turn out of the list. Your party is always named. Turn order itself is unchanged."
+      "effect": "On: an enemy you cannot see (invisible, under an arch or in the dark) still takes its place in Turn Order, as ??? unseen. Off: it is left out. The turns themselves are the same either way."
     },
     {
       "label": "Flexible Sextant Use",
       "tag": "original",
-      "effect": "Day or night, including surface settlement interiors. A Sextant is required; no dungeons or Underworld. Off: night use on the world map."
+      "effect": "On: the sextant works by day or night, on the world map and inside surface towns. Off: only at night on the world map, as in the original. It never works in dungeons or the Underworld."
     },
     {
       "label": "Ankh Visit Bonus",
       "tag": "original",
-      "effect": "A folk tale says an Ankh draws Lord British to your camp. There's no evidence the original did this, but it's here if you enjoy the idea. On: each living party member wearing an Ankh adds 5% to the 25% visit chance. Off: the original 25%."
+      "effect": "An old players' tale says an Ankh draws Lord British to your camp; the original shows no sign of it. On: each living member wearing an Ankh makes his visit a little more likely. Off: the original odds."
     },
     {
       "label": "Deed Experience",
@@ -77,7 +77,7 @@
     {
       "label": "Share Kill Experience",
       "tag": "helper",
-      "effect": "The original gives a kill's experience to whoever lands the killing blow. On: every living party member gets an equal share. Off: the original rule. Default: Off."
+      "effect": "On: every living member shares a kill's experience equally. Off: it all goes to whoever struck the killing blow, as in the original. Default: Off."
     },
     {
       "label": "Combat Speed",
@@ -97,7 +97,7 @@
     {
       "label": "Confirm Quick Save",
       "tag": "helper",
-      "effect": "Ask before saving with Q. On asks first; Off saves immediately. Q saves to the last slot you loaded or saved. Default: On."
+      "effect": "On: Q asks before it saves, and Ctrl+Q before it loads. Off: Q saves and Ctrl+Q loads at once. Either way they use the slot you last saved or loaded. Default: On."
     },
     {
       "label": "Show Combat HP Bars",
@@ -122,7 +122,7 @@
     {
       "label": "Simple Notes Mode",
       "tag": "look",
-      "effect": "Journal shows only My Notes. On shows My Notes only; Off shows all tabs. Nothing is deleted. Default: Off."
+      "effect": "On: the Journal shows only My Notes. Off: every tab. Nothing is deleted. Default: Off."
     }
   ],
   "option_tags": {

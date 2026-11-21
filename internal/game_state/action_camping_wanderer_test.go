@@ -518,7 +518,7 @@ func TestProcessWandererCharacter_DownwardFeedbackDoesNotClaimReward(t *testing.
 	assert.False(t, callbacks.StyledMessages[1].LeadingBlank)
 	feedback := strings.Join(callbacks.Messages, "\n")
 	assert.Contains(t, feedback, "Awake")
-	assert.Contains(t, feedback, "corrected to 3")
+	assert.Contains(t, feedback, "now level 3")
 	assert.NotContains(t, strings.ToLower(feedback), "reward")
 }
 
@@ -596,7 +596,7 @@ func TestProcessWandererCharacterPublishesOneLevelUpWithoutMaxHPHealing(t *testi
 		LeadingBlank: true,
 		Segments: []MessageSegment{
 			{Text: "\"", Style: MessageQuotation},
-			{Text: "Awake " + char.GetNameAsString() + " and feel restored!", Style: MessageSpoken},
+			{Text: "Awake, " + char.GetNameAsString() + ", and feel restored!", Style: MessageSpoken},
 			{Text: "\"", Style: MessageQuotation},
 		},
 	}, callbacks.StyledMessages[0])

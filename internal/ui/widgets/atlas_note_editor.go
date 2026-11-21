@@ -430,7 +430,7 @@ func (e *AtlasNoteEditor) ensureLayout() {
 	}
 	e.width, e.height = w, h
 	e.wraps = [2]atlasEditorWrap{}
-	config := FontConfig{Size: FontSizeBody, LineSpacing: 0,
+	config := FontConfig{Size: FontSizeBody,
 		LineSpacingMultiplier: 1.15, MaxLines: 32, MaxChars: 128}
 	e.font, e.output = GetScaledFontWithOutput(config)
 	_, e.validation = GetScaledFontWithOutput(config)

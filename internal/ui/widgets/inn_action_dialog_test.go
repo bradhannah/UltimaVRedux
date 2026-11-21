@@ -96,11 +96,11 @@ func TestInnActionDialogLeaveShowsExactDetailsAndSevereWarning(t *testing.T) {
 	require.Contains(t, body, "No charge today.")
 	require.Contains(t, body, "Monthly rate: 1234 gold.")
 	require.Contains(t, body, "At least one month is billed.")
-	require.Contains(t, body, "Pick up figures the rate again.")
+	require.Contains(t, body, "The rate is worked out again at check-out.")
 	require.Contains(t, body, "Shamino stays poisoned.")
 	require.Contains(t, body, "Party of 6 4 -1 3")
 	require.Contains(t, body, "Rooms of 4 3 +1 4")
-	require.Contains(t, body, "This removes the last living member from the active party.")
+	require.Contains(t, body, "This removes the last living companion from the active party.")
 	require.Contains(t, body, "[Enter] Leave [Esc] Back")
 	requireAmountWindowHoldsItsText(t, dialog.window, "leave")
 }

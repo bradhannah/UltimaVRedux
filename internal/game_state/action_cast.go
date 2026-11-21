@@ -13,7 +13,7 @@ const (
 	// SpellMPTooLowMessage matches the original U5 insufficient-MP message.
 	SpellMPTooLowMessage = "M.P. too low!"
 	// SpellNotImplementedMessage identifies an originally legal context that Redux cannot execute yet.
-	SpellNotImplementedMessage = "Spell not implemented!"
+	SpellNotImplementedMessage = "Not here!"
 	// VasRelPorShipMessage explains the original frigate-only travel restriction.
 	VasRelPorShipMessage = "Not aboard ship!"
 )
@@ -116,11 +116,11 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 	}
 
 	if !g.PartyState.HasCharacter(request.CasterIdx) {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Invalid caster!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Thou canst not cast now!"}
 	}
 	caster := g.PartyState.GetCharacter(request.CasterIdx)
 	if !caster.IsInParty() || !caster.IsAlive() {
-		return SpellValidationResult{ErrorMsg: "Invalid caster!"}
+		return SpellValidationResult{ErrorMsg: "Thou canst not cast now!"}
 	}
 	if g.CombatScene != nil {
 		identity := g.CombatScene.GetCurrentTurnIdentity()
@@ -130,10 +130,10 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 		if !g.isActiveCombatIdentity(identity) || g.CombatScene.isCombatPCSleeping(identity) ||
 			g.CombatScene.isCombatPCUnderground(identity) ||
 			g.combatIdentityLoyalty(identity) != CombatMonsterLoyaltyParty {
-			return SpellValidationResult{ErrorMsg: "Invalid caster!"}
+			return SpellValidationResult{ErrorMsg: "Thou canst not cast now!"}
 		}
 	} else if caster.IsAsleep() {
-		return SpellValidationResult{ErrorMsg: "Invalid caster!"}
+		return SpellValidationResult{ErrorMsg: "Thou canst not cast now!"}
 	}
 	if !caster.CanCastSpells() {
 		return SpellValidationResult{Valid: false, ErrorMsg: SpellNoMagicAbilityMessage, Refusal: SpellRefusalNoMagic}
@@ -192,7 +192,7 @@ func (g *GameState) validateSpellResourcesWithTargetPolicy(
 		return SpellValidationResult{Valid: false, ErrorMsg: "Level too low!", Refusal: SpellRefusalLevelTooLow}
 	}
 	if validateTarget && !g.isPreparedSpellEffectTargetValid(request) {
-		message := "Invalid target!"
+		message := "Nothing there!"
 		if currentContext == references.ContextDungeon &&
 			(isDungeonPackedSpell(request.Spell) || isDungeonFloorSpell(request.Spell)) {
 			message = "Failed!"

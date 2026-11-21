@@ -36,7 +36,7 @@ func TestEscapeMenuButtonOrderAndWidth(t *testing.T) {
 		"Save",
 		"Load",
 		"Configure",
-		"Back to Main Menu",
+		"Return to Main Menu",
 		"Exit to DOS",
 		"Help",
 	}, menu.ButtonTexts())
@@ -48,7 +48,7 @@ func TestEscapeMenuDeparturePromptsOfferSaveChoicesAndCancelBackToMenu(t *testin
 		buttonIndex  int
 		withoutLabel string
 	}{
-		{name: "main menu", buttonIndex: 4, withoutLabel: "Discard & Main Menu"},
+		{name: "main menu", buttonIndex: 4, withoutLabel: "Main Menu Without Saving"},
 		{name: "application", buttonIndex: 5, withoutLabel: "Exit Without Save"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestEscapeMenuMainMenuFailureKeepsGameplayAndReopensPrompt(t *testing.T) {
 
 	assert.Same(t, scene, game.currentScene)
 	reopened := requireEscapeMenuDialog[*widgets.ButtonListModal](t, scene)
-	assert.Equal(t, "Discard & Main Menu", reopened.ButtonTexts()[2])
+	assert.Equal(t, "Main Menu Without Saving", reopened.ButtonTexts()[2])
 }
 
 func TestEscapeMenuDepartureSaveCancellationReturnsToPrompt(t *testing.T) {
@@ -140,7 +140,7 @@ func TestEscapeMenuDepartureSaveCancellationReturnsToPrompt(t *testing.T) {
 			pressEscapeMenuWidgetKey(scene, browser, ebiten.KeyEscape)
 
 			reopened := requireEscapeMenuDialog[*widgets.ButtonListModal](t, scene)
-			assert.Equal(t, "Discard & Main Menu", reopened.ButtonTexts()[2])
+			assert.Equal(t, "Main Menu Without Saving", reopened.ButtonTexts()[2])
 		})
 	}
 }
@@ -506,7 +506,7 @@ func TestPlayerSaveErrorDetailHidesDiagnosticContext(t *testing.T) {
 	detailed := fmt.Errorf("active event queue work: %w", sentinel)
 	wrapped := fmt.Errorf("capturing player save: %w", detailed)
 
-	assert.Equal(t, "Saving is not available right now. Finish the current action and try again.", playerSaveErrorDetail(wrapped))
+	assert.Equal(t, "You cannot save just now. Finish what you are doing and try again.", playerSaveErrorDetail(wrapped))
 	assert.Equal(t, "Please try again. If the problem continues, check the game log for details.", playerSaveErrorDetail(errors.New("plain failure")))
 }
 

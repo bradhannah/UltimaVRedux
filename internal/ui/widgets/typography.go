@@ -35,7 +35,6 @@ const (
 // FontConfig holds typography settings for widget text rendering.
 type FontConfig struct {
 	Size                  StandardFontSize
-	LineSpacing           float64 // Absolute line spacing (deprecated - use LineSpacingMultiplier)
 	LineSpacingMultiplier float64 // Multiplier for line spacing (1.0 = same as font size, 1.3 = 30% extra)
 	MaxLines              int
 	MaxChars              int
@@ -85,18 +84,10 @@ func newScaledFontWithOutput(
 ) (*text.UltimaFont, *text.Output) {
 	font := text.NewUltimaFont(scaledSize)
 
-	// Calculate line spacing: prefer multiplier, fallback to absolute, default to 1:1
-	var lineSpacing float64
-	switch {
-	case config.LineSpacingMultiplier > 0:
-		// Use multiplier-based spacing (preferred - scales correctly)
-		lineSpacing = float64(config.Size) * config.LineSpacingMultiplier
-	case config.LineSpacing > 0:
-		// Use absolute spacing (deprecated but supported for compatibility)
-		lineSpacing = config.LineSpacing
-	default:
-		// Default 1:1 ratio
-		lineSpacing = float64(config.Size)
+	// Line spacing is the font size times the multiplier; no multiplier means 1:1.
+	lineSpacing := float64(config.Size)
+	if config.LineSpacingMultiplier > 0 {
+		lineSpacing *= config.LineSpacingMultiplier
 	}
 
 	scaledLineSpacing := scale(lineSpacing)

@@ -2,6 +2,7 @@ package game_state
 
 import (
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
+	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
 type combatTurnStartResult int
@@ -102,6 +103,7 @@ func (g *GameState) processUndergroundPCTurnStart(identity CombatTurnIdentity) c
 	condition := CombatConditionUnderground
 	if g.RollOriginalD30() < int(character.Dexterity) {
 		g.CombatScene.setCombatPCUnderground(identity, false)
+		g.relocateRegurgitatedPCIfOccupied(identity)
 		g.SystemCallbacks.Message.AddRowStr(character.GetNameAsString() + " regurgitated!")
 		condition = CombatConditionRegurgitated
 	}
@@ -111,6 +113,35 @@ func (g *GameState) processUndergroundPCTurnStart(identity CombatTurnIdentity) c
 		identity.EntityIndex, identity.Slot, condition)
 
 	return combatTurnSkipped
+}
+
+// relocateRegurgitatedPCIfOccupied moves a freshly regurgitated party character to the
+// nearest free combat square when another party member has taken its square meanwhile.
+//
+// REDUX DEVIATION: COMBAT-0005. The original ignores underground combatants when it
+// tests a square, so another member may step onto a swallowed member's square, and
+// regurgitation clears the swallowed condition without moving the member: both then
+// share the square. Redux brings the member back on the nearest free square instead,
+// so no two combatants ever share one.
+func (g *GameState) relocateRegurgitatedPCIfOccupied(identity CombatTurnIdentity) {
+	origin := g.CombatScene.GetCombatantPosition(identity)
+	if !g.CombatScene.isCombatPCAtPositionExcept(origin, identity) {
+		return
+	}
+	best, bestDistance, found := origin, 0, false
+	for y := range references.YCombatMapTiles {
+		for x := range references.XCombatMapTiles {
+			candidate := references.Position{X: x, Y: y}
+			distance := absoluteInt(int(candidate.X-origin.X)) + absoluteInt(int(candidate.Y-origin.Y))
+			if (found && distance >= bestDistance) || !g.isCombatPositionValidForPC(&candidate, identity) {
+				continue
+			}
+			best, bestDistance, found = candidate, distance, true
+		}
+	}
+	if found {
+		g.CombatScene.setCombatantPosition(identity, best)
+	}
 }
 
 func (g *GameState) publishCombatPCConditionEvent(identity CombatTurnIdentity, condition CombatConditionResult) {

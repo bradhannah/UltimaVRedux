@@ -166,10 +166,10 @@ func (g *GameState) ApplyReadyEquipment(
 		return result, err
 	}
 	if transaction.Confirmed != nil && *transaction.Confirmed != plan.preview {
-		return result, rejectReadyEquipment("Equipment changed. Review the replacement again.")
+		return result, rejectReadyEquipment("Thy gear has changed. Look it over again.")
 	}
 	if plan.preview.RequiresConfirmation() && transaction.Confirmed == nil {
-		return result, rejectReadyEquipment("Review and confirm the equipment replacement first.")
+		return result, rejectReadyEquipment("Confirm the swap first!")
 	}
 	result.Selection = plan.preview.Selection
 	if plan.preview.Selection == ReadyEquipmentNoChange {
@@ -306,7 +306,7 @@ func (g *GameState) validateReadyEquipmentTransaction(
 ) (*party_state.PlayerCharacter, error) {
 	request := transaction.Request
 	if request.LockCharacter && transaction.CharacterIndex != request.CharacterIndex {
-		return nil, rejectReadyEquipment("Combat Ready cannot change character.")
+		return nil, rejectReadyEquipment("Only the one whose turn it is may ready!")
 	}
 	if request.CombatMode {
 		if g.CombatScene == nil || !g.CombatScene.CombatTurnsStarted() ||
@@ -323,7 +323,7 @@ func (g *GameState) validateReadyEquipmentTransaction(
 	character := g.PartyState.GetCharacter(transaction.CharacterIndex)
 	if character == nil || !character.IsInParty() || !character.IsAlive() ||
 		transaction.ExpectedOccupant == "" || character.GetNameAsString() != transaction.ExpectedOccupant {
-		return nil, rejectReadyEquipment("Selected character is no longer available.")
+		return nil, rejectReadyEquipment("That one can no longer ready!")
 	}
 
 	return character, nil

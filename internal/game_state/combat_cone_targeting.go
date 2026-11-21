@@ -45,7 +45,7 @@ type CombatConeTargetResult struct {
 // See ref:SPELL-0003.
 func (g *GameState) BeginCombatConeTargeting(request CastRequest) SpellValidationResult {
 	if g.CombatScene == nil || g.CombatScene.hasPlayerActionOwner() {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Cannot cast now!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Thou canst not cast now!"}
 	}
 	activeIdx, active := g.activeCombatPartyMemberIndex()
 	if !active || request.CasterIdx != activeIdx {
@@ -57,7 +57,7 @@ func (g *GameState) BeginCombatConeTargeting(request CastRequest) SpellValidatio
 	}
 	spec, ok := CombatConeSpecForSpell(request.Spell)
 	if !ok {
-		return SpellValidationResult{Valid: false, ErrorMsg: "Spell not implemented!"}
+		return SpellValidationResult{Valid: false, ErrorMsg: "Not here!"}
 	}
 	g.CombatScene.ConeTargeting = &CombatConeTargeting{
 		Caster:  g.CombatScene.GetCurrentTurnIdentity(),

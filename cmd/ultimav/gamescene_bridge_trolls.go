@@ -81,7 +81,7 @@ func (g *GameScene) StartBridgeTrollEncounterWorkflow() {
 						Then(func() {
 							if g.gameState.PerformSneakCheck(memberCopy) {
 								caught = true
-								toll = g.gameState.CalculateTrollToll()
+								toll = g.gameState.CalculateTrollToll(memberCopy)
 							}
 						})
 				})

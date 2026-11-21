@@ -66,46 +66,46 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 	return [...]gameplaySettingDefinition{
 		{
 			label: "Repeated Monster Division",
-			detail: "Original: surviving Slimes and Gargoyles can divide repeatedly. " +
-				"Off keeps Redux's one-child split limit; On restores repeated division.",
+			detail: "On: a Slime or Gargoyle that survives can divide again and again, as in the original. " +
+				"Off: each divides once, and its child never does.",
 		},
 		{
 			label: "Remember Hidden Dungeon Discoveries",
-			detail: "Remember discovered hidden doors and pits between visits. " +
-				"On: keep discoveries. Off: reset each fresh visit.",
+			detail: "On: hidden doors and pits you find stay found. " +
+				"Off: they are hidden again on your next visit.",
 		},
 		{
 			label: "Show Subdued Unlit Dungeons",
-			detail: "Original: an unlit dungeon viewport is black. " +
-				"On shows subdued geometry without granting light; Off restores binary darkness.",
+			detail: "On: with no light you still make out dim walls and passages, but nothing is lit. " +
+				"Off: no light, no view, as in the original.",
 		},
 		{
 			label: "Batch Merchant Theft",
-			detail: "On: one Faulinei theft per paid batch. Off: original theft per item, bundle or patient; " +
-				"theft can stop a batch early. Charity requires a separate review.",
+			detail: "On: when gold goes missing in a shop, it happens once for the whole purchase. " +
+				"Off: as in the original, once for each item, bundle or patient, which can cut a purchase short.",
 		},
 		{
 			label: "Smooth Surface Movement",
-			detail: "Scroll while walking, riding, flying or boating. " +
-				"Mounts animate 25% faster; automatic sailing follows its cadence. " +
-				"Gameplay timing, combat and dungeons are unchanged.",
+			detail: "On: the map glides as you walk, ride, fly or sail. " +
+				"Only the look changes; play, battles and dungeons run as before.",
 		},
 		{
 			label: "Hidden Enemy Turns",
-			detail: "An enemy is hidden while invisible, under an arch or in the dark. " +
-				"On lists its coming turn in Turn Order as ??? unseen. " +
-				"Off leaves that turn out of the list. " +
-				"Your party is always named. Turn order itself is unchanged.",
+			detail: "On: an enemy you cannot see (invisible, under an arch or in the dark) " +
+				"still takes its place in Turn Order, as ??? unseen. Off: it is left out. " +
+				"The turns themselves are the same either way.",
 		},
 		{
 			label: "Flexible Sextant Use",
-			detail: "Redux: day or night, including surface settlement interiors. Sextant required. " +
-				"No dungeons or Underworld. Off: night world-map use.",
+			detail: "On: the sextant works by day or night, on the world map and inside surface towns. " +
+				"Off: only at night on the world map, as in the original. " +
+				"It never works in dungeons or the Underworld.",
 		},
 		{
 			label: "Ankh Visit Bonus",
-			detail: "Folk tale: an Ankh draws Lord British to camp. No evidence the original did this. " +
-				"On: each living Ankh wearer adds 5% to the 25% visit chance. Off: the original 25%.",
+			detail: "An old players' tale says an Ankh draws Lord British to your camp; " +
+				"the original shows no sign of it. On: each living member wearing an Ankh " +
+				"makes his visit a little more likely. Off: the original odds.",
 		},
 		{
 			label:     "Deed Experience",
@@ -119,8 +119,8 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 		},
 		{
 			label: "Share Kill Experience",
-			detail: "Original: a kill's experience goes to whoever lands the killing blow. " +
-				"On: every living party member gets an equal share. Off: the original rule.",
+			detail: "On: every living member shares a kill's experience equally. " +
+				"Off: it all goes to whoever struck the killing blow, as in the original.",
 		},
 		{
 			label:     "Combat Speed",
@@ -155,9 +155,8 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 		{
 			label: "Confirm Quick Save",
 			helpLines: []string{
-				"Ask before saving with Q.", "",
-				"On: Ask before saving.", "Off: Save immediately.", "",
-				"Q saves to the last slot you loaded or saved.", "",
+				"On: Q asks before it saves, and Ctrl+Q before it loads.", "Off: Q saves and Ctrl+Q loads at once.", "",
+				"Either way they use the slot you last saved or loaded.", "",
 				gameplayDefaultOnLine,
 			},
 		},
@@ -207,8 +206,7 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 		{
 			label: "Simple Notes Mode",
 			helpLines: []string{
-				"Journal shows only My Notes.", "",
-				"On: My Notes only.", "Off: all tabs.", "",
+				"On: the Journal shows only My Notes.", "Off: every tab.", "",
 				"Nothing is deleted.", "",
 				"Default: Off",
 			},
@@ -596,11 +594,11 @@ func (d *ConfigurationDialog) drawDisplayHelp(screen *ebiten.Image) {
 	if d.focusedDisplayIndex == configurationDisplaySizeRow && d.stagedDisplay.Mode == config.ModeWindowed {
 		lines = append(lines[:0], "Window size", "", "Choose the image size on your desktop.",
 			"You can also resize the window normally.", "",
-			"Presets reserve desktop space. Use Maximize for the largest window.", "",
+			"Presets leave room on the desktop. Maximize gives the largest window.", "",
 			"About means pixel rounding at this display scale.")
 	}
-	lines = append(lines, "", "Automatic pixel density; 720p to 4K.",
-		"Game shape stays 16:9; black bars may appear.")
+	lines = append(lines, "", "Fits any size from 720p to 4K.",
+		"The picture stays 16:9, so black bars may appear.")
 	for index, line := range lines {
 		color := widgets.DialogControlHintColor
 		if index == 0 {
@@ -744,11 +742,11 @@ func (d *ConfigurationDialog) drawGameplayContent(screen *ebiten.Image) {
 
 	d.drawGameplayScrollIndicator(screen)
 	d.prepareGameplayDetail()
-	inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
+	margin := gameplayDetailMargin(d.layout.pixelUnit)
 	d.detailOutput.DrawPanelContent(
 		screen,
-		image.Pt(d.layout.gameplayDetail.Min.X+inset, d.layout.gameplayDetail.Min.Y+inset),
-		max(1, d.layout.gameplayDetail.Dx()-inset*audioSettingsCenterDivisor),
+		image.Pt(d.layout.gameplayDetail.Min.X+margin, d.layout.gameplayDetail.Min.Y+margin),
+		max(1, d.layout.gameplayDetail.Dx()-margin*audioSettingsCenterDivisor),
 		etext.AlignStart,
 	)
 	widgets.DrawClassicPixelRoundedFrame(
@@ -776,9 +774,9 @@ func (d *ConfigurationDialog) drawGameplayValue(
 // prepareGameplayDetail uses the measured layout's wrapping capacity without
 // rasterizing. Selection and staged settings remain owned by Update.
 func (d *ConfigurationDialog) prepareGameplayDetail() {
-	inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
+	margin := gameplayDetailMargin(d.layout.pixelUnit)
 	d.detailOutput.SetMaxCharsPerLine(max(1,
-		d.detailOutput.Font.CharsForWidth(d.layout.gameplayDetail.Dx()-inset*audioSettingsCenterDivisor)))
+		d.detailOutput.Font.CharsForWidth(d.layout.gameplayDetail.Dx()-margin*audioSettingsCenterDivisor)))
 	if d.confirmingDeedExperience {
 		d.populateDeedExperienceConfirmation(d.detailOutput)
 

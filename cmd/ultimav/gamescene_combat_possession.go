@@ -22,11 +22,11 @@ func combatPossessionEventSuffix(event game_state.CombatEvent) string {
 	case game_state.CombatPossessionReleaseNatural:
 		return " breaks free of the enchantment!"
 	case game_state.CombatPossessionReleaseControllerDefeated:
-		return " regains control as the controller is defeated!"
+		return " regains control as the possessor is defeated!"
 	case game_state.CombatPossessionReleaseControllerEscaped:
-		return " regains control as the controller flees!"
+		return " regains control as the possessor flees!"
 	case game_state.CombatPossessionReleaseControllerReplaced:
-		return " regains control as the transformed controller's hold breaks!"
+		return " regains control as the transformed possessor's hold breaks!"
 	default:
 		panic("unknown possession release reason")
 	}
@@ -57,4 +57,4 @@ func (g *GameScene) observeCombatPossessionAllegiance(event game_state.CombatEve
 	}
 }
 
-const combatPossessionHelp = "Enemy possession counts the affected combatant's own completed scheduled turns, including turns lost to sleep, captivity, Time Stop or Quickness. Higher intelligence improves resistance from turn 4. Freedom is guaranteed by the end of turn 12. An Xen Ex can rescue sooner after its intelligence save. The responsible controller's defeat, actual escape or transformation into a rat also breaks its hold; a Daemon retiring after possession does not. Ordinary release does not heal or wake the victim. Chaos Sword control has no resistance timer."
+const combatPossessionHelp = "A possessed member fights the hold and always breaks free in time; the clever break free sooner. An Xen Ex can free them early. The hold also breaks when the possessor is slain, flees or is turned into a rat. Breaking free does not heal or wake them."

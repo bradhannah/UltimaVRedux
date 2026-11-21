@@ -111,7 +111,7 @@ func TestCharacterRosterStatusColorIgnoresSelectionAndEligibility(t *testing.T) 
 		{party_state.Poisoned, "Poisoned", pkgcolor.EGAGreen},
 		{party_state.Sleep, "Asleep", pkgcolor.EGAMagenta},
 		{party_state.Charmed, "Charmed", pkgcolor.EGALightBlue},
-		{party_state.Dead, "Dead", pkgcolor.EGARed},
+		{party_state.Dead, "Dead", pkgcolor.EGALightRed},
 		{party_state.Good, "Good", nil},
 		{0, "Unknown", nil},
 		{0, "", nil},
@@ -147,7 +147,7 @@ func TestCharacterRosterDrawPreservesStatusColorInBothPanes(t *testing.T) {
 		{party_state.Poisoned, "Poisoned", pkgcolor.EGAGreen},
 		{party_state.Sleep, "Asleep", pkgcolor.EGAMagenta},
 		{party_state.Charmed, "Charmed", pkgcolor.EGALightBlue},
-		{party_state.Dead, "Dead", pkgcolor.EGARed},
+		{party_state.Dead, "Dead", pkgcolor.EGALightRed},
 	}
 	for _, test := range tests {
 		for _, state := range []CharacterSelectionState{

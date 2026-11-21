@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -76,11 +77,23 @@ func (g *GameScene) quickLoadInputEligible() bool {
 	}
 }
 
+// handleQuickLoad reloads the last-used slot, asking first when Confirm Quick
+// Save is on, as Q does before it saves.
 func (g *GameScene) handleQuickLoad(game *Game) {
 	// REDUX DEVIATION: CMD-0002: the original Q save command has no direct
 	// active-slot reload chord. Redux permits Ctrl+Q, including ready combat
-	// turns, for quick retries without saving the outgoing adventure.
+	// turns, for quick retries without saving the outgoing adventure. Confirm
+	// Quick Save asks first; with it off the reload is immediate.
 	g.keyboard.PrepareForTransition(0)
+	if game != nil && g.confirmQuickSave() && g.activePlayerSaveSlot != "" {
+		g.askQuickLoad(game)
+
+		return
+	}
+	g.loadLastSave(game)
+}
+
+func (g *GameScene) loadLastSave(game *Game) {
 	if game == nil {
 		g.gameState.SystemCallbacks.Message.AddRowStr("Load failed: " + playerQuickLoadErrorDetail(ErrPlayerSaveUnavailable))
 
@@ -94,4 +107,46 @@ func (g *GameScene) handleQuickLoad(game *Game) {
 		return
 	}
 	showPlayerSaveLoadSuccess(game, slot)
+}
+
+// quickLoadQuestion is the Y/N prompt that stands between Ctrl+Q and a reload.
+// It takes the keys of the Save game? prompt: Y loads; N or Esc leaves the game as it is.
+type quickLoadQuestion struct {
+	*widgets.OverlayDialog
+	scene *GameScene
+	game  *Game
+}
+
+func (g *GameScene) askQuickLoad(game *Game) {
+	dialog := widgets.NewOverlayDialog("Load last save?").AsConfirmation().
+		WithPosition(widgets.PositionMapCenterLower).WithSizing(widgets.SizingCompact).
+		WithExternallyManagedDuration(0).Build()
+	dialog.AppendLineBuilder().Text("Unsaved play is lost.", widgets.DialogControlHintColor).Done()
+	dialog.AppendLineBuilder().Text("[Y]", widgets.DialogControlKeyColor).
+		Text(" Yes   ", widgets.DialogControlHintColor).Text("[N/Esc]", widgets.DialogControlKeyColor).
+		Text(" No", widgets.DialogControlHintColor).Done()
+	dialog.ShowWithoutAnimation()
+	g.dialogStack.PushModalDialog(&quickLoadQuestion{OverlayDialog: dialog, scene: g, game: game})
+}
+
+// Update reads the answer.
+func (q *quickLoadQuestion) Update() {
+	q.OverlayDialog.Update()
+	g := q.scene
+	key := g.keyboard.GetBoundKeyPressed(&boundKeysGame)
+	if key == nil || !g.keyboard.TryToRegisterKeyPress(*key) {
+		return
+	}
+	if *key != ebiten.KeyY && *key != ebiten.KeyN && *key != ebiten.KeyEscape {
+		return
+	}
+	g.dialogStack.MustRemoveWidgetInstance(q)
+	g.keyboard.PrepareForTransition(0)
+	if *key != ebiten.KeyY {
+		g.gameState.SystemCallbacks.Message.AddRowStr("Load last save? No")
+
+		return
+	}
+	g.gameState.SystemCallbacks.Message.AddRowStr("Load last save? Yes")
+	g.loadLastSave(q.game)
 }

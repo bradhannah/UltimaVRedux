@@ -509,6 +509,9 @@ func (g *GameState) jimmyPrisoner(targetPos *references.Position, player *party_
 	if !g.PartyState.Inventory.Provisions.Keys.HasSome() {
 		return JimmyDoorNoLockPicks
 	}
+	if player == nil {
+		return JimmyNoCharacter
+	}
 
 	// Fail when Dexterity is no greater than the 0..29 draw. ref:PROV-0004
 	if !g.isJimmyPrisonerSuccessful(player) {

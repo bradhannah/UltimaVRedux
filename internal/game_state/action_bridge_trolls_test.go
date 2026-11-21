@@ -36,7 +36,7 @@ func TestCalculateTrollToll(t *testing.T) {
 		char := gs.PartyState.GetCharacter(0)
 		char.PartyMap = party_state.PartyMapActive
 		char.Strength = test.strength
-		assert.Equal(t, test.want, gs.CalculateTrollToll(), "strength %d", test.strength)
+		assert.Equal(t, test.want, gs.CalculateTrollToll(gs.PartyState.GetCharacter(0)), "strength %d", test.strength)
 	}
 }
 
@@ -50,7 +50,7 @@ func TestCalculateTrollTollUsesFirstGoodOrPoisonedPartyMember(t *testing.T) {
 	second.PartyMap = party_state.PartyMapActive
 	second.Strength = 30
 
-	assert.Equal(t, 69, gs.CalculateTrollToll())
+	assert.Equal(t, 69, gs.CalculateTrollToll(gs.PartyState.GetCharacter(0)))
 }
 
 // Paying succeeds only when gold covers the toll; a negative original toll adds
@@ -193,4 +193,14 @@ func TestBridgeTrollCombatReturnsToBridgeForEveryOutcome(t *testing.T) {
 			assert.False(t, gs.HasPendingOverworldContact())
 		})
 	}
+}
+
+func TestCalculateTrollTollFallsBackToCaughtMemberWhenNoneIsGoodOrPoisoned(t *testing.T) {
+	gs := newBridgeTrollTestState()
+	caught := gs.PartyState.GetCharacter(0)
+	caught.PartyMap = party_state.PartyMapActive
+	caught.SetStatus(party_state.Charmed)
+	caught.Strength = 20
+
+	assert.Equal(t, 39, gs.CalculateTrollToll(caught))
 }
