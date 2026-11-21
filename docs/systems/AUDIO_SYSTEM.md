@@ -9,9 +9,9 @@ decoupling; [ADR-010](../ADR/ADR-010-reusable-audio-module.md) records SDK adopt
 Title/game scenes construct `internal/audio.GameAudioManager`, a Redux adapter over
 published Berad Audio dependencies. Redux pins runtime/authoring
 `v0.0.0-20261019225412-564225ae5d47` and tools
-`v0.0.0-20261020115307-20020a7917b6`, without replacements or a sibling checkout.
-These revisions trim unused experimental APIs while retaining the gameplay and
-editor/catalog/probe workflows. Runtime voices expose Stop/Status; music and
+`v0.0.0-20261121170048-ebe61075b92e`, without replacements or a sibling checkout.
+The runtime revision trims unused experimental APIs while retaining the gameplay
+workflows; the tools revision reworks the editor's screens around game moments. Runtime voices expose Stop/Status; music and
 audition retain their separate production transport controls. The SDK's own full-source gate covers dependency code;
 Redux's gate covers the consuming adapters and application behavior.
 
@@ -30,8 +30,8 @@ Reusable contracts and generic operation are maintained upstream:
 
 - [Runtime contract](https://github.com/bradhannah/berad-sdk/blob/564225ae5d47/modules/berad-audio/README.md).
 - [Authoring, analysis and publication](https://github.com/bradhannah/berad-sdk/blob/564225ae5d47/modules/berad-audio/docs/AUTHORING.md).
-- [Editor controls and workflows](https://github.com/bradhannah/berad-sdk/blob/20020a7917b6/tools/berad-audio/docs/EDITOR.md).
-- [Catalog contract](https://github.com/bradhannah/berad-sdk/blob/20020a7917b6/tools/berad-audio/docs/CATALOG.md)
+- [Editor controls and workflows](https://github.com/bradhannah/berad-sdk/blob/ebe61075b92e/tools/berad-audio/docs/EDITOR.md).
+- [Catalog contract](https://github.com/bradhannah/berad-sdk/blob/ebe61075b92e/tools/berad-audio/docs/CATALOG.md)
   and [neutral quickstart](https://github.com/bradhannah/berad-sdk/blob/564225ae5d47/modules/berad-audio/docs/QUICKSTART.md).
 
 These are current compatible guidance; `go.mod` remains the authority for the
@@ -414,9 +414,10 @@ affect every use; change one cue's assignment to replace only that event.
 
 ### Game-Matched Preview Volumes
 
-The default **Game Mix** label uses temporary Music/SFX/Ambience monitoring sliders,
-initially 7 each, and the game's curve (7 ×0.55, 10 ×0.75, 0 mute). These are comparison
-defaults, not player defaults. Cue audition composes calibration × cue × category at
+The default **Game Mix** label uses temporary Music/SFX/Ambience monitoring sliders
+that start on a new player's volumes (Music 5, SFX 6, Ambience 4) through the game's
+curve (4 ×0.18, 5 ×0.30, 6 ×0.43, 10 ×0.75, 0 mute), so a fresh editor session hears
+the mix the game ships with. Cue audition composes calibration × cue × category at
 unity request/context/distance; it does not simulate runtime fades or suppression.
 Bare Recordings use linked-use category, falling back for mixed uses to SFX;
 unassigned music paths use Music, ambience families use Ambience, otherwise SFX.

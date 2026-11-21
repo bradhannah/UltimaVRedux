@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	gameaudio "github.com/bradhannah/UltimaVRedux/internal/audio"
+	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/berad-sdk/modules/berad-audio/authoring"
 	"github.com/bradhannah/berad-sdk/modules/berad-audio/backend/ebitengine"
 	editor "github.com/bradhannah/berad-sdk/tools/berad-audio/editor"
@@ -89,7 +90,11 @@ func cueCategories(ids []string) map[string]string {
 
 // AudioEditorOptions contains presentation defaults for Redux's supported editor.
 func AudioEditorOptions() editor.Options {
+	volumes := config.DefaultAudioConfiguration()
+
 	return editor.Options{SliderGain: gameaudio.ConvertSliderToVolume, MixLabel: "GAME MIX",
+		InitialSliders: &editor.SliderLevels{Music: volumes.MusicVolume, SFX: volumes.SoundEffectVolume,
+			Ambience: volumes.AmbientVolume},
 		SavedNotice: "Saved library.json. Rebuild the game to use these changes.",
 		Ambient: &editor.AmbientPreset{CuePrefix: "ambient/", Profile: "ambient_bed",
 			Family: familyAmbience, Gain: newAmbientGain,

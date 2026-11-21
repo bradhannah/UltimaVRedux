@@ -11,6 +11,7 @@ import (
 
 	gameaudio "github.com/bradhannah/UltimaVRedux/internal/audio"
 	"github.com/bradhannah/UltimaVRedux/internal/audio/tooling"
+	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/berad-sdk/modules/berad-audio/authoring"
 	editor "github.com/bradhannah/berad-sdk/tools/berad-audio/editor"
 )
@@ -56,6 +57,11 @@ func TestReduxToolProjectPreservesPolicyAndSharedAuthoringRoundTrip(t *testing.T
 	}
 	if err := editor.ValidateOptions(doc, options); err != nil {
 		t.Fatal(err)
+	}
+	volumes := config.DefaultAudioConfiguration()
+	want := editor.SliderLevels{Music: volumes.MusicVolume, SFX: volumes.SoundEffectVolume, Ambience: volumes.AmbientVolume}
+	if options.InitialSliders == nil || *options.InitialSliders != want {
+		t.Fatal("the editor preview must start on a new player's volumes")
 	}
 	for level := 0; level <= 10; level++ {
 		if options.SliderGain(level) != gameaudio.ConvertSliderToVolume(level) {

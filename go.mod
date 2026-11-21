@@ -11,7 +11,7 @@ require (
 	github.com/bradhannah/berad-sdk/modules/berad-path v0.0.0-20261023203930-bea6c1522e86
 	github.com/bradhannah/berad-sdk/modules/berad-rng v0.0.0-20261020012912-891cf44f456a
 	github.com/bradhannah/berad-sdk/modules/berad-text v0.0.0-20261019225412-564225ae5d47
-	github.com/bradhannah/berad-sdk/tools/berad-audio v0.0.0-20261020115307-20020a7917b6
+	github.com/bradhannah/berad-sdk/tools/berad-audio v0.0.0-20261121170048-ebe61075b92e
 	github.com/coder/websocket v1.8.14
 	github.com/ebitengine/purego v0.11.0
 	github.com/gofrs/flock v0.13.0

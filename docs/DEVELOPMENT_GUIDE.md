@@ -57,7 +57,7 @@ contracts are linked upstream rather than maintained twice. No assistant or
 private tooling is required to use these public contracts.
 
 The terminal editor and report implementation now come from the separately pinned
-[audio tools module](https://github.com/bradhannah/berad-sdk/tree/20020a7917b6/tools/berad-audio).
+[audio tools module](https://github.com/bradhannah/berad-sdk/tree/ebe61075b92e/tools/berad-audio).
 Use `make audio-editor`, `make audio-catalog`, and `make audio-catalog-export`
 for Redux-configured launchers/reports. Existing editor probe flags remain supported.
 For a single build-and-open command, run `make audio-editor-run` in this checkout.
