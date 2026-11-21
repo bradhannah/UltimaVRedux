@@ -73,6 +73,20 @@ type AudioConfiguration struct {
 	AmbientVolume     int // Ambient sounds volume slider (0-10)
 }
 
+// The volume sliders a new player starts with.
+const (
+	defaultMusicVolume       = 5
+	defaultSoundEffectVolume = 6
+	defaultAmbientVolume     = 4
+)
+
+// DefaultAudioConfiguration returns the volume sliders a new player starts with.
+// The audio editor listens at these levels so its mix matches the shipped game.
+func DefaultAudioConfiguration() AudioConfiguration {
+	return AudioConfiguration{MusicVolume: defaultMusicVolume, SoundEffectVolume: defaultSoundEffectVolume,
+		AmbientVolume: defaultAmbientVolume}
+}
+
 // DisplayConfiguration holds desktop display and performance settings.
 type DisplayConfiguration struct {
 	Mode              Mode
@@ -392,9 +406,9 @@ func (uc *UltimaVConfiguration) loadConfigurationSource(explicitDataPath string,
 	return nil
 }
 
-//nolint:mnd // Slider defaults are intentional persisted configuration values.
 func (uc *UltimaVConfiguration) loadAudioConfiguration() {
-	uc.AudioConfiguration = &AudioConfiguration{MusicVolume: 5, SoundEffectVolume: 6, AmbientVolume: 4}
+	defaults := DefaultAudioConfiguration()
+	uc.AudioConfiguration = &defaults
 	if uc.source.IsSet("Audio.MusicVolume") {
 		uc.AudioConfiguration.MusicVolume = uc.source.GetInt("Audio.MusicVolume")
 	}
