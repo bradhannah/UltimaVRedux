@@ -497,19 +497,9 @@ func (d *ShipDispatchDialog) GetBodyBounds() image.Rectangle {
 // GetQuantity returns the selected vessel or skiff quantity.
 func (d *ShipPurchaseDialog) GetQuantity() int { return d.quantity }
 
-// GetTitleText returns the modal title.
-func (d *ShipPurchaseDialog) GetTitleText() string {
-	return outputText(d.window.header)
-}
-
 // GetBodyText returns the vessel, berth, skiff, and payment presentation.
 func (d *ShipPurchaseDialog) GetBodyText() string {
 	return outputText(d.window.body)
-}
-
-// GetFooterGuidance returns the keyboard guidance as displayed.
-func (d *ShipPurchaseDialog) GetFooterGuidance() string {
-	return outputText(d.window.footer)
 }
 
 // GetBodyBounds returns the semantically backed modal body.

@@ -86,7 +86,6 @@ type InputBoxConfig struct {
 	RegexPattern     string                            // Regex validation pattern (empty = grammar mode)
 	ResultCallback   func(text string, submitted bool) // Callback for regex mode (Enter/Escape)
 	EscapeClearsText bool                              // Escape clears input instead of cancelling regex mode
-	SpaceCancels     bool                              // Space cancels regex mode without submitting text
 }
 
 // InputBoxBuilder provides a fluent API for constructing InputBox instances.
@@ -124,7 +123,6 @@ type InputBoxBuilder struct {
 	regexPattern     *string                           // Regex validation pattern (nil = grammar mode)
 	resultCallback   func(text string, submitted bool) // Callback for regex mode results
 	escapeClearsText bool
-	spaceCancels     bool
 
 	autoCloseStack *DialogStack
 }
@@ -152,7 +150,6 @@ type InputBox struct {
 	regexPattern     string
 	resultCallback   func(text string, submitted bool)
 	escapeClearsText bool
-	spaceCancels     bool
 	keyboard         *input.Keyboard
 	onDismiss        func() // Optional: callback after resultCallback
 	dismissInvoked   bool
@@ -202,7 +199,6 @@ func NewInputBox(question string, textCommand *grammar.TextCommand, keyboard *in
 		regexPattern:     nil, // Grammar mode
 		resultCallback:   nil,
 		escapeClearsText: false,
-		spaceCancels:     false,
 		autoCloseStack:   nil,
 	}
 }
@@ -301,13 +297,6 @@ func (b *InputBoxBuilder) WithEscapeClearsText() *InputBoxBuilder {
 	return b
 }
 
-// WithSpaceCancellation treats Space as a cancelled regex result.
-func (b *InputBoxBuilder) WithSpaceCancellation() *InputBoxBuilder {
-	b.spaceCancels = true
-
-	return b
-}
-
 // AutoCloseAndPop is a convenience method that configures automatic dialog stack removal.
 // Creates a dismiss callback that pops the dialog from the provided stack.
 // Callback executes AFTER resultCallback completes.
@@ -381,7 +370,6 @@ func (b *InputBoxBuilder) Build() *InputBox {
 		config.ResultCallback = b.resultCallback
 	}
 	config.EscapeClearsText = b.escapeClearsText
-	config.SpaceCancels = b.spaceCancels
 
 	// Create InputBox from config
 	inputBox := createInputBoxFromConfig(b.question, b.textCommand, b.keyboard, config)
@@ -420,7 +408,6 @@ func (b *InputBoxBuilder) calculateAutoSizeDimensions(
 		RegexPattern:     "",
 		ResultCallback:   nil,
 		EscapeClearsText: false,
-		SpaceCancels:     false,
 	}
 }
 
@@ -450,7 +437,6 @@ func createInputBoxFromConfig(
 		regexPattern:     config.RegexPattern,
 		resultCallback:   config.ResultCallback,
 		escapeClearsText: config.EscapeClearsText,
-		spaceCancels:     config.SpaceCancels,
 		keyboard:         keyboard,
 		onDismiss:        nil, // Set by AutoCloseAndPop
 		dismissInvoked:   false,
@@ -546,8 +532,6 @@ func (i *InputBox) updateRegexMode() {
 		i.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter):
 		result = i.textInput.GetText()
 		submitted = true
-	case i.spaceCancels && i.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace):
-		// Cancelled without text
 	case i.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape):
 		if i.escapeClearsText {
 			i.textInput.Clear()

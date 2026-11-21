@@ -7,6 +7,9 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
+// GetHours returns the hours of rest currently chosen.
+func (p *HoursPrompt) GetHours() int { return p.hours }
+
 // GetMode returns the active Buy or Sell table.
 func (d *ArmsShopDialog) GetMode() ArmsShopMode { return d.mode }
 

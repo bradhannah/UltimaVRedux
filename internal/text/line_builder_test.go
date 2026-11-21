@@ -121,7 +121,6 @@ func TestRunic_InheritsFromVariousColors(t *testing.T) {
 	}{
 		{"Yellow", func(lb *LineBuilder) *LineBuilder { return lb.Yellow("text") }, ucolor.EGAYellow},
 		{"LightGreen", func(lb *LineBuilder) *LineBuilder { return lb.LightGreen("text") }, ucolor.EGALightGreen},
-		{"Cyan", func(lb *LineBuilder) *LineBuilder { return lb.Cyan("text") }, ucolor.EGACyan},
 	}
 
 	for _, tt := range tests {

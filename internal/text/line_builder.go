@@ -136,11 +136,6 @@ func (lb *LineBuilder) LightGrayf(format string, args ...interface{}) *LineBuild
 	return lb.Textf(format, ucolor.EGALightGray, args...)
 }
 
-// Cyan adds cyan text segment
-func (lb *LineBuilder) Cyan(text string) *LineBuilder {
-	return lb.Text(text, ucolor.EGACyan)
-}
-
 // Cyanf adds formatted cyan text segment
 func (lb *LineBuilder) Cyanf(format string, args ...interface{}) *LineBuilder {
 	return lb.Textf(format, ucolor.EGACyan, args...)

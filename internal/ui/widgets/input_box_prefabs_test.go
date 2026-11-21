@@ -232,15 +232,6 @@ func TestInputBoxPromptCardFooterMatchesInputMode(t *testing.T) {
 				Build(),
 			expected: "[Enter] Submit   [Esc] Clear",
 		},
-		{
-			name: "space cancels",
-			dialog: NewInputBox("How many hours?", nil, keyboard).
-				WithRegexValidation("^[0-9]$").
-				WithResultCallback(callback).
-				WithSpaceCancellation().
-				Build(),
-			expected: "[Enter] Submit   [Esc/Space] Cancel",
-		},
 	}
 
 	for _, test := range tests {

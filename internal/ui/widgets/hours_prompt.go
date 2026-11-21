@@ -79,9 +79,6 @@ func NewHoursPrompt(config HoursPromptConfig) *HoursPrompt {
 	return prompt
 }
 
-// GetHours returns the hours currently chosen.
-func (p *HoursPrompt) GetHours() int { return p.hours }
-
 // GetBounds returns the box's outer bounds.
 func (p *HoursPrompt) GetBounds() image.Rectangle {
 	p.ensureLayout()
