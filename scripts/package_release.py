@@ -296,7 +296,7 @@ def build_matrix(
                     "-mod=readonly",
                     "-trimpath",
                     "-buildvcs=false",
-                    "-ldflags=-X main.version=" + version,
+                    "-ldflags=-s -w -X main.version=" + version,
                     "-o",
                     str(binary),
                     "./cmd/ultimav",

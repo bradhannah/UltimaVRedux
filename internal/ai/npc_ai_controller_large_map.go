@@ -51,8 +51,7 @@ type NPCAIControllerLargeMap struct {
 	windProvider    WindProvider
 	rng             references.RandomProvider
 
-	mapUnits               map_units.MapUnits
-	positionOccupiedChance *map_units.XyOccupiedMap
+	mapUnits map_units.MapUnits
 }
 
 // NewNPCAIControllerLargeMapInput carries the shared game state a large-map controller reads and mutates.
@@ -74,20 +73,17 @@ func NewNPCAIControllerLargeMap(input NewNPCAIControllerLargeMapInput) *NPCAICon
 		panic("large-map NPC AI requires a random provider")
 	}
 
-	occupied := make(map_units.XyOccupiedMap)
-
 	return &NPCAIControllerLargeMap{
-		World:                  input.World,
-		tileRefs:               input.TileRefs,
-		mapState:               input.MapState,
-		debugOptions:           input.DebugOptions,
-		enemyReferences:        input.EnemyReferences,
-		theOdds:                input.TheOdds,
-		dateTime:               input.DateTime,
-		windProvider:           input.WindProvider,
-		rng:                    input.RandomProvider,
-		mapUnits:               make(map_units.MapUnits, 0, map_units.MaximumNpcsPerMap),
-		positionOccupiedChance: &occupied,
+		World:           input.World,
+		tileRefs:        input.TileRefs,
+		mapState:        input.MapState,
+		debugOptions:    input.DebugOptions,
+		enemyReferences: input.EnemyReferences,
+		theOdds:         input.TheOdds,
+		dateTime:        input.DateTime,
+		windProvider:    input.WindProvider,
+		rng:             input.RandomProvider,
+		mapUnits:        make(map_units.MapUnits, 0, map_units.MaximumNpcsPerMap),
 	}
 }
 
@@ -178,7 +174,6 @@ func (m *NPCAIControllerLargeMap) advanceActorsBeforeSlot(
 	attacked bool,
 	attack func(*map_units.NPCEnemy) OutdoorActorAction,
 ) {
-	m.positionOccupiedChance = m.mapUnits.CreateFreshXyOccupiedMap()
 	actors := m.mapUnits.GetEnemiesMatching(func(enemy *map_units.NPCEnemy) bool {
 		return enemy.MapUnitDetails().NPCNum < beforeSlot
 	})
