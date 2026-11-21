@@ -69,7 +69,7 @@ func TestInnShopDialogRestCardShowsConciseDecisionDetails(t *testing.T) {
 	require.Contains(t, detail, "6:03AM on 2-4-139")
 	require.Contains(t, detail, "next qualifying 6 o'clock hour")
 	require.Contains(t, detail, "Poisoned: Shamino, Mariahxxx")
-	require.Contains(t, detail, "WILL DIE during Rest")
+	require.Contains(t, detail, "Will die during Rest")
 	require.NotContains(t, detail, "Guest rooms:")
 	require.NotContains(t, detail, "Active party:")
 	require.NotContains(t, detail, "Gold after listed payment")
@@ -89,7 +89,7 @@ func TestInnShopDialogRestUnaffordableConfirmsButNoVacancyBlocksInline(t *testin
 	keyboard := newWidgetTestKeyboard(0)
 	dialog := newTestInnShopDialog(keyboard, poor)
 	detail := compactInnText(dialog.GetDetailText())
-	require.Contains(t, detail, "shortfall 1134")
+	require.Contains(t, detail, "1134 short")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	intent, ok := dialog.ConsumePendingActionIntent()
@@ -107,13 +107,13 @@ func TestInnShopDialogRestUnaffordableConfirmsButNoVacancyBlocksInline(t *testin
 	))
 	keyboard = newWidgetTestKeyboard(0)
 	dialog = newTestInnShopDialog(keyboard, full)
-	require.Contains(t, compactInnText(dialog.GetDetailText()), "BLOCKED: no guest room is vacant")
+	require.Contains(t, compactInnText(dialog.GetDetailText()), "We have no room available")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	_, ok = dialog.ConsumePendingActionIntent()
 	require.False(t, ok)
 	require.Equal(t, InnShopBrowse, dialog.GetPhase())
-	require.Contains(t, dialog.GetInlineFeedback(), "Pick Up a guest")
+	require.Contains(t, dialog.GetInlineFeedback(), "Pick up a guest")
 	require.False(t, dialog.IsDismissed(), "no-vacancy feedback must stay inline")
 }
 
@@ -122,30 +122,30 @@ func TestInnShopDialogLeaveRowsKeepFullNamesReasonsAndLastLivingReview(t *testin
 	dialog := newTestInnShopDialog(keyboard, testInnShopState())
 	pressInnShopKey(dialog, keyboard, ebiten.KeyL)
 
-	require.Equal(t, [3]string{"Avatar", "Dead", "Avatar stays"}, dialog.GetLeaveRowText(0))
+	require.Equal(t, [3]string{"Avatar", "Dead", "Cannot stay"}, dialog.GetLeaveRowText(0))
 	require.Equal(t, [3]string{"Iolo", "Dead", "Dead"}, dialog.GetLeaveRowText(1))
 	require.Equal(t, "Shamino", dialog.GetLeaveRowText(2)[0])
-	require.Equal(t, "SEVERE WARNING", dialog.GetLeaveRowText(2)[2])
+	require.Equal(t, "Last one living", dialog.GetLeaveRowText(2)[2])
 	require.Equal(t, "Mariahxxx", dialog.GetLeaveRowText(3)[0], "full nine-character active names stay intact")
-	require.Contains(t, compactInnText(dialog.GetDetailText()), "Avatar and must remain")
+	require.Contains(t, compactInnText(dialog.GetDetailText()), "Thy friends will not leave thee!")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	_, ok := dialog.ConsumePendingActionIntent()
 	require.False(t, ok)
-	require.Contains(t, dialog.GetInlineFeedback(), "Avatar")
+	require.Contains(t, dialog.GetInlineFeedback(), "Thy friends")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyDown)
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	_, ok = dialog.ConsumePendingActionIntent()
 	require.False(t, ok)
-	require.Contains(t, dialog.GetInlineFeedback(), "Dead")
+	require.Contains(t, dialog.GetInlineFeedback(), "dead")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyDown)
 	detail := compactInnText(dialog.GetDetailText())
 	require.Contains(t, detail, "No charge today")
-	require.Contains(t, detail, "Monthly rate: 1234 gold")
+	require.Contains(t, detail, "Rate: 1234 gold per month")
 	require.Contains(t, detail, "Status: Poisoned")
-	require.Contains(t, detail, "SEVERE")
+	require.Contains(t, detail, "last living companion")
 	require.NotContains(t, detail, "Minimum stay")
 	require.NotContains(t, detail, "Future rate")
 	require.NotContains(t, detail, "Guest rooms")
@@ -165,7 +165,7 @@ func TestInnShopDialogLeaveMinimumPartyAndNoVacancyAreVisibleBlocked(t *testing.
 		text   string
 	}{
 		{name: "minimum party", reason: game_state.InnLeaveBlockMinimumParty, text: "At least one active party member"},
-		{name: "no vacancy", reason: game_state.InnLeaveBlockNoVacancy, text: "No guest room is vacant"},
+		{name: "no vacancy", reason: game_state.InnLeaveBlockNoVacancy, text: "We have no room available"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -204,11 +204,11 @@ func TestInnShopDialogPickupRowsFourDigitChargesAndConfirmableWarnings(t *testin
 
 	detail := compactInnText(dialog.GetDetailText())
 	require.Contains(t, detail, "PICK UP: Geoffreyy")
-	require.Contains(t, detail, "Recorded / billable months: 0 / 1")
+	require.Contains(t, detail, "Months stayed / to pay for: 0 / 1")
 	require.Contains(t, detail, "Minimum charge is one month")
-	require.Contains(t, detail, "Monthly rate: 1234 gold")
-	require.Contains(t, detail, "Listed charge: 1234 gold")
-	require.Contains(t, detail, "Geoffreyy is Poisoned and WILL DIE")
+	require.Contains(t, detail, "Rate: 1234 gold per month")
+	require.Contains(t, detail, "That will be 1234 gold, please.")
+	require.Contains(t, detail, "Geoffreyy is poisoned and will die")
 	require.NotContains(t, detail, "Gold after listed payment")
 	require.NotContains(t, detail, "Guest rooms")
 
@@ -222,16 +222,16 @@ func TestInnShopDialogPickupRowsFourDigitChargesAndConfirmableWarnings(t *testin
 	dialog.populateDetailOutput()
 	pressInnShopKey(dialog, keyboard, ebiten.KeyDown)
 	require.Empty(t, dialog.GetReceiptText(), "row selection clears the old receipt")
-	require.Contains(t, compactInnText(dialog.GetDetailText()), "Dead and remains stored")
+	require.Contains(t, compactInnText(dialog.GetDetailText()), "dead and remains stored")
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	_, ok = dialog.ConsumePendingActionIntent()
 	require.False(t, ok, "dead stored guests never reach approval")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyDown)
 	detail = compactInnText(dialog.GetDetailText())
-	require.Contains(t, detail, "Listed charge: 4936 gold")
-	require.Contains(t, detail, "shortfall 615")
-	require.Contains(t, detail, "GUARD WARNING")
+	require.Contains(t, detail, "That will be 4936 gold, please.")
+	require.Contains(t, detail, "615 short")
+	require.Contains(t, detail, "the guards are called")
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEnter)
 	intent, ok = dialog.ConsumePendingActionIntent()
 	require.True(t, ok, "insufficient funds remains consequential and confirmable")
@@ -302,10 +302,10 @@ func TestInnShopDialogHelpExplainsLeaveAndPickupWithoutLeavingBrowse(t *testing.
 	require.Contains(t, help, "[L]eave a companion")
 	require.Contains(t, help, "costs nothing today")
 	require.Contains(t, help, "At least one month is billed")
-	require.Contains(t, help, "rate is recalculated")
+	require.Contains(t, help, "rate is worked out again")
 	require.Contains(t, help, "[P]ick Up a guest")
 	require.Contains(t, help, "Dead guests remain stored")
-	require.Contains(t, help, "without enough gold activates guards")
+	require.Contains(t, help, "the guards are called")
 	require.Contains(t, dialog.GetShell().GetFooterView().Guidance, "[H] Close Help")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyEscape)
@@ -390,7 +390,7 @@ func TestInnShopDialogResultReceiptPreviewStopAndReceiptClearing(t *testing.T) {
 	require.Equal(t, InnShopBrowse, dialog.GetPhase())
 	require.Equal(t, "3031", dialog.GetShell().GetHeaderView().PartyGold)
 	receipt := dialog.GetReceiptText()
-	require.Equal(t, "You rest until morning. Paid 1234 gold. Another 56 gold is missing. You have 3031 gold left.", receipt)
+	require.Equal(t, "You rest until morning. Paid 1234 gold. 56 more gold was stolen! Thou hast 3031 gold left.", receipt)
 	require.NotContains(t, receipt, "Faulinei")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyL)

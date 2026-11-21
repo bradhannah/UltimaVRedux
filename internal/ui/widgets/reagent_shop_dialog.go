@@ -380,11 +380,11 @@ func (d *ReagentShopDialog) ensureLayout() {
 	d.lastScreenWidth, d.lastScreenHeight = width, height
 	d.shell.GetBounds()
 	d.catalogFont, d.catalogOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: reagentShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: reagentShopLineSpacing,
 		MaxLines: 1, MaxChars: reagentShopMinimumTextChars,
 	})
 	d.detailFont, d.detailOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: reagentShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: reagentShopLineSpacing,
 		MaxLines: reagentShopDetailLines, MaxChars: reagentShopMinimumTextChars,
 	})
 	d.calculateLayout()
@@ -528,10 +528,9 @@ func (d *ReagentShopDialog) populateDetailOutput() {
 		).Done()
 	case game_state.ReagentOfferBlockInventoryFull:
 		d.detailOutput.AppendLine().Textf(
-			"Cannot buy %s: inventory is full at %d.",
+			"Thou canst not carry any more %s!",
 			DialogStatusWarningColor,
 			quote.ReagentName,
-			party_state.ItemQuantitySmallMax,
 		).WordWrap().Done()
 	case game_state.ReagentOfferBlockUnaffordable:
 		d.detailOutput.AppendLine().Textf(
@@ -554,11 +553,11 @@ func (d *ReagentShopDialog) syncPresentation() {
 func (d *ReagentShopDialog) footerGuidance() string {
 	switch d.phase {
 	case ReagentShopBrowse:
-		return "[Up/Down] Select   [Enter] Purchase   [Esc] Leave"
+		return "[Up/Down] Select   [Enter] Buy   [Esc] Leave"
 	case ReagentShopAwaitingQuantity:
 		return "Choose purchase quantity"
 	case ReagentShopAwaitingResult:
-		return "Processing purchase"
+		return ""
 	case ReagentShopFarewell, ReagentShopSessionError:
 		return merchantLeaveFooter
 	default:

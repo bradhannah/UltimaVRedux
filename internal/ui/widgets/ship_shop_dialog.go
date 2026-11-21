@@ -607,15 +607,15 @@ func (d *ShipShopDialog) ensureLayout() {
 	d.lastScreenWidth, d.lastScreenHeight = width, height
 	d.shell.GetBounds()
 	d.cardFont, d.cardOutputs[0] = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: shipShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: shipShopLineSpacing,
 		MaxLines: shipShopCardTextLines, MaxChars: shipShopMinimumTextChars,
 	})
 	_, d.cardOutputs[1] = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: shipShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: shipShopLineSpacing,
 		MaxLines: shipShopCardTextLines, MaxChars: shipShopMinimumTextChars,
 	})
 	d.manifestFont, d.manifestOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: shipShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: shipShopLineSpacing,
 		MaxLines: shipShopManifestLines, MaxChars: shipShopMinimumTextChars,
 	})
 	d.calculateLayout()
@@ -824,22 +824,22 @@ func (d *ShipShopDialog) footerGuidance() string {
 
 func shipShopActiveFooterGuidance(phase ShipShopDialogPhase) string {
 	if phase == ShipShopAwaitingPurchaseApproval {
-		return "Complete or cancel purchase review"
+		return "Confirm or cancel the purchase."
 	}
 	if phase == ShipShopAwaitingPurchaseResult {
-		return "Processing vessel order"
+		return ""
 	}
 	if phase == ShipShopAwaitingTravelApproval {
-		return "Complete or cancel harbour review"
+		return "Confirm or cancel the escort."
 	}
 	if phase == ShipShopAwaitingTravelResult {
 		return "Preparing harbour escort"
 	}
 	if phase == ShipShopSuccessReceipt {
-		return "Await vessel dispatch acknowledgement"
+		return "[Enter/Esc] Continue"
 	}
 	if phase == ShipShopNonterminalRefusal {
-		return "[Enter/Esc] Acknowledge"
+		return "[Enter/Esc] Continue"
 	}
 
 	panic("shipShopActiveFooterGuidance: inactive phase")
@@ -922,7 +922,7 @@ func shipBerthLabel(berth game_state.ShipBerthReview) string {
 
 func shipBerthVehicleLabel(berth game_state.ShipBerthReview) string {
 	if berth.State == game_state.ShipBerthObstructed {
-		return "Unrelated obstruction"
+		return "Something blocks the berth!"
 	}
 	if berth.State == game_state.ShipBerthEmpty {
 		return "None"
@@ -972,7 +972,7 @@ func shipBlockConsequence(quote game_state.ShipPurchaseQuote) string {
 	case game_state.ShipPurchaseBlockFrigateAlreadyPresent:
 		return "A frigate already holds this berth."
 	case game_state.ShipPurchaseBlockMapCapacity:
-		return "No safe delivery can be arranged."
+		return "The harbour has no room for another vessel."
 	case game_state.ShipPurchaseBlockSkiffLimit:
 		return fmt.Sprintf("This frigate already carries %d/%d skiffs.",
 			quote.Berth.SkiffCount, game_state.ShipShopMaximumSkiffs)

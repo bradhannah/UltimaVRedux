@@ -443,14 +443,12 @@ func (d *HealerShopDialog) ensureLayout() {
 
 	d.cellFont, d.cellOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: healerShopLineSpacing,
 		MaxLines:              healerShopServiceLines,
 		MaxChars:              healerShopMinimumTextChars,
 	})
 	d.detailFont, d.detailOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: healerShopLineSpacing,
 		MaxLines:              healerShopDetailLines,
 		MaxChars:              healerShopMinimumTextChars,
@@ -791,9 +789,9 @@ func (d *HealerShopDialog) detailActionText(eligible bool, affordable bool) (str
 
 		return "Enter to review.", DialogControlKeyColor
 	case HealerShopAwaitingApproval:
-		return "Approve or cancel in the treatment dialog.", DialogControlHintColor
+		return "Confirm or cancel the treatment.", DialogControlHintColor
 	case HealerShopAwaitingResult:
-		return "Processing treatment...", DialogNavHintColor
+		return "", DialogNavHintColor
 	case HealerShopSessionError:
 		return "Enter or Esc to leave.", DialogStatusWarningColor
 	default:
@@ -816,9 +814,9 @@ func (d *HealerShopDialog) footerGuidance() string {
 
 		return "[Left/Right] Pane   [Up/Down] Select\n[A] All   " + action + "   [Esc] Leave"
 	case HealerShopAwaitingApproval:
-		return "Approve or cancel the treatment dialog"
+		return "Confirm or cancel the treatment."
 	case HealerShopAwaitingResult:
-		return "Processing treatment"
+		return ""
 	case HealerShopSessionError:
 		return merchantLeaveFooter
 	default:

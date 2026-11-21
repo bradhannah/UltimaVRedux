@@ -28,24 +28,16 @@ type merchantTalkWorkflowState struct {
 	advanceTime              bool
 	finished                 bool
 	ownedDialogs             merchantDialogRegistry
-	armsDialog               *widgets.ArmsShopDialog
 	armsTrade                *widgets.ArmsTradeDialog
-	guildDialog              *widgets.GuildShopDialog
 	guildPurchase            *widgets.GuildPurchaseDialog
-	healerDialog             *widgets.HealerShopDialog
 	healerTreatment          *widgets.HealerTreatmentDialog
-	innDialog                *widgets.InnShopDialog
 	innAction                *widgets.InnActionDialog
-	tavernDialog             *widgets.TavernShopDialog
 	tavernAction             *widgets.TavernActionDialog
 	tavernResult             *widgets.TavernResultDialog
 	tavernNotice             *widgets.TavernAdviceNotice
 	tavernDismissAfterResult bool
-	reagentDialog            *widgets.ReagentShopDialog
 	reagentPurchase          *widgets.ReagentPurchaseDialog
-	horseDialog              *widgets.HorseShopDialog
 	horsePurchase            *widgets.HorsePurchaseDialog
-	shipDialog               *widgets.ShipShopDialog
 	shipPurchase             *widgets.ShipPurchaseDialog
 	shipDispatch             *widgets.ShipDispatchDialog
 	shipTravel               *widgets.ShipTravelDialog
@@ -224,7 +216,6 @@ func (g *GameScene) thenRunArmsShopAuthority(
 				Preview:        preview,
 				IsKeyPressed:   g.keyboard.IsKeyHeld,
 			})
-			workflowState.armsDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -470,7 +461,6 @@ func (g *GameScene) thenRunReagentShopAuthority(
 				Prose:          prose,
 				Preview:        preview,
 			})
-			workflowState.reagentDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -612,7 +602,6 @@ func (g *GameScene) thenRunHorseShopAuthority(
 				Prose:          prose,
 				Preview:        preview,
 			})
-			workflowState.horseDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -753,7 +742,6 @@ func (g *GameScene) thenRunShipShopAuthority(
 				Preview:        preview,
 				IsKeyPressed:   g.keyboard.IsKeyHeld,
 			})
-			workflowState.shipDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -1070,7 +1058,6 @@ func (g *GameScene) thenRunGuildShopAuthority(
 				Preview:        preview,
 				IsKeyPressed:   g.keyboard.IsKeyHeld,
 			})
-			workflowState.guildDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -1211,7 +1198,6 @@ func (g *GameScene) thenRunHealerShopAuthority(
 				Prose:          prose,
 				Preview:        preview,
 			})
-			workflowState.healerDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -1455,7 +1441,6 @@ func (g *GameScene) thenRunInnShopAuthority(
 				Preview:        preview,
 				IsKeyPressed:   g.keyboard.IsKeyHeld,
 			})
-			workflowState.innDialog = dialog
 			g.keyboard.PrepareForTransition(0)
 			workflowState.pushOwnedDialog(&g.dialogStack, dialog)
 		}).If(
@@ -1940,7 +1925,7 @@ func (g *GameScene) resolveInnShopProse(
 		dialog: widgets.InnShopDialogProse{
 			Greeting:     quoteMerchantConversation(greeting),
 			RestPrompt:   state.Merchant.OwnerName + " asks, \"Wilt thou Rest for the night?\"",
-			LeavePrompt:  state.Merchant.OwnerName + " asks, \"Who will Leave and stay?\"",
+			LeavePrompt:  state.Merchant.OwnerName + " asks, \"Who will stay?\"",
 			PickupPrompt: state.Merchant.OwnerName + " asks, \"Whom wilt thou Pick up?\"",
 		},
 		politeFarewell: quoteMerchantConversation(polite),
@@ -2170,28 +2155,27 @@ func resolveShipPurchaseResultDisplay(
 	switch result.Action {
 	case game_state.ShipPurchaseCreateFrigate:
 		receipt = fmt.Sprintf(
-			"Purchased a frigate with %d skiffs for %d gold; dispatched to the harbour.",
+			"Bought: a frigate with %d skiffs for %d gold. It awaits thee in the harbour.",
 			result.SkiffCountAfter,
 			result.Price,
 		)
 	case game_state.ShipPurchaseCreateStandaloneSkiff:
-		receipt = fmt.Sprintf("Purchased a standalone skiff for %d gold; dispatched to the harbour.", result.Price)
+		receipt = fmt.Sprintf("Bought: a standalone skiff for %d gold. It awaits thee in the harbour.", result.Price)
 	case game_state.ShipPurchaseLoadSkiff:
 		receipt = fmt.Sprintf(
-			"Purchased %d %s for %d gold; frigate skiffs: %d -> %d.",
+			"Bought: %d %s for %d gold. The frigate now carries %d.",
 			result.Quantity,
 			shipSkiffNoun(result.Quantity),
 			result.Price,
-			result.SkiffCountBefore,
 			result.SkiffCountAfter,
 		)
 	default:
 		panic("resolveShipPurchaseResultDisplay: unknown purchase action")
 	}
-	receipt += fmt.Sprintf(" Final gold %d.", result.GoldAfterTheft)
 	if result.Theft > 0 {
-		receipt += fmt.Sprintf(" Faulinei took %d additional gold.", result.Theft)
+		receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 	}
+	receipt += fmt.Sprintf(" Thou hast %d gold left.", result.GoldAfterTheft)
 
 	return widgets.ShipShopResultDisplay{MerchantExchange: prose.politeFarewell, Receipt: receipt}
 }
@@ -2217,7 +2201,7 @@ func resolveShipFundsRefusalDisplay(
 	return widgets.ShipShopResultDisplay{
 		MerchantExchange: prose.fundsRefusal,
 		Receipt: fmt.Sprintf(
-			"No %s purchased: need %d gold; party has %d.",
+			"No %s bought: need %d gold; party has %d.",
 			name,
 			request.ReviewedTotalPrice,
 			state.Gold,
@@ -2248,7 +2232,7 @@ func resolveShipPurchaseRefusalDisplay(
 		case game_state.ShipPurchaseBlockFrigateAlreadyPresent:
 			reason = "a frigate already holds the berth"
 		case game_state.ShipPurchaseBlockMapCapacity:
-			reason = "no safe delivery can be arranged"
+			reason = "the harbour has no room for another vessel"
 		case game_state.ShipPurchaseBlockSkiffLimit:
 			reason = "the frigate cannot carry another skiff"
 		case game_state.ShipPurchaseBlockNone:
@@ -2260,7 +2244,7 @@ func resolveShipPurchaseRefusalDisplay(
 
 	return widgets.ShipShopResultDisplay{
 		MerchantExchange: fmt.Sprintf("\"I cannot complete that order,\" says %s.", state.Merchant.OwnerName),
-		Receipt:          fmt.Sprintf("No %s purchased: %s. The manifest was refreshed.", name, reason),
+		Receipt:          fmt.Sprintf("No %s bought: %s.", name, reason),
 	}
 }
 
@@ -2282,19 +2266,17 @@ func resolveReagentPurchaseResultDisplay(
 		bundleNoun = "bundle"
 	}
 	receipt := fmt.Sprintf(
-		"Purchased %d %s of %s: %d -> %d; received %d. Paid %d gold; final gold %d.",
+		"Bought: %d %s of %s for %d gold. Thou hast now %d.",
 		result.BundleCount,
 		bundleNoun,
 		result.ReagentName,
-		result.QuantityBefore,
-		result.QuantityAfter,
-		result.ActualReceipt,
 		result.TotalPrice,
-		result.GoldAfterTheft,
+		result.QuantityAfter,
 	)
 	if result.Theft > 0 {
-		receipt += fmt.Sprintf(" Faulinei took %d additional gold.", result.Theft)
+		receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 	}
+	receipt += fmt.Sprintf(" Thou hast %d gold left.", result.GoldAfterTheft)
 
 	return widgets.ReagentPurchaseResultDisplay{
 		MerchantExchange: fmt.Sprintf("\"I thank thee!\" says %s. \"Anything else?\"", merchant.OwnerName),
@@ -2309,7 +2291,7 @@ func resolveHealerResultDisplay(
 	var receipt string
 	switch result.Service {
 	case references.HealerCure:
-		receipt = fmt.Sprintf("%s cured; HP remains %d/%d.", result.CharacterName, result.HPAfter, result.MaxHPAfter)
+		receipt = result.CharacterName + ": Poison cured!"
 	case references.HealerHeal:
 		receipt = fmt.Sprintf("%s healed: HP %d -> %d/%d.", result.CharacterName, result.HPBefore, result.HPAfter, result.MaxHPAfter)
 	case references.HealerResurrect:
@@ -2326,10 +2308,11 @@ func resolveHealerResultDisplay(
 	}
 	switch result.ChargeKind {
 	case game_state.HealerChargePaid:
-		receipt += fmt.Sprintf(" Paid %d; gold %d.", result.Charge, result.GoldAfterTheft)
+		receipt += fmt.Sprintf(" Paid %d gold.", result.Charge)
 		if result.Theft > 0 {
-			receipt += fmt.Sprintf(" Faulinei took %d.", result.Theft)
+			receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 		}
+		receipt += fmt.Sprintf(" Thou hast %d gold left.", result.GoldAfterTheft)
 	case game_state.HealerChargeFree:
 		receipt += " Free care."
 	case game_state.HealerChargeCharitable:
@@ -2369,10 +2352,11 @@ func resolveHealerAllResultDisplay(
 	receipt := fmt.Sprintf("%s %d %s.", verb, len(result.CharacterIndexes), recipientLabel)
 	switch result.ChargeKind {
 	case game_state.HealerChargePaid:
-		receipt += fmt.Sprintf(" Paid %d; gold %d.", result.Charge, result.GoldAfterTheft)
+		receipt += fmt.Sprintf(" Paid %d gold.", result.Charge)
 		if result.Theft > 0 {
-			receipt += fmt.Sprintf(" Faulinei took %d.", result.Theft)
+			receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 		}
+		receipt += fmt.Sprintf(" Thou hast %d gold left.", result.GoldAfterTheft)
 	case game_state.HealerChargeFree:
 		receipt += " Free care."
 	case game_state.HealerChargeCharitable:
@@ -2434,10 +2418,10 @@ func resolveHealerRefusalDisplay(
 	return widgets.HealerServiceResultDisplay{
 		MerchantExchange: prose.NoNeed,
 		Receipt: fmt.Sprintf(
-			"No %s for %s: %s.",
+			"No %s for %s: %s",
 			strings.ToLower(request.Service.String()),
 			recipient.Name,
-			strings.ToLower(healerEligibilityReceipt(recipient.Treatments[int(request.Service)].Eligibility)),
+			healerEligibilityReceipt(recipient.Treatments[int(request.Service)].Eligibility),
 		),
 	}
 }
@@ -2456,18 +2440,16 @@ func healerRecipientForRequest(
 
 func healerEligibilityReceipt(eligibility game_state.HealerEligibility) string {
 	switch eligibility {
-	case game_state.HealerNotPoisoned:
-		return "recipient is not poisoned"
-	case game_state.HealerNotInjured:
-		return "recipient is already fully healed"
+	case game_state.HealerNotPoisoned, game_state.HealerNotInjured:
+		return `"Thou hast no need of this art!"`
 	case game_state.HealerDeadCannotHeal:
-		return "recipient is dead"
+		return "recipient is dead."
 	case game_state.HealerLivingCannotResurrect:
-		return "recipient is still living"
+		return "recipient is still living."
 	case game_state.HealerEligible:
-		return "treatment is currently unavailable"
+		return "it cannot be done now."
 	default:
-		return "treatment is unavailable"
+		return "treatment is unavailable."
 	}
 }
 
@@ -2547,9 +2529,9 @@ func resolveArmsTradeRefusalProse(
 	}
 	switch {
 	case intent.SellQuote.Equipment.IsAmmo():
-		return fmt.Sprintf("We do not deal in used ammunition, says %s.", merchant.OwnerName)
+		return "We don't deal in used ammunition!"
 	case intent.SellQuote.BasePrice == 0 || intent.SellQuote.UnitOffer == 0 || !intent.SellQuote.Sellable:
-		return fmt.Sprintf("That, I cannot buy from thee, says %s.", merchant.OwnerName)
+		return "That, I cannot buy from thee."
 	case intent.SellQuote.MaxQuantity == 0:
 		return fmt.Sprintf("Spend some gold before selling more, says %s.", merchant.OwnerName)
 	default:
@@ -2573,13 +2555,13 @@ func resolveArmsBuyRefusalDisplay(
 	if errors.Is(err, game_state.ErrArmsCapacity) {
 		return widgets.ArmsTradeResultDisplay{
 			MerchantExchange: fmt.Sprintf("\"Thou canst not carry any more!\" says %s.", state.Merchant.OwnerName),
-			Receipt:          fmt.Sprintf("No %s purchased: carried equipment capacity is full.", equipment),
+			Receipt:          fmt.Sprintf("No %s bought: thou canst not carry any more!", equipment),
 		}
 	}
 
 	return widgets.ArmsTradeResultDisplay{
 		MerchantExchange: fmt.Sprintf("\"Can't pay?! Out with thee!\" yells %s.", state.Merchant.OwnerName),
-		Receipt:          fmt.Sprintf("No %s purchased: insufficient gold.", equipment),
+		Receipt:          fmt.Sprintf("No %s bought: thou hast not enough gold!", equipment),
 	}
 }
 
@@ -2619,17 +2601,17 @@ func resolveArmsSellRefusalDisplay(
 	case widgets.ArmsTradeUsedAmmunitionRefusal:
 		return widgets.ArmsTradeResultDisplay{
 			MerchantExchange: fmt.Sprintf("\"We don't deal in used ammunition!\" growls %s.", merchant.OwnerName),
-			Receipt:          fmt.Sprintf("No %s sold: used ammunition is refused; Arms trading ended.", equipment),
+			Receipt:          fmt.Sprintf("No %s sold: \"We don't deal in used ammunition!\"", equipment),
 		}
 	case widgets.ArmsTradeZeroPriceRefusal:
 		return widgets.ArmsTradeResultDisplay{
 			MerchantExchange: fmt.Sprintf("\"That, I cannot buy from thee.\" says %s.", merchant.OwnerName),
-			Receipt:          fmt.Sprintf("No %s sold: this equipment has no sale price.", equipment),
+			Receipt:          fmt.Sprintf("No %s sold: \"That, I cannot buy from thee.\"", equipment),
 		}
 	case widgets.ArmsTradeGoldCapacityRefusal:
 		return widgets.ArmsTradeResultDisplay{
 			MerchantExchange: fmt.Sprintf("\"Spend some gold before selling more.\" says %s.", merchant.OwnerName),
-			Receipt:          fmt.Sprintf("No %s sold: party gold cannot exceed 9999.", equipment),
+			Receipt:          fmt.Sprintf("No %s sold: thou canst not carry any more gold!", equipment),
 		}
 	case widgets.ArmsTradeNoRefusal:
 		panic("resolveArmsSellRefusalDisplay: refusal is required")
@@ -2643,26 +2625,23 @@ func resolveArmsBuyResultDisplay(
 	result game_state.ArmsBuyResult,
 ) widgets.ArmsTradeResultDisplay {
 	receipt := fmt.Sprintf(
-		"Bought %s x%d for %d gold. Carried: %d -> %d.",
+		"Bought: %s x%d for %d gold. Thou hast now %d.",
 		result.Equipment,
 		result.Quantity,
 		result.TotalCost,
-		result.QuantityBefore,
 		result.QuantityAfter,
 	)
 	if result.AmmoRefill {
 		receipt = fmt.Sprintf(
-			"Bought %s x%d ammunition refill for %d gold. Carried: %d -> %d; %d ammunition added.",
+			"Bought: %s x%d ammunition refill for %d gold. Thou hast now %d.",
 			result.Equipment,
 			result.Quantity,
 			result.TotalCost,
-			result.QuantityBefore,
 			result.QuantityAfter,
-			result.ActualReceipt,
 		)
 	}
 	if result.Theft > 0 {
-		receipt += fmt.Sprintf(" Faulinei took %d additional gold.", result.Theft)
+		receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 	}
 
 	return widgets.ArmsTradeResultDisplay{
@@ -2678,11 +2657,10 @@ func resolveArmsSellResultDisplay(
 	return widgets.ArmsTradeResultDisplay{
 		MerchantExchange: fmt.Sprintf("\"Done!\" says %s. \"What else can ye offer me?\"", merchant.OwnerName),
 		Receipt: fmt.Sprintf(
-			"Sold %s x%d for %d gold. Carried: %d -> %d.",
+			"Sold: %s x%d for %d gold. Thou hast now %d.",
 			result.Equipment,
 			result.Quantity,
 			result.TotalOffer,
-			result.QuantityBefore,
 			result.QuantityAfter,
 		),
 	}
@@ -2718,7 +2696,7 @@ func (g *GameScene) resolveGuildShopProse(
 	}
 	for index, quote := range state.Offers {
 		values := common
-		values.ItemName = merchantGuildProvisionName(quote.Provision)
+		values.ItemName = strings.ToLower(widgets.GuildProvisionName(quote.Provision))
 		values.Price = quote.PricePerBundle
 		values.Quantity = int(quote.BundleQuantity)
 		pitchID := references.MerchantTextID("GUILD_PITCH_" + strconv.Itoa(index))
@@ -2753,19 +2731,16 @@ func (g *GameScene) resolveGuildPurchaseResultDisplay(
 	if result.BundleCount == 1 {
 		bundleNoun = "bundle"
 	}
-	provisionName := merchantGuildProvisionName(result.Provision)
-	provisionName = strings.ToUpper(provisionName[:1]) + provisionName[1:]
 	receipt := fmt.Sprintf(
-		"Purchased %d %s for %d gold. %s: %d -> %d.",
+		"Bought: %d %s of %s for %d gold. Thou hast now %d.",
 		result.BundleCount,
 		bundleNoun,
+		strings.ToLower(widgets.GuildProvisionName(result.Provision)),
 		result.TotalCost,
-		provisionName,
-		result.QuantityBefore,
 		result.QuantityAfter,
 	)
 	if result.Theft > 0 {
-		receipt += fmt.Sprintf(" Faulinei took %d additional gold.", result.Theft)
+		receipt += fmt.Sprintf(" %d more gold was stolen!", result.Theft)
 	}
 
 	return widgets.GuildPurchaseResultDisplay{
@@ -2788,21 +2763,6 @@ func merchantSessionFeedback(err error) string {
 		return "No-one in thy party can trade."
 	default:
 		return "Merchant service is unavailable."
-	}
-}
-
-func merchantGuildProvisionName(provision references.Provision) string {
-	switch provision {
-	case references.Key:
-		return "keys"
-	case references.Gem:
-		return "gems"
-	case references.Torches:
-		return "torches"
-	case references.NoProvision, references.SkullKeys, references.Food, references.Gold:
-		panic("unsupported guild provision")
-	default:
-		panic("unknown guild provision")
 	}
 }
 

@@ -131,7 +131,7 @@ func (d *TavernResultDialog) Dismiss() {
 }
 
 // step describes the receipt: what happened, what it did to the party's food and
-// gold, what Faulinei took, and the keeper's word. It is only acknowledged.
+// gold, what was stolen, and the keeper's word. It is only acknowledged.
 func (d *TavernResultDialog) step() amountStep {
 	view := d.view
 	step := emptyAmountStep()
@@ -153,7 +153,7 @@ func (d *TavernResultDialog) step() amountStep {
 	}
 	if view.Theft > 0 {
 		step.notes = append(step.notes, amountNote{
-			text: fmt.Sprintf("Faulinei took %d more gold.", view.Theft), tone: amountWarning,
+			text: fmt.Sprintf("%d more gold was stolen!", view.Theft), tone: amountWarning,
 		})
 	}
 	if view.Note != "" {

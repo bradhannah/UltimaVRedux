@@ -14,7 +14,7 @@ import (
 
 const (
 	armsAmountNoun    = "Quantity"
-	armsRefusalFooter = "[Enter/Esc] Acknowledge"
+	armsRefusalFooter = "[Enter/Esc] Continue"
 )
 
 var _ Widget = (*ArmsTradeDialog)(nil)
@@ -277,11 +277,11 @@ func armsTradeRefusal(intent ArmsTradeIntent) ArmsTradeRefusalKind {
 func armsRefusalLabel(kind ArmsTradeRefusalKind) string {
 	switch kind {
 	case ArmsTradeUsedAmmunitionRefusal:
-		return "USED AMMUNITION: ARMS SESSION ENDS"
+		return "The trade is ended."
 	case ArmsTradeZeroPriceRefusal:
-		return "NO OFFER: RETURN TO SELL"
+		return "Choose another."
 	case ArmsTradeGoldCapacityRefusal:
-		return "GOLD CAPACITY: RETURN TO SELL"
+		return "Thou canst not carry any more gold! Choose another."
 	case ArmsTradeNoRefusal:
 		return ""
 	default:

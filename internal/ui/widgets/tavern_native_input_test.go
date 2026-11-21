@@ -437,7 +437,7 @@ func TestTavernNativeSubjectResultStackAndBrowseReturn(t *testing.T) {
 	f.stack.PushModalDialog(result)
 	state := f.dialog.GetState()
 	f.dialog.ApplyResult(intent.Request, state, TavernActionResultDisplay{
-		Action: TavernActionInformation, MerchantExchange: "Ask the informant.", Receipt: "Information received.",
+		Action: TavernActionInformation, MerchantExchange: "Ask the informant.",
 		PaidInformation: &TavernTranscriptEntry{Question: "honesty", Answer: "Ask the informant."},
 	})
 	require.False(t, f.field.IsFocused(), "Browse cannot steal focus from a result acknowledgement")

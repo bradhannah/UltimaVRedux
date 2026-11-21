@@ -193,7 +193,7 @@ func (d *InnActionDialog) describeRest(step *amountStep) {
 	case recovering > 0 && poisoned:
 		step.notes = append(step.notes, amountNote{text: "The unaffected heal fully.", tone: amountPlain})
 	case recovering > 0:
-		step.notes = append(step.notes, amountNote{text: "Every living member heals fully.", tone: amountPlain})
+		step.notes = append(step.notes, amountNote{text: "Every living companion heals fully.", tone: amountPlain})
 	}
 	if len(deadNames) > 0 {
 		step.notes = append(step.notes, innNotes("Dead and unchanged: "+joinInnNames(deadNames)+".", amountPlain)...)
@@ -207,7 +207,7 @@ func (d *InnActionDialog) describeLeave(step *amountStep) {
 	step.rows = d.innPlaceRows(row.PartySizeAfter, row.OccupancyAfter)
 	if innHasWarning(row.Warnings, game_state.InnWarningLastLivingMember) {
 		step.notes = append(step.notes,
-			innNotes("This removes the last living member from the active party.", amountWarning)...)
+			innNotes("This removes the last living companion from the active party.", amountWarning)...)
 		step.notes = append(step.notes, amountNote{text: "", tone: amountPlain})
 	}
 	step.notes = append(step.notes, amountNote{text: "No charge today.", tone: amountPlain})
@@ -218,7 +218,7 @@ func (d *InnActionDialog) describeLeave(step *amountStep) {
 	}
 	step.notes = append(step.notes,
 		amountNote{text: "At least one month is billed.", tone: amountPlain},
-		amountNote{text: "Pick up figures the rate again.", tone: amountPlain})
+		amountNote{text: "The rate is worked out again at check-out.", tone: amountPlain})
 	status := strings.ToLower(innStatusName(row.Status))
 	step.notes = append(step.notes, innNotes(name+" stays "+status+".", amountPlain)...)
 }

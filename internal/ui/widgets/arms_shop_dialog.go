@@ -604,7 +604,7 @@ func armsBuyUnavailableReason(quote game_state.ArmsBuyQuote) string {
 	case quote.MaxQuantity > 0:
 		return ""
 	case quote.QuantityBefore >= party_state.ItemQuantitySmallMax:
-		return "Cannot buy: carried quantity is already 99."
+		return "Thou canst not carry any more!"
 	case int(quote.Gold) < quote.UnitPrice:
 		return fmt.Sprintf("Cannot buy: need %d gold; party has %d.", quote.UnitPrice, quote.Gold)
 	default:
@@ -615,11 +615,11 @@ func armsBuyUnavailableReason(quote game_state.ArmsBuyQuote) string {
 func armsSellUnavailableReason(quote game_state.ArmsSellQuote) string {
 	switch {
 	case quote.Equipment.IsAmmo():
-		return "Cannot sell: used ammunition is refused."
+		return "\"We don't deal in used ammunition!\""
 	case quote.BasePrice == 0 || quote.UnitOffer == 0 || !quote.Sellable:
-		return "Cannot sell: this equipment has no offer."
+		return "\"That, I cannot buy from thee.\""
 	case quote.MaxQuantity == 0:
-		return "Cannot sell: party gold has no room."
+		return "Thou canst not carry any more gold!"
 	default:
 		return ""
 	}
@@ -877,19 +877,19 @@ func (d *ArmsShopDialog) ensureLayout() {
 	d.lastScreenWidth, d.lastScreenHeight = width, height
 	d.shell.GetBounds()
 	_, d.headerOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: armsShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: armsShopLineSpacing,
 		MaxLines: 1, MaxChars: armsShopMinimumTextChars,
 	})
 	_, d.sortOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: armsShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: armsShopLineSpacing,
 		MaxLines: 1, MaxChars: armsShopMinimumTextChars,
 	})
 	d.rowFont, d.rowOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: armsShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: armsShopLineSpacing,
 		MaxLines: armsShopDetailLines, MaxChars: armsShopMinimumTextChars,
 	})
 	_, d.detailOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: armsShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: armsShopLineSpacing,
 		MaxLines: armsShopDetailLines, MaxChars: armsShopMinimumTextChars,
 	})
 	d.calculateLayout()
@@ -1174,8 +1174,7 @@ func (d *ArmsShopDialog) populateUnavailableDetail() {
 	if d.mode == ArmsShopBuy {
 		quote := d.activeMode().buyRows[d.GetSelectedIndex()]
 		if quote.QuantityBefore >= party_state.ItemQuantitySmallMax {
-			d.detailOutput.AppendLine().Text("Cannot buy: carried quantity", DialogStatusWarningColor).Done()
-			d.detailOutput.AppendLine().Text("is already 99.", DialogStatusWarningColor).Done()
+			d.detailOutput.AppendLine().Text("Thou canst not carry any more!", DialogStatusWarningColor).WordWrap().Done()
 
 			return
 		}
@@ -1190,14 +1189,14 @@ func (d *ArmsShopDialog) populateUnavailableDetail() {
 	quote := d.activeMode().sellRows[d.GetSelectedIndex()]
 	switch {
 	case quote.Equipment.IsAmmo():
-		d.detailOutput.AppendLine().Text("Cannot sell: used ammunition", DialogStatusWarningColor).Done()
-		d.detailOutput.AppendLine().Text("is refused.", DialogStatusWarningColor).Done()
+		d.detailOutput.AppendLine().Text("\"We don't deal in used ammunition!\"", DialogStatusWarningColor).
+			WordWrap().Done()
 	case quote.BasePrice == 0 || quote.UnitOffer == 0 || !quote.Sellable:
-		d.detailOutput.AppendLine().Text("Cannot sell: this equipment", DialogStatusWarningColor).Done()
-		d.detailOutput.AppendLine().Text("has no offer.", DialogStatusWarningColor).Done()
+		d.detailOutput.AppendLine().Text("\"That, I cannot buy from thee.\"", DialogStatusWarningColor).
+			WordWrap().Done()
 	case quote.MaxQuantity == 0:
-		d.detailOutput.AppendLine().Text("Cannot sell: party gold", DialogStatusWarningColor).Done()
-		d.detailOutput.AppendLine().Text("has no room.", DialogStatusWarningColor).Done()
+		d.detailOutput.AppendLine().Text("Thou canst not carry any more gold!", DialogStatusWarningColor).
+			WordWrap().Done()
 	default:
 		panic("ArmsShopDialog.populateUnavailableDetail: selected row is available")
 	}
@@ -1227,9 +1226,9 @@ func (d *ArmsShopDialog) footerGuidance() string {
 	case ArmsShopBrowse:
 		return "[B] Buy  [S] Sell  [R] Sort  [Shift+Up/Down/PgUp/PgDn] Page\n[Up/Down] Select  [Enter] Trade  [Esc] Leave"
 	case ArmsShopAwaitingTrade:
-		return "Complete or cancel the trade dialog"
+		return "Confirm or cancel the trade."
 	case ArmsShopAwaitingResult:
-		return "Processing trade"
+		return ""
 	case ArmsShopTerminalRefusal, ArmsShopSessionError:
 		return merchantLeaveFooter
 	default:

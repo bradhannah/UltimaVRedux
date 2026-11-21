@@ -147,7 +147,7 @@ func (d *GuildPurchaseDialog) Dismiss() {
 func (d *GuildPurchaseDialog) step() amountStep {
 	quote := d.quote
 	step := emptyAmountStep()
-	step.title, step.verb = amountBuyVerb+" "+guildProvisionName(quote.Provision), amountBuyVerb
+	step.title, step.verb = amountBuyVerb+" "+GuildProvisionName(quote.Provision), amountBuyVerb
 	step.unit = bundleUnitPrice(quote.PricePerBundle, int(quote.BundleQuantity))
 	if quote.MaxBundles == 0 {
 		step.refused, step.notes = true, guildRefusalNotes(quote)

@@ -283,10 +283,10 @@ func (d *HorseShopDialog) ApplyPurchaseResult(result game_state.HorsePurchaseRes
 	}
 	d.state.Gold = result.GoldAfterTheft
 	d.latestExchange = d.prose.PoliteFarewell
-	d.receiptText = fmt.Sprintf("Purchased one horse for %d gold.", result.Price)
+	d.receiptText = fmt.Sprintf("Bought: one horse for %d gold.", result.Price)
 	if result.Theft > 0 {
 		d.receiptText = fmt.Sprintf(
-			"Purchased one horse for %d gold. Faulinei took %d more; party gold is %d.",
+			"Bought: one horse for %d gold. %d more gold was stolen! Thou hast %d gold left.",
 			result.Price,
 			result.Theft,
 			result.GoldAfterTheft,
@@ -304,7 +304,7 @@ func (d *HorseShopDialog) ApplyFundsRefusal() {
 	}
 	d.latestExchange = d.prose.FundsRefusal
 	if d.awaitingQuote.Affordable {
-		d.receiptText = "Purchase refused: not enough gold."
+		d.receiptText = "Thou hast not enough gold!"
 	} else {
 		d.receiptText = fmt.Sprintf(
 			"Need %d gold; party has %d.",
@@ -378,15 +378,15 @@ func (d *HorseShopDialog) ensureLayout() {
 
 func (d *HorseShopDialog) rebuildOutputs() {
 	d.showroomFont, d.showroomTitleOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: horseShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: horseShopLineSpacing,
 		MaxLines: 1, MaxChars: horseShopMinimumTextChars,
 	})
 	_, d.showroomDetailsOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: horseShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: horseShopLineSpacing,
 		MaxLines: horseShopShowroomDetailLines, MaxChars: horseShopMinimumTextChars,
 	})
 	d.statusFont, d.statusOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: horseShopLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: horseShopLineSpacing,
 		MaxLines: horseShopStatusMinimumLines, MaxChars: horseShopMinimumTextChars,
 	})
 }
@@ -609,9 +609,9 @@ func (d *HorseShopDialog) footerGuidance() string {
 	case HorseShopBrowse:
 		return "[Enter] Review purchase   [Esc] Leave"
 	case HorseShopAwaitingApproval:
-		return "Review or return in purchase dialog"
+		return "Confirm or cancel the purchase."
 	case HorseShopAwaitingResult:
-		return horseShopProcessingText
+		return ""
 	case HorseShopFarewell, HorseShopSuccess, HorseShopFundsRefusal,
 		HorseShopStableClosed, HorseShopPreviewStopped, HorseShopSessionError:
 		return merchantLeaveFooter

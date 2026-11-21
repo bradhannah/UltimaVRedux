@@ -378,14 +378,12 @@ func (d *GuildShopDialog) ensureLayout() {
 
 	d.catalogFont, d.catalogOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: guildShopLineSpacing,
 		MaxLines:              1,
 		MaxChars:              guildShopMinimumTextChars,
 	})
 	d.statusFont, d.statusOutput = GetScaledFontWithOutput(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: guildShopLineSpacing,
 		MaxLines:              guildShopStatusMinimumLines,
 		MaxChars:              guildShopMinimumTextChars,
@@ -510,7 +508,7 @@ func (d *GuildShopDialog) drawCatalogRowCells(
 	textColor stdcolor.Color,
 ) {
 	values := [...]string{
-		guildProvisionName(quote.Provision),
+		GuildProvisionName(quote.Provision),
 		strconv.FormatUint(uint64(quote.BundleQuantity), 10),
 		strconv.FormatUint(uint64(quote.QuantityBefore), 10),
 		strconv.Itoa(quote.PricePerBundle),
@@ -584,7 +582,7 @@ func (d *GuildShopDialog) footerGuidance() string {
 	case GuildShopAwaitingQuantity:
 		return "Choose purchase quantity"
 	case GuildShopAwaitingResult:
-		return "Processing purchase"
+		return ""
 	case GuildShopError:
 		return merchantLeaveFooter
 	default:
@@ -742,7 +740,8 @@ func guildOfferIndex(
 	panic("GuildShopDialog: selected provision missing after refresh")
 }
 
-func guildProvisionName(provision references.Provision) string {
+// GuildProvisionName is the capitalised plural name of a guild provision.
+func GuildProvisionName(provision references.Provision) string {
 	switch provision {
 	case references.Key:
 		return "Keys"
@@ -760,10 +759,10 @@ func guildProvisionName(provision references.Provision) string {
 func guildSelectionNote(quote game_state.GuildOfferQuote) (string, bool) {
 	if quote.MaxBundles == 0 {
 		if quote.QuantityBefore >= party_state.ItemQuantitySmallMax {
-			return "Inventory max: 99.", true
+			return "Thou canst not carry any more!", true
 		}
 
-		return "Insufficient money.", true
+		return "Thou hast not enough gold!", true
 	}
 
 	return "", false

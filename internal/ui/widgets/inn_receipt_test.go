@@ -40,7 +40,7 @@ func TestInnReceiptDescribesOnlyObservedChanges(t *testing.T) {
 			display: InnActionResultDisplay{
 				Action: InnActionRest, ListedCharge: 2, FaulineiTheft: 4, FinalGold: 0,
 			},
-			want: "You rest until morning. Paid 2 gold. Another 4 gold is missing. You have 0 gold left.",
+			want: "You rest until morning. Paid 2 gold. 4 more gold was stolen! Thou hast 0 gold left.",
 		},
 		{
 			name: "death does not claim recovery even when magic increased",
