@@ -1,6 +1,10 @@
 package main
 
 import (
+	"image"
+	"image/color"
+	"math"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
@@ -17,11 +21,22 @@ const (
 
 const combatConeCastHoldDurationMs int64 = 150
 
+// While a cone is aimed its squares carry a flat wash of the spell's colour under
+// the figures, and every other square of the battlefield is shaded over them.
+// Whoever stays lit stands in the spell's path, friend or foe.
 const (
-	combatConeArrowPulsePeriodMs int64   = 450
-	combatConeArrowPulsePhases           = 2
-	combatConeArrowShadowStroke  float32 = 2
-	combatConeArrowFaceStroke    float32 = 1
+	combatConeAimTintOpacity  = 0.35
+	combatConeAimShadeOpacity = 0.6
+)
+
+// Direction arrows are solid, one source-pixel row at a time, on the centre line
+// of the caster's 18-pixel frame. The chosen arrow is the larger one.
+const (
+	combatAimArrowChosenRows = 6
+	combatAimArrowIdleRows   = 4
+	combatAimArrowGapPixels  = 2
+	combatAimArrowCenter     = combatSourceTileInset + combatSourceTilePixels/2
+	combatAimArrowFarEdge    = combatSourceTileInset + combatSourceTilePixels
 )
 
 // combatDirectionalFootprintVisual configures reusable presentation for directional combat effects.
@@ -29,8 +44,6 @@ type combatDirectionalFootprintVisual struct {
 	Tiles               [2]indexes.SpriteIndex
 	TileCount           int
 	Color               ucolor.EGAColor
-	PreviewNearOpacity  float32
-	PreviewFarOpacity   float32
 	CastNearOpacity     float32
 	CastFarOpacity      float32
 	PropagationDuration uint64
@@ -45,17 +58,31 @@ type combatConeCastEffect struct {
 	progress  float32
 }
 
+// combatConeAim is the footprint a chosen direction previews: a pure projection
+// of the squares a confirmed cast would use, with the square it starts from.
+type combatConeAim struct {
+	spell   references.Spell
+	origin  references.Position
+	squares [references.XCombatMapTiles][references.YCombatMapTiles]bool
+}
+
+// combatGridLines are the battlefield's square boundaries in whole screen pixels.
+// Filling between shared lines leaves neither a gap nor a doubled strip where two
+// squares meet, at any window size.
+type combatGridLines struct {
+	x [references.XCombatMapTiles + 1]float32
+	y [references.YCombatMapTiles + 1]float32
+}
+
 func combatDirectionalFootprintVisualForSpell(spell references.Spell) combatDirectionalFootprintVisual {
 	//nolint:exhaustive // Only implemented cone spells require presentation configuration.
 	switch spell {
 	case references.InZu:
 		return combatDirectionalFootprintVisual{
-			Tiles:              [2]indexes.SpriteIndex{indexes.MagicField},
-			TileCount:          1,
-			Color:              ucolor.EGALightMagenta,
-			PreviewNearOpacity: 0.25,
-			PreviewFarOpacity:  0.12,
-			// MagicField has a sparse silhouette, so a wide cast-only range is
+			Tiles:     [2]indexes.SpriteIndex{indexes.MagicField},
+			TileCount: 1,
+			Color:     ucolor.EGALightMagenta,
+			// MagicField has a sparse silhouette, so a wide cast range is
 			// needed for the spray to visibly thin as it expands.
 			CastNearOpacity:     0.95,
 			CastFarOpacity:      0.18,
@@ -67,8 +94,6 @@ func combatDirectionalFootprintVisualForSpell(spell references.Spell) combatDire
 			Tiles:               [2]indexes.SpriteIndex{indexes.PoisonField},
 			TileCount:           1,
 			Color:               ucolor.EGALightGreen,
-			PreviewNearOpacity:  0.28,
-			PreviewFarOpacity:   0.14,
 			CastNearOpacity:     0.95,
 			CastFarOpacity:      0.24,
 			PropagationDuration: combatConeCastPropagationDurationMs,
@@ -79,8 +104,6 @@ func combatDirectionalFootprintVisualForSpell(spell references.Spell) combatDire
 			Tiles:               [2]indexes.SpriteIndex{indexes.FireField},
 			TileCount:           1,
 			Color:               ucolor.EGALightRed,
-			PreviewNearOpacity:  0.30,
-			PreviewFarOpacity:   0.15,
 			CastNearOpacity:     0.95,
 			CastFarOpacity:      0.25,
 			PropagationDuration: combatConeCastPropagationDurationMs,
@@ -91,8 +114,6 @@ func combatDirectionalFootprintVisualForSpell(spell references.Spell) combatDire
 			Tiles:               [2]indexes.SpriteIndex{indexes.MagicField},
 			TileCount:           1,
 			Color:               ucolor.EGALightBlue,
-			PreviewNearOpacity:  0.30,
-			PreviewFarOpacity:   0.15,
 			CastNearOpacity:     0.95,
 			CastFarOpacity:      0.25,
 			PropagationDuration: combatConeCastPropagationDurationMs,
@@ -103,42 +124,122 @@ func combatDirectionalFootprintVisualForSpell(spell references.Spell) combatDire
 	}
 }
 
-func (g *GameScene) drawCombatConeOverlay(screen *ebiten.Image) {
-	var spell references.Spell
-	var origin references.Position
-	var direction references.Direction
-	var positions []references.Position
-	progress := float32(1)
-	casting := false
-	if g.combatConeCast != nil {
-		spell = g.combatConeCast.spell
-		origin = g.combatConeCast.origin
-		direction = g.combatConeCast.direction
-		positions = g.combatConeCast.positions
-		progress = g.combatConeCast.progress
-		casting = true
-	} else if targeting := g.gameState.CombatScene.ConeTargeting; targeting != nil &&
-		targeting.Direction != references.NoneDirection {
-		spell = targeting.Request.Spell
-		origin = targeting.Origin
-		direction = targeting.Direction
-		positions = g.gameState.CombatConePreview()
+// combatConeAim reports the aimed footprint. There is none before a direction is
+// chosen, nor once the confirmed cast is being shown.
+func (g *GameScene) combatConeAim() (combatConeAim, bool) {
+	frame := &g.combatRenderFrame
+	if !frame.active {
+		return g.computeCombatConeAim()
 	}
-	if len(positions) == 0 {
+	if !frame.coneAimReady {
+		frame.coneAim, frame.coneAimShown = g.computeCombatConeAim()
+		frame.coneAimReady = true
+	}
+
+	return frame.coneAim, frame.coneAimShown
+}
+
+func (g *GameScene) computeCombatConeAim() (combatConeAim, bool) {
+	targeting := g.gameState.CombatScene.ConeTargeting
+	if g.combatConeCast != nil || targeting == nil || targeting.Direction == references.NoneDirection {
+		return combatConeAim{}, false
+	}
+	aim := combatConeAim{spell: targeting.Request.Spell, origin: targeting.Origin}
+	for _, position := range g.gameState.CombatConePreview() {
+		aim.squares[position.X][position.Y] = true
+	}
+
+	return aim, true
+}
+
+// drawCombatConeOverlay draws what lies under the figures: the aimed footprint's
+// tint, or the spreading spray once the cast is confirmed.
+func (g *GameScene) drawCombatConeOverlay(screen *ebiten.Image) {
+	if g.combatConeCast != nil {
+		g.drawCombatConeCast(screen, g.combatConeCast)
+
 		return
 	}
-	visual := combatDirectionalFootprintVisualForSpell(spell)
-	maxDistance := combatDirectionalFootprintMaxDistance(positions, origin, direction)
-	for _, position := range positions {
-		distance := combatDirectionalFootprintDistance(origin, position, direction)
-		if casting && float32(distance) > progress*float32(maxDistance) {
+	aim, shown := g.combatConeAim()
+	if !shown {
+		return
+	}
+	tint := combatSquareWash(combatDirectionalFootprintVisualForSpell(aim.spell).Color, combatConeAimTintOpacity)
+	g.fillCombatSquares(screen, tint, func(position references.Position) bool {
+		return aim.squares[position.X][position.Y]
+	})
+}
+
+// drawCombatConeShade darkens every square outside the aimed footprint, figures
+// and their health marks included. The caster's own square stays lit.
+func (g *GameScene) drawCombatConeShade(screen *ebiten.Image) {
+	aim, shown := g.combatConeAim()
+	if !shown {
+		return
+	}
+	shade := combatSquareWash(ucolor.EGABlack, combatConeAimShadeOpacity)
+	g.fillCombatSquares(screen, shade, func(position references.Position) bool {
+		return position != aim.origin && !aim.squares[position.X][position.Y]
+	})
+}
+
+func (g *GameScene) drawCombatConeCast(screen *ebiten.Image, cast *combatConeCastEffect) {
+	if len(cast.positions) == 0 {
+		return
+	}
+	visual := combatDirectionalFootprintVisualForSpell(cast.spell)
+	maxDistance := combatDirectionalFootprintMaxDistance(cast.positions, cast.origin, cast.direction)
+	for _, position := range cast.positions {
+		distance := combatDirectionalFootprintDistance(cast.origin, position, cast.direction)
+		if float32(distance) > cast.progress*float32(maxDistance) {
 			continue
 		}
-		opacity := combatDirectionalFootprintOpacity(visual, distance, maxDistance, casting)
 		drawOptions := g.combatSquareMarkerDrawOptions(position)
 		drawOptions.ColorScale.ScaleWithColor(visual.Color.ToRGBA())
-		drawOptions.ColorScale.ScaleAlpha(opacity)
+		drawOptions.ColorScale.ScaleAlpha(combatDirectionalFootprintOpacity(visual, distance, maxDistance))
 		screen.DrawImage(g.spriteSheet.GetSprite(combatDirectionalFootprintTile(visual, position)), drawOptions)
+	}
+}
+
+// combatSquareWash is a translucent flat colour for whole-square fills.
+func combatSquareWash(base ucolor.EGAColor, opacity float64) color.NRGBA {
+	return color.NRGBA{R: base.R, G: base.G, B: base.B, A: uint8(math.Round(opacity * ucolor.AlphaOpaque))}
+}
+
+func (g *GameScene) combatGridLines() combatGridLines {
+	lines := combatGridLines{}
+	for index := range lines.x {
+		corner := references.Position{X: references.Coordinate(index)}
+		x, _ := g.combatSquareMarkerDrawOptions(corner).GeoM.Apply(combatSourceTileInset, combatSourceTileInset)
+		lines.x[index] = float32(math.Round(x))
+	}
+	for index := range lines.y {
+		corner := references.Position{Y: references.Coordinate(index)}
+		_, y := g.combatSquareMarkerDrawOptions(corner).GeoM.Apply(combatSourceTileInset, combatSourceTileInset)
+		lines.y[index] = float32(math.Round(y))
+	}
+
+	return lines
+}
+
+// fillCombatSquares washes the battlefield squares include accepts, each row's
+// run of neighbouring squares as one rectangle.
+func (g *GameScene) fillCombatSquares(screen *ebiten.Image, wash color.Color, include func(references.Position) bool) {
+	lines := g.combatGridLines()
+	for y := range references.YCombatMapTiles {
+		runStart := -1
+		for x := 0; x <= int(references.XCombatMapTiles); x++ {
+			included := x < int(references.XCombatMapTiles) &&
+				include(references.Position{X: references.Coordinate(x), Y: y})
+			switch {
+			case included && runStart < 0:
+				runStart = x
+			case !included && runStart >= 0:
+				vector.FillRect(screen, lines.x[runStart], lines.y[y],
+					lines.x[x]-lines.x[runStart], lines.y[y+1]-lines.y[y], wash, false)
+				runStart = -1
+			}
+		}
 	}
 }
 
@@ -174,18 +275,14 @@ func combatDirectionalFootprintMaxDistance(
 	return maxDistance
 }
 
+// combatDirectionalFootprintOpacity thins the cast's spray as it travels.
 func combatDirectionalFootprintOpacity(
 	visual combatDirectionalFootprintVisual,
 	distance, maxDistance int,
-	casting bool,
 ) float32 {
-	near, far := visual.PreviewNearOpacity, visual.PreviewFarOpacity
-	if casting {
-		near, far = visual.CastNearOpacity, visual.CastFarOpacity
-	}
 	progress := float32(distance) / float32(max(maxDistance, 1))
 
-	return near + (far-near)*progress
+	return visual.CastNearOpacity + (visual.CastFarOpacity-visual.CastNearOpacity)*progress
 }
 
 func combatDirectionalFootprintTile(
@@ -227,17 +324,14 @@ func (g *GameScene) drawCombatDirectionIndicators(screen *ebiten.Image) {
 		return
 	}
 	drawOptions := g.combatPartyDrawOptions(origin, casterIdx)
-	phase := combatConeArrowPulsePhase(g.getElapsedMs())
 	for _, direction := range []references.Direction{
 		references.Up, references.Down, references.Left, references.Right,
 	} {
-		geometry := combatConeArrowSourceGeometry(direction, phase)
-		drawCombatConeDirectionArrow(
-			screen,
-			drawOptions,
-			geometry,
-			combatConeArrowColor(direction, selectedDirection, phase),
-		)
+		rows, face := combatAimArrowIdleRows, ucolor.CombatAimFrameFace
+		if direction == selectedDirection {
+			rows, face = combatAimArrowChosenRows, ucolor.CombatAimArrowChosen
+		}
+		drawCombatAimArrow(screen, drawOptions, direction, rows, face)
 	}
 }
 
@@ -277,75 +371,44 @@ func (g *GameScene) combatDoorSpellCursor() (references.Position, bool) {
 	return target, active
 }
 
-type combatConeArrowGeometry struct {
-	baseOneX, baseOneY float64
-	tipX, tipY         float64
-	baseTwoX, baseTwoY float64
-}
-
-func combatConeArrowSourceGeometry(direction references.Direction, phase int) combatConeArrowGeometry {
-	offset := float64(phase % combatConeArrowPulsePhases)
-	//nolint:exhaustive // Direction indicators are always cardinal.
+// combatAimArrowRow is one row of an arrow pointing away from the caster's
+// square, in the source pixels of the caster's frame. Row zero is the base,
+// nearest the caster; each row beyond it lies one pixel farther out and is two
+// pixels narrower, down to a two-pixel tip.
+func combatAimArrowRow(direction references.Direction, rows, row int) image.Rectangle {
+	half := rows - row
+	low, high := combatAimArrowCenter-half, combatAimArrowCenter+half
+	before := combatSourceTileInset - combatAimArrowGapPixels - row
+	after := combatAimArrowFarEdge + combatAimArrowGapPixels + row
 	switch direction {
 	case references.Up:
-		return combatConeArrowGeometry{5, -1 - offset, 9, -4 - offset, 13, -1 - offset}
+		return image.Rect(low, before-1, high, before)
 	case references.Down:
-		return combatConeArrowGeometry{5, 19 + offset, 9, 22 + offset, 13, 19 + offset}
+		return image.Rect(low, after, high, after+1)
 	case references.Left:
-		return combatConeArrowGeometry{-1 - offset, 5, -4 - offset, 9, -1 - offset, 13}
+		return image.Rect(before-1, low, before, high)
 	case references.Right:
-		return combatConeArrowGeometry{19 + offset, 5, 22 + offset, 9, 19 + offset, 13}
-	default:
-		panic("combat cone indicator requires a cardinal direction")
+		return image.Rect(after, low, after+1, high)
+	case references.NoneDirection:
 	}
+	panic("combat aim arrow requires a cardinal direction")
 }
 
-func combatConeArrowPulsePhase(elapsedMs int64) int {
-	return int(elapsedMs/combatConeArrowPulsePeriodMs) % combatConeArrowPulsePhases
-}
-
-func combatConeArrowColor(
-	direction, selectedDirection references.Direction,
-	phase int,
-) ucolor.EGAColor {
-	if direction == selectedDirection {
-		if phase == 0 {
-			return ucolor.EGAMagenta
-		}
-
-		return ucolor.EGALightMagenta
-	}
-	if phase == 0 {
-		return ucolor.EGABlue
-	}
-
-	return ucolor.EGALightBlue
-}
-
-func drawCombatConeDirectionArrow(
+// drawCombatAimArrow fills an arrow's rows over a one-pixel black edge.
+func drawCombatAimArrow(
 	screen *ebiten.Image,
-	drawOptions *ebiten.DrawImageOptions,
-	geometry combatConeArrowGeometry,
-	faceColor ucolor.EGAColor,
+	options *ebiten.DrawImageOptions,
+	direction references.Direction,
+	rows int,
+	face ucolor.EGAColor,
 ) {
-	baseOneX, baseOneY := drawOptions.GeoM.Apply(geometry.baseOneX, geometry.baseOneY)
-	tipX, tipY := drawOptions.GeoM.Apply(geometry.tipX, geometry.tipY)
-	baseTwoX, baseTwoY := drawOptions.GeoM.Apply(geometry.baseTwoX, geometry.baseTwoY)
-	scale := combatActivePCSourcePixelScale(drawOptions)
-	drawSegment := func(fromX, fromY, toX, toY float64, width float32, clr ucolor.EGAColor) {
-		vector.StrokeLine(
-			screen,
-			float32(fromX), float32(fromY),
-			float32(toX), float32(toY),
-			width*scale,
-			clr,
-			false,
-		)
+	for row := range rows {
+		edge := combatAimArrowRow(direction, rows, row).Inset(-combatMarkerBorderPixels)
+		drawCombatMarkerRect(screen, options, edge, ucolor.CombatAimFrameBorder)
 	}
-	drawSegment(baseOneX, baseOneY, tipX, tipY, combatConeArrowShadowStroke, ucolor.EGABlack)
-	drawSegment(baseTwoX, baseTwoY, tipX, tipY, combatConeArrowShadowStroke, ucolor.EGABlack)
-	drawSegment(baseOneX, baseOneY, tipX, tipY, combatConeArrowFaceStroke, faceColor)
-	drawSegment(baseTwoX, baseTwoY, tipX, tipY, combatConeArrowFaceStroke, faceColor)
+	for row := range rows {
+		drawCombatMarkerRect(screen, options, combatAimArrowRow(direction, rows, row), face)
+	}
 }
 
 func (g *GameScene) startCombatConeSpellEffect(result game_state.CombatConeTargetResult) {

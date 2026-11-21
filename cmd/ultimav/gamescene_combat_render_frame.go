@@ -13,6 +13,9 @@ type combatRenderFrame struct {
 	preview           game_state.CombatAttackPreview
 	insectStacksReady bool
 	insectStacks      map[references.Position][]int
+	coneAimReady      bool
+	coneAimShown      bool
+	coneAim           combatConeAim
 }
 
 func (g *GameScene) beginCombatRenderFrame() {
