@@ -164,7 +164,6 @@ func NewSlider(config SliderConfig) *Slider {
 		Size:                  FontSizeBody,
 		MaxLines:              1, // Single line for label
 		MaxChars:              sliderMaxCharsPerLine,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 	})
 

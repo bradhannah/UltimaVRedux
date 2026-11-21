@@ -64,7 +64,7 @@ func (p *ProvisionChangePanel) Update(
 func (p *ProvisionChangePanel) initializeOutputs(width int) {
 	profiling.Count(profiling.ProvisionFontRebuilds)
 	font, header := widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
-		Size: widgets.FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: 1,
+		Size: widgets.FontSizeBody, LineSpacingMultiplier: 1,
 		MaxLines: 1, MaxChars: len(provisionPanelTitle),
 	}, width)
 	p.header = header
@@ -73,11 +73,11 @@ func (p *ProvisionChangePanel) initializeOutputs(width int) {
 		p.outputs[index] = text.NewOutput(font, header.GetLineSpacing(), 1, 1)
 	}
 	_, p.foodHeading = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
-		Size: widgets.FontSizeTitle, LineSpacing: 0, LineSpacingMultiplier: 1,
+		Size: widgets.FontSizeTitle, LineSpacingMultiplier: 1,
 		MaxLines: 1, MaxChars: provisionFoodChars,
 	}, width)
 	_, p.foodDetails = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
-		Size: widgets.FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: 1,
+		Size: widgets.FontSizeBody, LineSpacingMultiplier: 1,
 		MaxLines: provisionPanelSides, MaxChars: provisionFoodChars,
 	}, width)
 }

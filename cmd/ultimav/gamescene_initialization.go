@@ -215,21 +215,18 @@ func (g *GameScene) initializeResizeableVisualElements() {
 
 	_, g.combatDamageOutput = widgets.GetScaledFontWithOutput(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 1,
 		MaxLines:              1,
 		MaxChars:              combatDamageMaxChars,
 	})
 	_, combatTurnOutput := widgets.GetScaledFontWithOutput(widgets.FontConfig{
 		Size:                  combatHUDFontSize,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 1,
 		MaxLines:              combatHUDOutputLines,
 		MaxChars:              combatHUDOutputChars,
 	})
 	_, combatEventOutput := widgets.GetScaledFontWithOutput(widgets.FontConfig{
 		Size:                  combatHUDFontSize,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 1,
 		MaxLines:              combatHUDOutputLines,
 		MaxChars:              combatHUDOutputChars,

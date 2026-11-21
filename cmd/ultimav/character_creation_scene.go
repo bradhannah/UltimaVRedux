@@ -998,7 +998,7 @@ func (scene *CharacterCreationScene) prepareDiscardConfirmation(screen image.Rec
 	width, height := screen.Dx(), screen.Dy()
 	if scene.discardOutput == nil || scene.discardScreenWidth != width {
 		_, scene.discardOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
-			Size: widgets.FontSizeCompact, LineSpacing: 0, LineSpacingMultiplier: 1.3,
+			Size: widgets.FontSizeCompact, LineSpacingMultiplier: 1.3,
 			MaxLines: 3, MaxChars: max(len(title), len(choices), len(hint)),
 		}, width)
 		scene.discardOutput.AppendLine().White(title).Done()

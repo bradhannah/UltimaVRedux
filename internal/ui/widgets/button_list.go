@@ -327,14 +327,12 @@ func (b *ButtonListModal) ensureLayout(width, height int) {
 func (b *ButtonListModal) initializeLayoutOutputs(width int) {
 	_, b.titleOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeTitle,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	}, width)
 	_, b.descriptionOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: buttonListLineSpacing,
 		MaxLines:              max(1, utf8.RuneCountInString(b.description)+1),
 		MaxChars:              1,
@@ -342,7 +340,6 @@ func (b *ButtonListModal) initializeLayoutOutputs(width int) {
 	b.descriptionOutput.SetHyphenateLongWords(false)
 	_, b.rowOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
@@ -350,7 +347,6 @@ func (b *ButtonListModal) initializeLayoutOutputs(width int) {
 	// The two hint rows get the description's leading: at one-to-one they touched.
 	_, b.footerOutput = GetScaledFontWithOutputForWidth(FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: buttonListLineSpacing,
 		MaxLines:              buttonListFooterLines,
 		MaxChars:              1,

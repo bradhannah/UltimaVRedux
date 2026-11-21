@@ -78,7 +78,7 @@ func (s *characterRosterDialogShell) createGuardResourceOutputs(width int, reduc
 		point := max(guardResourceMinimumFontPoint, preferred-reduction)
 
 		return newScaledFontWithOutput(FontConfig{
-			Size: size, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+			Size: size, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 			MaxLines: lines, MaxChars: characterRosterDialogFooterMaximumChars,
 		}, point, func(value float64) float64 { return value * point / float64(size) })
 	}

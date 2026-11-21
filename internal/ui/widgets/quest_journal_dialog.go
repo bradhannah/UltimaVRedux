@@ -487,7 +487,6 @@ func (d *QuestJournalDialog) rebuildOutputs() {
 	d.exchangeOutput = nil
 	config := FontConfig{
 		Size:                  FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: questJournalLineSpacingMultiplier,
 		MaxLines:              1,
 		MaxChars:              questJournalMinimumTextChars,
