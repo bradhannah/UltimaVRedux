@@ -287,6 +287,7 @@ var (
 	// recipient availability remain in the semantic readouts, not a colour pulse.
 	CombatAimFrameFace       = EGAWhite
 	CombatAimFrameBorder     = EGABlack
+	CombatAimArrowChosen     = EGAYellow
 	CombatWakeMarkerFace     = EGALightMagenta
 	CombatActiveAccentBorder = EGABlack
 

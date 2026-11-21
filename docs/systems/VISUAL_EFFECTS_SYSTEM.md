@@ -577,9 +577,35 @@ both the older adjacent-target coloured underlay and the generic direction
 arrows, so one white cursor owns selection. Cursor geometry/colour and prompt text
 do not expose a concealed door's eligibility or an unassessed chest's trap state.
 The active actor indicator retains its foreground placement above HP. Other
-adjacent and cone spells keep their existing previews. Commitment and cleanup
-belong to [combat door/disarm input](INPUT_HANDLING.md#combat-door-and-disarm-spells),
+adjacent and cone spells keep their own previews, described next. Commitment and
+cleanup belong to [combat door/disarm input](INPUT_HANDLING.md#combat-door-and-disarm-spells),
 with composed cursor coverage in `cmd/ultimav/gamescene_combat_door_spell_test.go`.
+
+### Direction Arrows And Cone Aiming
+
+Cone spells (In Zu, In Nox Hur, In Flam Hur, In Vas Grav Corp) and the remaining
+adjacent-square spells (An Grav, An Ylem) show four solid arrows around the
+caster. Each arrow is drawn one source-pixel row at a time on the centre line of
+the caster's frame, two pixels clear of the caster's square, over a one-pixel
+black edge. Idle arrows are four rows of white; the chosen direction's arrow is
+six rows of yellow. The arrows hold still.
+
+Once a cone direction is chosen, every square of its footprint carries a flat
+35% wash of the spell's colour (light magenta, light green, light red or light
+blue) beneath the figures. Every other battlefield square except the caster's
+own is shaded 60% black above the figures and their health marks. Whoever stays
+lit stands in the path, friend or foe. There is no outline, and no mark, count
+or warning is added for party members. Washes are filled between shared
+whole-pixel grid lines, one rectangle for each run along a row, so squares
+neither gap nor overlap at any window size.
+
+The footprint is the same pure projection the cast uses
+([SPELL-0003](../gamefacts/MAGIC_SPELLS.md#spell-0003)); drawing it mutates
+nothing and draws no RNG. Before a direction is chosen nothing is tinted or
+shaded. The confirmed cast keeps its spreading field-sprite spray and is not
+shaded. The caster's arrows and active frame are drawn after the shade and stay
+bright. `cmd/ultimav/gamescene_combat_cone_test.go` accounts for every
+battlefield pixel at four window sizes.
 
 ## Combat Attack Eligibility
 

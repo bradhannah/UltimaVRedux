@@ -53,8 +53,11 @@ func (g *GameScene) drawAvatarOverlay(screen *ebiten.Image) {
 		g.drawCombatStrikeEffects(screen)
 		g.drawCombatInvocationActorEffects(screen)
 		g.drawCombatDivisionEffects(screen)
-		g.drawCombatDirectionIndicators(screen)
 		g.drawCombatHealthFrames(screen)
+		// The aim shade covers figures and their health marks outside a cone's
+		// path; the caster's arrows and frame are drawn after it and stay bright.
+		g.drawCombatConeShade(screen)
+		g.drawCombatDirectionIndicators(screen)
 		g.drawCombatActiveSelection(screen)
 		g.drawCombatAttackEligibility(screen)
 		g.drawCombatAttackCrosshair(screen)
