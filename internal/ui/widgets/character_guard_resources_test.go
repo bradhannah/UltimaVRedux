@@ -229,7 +229,7 @@ func TestGuardResourcesConditionColoursSurviveSelection(t *testing.T) {
 	dialog := newGuardResourceTestDialog(options, func(int) {}, func() {})
 	shell := dialog.shell
 	shell.ensureGuardResourceLayout(1280, 720, guardResourceTestView(dialog))
-	for index, expected := range []pkgcolor.EGAColor{pkgcolor.EGAGreen, pkgcolor.EGAMagenta, pkgcolor.EGARed, pkgcolor.EGALightBlue} {
+	for index, expected := range []pkgcolor.EGAColor{pkgcolor.EGAGreen, pkgcolor.EGAMagenta, pkgcolor.EGALightRed, pkgcolor.EGALightBlue} {
 		option := options[index+1]
 		for _, selected := range []bool{false, true} {
 			shell.appendGuardResourceCell(option, selected, guardResourceConditionColumn, option.Status)

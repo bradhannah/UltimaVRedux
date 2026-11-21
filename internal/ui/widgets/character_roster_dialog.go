@@ -100,7 +100,8 @@ func (o CharacterSelectionOption) statusColor(fallback stdcolor.Color) stdcolor.
 		// Dark EGA blue is unreadable as text on black; portraits keep it.
 		return pkgcolor.EGALightBlue
 	case party_state.Dead:
-		return pkgcolor.EGARed
+		// Dark EGA red is hard to read as text on black; portraits keep it.
+		return pkgcolor.EGALightRed
 	case party_state.Good:
 		return fallback
 	default:
@@ -315,23 +316,23 @@ func (s *characterRosterDialogShell) createOutputs() {
 		detailLines = characterHealthDetailLines
 	}
 	_, s.titleOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeTitle, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+		Size: FontSizeTitle, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 		MaxLines: 1, MaxChars: characterRosterDialogMaximumChars,
 	})
 	s.bodyFont, s.rowOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeCompact, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+		Size: FontSizeCompact, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 		MaxLines: 1, MaxChars: characterRosterDialogMaximumChars,
 	})
 	_, s.headerOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeCompact, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+		Size: FontSizeCompact, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 		MaxLines: 1, MaxChars: characterRosterDialogMaximumChars,
 	})
 	_, s.detailOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeCompact, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+		Size: FontSizeCompact, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 		MaxLines: detailLines, MaxChars: characterRosterDialogMaximumChars,
 	})
 	_, s.footerOutput = GetScaledFontWithOutput(FontConfig{
-		Size: FontSizeBody, LineSpacing: 0, LineSpacingMultiplier: characterRosterDialogLineSpacing,
+		Size: FontSizeBody, LineSpacingMultiplier: characterRosterDialogLineSpacing,
 		MaxLines: characterRosterDialogFooterMaximumLines, MaxChars: characterRosterDialogFooterMaximumChars,
 	})
 	s.titleOutput.SetMaxCharsPerLine(max(
