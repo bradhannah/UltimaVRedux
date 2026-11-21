@@ -346,7 +346,7 @@ func TestTavernTalkSetupCancellationMealRefreshAndOneMinute(t *testing.T) {
 	resultDialog := waitForMerchantDialog[*widgets.TavernResultDialog](t, fixture)
 	require.Equal(t, "Meal Served", resultDialog.GetView().Title)
 	require.Equal(t, quote.Meal.Name, resultDialog.GetView().Item)
-	require.Contains(t, resultDialog.GetBodyText(), quote.Meal.Name)
+	require.Contains(t, resultDialog.GetBodyText(), "Food")
 	refreshed := dialog.GetState()
 	require.Equal(t, fixture.state.PartyState.Inventory.Gold.Get(), refreshed.Gold)
 	require.Equal(t, fixture.state.PartyState.Inventory.Provisions.Food.Get(), refreshed.Food)

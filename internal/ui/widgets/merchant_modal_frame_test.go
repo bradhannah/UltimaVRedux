@@ -19,11 +19,11 @@ func TestMerchantModalFrameResponsiveGeometryAndDrawing(t *testing.T) {
 			StartPercentY: 0.12,
 			EndPercentY:   0.88,
 		},
-		headerRatio:           shipModalHeaderRatio,
-		footerRatio:           shipModalFooterRatio,
-		minimumInset:          shipModalMinimumInset,
-		lineSpacingMultiplier: shipModalLineSpacing,
-		footerMinimumLines:    shipModalFooterLines,
+		headerRatio:           0.13,
+		footerRatio:           0.16,
+		minimumInset:          5,
+		lineSpacingMultiplier: 1.08,
+		footerMinimumLines:    2,
 	})
 
 	require.True(t, frame.ensureLayout())

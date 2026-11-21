@@ -10,19 +10,7 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
-)
-
-const (
-	shipModalHeaderRatio      = 0.13
-	shipModalFooterRatio      = 0.16
-	shipModalMinimumInset     = 5
-	shipModalLineSpacing      = 1.08
-	shipModalMaximumBodyLines = 12
-	shipModalFooterLines      = 2
-	shipModalMinimumTextChars = 8
 )
 
 var _ Widget = (*ShipPurchaseDialog)(nil)
@@ -281,22 +269,4 @@ func validateShipApprovalGold(approval game_state.ShipPurchaseApprovalView) {
 	if approval.GoldAfterPayment != expectedAfter {
 		panic("ShipPurchaseDialog: approval gold consequence is inconsistent")
 	}
-}
-
-func newShipMerchantModalFrame(placement sprites.PercentBasedPlacement) *merchantModalFrame {
-	return newMerchantModalFrame(merchantModalFrameConfig{
-		placement:             placement,
-		headerRatio:           shipModalHeaderRatio,
-		footerRatio:           shipModalFooterRatio,
-		minimumInset:          shipModalMinimumInset,
-		lineSpacingMultiplier: shipModalLineSpacing,
-		footerMinimumLines:    shipModalFooterLines,
-	})
-}
-
-func newShipMerchantModalOutputs(frame *merchantModalFrame) (*text.Output, *text.Output, *text.Output) {
-	return frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: shipModalLineSpacing, maximumBodyLines: shipModalMaximumBodyLines,
-		footerLines: shipModalFooterLines, minimumChars: shipModalMinimumTextChars, fixedBody: true,
-	})
 }

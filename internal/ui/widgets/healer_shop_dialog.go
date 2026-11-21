@@ -1009,26 +1009,6 @@ func healerServicePriceLabel(quote game_state.HealerServiceQuote) string {
 	}
 }
 
-func healerAllChargeText(quote game_state.HealerAllServiceQuote, gold uint16) (string, stdcolor.Color) {
-	if quote.RecipientCount == 0 {
-		return "No charge.", DialogControlHintColor
-	}
-	switch quote.ChargeKind {
-	case game_state.HealerChargeFree:
-		return "Free care for all.", DialogDeltaPositive
-	case game_state.HealerChargeCharitable:
-		return "Charitable care for all.", DialogDeltaPositive
-	case game_state.HealerChargePaid:
-		if !quote.Affordable {
-			return fmt.Sprintf("Need %d gold; party has %d.", quote.Charge, gold), DialogLabelColor
-		}
-
-		return fmt.Sprintf("Total: %d gold; %d after payment.", quote.Charge, gold-quote.Charge), DialogLabelColor
-	default:
-		panic("HealerShopDialog: unknown aggregate charge kind")
-	}
-}
-
 func healerChargeText(quote game_state.HealerServiceQuote, gold uint16) (string, stdcolor.Color) {
 	switch quote.ChargeKind {
 	case game_state.HealerChargeFree:

@@ -484,7 +484,9 @@ The map takes the left 76% of the play screen. Three cases cover every window:
    on purpose: the Map, Cast and Mix lists, Ready, Configure, the Journal, Help,
    Z-stats, the shop screens and Use.
 3. A window opened on top of another window centres on that window: the shop
-   amount and approval windows, and Mix's amount window on its spell list.
+   amount and approval windows (the healer's, the horse dealer's, the tavern
+   receipt, the shipwright's dispatch and escort and the inn's Rest, Leave and
+   Pick Up among them), and Mix's amount window on its spell list.
 
 A window in the third case is the one being answered, so `DialogStack.Draw` lays
 one flat shade (`drawBackdropShade`, alpha 150 of 255, no fade and no pattern)
@@ -929,10 +931,10 @@ widget tests rather than designing a parallel transaction framework.
 | Family / widget sources | Preserve when extending |
 |---|---|
 | Arms: `arms_shop_dialog.go`, `arms_trade_dialog.go` | Carried inventory is sale authority; READY counts are informational. Buy/Sell retain independent selection/scroll/sort. M ("Most") selects the Buy maximum or the gold-safe Sell maximum (A remains a Sell alias); ammo is a fixed refill. Headings and the Buy/Sell titles are in ordinary case; the open table's title sits on the shared tab plate and B, S and R are shown only in the hint row. Used-ammo refusal ends the session; zero-price/headroom refusals return to Sell. Capacity refusal returns to Buy; insufficient Buy funds terminate after acknowledgement. |
-| Healer: `healer_shop_dialog.go`, `healer_treatment_dialog.go` | Services focus does not silently select a recipient. Individual and All intents require approval. Preserve distinct eligibility, funds blockers, and authoritative effect projections; refresh all recipients/prices after outcomes. |
-| Horse: `horse_shop_dialog.go`, `horse_purchase_dialog.go` | Placement/ownership/terrain details stay out of shopping UI. Approval Escape returns to Browse (a documented Redux deviation); success/funds/stable-closure outcomes remain one-shot terminal acknowledgements. Remote Preview does not claim Live placement availability. |
-| Ships: `ship_shop_dialog.go`, `ship_purchase_dialog.go`, `ship_dispatch_dialog.go`, `ship_travel_dialog.go` | The selected card uses the shared white selection bar. Parent shows trusted berth/delivery projections. Frigate loading uses aggregate quantities; standalone delivery is one. Refresh after purchase/stale refusal. First vessel creation can open dispatch; reviewed harbour escort is separate from boarding. Preview stops before purchase or travel. |
-| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode; the open page's title sits on the shared tab plate (`shop_tabs.go`, as in the Arms and Tavern tab rows) and R, L and P appear only in the hint row. The Tavern's Tab hint reads "Order or" plus its information page's name. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
+| Healer: `healer_shop_dialog.go`, `healer_treatment_dialog.go` | Services focus does not silently select a recipient. Individual and All intents require approval in the fitted amount window: the title is the service and the patient ("Cure Shamino", "Heal All"), rows show HP, Max HP, Level and Gold as Have/Change/Then, a note names a status change, and free care says so. A party that cannot pay still sends the request: the reason with its figures shows in the readable red, "The healer will refuse." follows, and Enter reads "Cure anyway". Preserve distinct eligibility, funds blockers, and authoritative effect projections; refresh all recipients/prices after outcomes. |
+| Horse: `horse_shop_dialog.go`, `horse_purchase_dialog.go` | The approval is the fitted amount window ("Buy Horse", one Gold row; short of gold it says so, "Buying anyway ends the talk.", and Enter reads "Buy anyway"). Placement/ownership/terrain details stay out of shopping UI. Approval Escape returns to Browse (a documented Redux deviation); success/funds/stable-closure outcomes remain one-shot terminal acknowledgements. Remote Preview does not claim Live placement availability. |
+| Ships: `ship_shop_dialog.go`, `ship_purchase_dialog.go`, `ship_dispatch_dialog.go`, `ship_travel_dialog.go` | The selected card uses the shared white selection bar. Parent shows trusted berth/delivery projections. Frigate loading uses aggregate quantities; standalone delivery is one. Refresh after purchase/stale refusal. First vessel creation can open dispatch ("Frigate Dispatched": the harbour, berth, skiffs aboard and whether an escort is available; Enter returns to the showroom, D escorts); the reviewed escort ("Escort the Frigate", Enter "Travel") is separate from boarding. All four are fitted amount windows. Preview stops before purchase or travel. |
+| Inn: `inn_shop_dialog.go`, `inn_action_dialog.go` | Rest/Leave/Pick Up retain mode; the open page's title sits on the shared tab plate (`shop_tabs.go`, as in the Arms and Tavern tab rows) and R, L and P appear only in the hint row. The Tavern's Tab hint reads "Order or" plus its information page's name. Ineligible rows remain inspectable with reasons; poison death and insufficient-funds guard consequences are visible before approval. The approval is a fitted amount window: "Rest at <inn>" ("Rest" when the name does not fit), "Leave <name>", "Pick Up <name>"; Enter repeats the verb. Rest and Pick Up show the Gold row, Leave and Pick Up the Party and Rooms rows; who will die, the wake time, who heals and who is dead and unchanged are notes, the death warning first in the readable red. Without the gold Enter reads "Rest anyway" or "Pick Up anyway" and one line says what follows (the keeper turns the party out; the guards are called). Last-living-member Leave remains reviewable with warning. Approval Escape returns to Browse. Refresh complete roster/charge/result data; clear stale receipts on navigation. |
 | Guild: `guild_shop_dialog.go`, `guild_purchase_dialog.go` | Browsing does not replace latest speech; pitch appears in quantity approval. Cancellation retains exchange. Maximum comes from authority and permits a saturating final bundle. Zero maximum emits no request. Session errors disable purchase until dismissal. |
 
 All approval dialogs consume requests once. Do not normalize distinct family
@@ -942,7 +944,8 @@ for navigation, terminal/nonterminal refusals, duplicate suppression, and refres
 ### Merchant Quantity Controls
 
 `quantity_input.go` shares input ownership across five approval forms; each form
-retains its existing quote-derived bounds and request type. All five draw one
+retains its existing quote-derived bounds and request type. All five, and every
+other merchant approval and receipt, draw one
 window, `amount_window.go`, described by an `amountStep`: the item named once in
 the title with the price of one under it in grey; the keeper's own line first in
 the body, where the shop has one; the amount row; and a grid that reads across as
@@ -951,7 +954,9 @@ Food, Aboard and Gold. The window is fitted to that grid, 36 body letters wide
 and as tall as its lines, and keeps its size while the amount changes: a line is
 kept free for a warning that only some amounts bring. An approval with nothing to
 choose (a meal, a drink, information, a frigate, a lone skiff, an ammunition
-refill) is the same window without the amount row.
+refill, the shipwright's dispatch and escort, the inn's Rest, Leave and Pick Up)
+is the same window without the amount row; a window with no gold to change shows
+its facts as notes and may replace its hints (`footer`).
 
 The chosen number is drawn by `appendAmountStepper`, the one place that decides
 its look: the label yellow between its arrows, no selection bar, an arrow that
@@ -970,7 +975,11 @@ as before. The Tavern and the shipwright still send the request, because asking
 without the gold is itself answered there (service or the talk ends; MERCH-0008,
 MERCH-0012 to MERCH-0014): the window says so and Enter reads "Order anyway" or
 "Ask anyway". Gold shown is before any theft by Faulinei, which the receipt
-reports afterwards.
+reports afterwards. The receipt (`tavern_result_dialog.go`) is the same window
+with Food and Gold rows showing what the order did, grey notes for the detail and
+the price when the gold row differs from it, a red line for what Faulinei took, the
+keeper's word (red when the order was refused or ended), and the one-key footer
+"[Enter/Esc] Continue".
 
 | Form | Repeating adjustment | Existing one-shot shortcuts / limits |
 |---|---|---|

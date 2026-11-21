@@ -5,27 +5,12 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
-const (
-	horsePurchaseStartPercentX    = 0.30
-	horsePurchaseEndPercentX      = 0.70
-	horsePurchaseStartPercentY    = 0.24
-	horsePurchaseEndPercentY      = 0.76
-	horsePurchaseHeaderRatio      = 0.18
-	horsePurchaseFooterRatio      = 0.22
-	horsePurchaseMinimumInset     = 6
-	horsePurchaseLineSpacing      = 1.12
-	horsePurchaseMaximumBodyLines = 6
-	horsePurchaseMinimumTextChars = 8
-	horsePurchaseFooterLines      = 2
-)
+const horseEndsTalk = "Buying anyway ends the talk."
 
 var _ Widget = (*HorsePurchaseDialog)(nil)
 
@@ -43,10 +28,7 @@ type HorsePurchaseDialog struct {
 	cancelled bool
 	pending   *game_state.HorsePurchaseRequest
 
-	frame        *merchantModalFrame
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window *amountWindow
 }
 
 // NewHorsePurchaseDialog creates a centered keyboard-only approval modal.
@@ -61,49 +43,20 @@ func NewHorsePurchaseDialog(config HorsePurchaseDialogConfig) *HorsePurchaseDial
 		dismissed: false,
 		cancelled: false,
 		pending:   nil,
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             horsePurchasePlacement(),
-			headerRatio:           horsePurchaseHeaderRatio,
-			footerRatio:           horsePurchaseFooterRatio,
-			minimumInset:          horsePurchaseMinimumInset,
-			lineSpacingMultiplier: horsePurchaseLineSpacing,
-			footerMinimumLines:    1,
-		}),
-		headerOutput: nil,
-		bodyOutput:   nil,
-		footerOutput: nil,
+		window:    newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
 
-// Draw renders the centered opaque horse approval modal.
+// Draw renders the opaque horse approval window.
 func (d *HorsePurchaseDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.headerOutput.DrawPanelContent(
-		screen,
-		image.Pt(d.frame.headerText.Min.X, verticallyCenteredOutputY(d.frame.headerText, d.headerOutput)),
-		d.frame.headerText.Dx(),
-		etext.AlignCenter,
-	)
-	d.bodyOutput.DrawPanelContent(
-		screen,
-		image.Pt(d.frame.bodyText.Min.X, verticallyCenteredOutputY(d.frame.bodyText, d.bodyOutput)),
-		d.frame.bodyText.Dx(),
-		etext.AlignStart,
-	)
-	d.footerOutput.DrawPanelContent(
-		screen,
-		image.Pt(d.frame.footerText.Min.X, verticallyCenteredOutputY(d.frame.footerText, d.footerOutput)),
-		d.frame.footerText.Dx(),
-		etext.AlignCenter,
-	)
+	d.window.draw(screen)
 }
 
 // Update confirms or cancels the horse approval after transition-key release.
@@ -111,7 +64,6 @@ func (d *HorsePurchaseDialog) Update() {
 	if d.dismissed {
 		return
 	}
-	d.ensureLayout()
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
 		d.cancelled = true
 		d.dismissed = true
@@ -139,9 +91,7 @@ func (d *HorsePurchaseDialog) ConsumePendingPurchaseRequest() (game_state.HorseP
 
 // GetBounds returns the centered modal bounds.
 func (d *HorsePurchaseDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape closed the modal without confirmation.
@@ -153,54 +103,22 @@ func (d *HorsePurchaseDialog) IsDismissed() bool { return d.dismissed }
 // Dismiss closes the modal without emitting a request.
 func (d *HorsePurchaseDialog) Dismiss() { d.dismissed = true }
 
-func (d *HorsePurchaseDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing:      horsePurchaseLineSpacing,
-		maximumBodyLines: horsePurchaseMaximumBodyLines,
-		footerLines:      horsePurchaseFooterLines,
-		minimumChars:     horsePurchaseMinimumTextChars,
-		fixedBody:        false,
-	})
-	d.populateOutputs()
-}
+// step describes the window: the price is the change in gold. A party that
+// cannot pay still sends the request, which the stable keeper refuses and ends
+// the talk with, so Enter stays and says what it will do.
+func (d *HorsePurchaseDialog) step() amountStep {
+	quote := d.intent.Quote
+	step := emptyAmountStep()
+	step.preview, step.title, step.verb = d.intent.Preview, amountBuyVerb+" Horse", amountBuyVerb
+	if quote.Affordable {
+		step.rows = []amountRow{{label: amountGoldRow, have: int(quote.GoldBefore), then: int(quote.GoldAfterPayment)}}
 
-func (d *HorsePurchaseDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
+		return step
 	}
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text("Purchase Horse", DialogHeaderColor).Done()
+	step.verb += tavernAnyway
+	step.notes = shortOfGoldNotes("It costs", quote.Price, int(quote.GoldBefore), horseEndsTalk)
 
-	d.bodyOutput.Reset()
-	if d.intent.Preview {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text("Preview", DialogStatusWarningColor).Done()
-	}
-	d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).White("Horse").Done()
-	d.bodyOutput.AppendLine().Yellow("Price: ").Whitef("%d gold", d.intent.Quote.Price).Done()
-	if d.intent.Quote.Affordable {
-		d.bodyOutput.AppendLine().Yellow("Party gold: ").Cyanf("%d", d.intent.Quote.GoldBefore).
-			White(" -> ").LightGreenf("%d", d.intent.Quote.GoldAfterPayment).Done()
-	} else {
-		d.bodyOutput.AppendLine().Yellow("Party gold: ").Cyanf("%d", d.intent.Quote.GoldBefore).Done()
-		d.bodyOutput.AppendLine().Yellow("Needed: ").Whitef("%d gold", d.intent.Quote.Price).Done()
-	}
-
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, "[Enter] Confirm   [Esc] Back", d.frame.footerText.Dx())
-}
-
-func horsePurchasePlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: horsePurchaseStartPercentX,
-		EndPercentX:   horsePurchaseEndPercentX,
-		StartPercentY: horsePurchaseStartPercentY,
-		EndPercentY:   horsePurchaseEndPercentY,
-	}
+	return step
 }
 
 func validateHorsePurchaseIntent(intent HorsePurchaseIntent) {

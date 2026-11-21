@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"strings"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
@@ -20,16 +22,13 @@ func TestHorsePurchaseDialogShowsOnlyHorsePriceAndGoldConsequence(t *testing.T) 
 		Keyboard: newWidgetTestKeyboard(0),
 		Intent:   intent,
 	})
-	title := compactHorseText(dialog.GetTitleText())
-	body := compactHorseText(dialog.GetBodyText())
+	words := dialog.window.flatText()
 
-	assert.Equal(t, "Purchase Horse", title)
 	assert.True(t, dialog.IsPreview())
-	assert.Equal(t, "Preview Horse Price: 170 gold Party gold: 500 -> 330", body)
-	assert.NotContains(t, body, "Horse: Horse")
-	assert.Equal(t, "[Enter] Confirm   [Esc] Back", dialog.GetFooterGuidance())
+	assert.Equal(t, "PREVIEW - Buy Horse Have Then Gold 500 -170 330 [Enter] Buy [Esc] Back", words)
+	requireAmountWindowHoldsItsText(t, dialog.window, "horse")
 
-	visible := strings.ToLower(strings.Join([]string{title, body, dialog.GetFooterGuidance()}, " "))
+	visible := strings.ToLower(words)
 	for _, forbidden := range horseDialogForbiddenDetails() {
 		assert.NotContains(t, visible, forbidden)
 	}
@@ -41,22 +40,21 @@ func TestHorsePurchaseDialogUnaffordableRemainsConfirmable(t *testing.T) {
 	state := testHorseShopState()
 	setHorseShopGold(&state, 50)
 	intent := testHorsePurchaseIntent(state, false)
-	keyboard := newWidgetTestKeyboard(0)
-	dialog := NewHorsePurchaseDialog(HorsePurchaseDialogConfig{Keyboard: keyboard, Intent: intent})
-	body := compactHorseText(dialog.GetBodyText())
+	for _, size := range config.SupportedWindowResolutions() {
+		setMerchantShellTestResolution(t, size.X, size.Y)
+		keyboard := newWidgetTestKeyboard(0)
+		dialog := NewHorsePurchaseDialog(HorsePurchaseDialogConfig{Keyboard: keyboard, Intent: intent})
 
-	assert.Contains(t, body, "Horse")
-	assert.NotContains(t, body, "Horse: Horse")
-	assert.Contains(t, body, "Price: 170 gold")
-	assert.Contains(t, body, "Party gold: 50")
-	assert.Contains(t, body, "Needed: 170 gold")
-	assert.NotContains(t, body, "50 ->")
+		assert.Equal(t, "Buy Horse Not enough gold. It costs 170 and the party has 50. "+
+			"Buying anyway ends the talk. [Enter] Buy anyway [Esc] Back", dialog.window.flatText())
+		requireAmountWindowHoldsItsText(t, dialog.window, fmt.Sprintf("%dx%d", size.X, size.Y))
 
-	pressHorsePurchaseKey(dialog, keyboard, ebiten.KeyEnter)
-	assert.True(t, dialog.IsDismissed())
-	request, ok := dialog.ConsumePendingPurchaseRequest()
-	require.True(t, ok)
-	assert.Equal(t, intent.Request, request)
+		pressHorsePurchaseKey(dialog, keyboard, ebiten.KeyEnter)
+		assert.True(t, dialog.IsDismissed())
+		request, ok := dialog.ConsumePendingPurchaseRequest()
+		require.True(t, ok)
+		assert.Equal(t, intent.Request, request)
+	}
 }
 
 func TestHorsePurchaseDialogApproveBackAndSingleRequestLifecycle(t *testing.T) {
@@ -100,7 +98,7 @@ func TestHorsePurchaseDialogSemanticBackgroundAndResizeSafety(t *testing.T) {
 		Intent:   intent,
 	})
 	lowBounds := dialog.GetBounds()
-	lowBody := compactHorseText(dialog.GetBodyText())
+	lowText := dialog.window.flatText()
 	setMerchantShellTestResolution(t, 1280, 720)
 	screen := ebiten.NewImage(1280, 720)
 	t.Cleanup(screen.Dispose)
@@ -108,16 +106,16 @@ func TestHorsePurchaseDialogSemanticBackgroundAndResizeSafety(t *testing.T) {
 
 	assert.Greater(t, dialog.GetBounds().Dx(), lowBounds.Dx())
 	assert.Greater(t, dialog.GetBounds().Dy(), lowBounds.Dy())
-	assert.Equal(t, lowBody, compactHorseText(dialog.GetBodyText()))
+	assert.Equal(t, lowText, dialog.window.flatText())
 	assert.Equal(t, intent, dialog.GetIntent())
-	requireOutputVerticallyCentered(t, dialog.frame.bodyText, dialog.bodyOutput)
+	requireOutputVerticallyCentered(t, dialog.window.frame.bodyText, dialog.window.body)
 	headerBackground := image.Pt(
-		dialog.frame.headerBounds.Min.X+dialog.frame.pixelUnit()*4,
-		dialog.frame.headerBounds.Min.Y,
+		dialog.window.frame.headerBounds.Min.X+dialog.window.frame.pixelUnit()*4,
+		dialog.window.frame.headerBounds.Min.Y,
 	)
 	requireColorRGBA(t, DialogRuleColor, screen.At(headerBackground.X, headerBackground.Y))
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlKeyColor)
-	requireImageRegionContainsColor(t, screen, dialog.frame.footerText, DialogControlHintColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlKeyColor)
+	requireImageRegionContainsColor(t, screen, dialog.window.frame.footerText, DialogControlHintColor)
 }
 
 func TestHorsePurchaseDialogStrictDetachedIntentContracts(t *testing.T) {

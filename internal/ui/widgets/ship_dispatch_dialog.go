@@ -5,20 +5,15 @@ import (
 	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 const (
-	shipDispatchStartPercentX = 0.25
-	shipDispatchEndPercentX   = 0.75
-	shipDispatchStartPercentY = 0.18
-	shipDispatchEndPercentY   = 0.82
+	shipDispatchShowroomHint = "[Enter] Showroom"
+	shipDispatchEscortHint   = "   [D] Escort"
 )
 
 var _ Widget = (*ShipDispatchDialog)(nil)
@@ -36,11 +31,7 @@ type ShipDispatchDialog struct {
 	dismissed        bool
 	continueShopping bool
 	pendingTravel    *ShipTravelIntent
-	frame            *merchantModalFrame
-
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window           *amountWindow
 }
 
 // NewShipDispatchDialog creates a centered keyboard-only first-delivery choice.
@@ -55,10 +46,10 @@ func NewShipDispatchDialog(config ShipDispatchDialogConfig) *ShipDispatchDialog 
 	dialog := &ShipDispatchDialog{ //nolint:exhaustruct_v5 // Transient choice fields start empty.
 		keyboard: config.Keyboard,
 		state:    config.State,
-		frame:    newShipMerchantModalFrame(shipDispatchPlacement()),
+		window:   newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -68,9 +59,7 @@ func (d *ShipDispatchDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || d.dismissed {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update chooses exactly one post-delivery action after release debounce.
@@ -106,20 +95,9 @@ func (d *ShipDispatchDialog) ConsumePendingTravelIntent() (ShipTravelIntent, boo
 // ShouldContinueShopping reports whether Enter acknowledged the refreshed showroom.
 func (d *ShipDispatchDialog) ShouldContinueShopping() bool { return d.continueShopping }
 
-// GetFooterGuidance returns the available keyboard-only dispatch choices.
-func (d *ShipDispatchDialog) GetFooterGuidance() string {
-	if d.travelAvailable() {
-		return "[Enter] Return to showroom   [D] Escort"
-	}
-
-	return "[Enter] Return to showroom"
-}
-
 // GetBounds returns the centered dispatch modal bounds.
 func (d *ShipDispatchDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsDismissed reports whether the workflow can remove the modal.
@@ -128,39 +106,35 @@ func (d *ShipDispatchDialog) IsDismissed() bool { return d.dismissed }
 // Dismiss closes the dispatch modal without choosing an action.
 func (d *ShipDispatchDialog) Dismiss() { d.dismissed = true }
 
-func (d *ShipDispatchDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
+// step describes the window: the vessel that was ordered and where it waits,
+// and whether the party can be escorted there. Enter and D are all it offers,
+// so its footer replaces the usual Enter and Esc.
+func (d *ShipDispatchDialog) step() amountStep {
+	berth := d.state.Berth
+	step := emptyAmountStep()
+	step.title = shipVehicleName(berth.VehicleType) + " Dispatched"
+	step.unit = "To " + d.state.Travel.HarbourName
+	skiffs := "A standalone skiff."
+	if berth.VehicleType == references.FrigateVehicle {
+		skiffs = fmt.Sprintf("Skiffs aboard: %d of %d", berth.SkiffCount, game_state.ShipShopMaximumSkiffs)
 	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = newShipMerchantModalOutputs(d.frame)
-	d.populateOutputs()
-}
-
-func (d *ShipDispatchDialog) populateOutputs() {
-	d.headerOutput.Reset()
-	d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter).
-		Text("Vessel Dispatched", DialogHeaderColor).Done()
-	body := d.bodyOutput
-	body.Reset()
-	body.AppendLine().LightGray("Harbour: ").White(d.state.Travel.HarbourName).Done()
-	body.AppendLine().LightGray("Berth: ").White(shipBerthLabel(d.state.Berth)).Done()
-	body.AppendLine().LightGray("Vessel: ").White(shipVehicleName(d.state.Berth.VehicleType)).Done()
-	if d.state.Berth.VehicleType == references.FrigateVehicle {
-		body.AppendLine().LightGray("Skiffs aboard: ").Cyanf(
-			"%d/%d", d.state.Berth.SkiffCount, game_state.ShipShopMaximumSkiffs,
-		).Done()
-	} else {
-		body.AppendLine().LightGray("Skiffs: ").Cyan("1 standalone").Done()
+	step.notes = []amountNote{
+		{text: "Berth: " + shipBerthLabel(berth), tone: amountPlain},
+		{text: skiffs, tone: amountPlain},
+		{text: "", tone: amountPlain},
 	}
-	escort := fmt.Sprintf("Escort: unavailable, %d minutes", d.state.Travel.TimeCostMinutes)
-	color := DialogEmptyColor
+	step.footer = shipDispatchShowroomHint
 	if d.travelAvailable() {
-		escort = fmt.Sprintf("[D] Escort available, %d minutes", d.state.Travel.TimeCostMinutes)
-		color = DialogDeltaPositive
+		step.notes = append(step.notes, amountNote{
+			text: fmt.Sprintf("An escort there takes %s.", countedNoun(d.state.Travel.TimeCostMinutes, "minute")),
+			tone: amountPlain,
+		})
+		step.footer += shipDispatchEscortHint
+	} else {
+		step.notes = append(step.notes, amountNote{text: "No escort is available now.", tone: amountPlain})
 	}
-	body.AppendLine().Text(escort, color).Done()
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
+
+	return step
 }
 
 func (d *ShipDispatchDialog) travelAvailable() bool {
@@ -176,14 +150,5 @@ func shipBerthHasVessel(berth game_state.ShipBerthReview) bool {
 		return false
 	default:
 		panic("shipBerthHasVessel: unknown berth state")
-	}
-}
-
-func shipDispatchPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: shipDispatchStartPercentX,
-		EndPercentX:   shipDispatchEndPercentX,
-		StartPercentY: shipDispatchStartPercentY,
-		EndPercentY:   shipDispatchEndPercentY,
 	}
 }

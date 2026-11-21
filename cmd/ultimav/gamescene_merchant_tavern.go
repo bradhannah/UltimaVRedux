@@ -616,7 +616,7 @@ func tavernMealResultView(result game_state.TavernMealResult) widgets.TavernResu
 	view := widgets.TavernResultView{
 		Title: "Meal Served", Item: result.Meal.Name,
 		Detail: fmt.Sprintf(
-			"%d diners x %d gold each", result.DinerCount, result.Meal.BasePrice,
+			"%d %s x %d gold each", result.DinerCount, dinerWord(result.DinerCount), result.Meal.BasePrice,
 		),
 		ChargeLabel: "Total", Charge: int(result.Charge),
 		ShowFood: true, FoodBefore: result.FoodBefore, FoodAfter: result.FoodAfter,
@@ -626,7 +626,7 @@ func tavernMealResultView(result game_state.TavernMealResult) widgets.TavernResu
 	if result.Outcome == game_state.TavernMealInsufficientFunds {
 		view.Title = "Meal Refused"
 		view.ChargeLabel = "Required"
-		view.Note = "The party does not have enough gold for this meal."
+		view.Note = "Not enough gold for this meal."
 		view.Tone = widgets.TavernResultFailure
 	}
 
@@ -744,7 +744,7 @@ func tavernProvisionResultView(result game_state.TavernProvisionResult) widgets.
 	case game_state.TavernProvisionCompleted:
 	case game_state.TavernProvisionPartial:
 		view.Title = "Partial Order"
-		view.Note = "The remaining packs could not be paid for."
+		view.Note = "The rest could not be paid for."
 		view.Tone = widgets.TavernResultCaution
 	case game_state.TavernProvisionSaturated:
 		view.Title = "Supply Limit Reached"
@@ -758,7 +758,7 @@ func tavernProvisionResultView(result game_state.TavernProvisionResult) widgets.
 	case game_state.TavernProvisionEjection:
 		view.Title = "Order Refused"
 		view.Detail = "No packs bought"
-		view.Note = "The keeper ends the provision order."
+		view.Note = "The keeper ends the order."
 		view.Tone = widgets.TavernResultFailure
 	case game_state.TavernProvisionOutcomeUnknown:
 		panic("Tavern provision result view has no outcome")
@@ -864,4 +864,12 @@ func tavernProvisionOutcomeName(outcome game_state.TavernProvisionOutcome) strin
 	default:
 		panic("unknown Tavern provision outcome")
 	}
+}
+
+func dinerWord(count int) string {
+	if count == 1 {
+		return "diner"
+	}
+
+	return "diners"
 }

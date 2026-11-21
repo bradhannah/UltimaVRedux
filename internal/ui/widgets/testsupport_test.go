@@ -153,26 +153,8 @@ func (d *HealerShopDialog) IsAwaitingResult() bool { return d.phase == HealerSho
 // GetIntent returns the detached treatment shown by the modal.
 func (d *HealerTreatmentDialog) GetIntent() HealerTreatmentIntent { return d.intent }
 
-// GetFooterGuidance returns the approval controls.
-func (d *HealerTreatmentDialog) GetFooterGuidance() string { return "Enter: Confirm  Esc: Back" }
-
 // HasPendingPurchaseRequest reports whether confirmation emitted an unconsumed request.
 func (d *HorsePurchaseDialog) HasPendingPurchaseRequest() bool { return d.pending != nil }
-
-// GetTitleText returns the exact purchase title.
-func (d *HorsePurchaseDialog) GetTitleText() string {
-	return outputText(d.headerOutput)
-}
-
-// GetBodyText returns the horse, price, and party-gold consequence presentation.
-func (d *HorsePurchaseDialog) GetBodyText() string {
-	return outputText(d.bodyOutput)
-}
-
-// GetFooterGuidance returns the exact keyboard-only approval controls.
-func (d *HorsePurchaseDialog) GetFooterGuidance() string {
-	return "[Enter] Confirm   [Esc] Back"
-}
 
 // HasPendingPurchaseIntent reports whether an unconsumed approval intent exists.
 func (d *HorseShopDialog) HasPendingPurchaseIntent() bool { return d.pendingIntent != nil }
@@ -206,19 +188,24 @@ func (d *InnActionDialog) HasPendingRequest() bool { return d.pending != nil }
 
 // GetTitleText returns the visible action title, including PREVIEW when applicable.
 func (d *InnActionDialog) GetTitleText() string {
-	return outputText(d.headerOutput)
+	return outputText(d.window.header)
+}
+
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *InnActionDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
 }
 
 // GetBodyText returns the exact mode-specific approval consequences.
 func (d *InnActionDialog) GetBodyText() string {
-	return outputText(d.bodyOutput)
+	return outputText(d.window.body)
 }
 
 // GetBodyBounds returns the semantically backed modal body.
 func (d *InnActionDialog) GetBodyBounds() image.Rectangle {
-	d.ensureLayout()
+	d.window.ensureLayout()
 
-	return d.frame.bodyBounds
+	return d.window.frame.bodyBounds
 }
 
 // IsPreview reports whether confirmation stops before Inn authority.
@@ -487,23 +474,24 @@ func (s *ScrollableListState) IsScrollingNeeded() bool {
 
 // GetTitleText returns the dispatch title.
 func (d *ShipDispatchDialog) GetTitleText() string {
-	d.ensureLayout()
+	return outputText(d.window.header)
+}
 
-	return d.headerOutput.GetOutputStr(false)
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *ShipDispatchDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
 }
 
 // GetBodyText returns the player-facing berth, vessel, skiff, and escort summary.
 func (d *ShipDispatchDialog) GetBodyText() string {
-	d.ensureLayout()
-
-	return d.bodyOutput.GetOutputStr(false)
+	return outputText(d.window.body)
 }
 
 // GetBodyBounds returns the semantically backed dispatch body.
 func (d *ShipDispatchDialog) GetBodyBounds() image.Rectangle {
-	d.ensureLayout()
+	d.window.ensureLayout()
 
-	return d.frame.bodyBounds
+	return d.window.frame.bodyBounds
 }
 
 // GetQuantity returns the selected vessel or skiff quantity.
@@ -595,23 +583,24 @@ func (d *ShipTravelDialog) HasPendingTravelReview() bool { return d.pending != n
 
 // GetTitleText returns the harbour approval title.
 func (d *ShipTravelDialog) GetTitleText() string {
-	d.ensureLayout()
+	return outputText(d.window.header)
+}
 
-	return d.headerOutput.GetOutputStr(false)
+// GetFooterGuidance returns the keyboard guidance as displayed.
+func (d *ShipTravelDialog) GetFooterGuidance() string {
+	return outputText(d.window.footer)
 }
 
 // GetBodyText returns the player-facing harbour, berth, vessel, and time summary.
 func (d *ShipTravelDialog) GetBodyText() string {
-	d.ensureLayout()
-
-	return d.bodyOutput.GetOutputStr(false)
+	return outputText(d.window.body)
 }
 
 // GetBodyBounds returns the semantically backed travel body.
 func (d *ShipTravelDialog) GetBodyBounds() image.Rectangle {
-	d.ensureLayout()
+	d.window.ensureLayout()
 
-	return d.frame.bodyBounds
+	return d.window.frame.bodyBounds
 }
 
 // GetMinValue returns the minimum value (test accessor)
@@ -667,14 +656,11 @@ func (d *TavernActionDialog) ShowWithoutAnimation() {
 // IsComplete reports whether approval confirmed, cancelled, or was dismissed.
 func (d *TavernActionDialog) IsComplete() bool { return d.dismissed }
 
-// GetFooterGuidance returns the acknowledgement controls.
-func (d *TavernResultDialog) GetFooterGuidance() string { return tavernResultFooter }
-
 // GetBodyBounds returns the semantically backed body region.
 func (d *TavernResultDialog) GetBodyBounds() image.Rectangle {
-	d.ensureLayout()
+	d.window.ensureLayout()
 
-	return d.frame.bodyBounds
+	return d.window.frame.bodyBounds
 }
 
 // ShowWithoutAnimation makes an incomplete result visible.

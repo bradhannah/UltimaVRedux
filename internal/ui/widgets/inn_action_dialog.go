@@ -1,32 +1,31 @@
 package widgets
 
 import (
+	"fmt"
 	"image"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
-	"github.com/bradhannah/UltimaVRedux/internal/sprites"
-	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 const (
-	innActionStartPercentX    = 0.22
-	innActionEndPercentX      = 0.78
-	innActionStartPercentY    = 0.08
-	innActionEndPercentY      = 0.92
-	innActionHeaderRatio      = 0.11
-	innActionFooterRatio      = 0.13
-	innActionMinimumInset     = 5
-	innActionLineSpacing      = 1.08
-	innActionMaximumBodyLines = 24
-	innActionFooterLines      = 1
-	innActionMinimumTextChars = 8
-	innActionFooterGuidance   = "[Enter] Confirm   [Esc] Back"
+	innNoteChars     = 34 // The longest authored note line; the window is 36 letters wide.
+	innTitleChars    = 28 // The longest title, with "PREVIEW - " before it, that the window's title line holds.
+	innPreviewChars  = len("PREVIEW - ")
+	innRestVerb      = restActionLabel
+	innLeaveVerb     = "Leave"
+	innPickUpVerb    = "Pick Up"
+	innPartyLabel    = "Party of "
+	innRoomsLabel    = "Rooms of "
+	innNamesAnd      = " and "
+	innNamesComma    = ", "
+	innPickUpGuards  = "Asking anyway calls the guards."
+	innRestTurnedOut = "The keeper turns the party out."
+	innShortCost     = "It costs"
 )
 
 var _ Widget = (*InnActionDialog)(nil)
@@ -48,11 +47,7 @@ type InnActionDialog struct {
 	cancelled       bool
 	actionKeysReady bool
 	pending         *InnActionRequest
-
-	frame        *merchantModalFrame
-	headerOutput *text.Output
-	bodyOutput   *text.Output
-	footerOutput *text.Output
+	window          *amountWindow
 }
 
 // NewInnActionDialog creates a centered keyboard-only approval for Rest, Leave, or Pick Up.
@@ -71,17 +66,10 @@ func NewInnActionDialog(config InnActionDialogConfig) *InnActionDialog {
 		intent:          cloneInnActionIntent(config.Intent),
 		visible:         true,
 		actionKeysReady: innActionKeysReleased(isKeyPressed),
-		frame: newMerchantModalFrame(merchantModalFrameConfig{
-			placement:             innActionPlacement(),
-			headerRatio:           innActionHeaderRatio,
-			footerRatio:           innActionFooterRatio,
-			minimumInset:          innActionMinimumInset,
-			lineSpacingMultiplier: innActionLineSpacing,
-			footerMinimumLines:    1,
-		}),
+		window:          newAmountWindow(),
 	}
 	config.Keyboard.PrepareForTransition(0)
-	dialog.ensureLayout()
+	dialog.window.set(dialog.step())
 
 	return dialog
 }
@@ -91,9 +79,7 @@ func (d *InnActionDialog) Draw(screen *ebiten.Image) {
 	if screen == nil || !d.IsVisible() {
 		return
 	}
-	d.ensureLayout()
-	d.frame.draw(screen)
-	d.frame.drawOutputs(screen, d.headerOutput, d.bodyOutput, d.footerOutput)
+	d.window.draw(screen)
 }
 
 // Update confirms or cancels the exact reviewed request after transition-key release.
@@ -135,14 +121,9 @@ func (d *InnActionDialog) ConsumePendingRequest() (InnActionRequest, bool) {
 	return request, true
 }
 
-// GetFooterGuidance returns the keyboard-only approval controls.
-func (d *InnActionDialog) GetFooterGuidance() string { return innActionFooterGuidance }
-
 // GetBounds returns the centered modal bounds.
 func (d *InnActionDialog) GetBounds() image.Rectangle {
-	d.ensureLayout()
-
-	return d.frame.bounds()
+	return d.window.bounds()
 }
 
 // IsCancelled reports whether Escape returned to the parent without a request.
@@ -160,92 +141,154 @@ func (d *InnActionDialog) Dismiss() {
 	d.dismissed = true
 }
 
-func (d *InnActionDialog) ensureLayout() {
-	if !d.frame.ensureLayout() {
-		return
-	}
-	d.headerOutput, d.bodyOutput, d.footerOutput = d.frame.newOutputs(merchantModalTextBudget{
-		lineSpacing: innActionLineSpacing, maximumBodyLines: innActionMaximumBodyLines,
-		footerLines: innActionFooterLines, minimumChars: innActionMinimumTextChars, fixedBody: true,
-	})
-	d.populateOutputs()
-}
-
-func (d *InnActionDialog) populateOutputs() {
-	if d.headerOutput == nil || d.bodyOutput == nil || d.footerOutput == nil {
-		return
-	}
-	d.headerOutput.Reset()
-	title := d.headerOutput.AppendLine().WithAlignment(etext.AlignCenter)
-	if d.intent.Preview {
-		title.Text("PREVIEW - ", DialogStatusWarningColor)
-	}
-	title.Text("Approve "+d.intent.Action.String(), DialogHeaderColor).Done()
-
-	d.bodyOutput.Reset()
-	if d.intent.Preview {
-		d.bodyOutput.AppendLine().WithAlignment(etext.AlignCenter).
-			Text("PREVIEW: authority has not run.", DialogStatusWarningColor).Done()
-	}
+// step describes the approval window for the action: what it is, what it does
+// to the party's gold, and every consequence the player decides by.
+func (d *InnActionDialog) step() amountStep {
+	step := emptyAmountStep()
+	step.preview = d.intent.Preview
 	switch d.intent.Action {
 	case InnActionRest:
-		d.populateRestBody()
+		d.describeRest(&step)
 	case InnActionLeave:
-		d.populateLeaveBody()
+		d.describeLeave(&step)
 	case InnActionPickup:
-		d.populatePickupBody()
+		d.describePickup(&step)
 	default:
-		panic("InnActionDialog.populateOutputs: unknown action")
+		panic("InnActionDialog.step: unknown action")
 	}
 
-	d.footerOutput.Reset()
-	appendControlGuidance(d.footerOutput, d.GetFooterGuidance(), d.frame.footerText.Dx())
+	return step
 }
 
-func (d *InnActionDialog) populateRestBody() {
+func (d *InnActionDialog) describeRest(step *amountStep) {
 	quote := d.intent.Rest
-	d.bodyOutput.AppendLine().LightGray("Inn: ").White(d.intent.InnName).Done()
-	d.bodyOutput.AppendLine().LightGray("Listed charge: ").Yellowf("%d gold", quote.Charge).Done()
-	if quote.Affordable {
-		d.bodyOutput.AppendLine().LightGray("Gold after listed payment: ").Cyanf(
-			"%d -> %d", quote.GoldBefore, quote.GoldAfterPayment,
-		).Done()
-	} else {
-		d.bodyOutput.AppendLine().Textf(
-			"Gold %d; shortfall %d. Confirmation remains available.",
-			DialogStatusWarningColor,
-			quote.GoldBefore,
-			int(quote.Charge)-int(quote.GoldBefore),
-		).WordWrap().Done()
+	step.verb, step.title = innRestVerb, innRestVerb
+	title := innRestVerb + " at " + d.intent.InnName
+	if d.intent.Preview {
+		title = strings.Repeat(" ", innPreviewChars) + title
 	}
-	d.bodyOutput.AppendLine().LightGray("Wake: ").White(innWakeText(quote)).Done()
-	d.bodyOutput.AppendLine().Text(
-		"Successful Rest ends active spells.", DialogControlHintColor,
-	).Done()
-	d.appendRestRecoverySummary(quote.MemberProjections)
-	names := innPoisonedNames(quote.MemberProjections)
-	if len(names) > 0 {
-		d.bodyOutput.AppendLine().Text(
-			"Poisoned: "+strings.Join(names, ", "), DialogStatusWarningColor,
-		).WordWrap().Done()
-		d.bodyOutput.AppendLine().Text("WILL DIE during Rest.", DialogStatusWarningColor).Done()
+	if len(title) <= innTitleChars {
+		step.title = strings.TrimSpace(title)
 	}
-}
+	if !quote.Affordable {
+		// Asking without the gold is still a real request: the keeper turns the party out.
+		step.verb += tavernAnyway
+		step.notes = shortOfGoldNotes(innShortCost, int(quote.Charge), int(quote.GoldBefore), innRestTurnedOut)
 
-func (d *InnActionDialog) appendRestRecoverySummary(projections []game_state.InnCharacterProjection) {
-	recovering, deadNames, poisoned := classifyInnRestProjections(projections)
+		return
+	}
+	step.rows = []amountRow{{label: amountGoldRow, have: int(quote.GoldBefore), then: int(quote.GoldAfterPayment)}}
+	recovering, deadNames, poisoned := classifyInnRestProjections(quote.MemberProjections)
+	if names := innPoisonedNames(quote.MemberProjections); len(names) > 0 {
+		step.notes = append(step.notes, innNotes(joinInnNames(names)+" will die during the rest.", amountWarning)...)
+		step.notes = append(step.notes, amountNote{text: "", tone: amountPlain})
+	}
+	wake := quote.DateTimeAfter
+	step.notes = append(step.notes, innNotes(fmt.Sprintf("Wake at %s on %s.",
+		strings.TrimSpace(wake.GetTimeAsString()), wake.GetDateAsString()), amountPlain)...)
+	step.notes = append(step.notes, amountNote{text: "Active spells end.", tone: amountPlain})
 	switch {
-	case recovering == len(projections):
-		d.bodyOutput.AppendLine().LightGreen("Everyone fully heals.").Done()
+	case recovering == len(quote.MemberProjections):
+		step.notes = append(step.notes, amountNote{text: "Everyone fully heals.", tone: amountPlain})
 	case recovering > 0 && poisoned:
-		d.bodyOutput.AppendLine().LightGreen("Unaffected living party members fully heal.").Done()
+		step.notes = append(step.notes, amountNote{text: "The unaffected heal fully.", tone: amountPlain})
 	case recovering > 0:
-		d.bodyOutput.AppendLine().LightGreen("All living party members fully heal.").Done()
+		step.notes = append(step.notes, amountNote{text: "Every living member heals fully.", tone: amountPlain})
 	}
 	if len(deadNames) > 0 {
-		d.bodyOutput.AppendLine().LightGray("Dead and unchanged: " + strings.Join(deadNames, ", ") + ".").
-			WordWrap().Done()
+		step.notes = append(step.notes, innNotes("Dead and unchanged: "+joinInnNames(deadNames)+".", amountPlain)...)
 	}
+}
+
+func (d *InnActionDialog) describeLeave(step *amountStep) {
+	row := d.intent.Leave
+	name := row.Identity.Name
+	step.verb, step.title = innLeaveVerb, innLeaveVerb+" "+name
+	step.rows = d.innPlaceRows(row.PartySizeAfter, row.OccupancyAfter)
+	if innHasWarning(row.Warnings, game_state.InnWarningLastLivingMember) {
+		step.notes = append(step.notes,
+			innNotes("This removes the last living member from the active party.", amountWarning)...)
+		step.notes = append(step.notes, amountNote{text: "", tone: amountPlain})
+	}
+	step.notes = append(step.notes, amountNote{text: "No charge today.", tone: amountPlain})
+	if d.intent.HasMonthlyRate {
+		step.notes = append(step.notes, amountNote{
+			text: fmt.Sprintf("Monthly rate: %d gold.", d.intent.MonthlyRate), tone: amountPlain,
+		})
+	}
+	step.notes = append(step.notes,
+		amountNote{text: "At least one month is billed.", tone: amountPlain},
+		amountNote{text: "Pick up figures the rate again.", tone: amountPlain})
+	status := strings.ToLower(innStatusName(row.Status))
+	step.notes = append(step.notes, innNotes(name+" stays "+status+".", amountPlain)...)
+}
+
+func (d *InnActionDialog) describePickup(step *amountStep) {
+	row := d.intent.Pickup
+	name := row.Identity.Name
+	step.verb, step.title = innPickUpVerb, innPickUpVerb+" "+name
+	step.unit = fmt.Sprintf("%d gold a month for %s", row.MonthlyRate, countedNoun(row.BilledMonths, "month"))
+	if !row.Affordable {
+		// Asking without the gold is still a real request: the guards are called.
+		step.verb += tavernAnyway
+		step.notes = shortOfGoldNotes(innShortCost, int(row.Charge), int(row.GoldBefore), innPickUpGuards)
+
+		return
+	}
+	step.rows = append([]amountRow{{label: amountGoldRow, have: int(row.GoldBefore), then: int(row.GoldAfterPayment)}},
+		d.innPlaceRows(row.PartySizeAfter, row.RoomOccupancyAfter)...)
+	if innHasWarning(row.Warnings, game_state.InnWarningPoisonDeath) {
+		step.notes = append(step.notes, innNotes(name+" is poisoned and will die when picked up.", amountWarning)...)
+		step.notes = append(step.notes, amountNote{text: "", tone: amountPlain})
+	} else {
+		step.notes = append(step.notes, innNotes(name+" is "+strings.ToLower(innStatusName(row.Status))+".", amountPlain)...)
+	}
+	if int(row.MonthsAtInn) != row.BilledMonths || innHasWarning(row.Warnings, game_state.InnWarningMinimumMonthCharge) {
+		step.notes = append(step.notes, amountNote{
+			text: "Stayed " + countedNoun(int(row.MonthsAtInn), "month") + ".", tone: amountPlain,
+		})
+	}
+	if innHasWarning(row.Warnings, game_state.InnWarningMinimumMonthCharge) {
+		step.notes = append(step.notes, amountNote{text: "One month is the least billed.", tone: amountPlain})
+	}
+}
+
+// innPlaceRows gives the party's places and the inn's rooms before and after.
+func (d *InnActionDialog) innPlaceRows(partyAfter, roomsAfter int) []amountRow {
+	intent := d.intent
+
+	return []amountRow{
+		{label: fmt.Sprintf("%s%d", innPartyLabel, intent.PartyCapacity), have: intent.PartySize, then: partyAfter},
+		{label: fmt.Sprintf("%s%d", innRoomsLabel, intent.RoomCapacity), have: intent.RoomOccupancy, then: roomsAfter},
+	}
+}
+
+// innNotes breaks one sentence into note lines that each fit the window.
+func innNotes(sentence string, tone amountTone) []amountNote {
+	var notes []amountNote
+	line := ""
+	for _, word := range strings.Fields(sentence) {
+		if line != "" && len(line)+1+len(word) > innNoteChars {
+			notes = append(notes, amountNote{text: line, tone: tone})
+			line = ""
+		}
+		if line != "" {
+			line += " "
+		}
+		line += word
+	}
+
+	return append(notes, amountNote{text: line, tone: tone})
+}
+
+// joinInnNames words a list of names, such as "Iolo, Shamino and Mariah".
+func joinInnNames(names []string) string {
+	last := len(names) - 1
+	if last < 1 {
+		return strings.Join(names, "")
+	}
+
+	return strings.Join(names[:last], innNamesComma) + innNamesAnd + names[last]
 }
 
 func classifyInnRestProjections(
@@ -268,87 +311,6 @@ func classifyInnRestProjections(
 	}
 
 	return recovering, deadNames, poisoned
-}
-
-func (d *InnActionDialog) populateLeaveBody() {
-	row := d.intent.Leave
-	d.bodyOutput.AppendLine().Yellow("Companion: ").White(row.Identity.Name).Done()
-	d.bodyOutput.AppendLine().LightGray("Inn: ").White(d.intent.InnName).Done()
-	d.bodyOutput.AppendLine().LightGray("Charge today: ").LightGreen("0 gold").Done()
-	if d.intent.HasMonthlyRate {
-		d.bodyOutput.AppendLine().LightGray("Current monthly rate: ").Yellowf(
-			"%d gold", d.intent.MonthlyRate,
-		).Done()
-	}
-	d.bodyOutput.AppendLine().LightGray("Minimum stay: ").White("one billed month").Done()
-	d.bodyOutput.AppendLine().LightGray("Future rate: ").White("recalculated when picked up.").Done()
-	d.bodyOutput.AppendLine().LightGray("Status retained: ").White(innStatusName(row.Status)).Done()
-	d.bodyOutput.AppendLine().LightGray("Party: ").Cyanf(
-		"%d/%d -> %d/%d", d.intent.PartySize, d.intent.PartyCapacity,
-		row.PartySizeAfter, d.intent.PartyCapacity,
-	).Done()
-	d.bodyOutput.AppendLine().LightGray("Guest rooms: ").Cyanf(
-		"%d/%d -> %d/%d", d.intent.RoomOccupancy, d.intent.RoomCapacity,
-		row.OccupancyAfter, d.intent.RoomCapacity,
-	).Done()
-	if innHasWarning(row.Warnings, game_state.InnWarningLastLivingMember) {
-		d.bodyOutput.AppendLine().Text(
-			"SEVERE: this removes the last living member from the active party.",
-			DialogStatusWarningColor,
-		).WordWrap().Done()
-	}
-}
-
-func (d *InnActionDialog) populatePickupBody() {
-	row := d.intent.Pickup
-	d.bodyOutput.AppendLine().Yellow("Guest: ").White(row.Identity.Name).Done()
-	d.bodyOutput.AppendLine().LightGray("Inn: ").White(d.intent.InnName).Done()
-	d.bodyOutput.AppendLine().LightGray("Status: ").White(innStatusName(row.Status)).Done()
-	d.bodyOutput.AppendLine().LightGray("Recorded / billable months: ").Whitef(
-		"%d / %d", row.MonthsAtInn, row.BilledMonths,
-	).Done()
-	if innHasWarning(row.Warnings, game_state.InnWarningMinimumMonthCharge) {
-		d.bodyOutput.AppendLine().Text("Minimum charge is one month.", DialogLabelColor).Done()
-	}
-	d.bodyOutput.AppendLine().LightGray("Monthly rate: ").Yellowf("%d gold", row.MonthlyRate).Done()
-	d.bodyOutput.AppendLine().LightGray("Listed charge: ").Yellowf("%d gold", row.Charge).Done()
-	if row.Affordable {
-		d.bodyOutput.AppendLine().LightGray("Gold after listed payment: ").Cyanf(
-			"%d -> %d", row.GoldBefore, row.GoldAfterPayment,
-		).Done()
-	} else {
-		d.bodyOutput.AppendLine().Textf(
-			"Gold %d; shortfall %d.", DialogStatusWarningColor,
-			row.GoldBefore, int(row.Charge)-int(row.GoldBefore),
-		).Done()
-		d.bodyOutput.AppendLine().Text(
-			"GUARD WARNING: confirming without enough gold activates guards.",
-			DialogStatusWarningColor,
-		).WordWrap().Done()
-	}
-	d.bodyOutput.AppendLine().LightGray("Party: ").Cyanf(
-		"%d/%d -> %d/%d", d.intent.PartySize, d.intent.PartyCapacity,
-		row.PartySizeAfter, d.intent.PartyCapacity,
-	).Done()
-	d.bodyOutput.AppendLine().LightGray("Guest rooms: ").Cyanf(
-		"%d/%d -> %d/%d", d.intent.RoomOccupancy, d.intent.RoomCapacity,
-		row.RoomOccupancyAfter, d.intent.RoomCapacity,
-	).Done()
-	if innHasWarning(row.Warnings, game_state.InnWarningPoisonDeath) {
-		d.bodyOutput.AppendLine().Text(
-			row.Identity.Name+" is Poisoned and WILL DIE when picked up.",
-			DialogStatusWarningColor,
-		).WordWrap().Done()
-	}
-}
-
-func innActionPlacement() sprites.PercentBasedPlacement {
-	return sprites.PercentBasedPlacement{
-		StartPercentX: innActionStartPercentX,
-		EndPercentX:   innActionEndPercentX,
-		StartPercentY: innActionStartPercentY,
-		EndPercentY:   innActionEndPercentY,
-	}
 }
 
 func validateInnActionIntent(intent InnActionIntent) {
