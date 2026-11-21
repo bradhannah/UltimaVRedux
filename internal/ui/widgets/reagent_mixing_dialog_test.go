@@ -123,8 +123,8 @@ func TestMixMostSetsTheLargestAmountThatFits(t *testing.T) {
 		topLine           string
 	}{
 		{92, 18, 7, "Ready to mix."}, {92, 3, 3, "Ready to mix."}, {0, 99, 99, "Ready to mix."},
-		{99, 18, 1, "Already 99 prepared. These would be thrown away."},
-		{0, 0, 0, "Cannot mix In Lor: no Sulfurous Ash."},
+		{99, 18, 1, "Already 99 prepared. None would fit."},
+		{0, 0, 0, "Cannot mix: no Sulfurous Ash."},
 	} {
 		catalog := testMixCatalog()
 		catalog[references.InLor].Prepared = test.prepared
@@ -227,7 +227,7 @@ func TestMixRecipeTabCannotChangeTheMixtureAndExperimentCan(t *testing.T) {
 	ginseng := uint16(1) << uint(references.Ginseng)
 	require.Equal(t, recipe|ginseng, dialog.mask())
 	sentence, sentenceColor = dialog.topLine()
-	require.Equal(t, "Untested mix: it may be wasted and may hurt.", sentence)
+	require.Equal(t, "Untested: it may be wasted and may hurt.", sentence)
 	require.Equal(t, DialogWarningColor, sentenceColor)
 
 	press(ebiten.KeyTab)
@@ -247,7 +247,7 @@ func TestMixSpellWithoutRecordedRecipeOpensOnExperimentAlone(t *testing.T) {
 	dialog.ChooseSpell(references.VasFlam, true)
 	require.Equal(t, []mixTab{mixTabExperiment}, dialog.tabs())
 	sentence, _ := dialog.topLine()
-	require.Equal(t, "No recipe recorded. Choose ingredients to try.", sentence)
+	require.Equal(t, "No recipe recorded. Try ingredients.", sentence)
 	press(ebiten.KeyTab, ebiten.KeyEnter)
 	require.Equal(t, mixTabExperiment, dialog.tab, "there is no Recipe tab to open")
 	require.False(t, dialog.HasPendingMixRequest(), "nothing ticked, nothing to mix")
@@ -262,7 +262,7 @@ func TestMixTopLineNamesWhatIsMissing(t *testing.T) {
 	dialog := NewReagentMixingDialog(newWidgetTestKeyboard(0), testMixCatalog(), reagents)
 	dialog.ChooseSpell(references.KalXen, true)
 	sentence, sentenceColor := dialog.topLine()
-	require.Equal(t, "Cannot mix Kal Xen: no Mandrake Root.", sentence)
+	require.Equal(t, "Cannot mix: no Mandrake Root.", sentence)
 	require.Equal(t, DialogWarningColor, sentenceColor)
 	require.Equal(t, DialogWarningColor, dialog.view.warning, "the list's details name a shortage in the same red")
 	require.Zero(t, dialog.amount())
@@ -271,7 +271,7 @@ func TestMixTopLineNamesWhatIsMissing(t *testing.T) {
 	dialog = NewReagentMixingDialog(newWidgetTestKeyboard(0), testMixCatalog(), reagents)
 	dialog.ChooseSpell(references.KalXen, true)
 	sentence, _ = dialog.topLine()
-	require.Equal(t, "Cannot mix Kal Xen: lacks 2 ingredients.", sentence)
+	require.Equal(t, "Cannot mix: lacks 2 ingredients.", sentence)
 }
 
 func TestMixTopLineStatesTheLossBeforeEnter(t *testing.T) {
@@ -281,7 +281,7 @@ func TestMixTopLineStatesTheLossBeforeEnter(t *testing.T) {
 	dialog.ChooseSpell(references.InLor, true)
 	dialog.handleQuantityInput(5)
 	sentence, sentenceColor := dialog.topLine()
-	require.Equal(t, "Only 2 will fit. 3 of 5 would be thrown away.", sentence)
+	require.Equal(t, "Only 2 fit. 3 would be thrown away.", sentence)
 	require.Equal(t, DialogWarningColor, sentenceColor)
 	dialog.setMost()
 	require.Equal(t, 2, dialog.amount())

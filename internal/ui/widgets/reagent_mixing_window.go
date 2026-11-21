@@ -15,9 +15,11 @@ import (
 )
 
 // The quantity window is measured in letters and lines of the body font, so
-// every sentence, table row and hint row written for it fits at every size.
+// every sentence, table row and hint row written for it fits at every size. It
+// is as wide as its table and no wider: the sentences and hints are written to
+// fit that.
 const (
-	mixWindowColumns  = 50 // Letters across the window.
+	mixWindowColumns  = 41 // Letters across the window: the table and a letter each side.
 	mixNameColumns    = 18 // Lead space, tick box and the longest ingredient name.
 	mixHaveColumns    = 9  // The Have column, ending at letter 27.
 	mixCostColumns    = 6  // The Use column and the Left column.
@@ -28,6 +30,9 @@ const (
 	mixExperimentHead = 3  // How many, a blank line and the column titles.
 	mixTabGapLetters  = 2
 	mixHintGap        = "   "
+	mixTightHintGap   = "  "
+	mixAmountKeys     = "Left/Right/0-9"
+	mixWidestAction   = " Mix 99"
 )
 
 // mixWindow is the quantity window's four stacked panes, fitted to its content
@@ -184,25 +189,26 @@ func (d *ReagentMixingDialog) topLine() (string, stdcolor.Color) {
 	case d.notice != "":
 		return d.notice, DialogWarningColor
 	case mask == 0 && d.spell.RecipeMask == 0:
-		return "No recipe recorded. Choose ingredients to try.", DialogLabelColor
+		return "No recipe recorded. Try ingredients.", DialogLabelColor
 	case mask == 0:
 		return "Choose ingredients.", DialogLabelColor
 	case d.maximum() == 0:
 		return d.missingSentence(), DialogWarningColor
 	case mask != d.spell.RecipeMask:
-		return "Untested mix: it may be wasted and may hurt.", DialogWarningColor
+		return "Untested: it may be wasted and may hurt.", DialogWarningColor
 	case d.room() == 0:
-		return fmt.Sprintf("Already %d prepared. These would be thrown away.", spellInventoryLimit), DialogWarningColor
+		return fmt.Sprintf("Already %d prepared. None would fit.", spellInventoryLimit), DialogWarningColor
 	case d.quantity > d.room():
-		return fmt.Sprintf("Only %d will fit. %d of %d would be thrown away.",
-			d.room(), d.quantity-d.room(), d.quantity), DialogWarningColor
+		return fmt.Sprintf("Only %d fit. %d would be thrown away.",
+			d.room(), d.quantity-d.room()), DialogWarningColor
 	default:
 		return "Ready to mix.", DialogLabelColor
 	}
 }
 
 // missingSentence names the one ingredient the mixture lacks, or counts them
-// when there are several; the rows below mark each with "none".
+// when there are several; the rows below mark each with "none". The spell is
+// named in the title.
 func (d *ReagentMixingDialog) missingSentence() string {
 	mask := d.mask()
 	var missing []string
@@ -212,10 +218,10 @@ func (d *ReagentMixingDialog) missingSentence() string {
 		}
 	}
 	if len(missing) == 1 {
-		return fmt.Sprintf("Cannot mix %s: no %s.", d.spell.Name, missing[0])
+		return fmt.Sprintf("Cannot mix: no %s.", missing[0])
 	}
 
-	return fmt.Sprintf("Cannot mix %s: lacks %d ingredients.", d.spell.Name, max(1, len(missing)))
+	return fmt.Sprintf("Cannot mix: lacks %d ingredients.", max(1, len(missing)))
 }
 
 // mixInk is the colour of each kind of text on a line. The white selection bar
@@ -317,7 +323,7 @@ func (d *ReagentMixingDialog) drawIngredient(screen *ebiten.Image, rect image.Re
 		case reagent.Quantity == 0 && checked:
 			line.Text(name, ink.value).Text(fmt.Sprintf("%*s", mixHaveColumns, "none"), ink.warning)
 		case reagent.Quantity == 0:
-			line.Text(name+have+"   none carried", ink.dim)
+			line.Text(name+fmt.Sprintf("%*s", mixHaveColumns, "none"), ink.dim)
 		case checked && amount > 0:
 			line.Text(name+have+fmt.Sprintf("%*d%*d", mixCostColumns, amount, mixCostColumns,
 				reagent.Quantity-amount), ink.value)
@@ -328,8 +334,9 @@ func (d *ReagentMixingDialog) drawIngredient(screen *ebiten.Image, rect image.Re
 }
 
 // drawWindowFooter writes the hint rows by hand: the window is exactly wide
-// enough for them, and "[Left/Right] or [0-9]" must stay one phrase. Keys that
-// cannot work now are dimmed whole; the top line says why.
+// enough for them. Keys that cannot work now are dimmed whole; the top line says
+// why. The Tab hint shares the Enter row when it fits, with a tighter gap if that
+// is what it takes, and otherwise has the next row.
 func (d *ReagentMixingDialog) drawWindowFooter(screen *ebiten.Image) {
 	view := &d.view
 	rect := d.window.footer.Inset(view.padding)
@@ -339,19 +346,35 @@ func (d *ReagentMixingDialog) drawWindowFooter(screen *ebiten.Image) {
 		line := appendMixHint(view.footer.AppendLine(), hintKeyUpDown, " Move"+mixHintGap, true)
 		appendMixHint(line, hintKeySpace, " Add or remove", true).Done()
 	}
-	line := appendMixHint(view.footer.AppendLine(), "Left/Right", " or ", amount > 0)
-	appendMixHint(line, "0-9", " How many"+mixHintGap, amount > 0)
+	line := appendMixHint(view.footer.AppendLine(), mixAmountKeys, " How many"+mixHintGap, amount > 0)
 	appendMixHint(line, "M", " Most", min(d.maximum(), d.room()) > 0).Done()
 	mix := " Mix"
 	if amount > 0 {
 		mix += " " + strconv.Itoa(amount)
 	}
-	line = appendMixHint(view.footer.AppendLine(), hintKeyEnter, mix+mixHintGap, amount > 0)
-	appendMixHint(line, hintKeyEsc, " "+spellBackAction, true)
+	back, tab := " "+spellBackAction, ""
 	if len(d.tabs()) > 1 {
-		appendMixHint(line.Text(mixHintGap, DialogControlHintColor), "Tab", " "+d.otherTab().title(), true)
+		tab = " " + d.otherTab().title()
+	}
+	// Measured with the longest amount, so the row never rearranges as the amount changes.
+	gap, tabOnRow := mixHintGap, tab != ""
+	row := len("[Enter]"+mixWidestAction+"[Esc]"+back+"[Tab]"+tab) + len(mixHintGap)*spellBrowserRowLines
+	if row > mixWindowColumns {
+		gap = mixTightHintGap
+		tabOnRow = tabOnRow && row-spellBrowserRowLines <= mixWindowColumns
+	}
+	if !tabOnRow {
+		gap = mixHintGap
+	}
+	line = appendMixHint(view.footer.AppendLine(), hintKeyEnter, mix+gap, amount > 0)
+	appendMixHint(line, hintKeyEsc, back, true)
+	if tabOnRow {
+		appendMixHint(line.Text(gap, DialogControlHintColor), "Tab", tab, true)
 	}
 	line.Done()
+	if tab != "" && !tabOnRow {
+		appendMixHint(view.footer.AppendLine(), "Tab", tab, true).Done()
+	}
 	drawSpellOutput(screen, view.footer, rect, 0, view.footer.GetPanelContentLineCount())
 }
 

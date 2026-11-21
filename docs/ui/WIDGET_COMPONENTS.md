@@ -1262,11 +1262,13 @@ hint content. Keys/actions and labels/values use separate semantic-colour
 segments. Ingredient check marks have distinct normal and selected-row colours.
 
 Mix's quantity window (`reagent_mixing_window.go`) is not that full-size frame.
-It is fifty body-font letters wide and as tall as its taller tab, centred on the
-screen, so it never moves when the tab or the amount changes. Every sentence,
-table row and hint row in it is written to fit fifty letters, which holds at
-every supported size; its hint rows are composed by hand so `[Left/Right] or
-[0-9]` stays one phrase. Refusals, losses and shortages across Mix (this window
+It is as wide as its table, forty-one body-font letters, and as tall as its
+taller tab, centred on the screen, so it never moves when the tab or the amount
+changes. Every sentence, table row and hint row in it is written to fit those
+letters, which holds at every supported size, so the window carries no spare
+width; the spell is named in the title, not again in the top line. Its hint rows
+are composed by hand: the Tab hint shares the Enter row when it fits beside the
+longest amount, and otherwise has the row Recipe leaves free. Refusals, losses and shortages across Mix (this window
 and the details beside Mix's list) use `DialogWarningColor`, light red that
 reads on black; a warning on the white selection bar keeps the darker
 `DialogStatusWarningColor`. Cast's status line uses the same light red; Z-stats

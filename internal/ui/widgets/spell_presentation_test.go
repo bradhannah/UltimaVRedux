@@ -105,12 +105,15 @@ func TestSpellHintsFieldsAndSelectionMarksHaveDistinctColours(t *testing.T) {
 
 		return lines
 	}
-	require.Equal(t, []string{"[Left/Right] or [0-9] How many   [M] Most",
-		"[Enter] Mix 5   [Esc] Back   [Tab] Experiment"}, footer())
+	require.Equal(t, []string{"[Left/Right/0-9] How many   [M] Most", "[Enter] Mix 5   [Esc] Back",
+		"[Tab] Experiment"}, footer(), "Tab has the row Recipe leaves free")
 	dialog.tab = mixTabExperiment
 	dialog.Draw(screen)
-	require.Equal(t, []string{"[Up/Down] Move   [Space] Add or remove", "[Left/Right] or [0-9] How many   [M] Most",
-		"[Enter] Mix 5   [Esc] Back   [Tab] Recipe"}, footer())
+	require.Equal(t, []string{"[Up/Down] Move   [Space] Add or remove", "[Left/Right/0-9] How many   [M] Most",
+		"[Enter] Mix 5  [Esc] Back  [Tab] Recipe"}, footer(), "the gap that still fits the longest amount")
+	for _, row := range footer() {
+		require.LessOrEqual(t, len(row), mixWindowColumns, row)
+	}
 	hint := appendMixHint(view.footer.AppendLine(), "Enter", " Mix 5", true).GetSegments()
 	require.Equal(t, "[Enter]", hint[0].Text)
 	require.Equal(t, DialogControlKeyColor, hint[0].Color)
