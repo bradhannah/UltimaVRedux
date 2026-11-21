@@ -30,7 +30,7 @@ func TestCommandHelpDialogSpacePagingAndNavigation(t *testing.T) {
 	require.Greater(t, dialog.lastRow(), dialog.pageSize())
 	require.Contains(t, dialog.footer.GetOutputStr(false), "COMMAND HELP")
 	require.Contains(t, strings.Join(strings.Fields(dialog.footer.GetOutputStr(false)), " "),
-		"[Tab] Page of Help [Up/Down] Scroll [Esc] Close")
+		"[Tab] Page of Help [Up/Down] More below [Esc] Close", "a page taller than the card says so")
 	require.NotContains(t, dialog.footer.GetOutputStr(false), "Home/End", "extra paging keys work but are not hinted")
 	press(ebiten.KeySpace)
 	require.Equal(t, dialog.pageSize(), dialog.row)
@@ -52,6 +52,7 @@ func TestCommandHelpDialogSpacePagingAndNavigation(t *testing.T) {
 	require.Zero(t, dialog.row)
 	press(ebiten.KeyEnd)
 	require.Equal(t, dialog.lastRow(), dialog.row)
+	require.Contains(t, dialog.footer.GetOutputStr(false), "[Up/Down] More above", "at the end the rest is above")
 	press(ebiten.KeyEscape)
 	require.Equal(t, 1, closed)
 }

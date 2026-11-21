@@ -1180,7 +1180,8 @@ Configuration row).
 Status identifies only currently displayed worn items/effects using the same
 artwork and tints as the rail, includes explicit empty states and current food,
 and exposes no countdowns, undiscovered artifacts, or hidden actor identities.
-Long text wraps and scrolls at normal typography. Scene-owned construction and
+Long text wraps and scrolls at normal typography; the scroll hint reads "More below" until the
+end of a page taller than the card, then "More above", and is dimmed when the page fits. Scene-owned construction and
 exact dismissal preserve Help's no-time/no-resource contract and nested menu focus.
 
 ## Title Acknowledgments

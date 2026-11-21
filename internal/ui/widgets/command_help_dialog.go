@@ -162,24 +162,29 @@ func (d *CommandHelpDialog) populatePage() {
 	default:
 		d.populateNow(width)
 	}
+	d.row = min(d.row, d.lastRow())
+	d.populateFooter()
+}
+
+// populateFooter names the page and adds the three keys a lost player needs. The
+// other paging keys keep working and are listed with the Help command on
+// Commands. The scroll hint says which way there is more to read, and is dimmed
+// when the page already fits.
+func (d *CommandHelpDialog) populateFooter() {
+	last := d.lastRow() // Measured before the footer is emptied: the page's room depends on it.
 	d.footer.Reset()
 	title := [helpPageCount]string{"KEYS THAT WORK RIGHT NOW", "COMMAND HELP", "STATUS HELP"}[d.page]
 	d.footer.AppendLine().Text(title, DialogHeaderColor).
 		Text("   No time or resources spent", DialogControlHintColor).WordWrap().Done()
-	d.row = min(d.row, d.lastRow())
-	d.appendFooterHints()
-}
-
-// appendFooterHints adds the three keys a lost player needs. The other paging
-// keys keep working and are listed with the Help command on Commands. Scroll is
-// dimmed when the page already fits.
-func (d *CommandHelpDialog) appendFooterHints() {
-	scrollKey, scrollHint := DialogControlKeyColor, DialogControlHintColor
-	if d.lastRow() == 0 {
-		scrollKey, scrollHint = DialogUnavailableItemColor, DialogUnavailableItemColor
+	scrollKey, scrollHint, scroll := DialogControlKeyColor, DialogControlHintColor, " More below   "
+	switch {
+	case last == 0:
+		scrollKey, scrollHint, scroll = DialogUnavailableItemColor, DialogUnavailableItemColor, " Scroll   "
+	case d.row >= last:
+		scroll = " More above   "
 	}
 	d.footer.AppendLine().Text("[Tab]", DialogControlKeyColor).Text(" Page of Help   ", DialogControlHintColor).
-		Text("[Up/Down]", scrollKey).Text(" Scroll   ", scrollHint).
+		Text("[Up/Down]", scrollKey).Text(scroll, scrollHint).
 		Text("["+hintKeyEsc+"]", DialogControlKeyColor).Text(" "+hintActionClose, DialogControlHintColor).Done()
 }
 
@@ -311,6 +316,7 @@ func (d *CommandHelpDialog) Update() {
 	if !owned && d.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace) {
 		d.row = min(d.lastRow(), d.row+d.pageSize())
 	}
+	d.populateFooter()
 }
 
 // helpTabGap separates the page titles on the one centred tab line.

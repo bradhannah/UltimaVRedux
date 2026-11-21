@@ -875,9 +875,10 @@ func (d *ReadyEquipmentDialog) appendEquipmentFacts(item *availableEquipment) {
 	d.detailOutput.AppendLine().Text(equip.String(), DialogHeaderColor).WordWrap().Done()
 
 	d.appendReplacementTargets(item)
-	if equip.IsWeapon() {
+	// A weapon that only reaches the next tile has no range worth stating, as in Z-stats.
+	if reach := equip.GetAttackRange(); equip.IsWeapon() && reach > 0 {
 		d.detailOutput.AppendLine().Text("Range: ", DialogLabelColor).
-			Textf("%d tiles", DialogValueColor, equip.GetAttackRange()).Done()
+			Text(countedNoun(reach, "tile"), DialogValueColor).Done()
 	}
 	if ammo := equip.GetRequiredAmmo(); ammo != references.NoEquipment {
 		d.detailOutput.AppendLine().Text("Ammo: ", DialogLabelColor).
