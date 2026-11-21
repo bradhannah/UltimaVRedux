@@ -13,6 +13,7 @@ import (
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/originaldata"
 	"github.com/bradhannah/UltimaVRedux/internal/platform/texteditor"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
@@ -330,7 +331,7 @@ func (s *dataSetupScene) drawSearch(screen *ebiten.Image) {
 	s.heading.AppendLine().WithAlignment(etext.AlignCenter).White("LOCATE ULTIMA V GAME FILES").Done()
 	s.heading.DrawPanelContent(screen, image.Pt(width/10, height/5), width*8/10, etext.AlignCenter)
 	s.body.Reset()
-	s.body.AppendLine().WithAlignment(etext.AlignCenter).White("Looking in common installation locations...").Done()
+	s.body.AppendLine().WithAlignment(etext.AlignCenter).White("Looking in the usual places...").Done()
 	s.body.AppendLine().WithAlignment(etext.AlignCenter).
 		White("Checking configured folders, GOG and Heroic installations, and your home UltimaV folder").WordWrap().Done()
 	s.body.AppendLine().WithAlignment(etext.AlignCenter).
@@ -427,11 +428,22 @@ func (s *dataSetupScene) stopValidation() {
 	s.validating = false
 }
 
+// folderProblemStatus words a failed folder check for the player and keeps the
+// technical error in the log.
+func folderProblemStatus(err error) string {
+	logging.Warnf(logging.CategorySystem, "Game folder check failed: %v", err)
+	if reason := originaldata.PlainReason(err); reason != "" {
+		return "That folder no longer works: " + reason
+	}
+
+	return "That folder no longer works. The game log has the details."
+}
+
 func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupValidationResult) {
 	switch result.kind {
 	case dataSetupValidateCandidate:
 		if result.err != nil {
-			s.status = "That installation is no longer usable: " + result.err.Error()
+			s.status = folderProblemStatus(result.err)
 			if s.candidateFromBrowser {
 				s.showCandidateBrowser(game, s.candidateChoices, s.status)
 
@@ -446,6 +458,9 @@ func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupVali
 	case dataSetupCheckSettings:
 		if result.err != nil {
 			s.status = "Saved settings are not usable yet: " + result.err.Error()
+			if originaldata.PlainReason(result.err) != "" {
+				s.status = folderProblemStatus(result.err)
+			}
 			s.showSettingsRecoveryWithBack(game, false, s.settingsBack)
 
 			return
@@ -453,7 +468,7 @@ func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupVali
 		s.completeSavedSettings(game, result.playable)
 	case dataSetupLoadSelected:
 		if result.err != nil {
-			s.status = "The selected installation could not be loaded: " + result.err.Error()
+			s.status = folderProblemStatus(result.err)
 			s.showRecoveryActions(game)
 
 			return
@@ -498,7 +513,8 @@ func (s *dataSetupScene) cancelValidationFlow(game *Game) {
 func (s *dataSetupScene) showSearchResult(game *Game) {
 	switch len(s.report.Candidates) {
 	case 0:
-		s.status = "No complete Ultima V installation was found in the checked locations."
+		s.status = "No complete Ultima V installation was found. Put your Ultima V files in " +
+			originaldata.RecommendedDirectory(s.host) + " and choose Check Again."
 		s.showRecoveryActions(game)
 	case 1:
 		s.showSingleCandidate(game, s.report.Candidates[0])
@@ -512,7 +528,7 @@ func (s *dataSetupScene) showSingleCandidate(game *Game, candidate originaldata.
 	s.candidateSelectionID = candidate.Path
 	s.candidateFromBrowser = false
 	description := fmt.Sprintf(
-		"Redux found a usable installation.\nSource: %s\nFolder: %s\nYour original files will not be changed.",
+		"Redux found Ultima V.\nSource: %s\nFolder: %s\nYour original files will not be changed.",
 		candidate.Label, candidate.Path,
 	)
 	if s.status != "" {
@@ -608,7 +624,7 @@ func (s *dataSetupScene) dataCandidateView(candidate originaldata.Candidate) wid
 	}
 
 	return widgets.SaveSlotView{
-		ID: candidate.Path, Label: candidate.Label, Status: "Required game files verified", RowSummary: "",
+		ID: candidate.Path, Label: candidate.Label, Status: "All game files found", RowSummary: "",
 		ReviewValue: candidate.Path, Description: "", Newest: active, HasSave: true, NavigationDisabled: false,
 		Details: details,
 		Problem: "", PrimaryEnabled: true,
@@ -702,7 +718,7 @@ func (s *dataSetupScene) showSearchDetails(game *Game) {
 		Title: "Search Details", PrimaryActionLabel: setupBackLabel, CancelActionLabel: setupBackLabel,
 		InitialSelectionID: "", NewestLegend: "", ReviewLabel: "",
 		RequireExplicitSelection: false,
-		Notice:                   "Bounded local search only. No whole-computer scan was performed.",
+		Notice:                   "Only the usual places were searched, not the whole computer.",
 		Keyboard:                 s.keyboard,
 		Placement: sprites.PercentBasedPlacement{
 			StartPercentX: 0, EndPercentX: 0, StartPercentY: 0, EndPercentY: 0,
@@ -741,7 +757,7 @@ func (s *dataSetupScene) searchDetailViews() []widgets.SaveSlotView {
 			label = string(root.Source)
 		}
 		views = append(views, widgets.SaveSlotView{
-			ID: fmt.Sprintf("root-%d", index), Label: label, Status: "Checked known bounded layouts",
+			ID: fmt.Sprintf("root-%d", index), Label: label, Status: "Searched here",
 			RowSummary: string(root.Source), ReviewValue: "", Description: "", Newest: false, HasSave: false,
 			NavigationDisabled: false,
 			Details: []widgets.SaveSlotDetail{
@@ -765,7 +781,7 @@ func (s *dataSetupScene) searchDetailViews() []widgets.SaveSlotView {
 	}
 	if len(views) == 0 {
 		views = append(views, widgets.SaveSlotView{
-			ID: "no-search-locations", Label: "No recorded locations", Status: "Search did not inspect any roots",
+			ID: "no-search-locations", Label: "No recorded locations", Status: "Nothing was searched",
 			RowSummary: "", ReviewValue: "", Description: "", Newest: false, HasSave: false, NavigationDisabled: false,
 			Details: []widgets.SaveSlotDetail{{Label: "Recommended", Value: originaldata.RecommendedDirectory(s.host)}},
 			Problem: "", PrimaryEnabled: true,
@@ -798,7 +814,7 @@ func (s *dataSetupScene) useCandidate(game *Game, candidate originaldata.Candida
 	s.configurationError = nil
 	s.validationCandidate = candidate
 	validate := s.validate
-	s.beginValidation(dataSetupValidateCandidate, "Rechecking the selected installation before saving it...",
+	s.beginValidation(dataSetupValidateCandidate, "Checking the folder before saving it...",
 		func(ctx context.Context) dataSetupValidationResult {
 			return dataSetupValidationResult{
 				generation: 0, kind: dataSetupValidateCandidate, candidate: candidate,
@@ -833,7 +849,7 @@ func (s *dataSetupScene) commitCandidate(game *Game, candidate originaldata.Cand
 		}
 		if active {
 			s.showButtonMenu("Game-File Location Confirmed",
-				"The pending game-file location was cleared. This session will keep using the current files.", []setupButton{
+				"The new folder choice was cleared. This session keeps the current files.", []setupButton{
 					{label: setupReturnToMenuLabel, action: func() { s.returnToTitle(game) }},
 				})
 
@@ -850,7 +866,7 @@ func (s *dataSetupScene) commitCandidate(game *Game, candidate originaldata.Cand
 	}
 
 	loadCandidate := s.loadCandidate
-	s.beginValidation(dataSetupLoadSelected, "Loading the validated installation...",
+	s.beginValidation(dataSetupLoadSelected, "Loading the game files...",
 		func(ctx context.Context) dataSetupValidationResult {
 			playable, err := loadCandidate(candidate.Path)
 			if err == nil {
@@ -946,7 +962,7 @@ func (s *dataSetupScene) updateEditorResult(game *Game) {
 
 func (s *dataSetupScene) checkSavedSettings(_ *Game) {
 	loadPlayable, validate := s.loadPlayable, s.validate
-	s.beginValidation(dataSetupCheckSettings, "Rereading and validating the saved game-file location...",
+	s.beginValidation(dataSetupCheckSettings, "Checking the saved game folder...",
 		func(ctx context.Context) dataSetupValidationResult {
 			playable, err := loadPlayable()
 			if err == nil {
@@ -994,7 +1010,7 @@ func (s *dataSetupScene) completeSavedSettings(game *Game, playable *config.Ulti
 
 		return
 	}
-	s.status = "The saved location is usable. Confirm it to continue."
+	s.status = "The saved folder works. Confirm it to continue."
 	s.showSingleCandidate(game, originaldata.Candidate{
 		Path: playable.SavedConfigData.DataFilePath, Source: originaldata.SourceConfigured, Label: "Saved settings",
 	})

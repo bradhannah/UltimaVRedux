@@ -83,9 +83,8 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 			"Choose Off, 1, 2 or 3.", "", "Default: 3",
 		},
 		gameplayConfirmQuickSaveIndex: {
-			"Ask before saving with Q.", "",
-			"On: Ask before saving.", "Off: Save immediately.", "",
-			"Q saves to the last slot you loaded or saved.", "", "Default: On",
+			"On: Q asks before it saves, and Ctrl+Q before it loads.", "Off: Q saves and Ctrl+Q loads at once.", "",
+			"Either way they use the slot you last saved or loaded.", "", "Default: On",
 		},
 		gameplayShowCombatHPBarsIndex: {
 			"Show a health bar under each injured figure in combat.", "",
@@ -117,19 +116,19 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 		dialog.focusedGameplayIndex = index
 		dialog.detailOutput.SetMaxCharsPerLine(1000)
 		populateGameplayDetail(dialog.detailOutput, setting, dialog.gameplaySettingDisplayValue())
-		require.Equal(t, len(lines)+2, dialog.detailOutput.GetPanelContentLineCount())
+		require.Equal(t, len(lines)+4, dialog.detailOutput.GetPanelContentLineCount())
 		actualRows := strings.Split(strings.TrimSpace(dialog.detailOutput.GetOutputStr(true)), "\n")
 		for row := range actualRows {
 			actualRows[row] = strings.TrimSpace(actualRows[row])
 		}
-		wantRows := append([]string{setting.label}, lines...)
-		wantRows = append(wantRows, "Value: "+dialog.gameplaySettingDisplayValue())
+		wantRows := append([]string{setting.label, ""}, lines...)
+		wantRows = append(wantRows, "", "Value: "+dialog.gameplaySettingDisplayValue())
 		assert.Equal(t, wantRows, actualRows)
 	}
 
 	for _, resolution := range config.SupportedWindowResolutions() {
 		dialog.ensureLayout(resolution.X, resolution.Y)
-		inset := max(1, dialog.layout.pixelUnit*audioSettingsCenterDivisor)
+		inset := gameplayDetailMargin(dialog.layout.pixelUnit)
 		width := dialog.layout.gameplayDetail.Dx() - inset*audioSettingsCenterDivisor
 		chars := dialog.detailOutput.Font.CharsForWidth(width)
 		assert.Equal(t, gametext.GetScaledNumberToWidth(resolution.X, float64(widgets.FontSizeBody)),
@@ -139,7 +138,7 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 			dialog.prepareGameplayDetail()
 			setting := gameplaySettings()[index]
 			rows := gametext.MeasureText(setting.label, dialog.detailOutput.Font,
-				dialog.detailOutput.GetLineSpacing(), chars).Lines + 1
+				dialog.detailOutput.GetLineSpacing(), chars).Lines + 3
 			for _, line := range lines {
 				rows += max(1, gametext.MeasureText(line, dialog.detailOutput.Font,
 					dialog.detailOutput.GetLineSpacing(), chars).Lines)
@@ -151,7 +150,12 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 				"complete paragraphs for %s must fit %dx%d", setting.label, resolution.X, resolution.Y)
 			assert.Equal(t, strings.Fields(setting.label+" "+strings.Join(lines, " ")+" Value: "+dialog.gameplaySettingDisplayValue()),
 				strings.Fields(dialog.detailOutput.GetOutputStr(false)))
-			blankRows := 0
+			blankRows, wantBlankRows := 0, 2 // After the heading and before Value.
+			for _, line := range lines {
+				if line == "" {
+					wantBlankRows++
+				}
+			}
 			for _, row := range strings.Split(strings.TrimSpace(dialog.detailOutput.GetOutputStr(true)), "\n") {
 				row = strings.TrimSpace(row)
 				if row == "" {
@@ -160,7 +164,7 @@ func TestConfigurationQoLHelpUsesApprovedFontSafeParagraphs(t *testing.T) {
 				rowWidth, _ := dialog.detailOutput.Font.MeasureString(row)
 				assert.LessOrEqual(t, int(math.Ceil(rowWidth)), width, "wrapped help row must fit: %q", row)
 			}
-			assert.Equal(t, 3, blankRows, "paragraph separators survive wrapping for %s", setting.label)
+			assert.Equal(t, wantBlankRows, blankRows, "paragraph separators survive wrapping for %s", setting.label)
 		}
 	}
 }

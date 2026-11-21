@@ -267,7 +267,7 @@ ambiguous clone selection, committed player-action presentation, retained target
 readers and modals.
 Modified shortcuts retain precedence; Shift+J opens Journal and clears intent.
 
-Escape clears without cost and writes one `Pending command cleared.` line to
+Escape clears without cost and writes one `Queued command dropped.` line to
 ordinary Output. A plain unsupported gameplay letter, Space/Pass or Tab/Auto
 clears with one ordinary Output explanation and is consumed through release.
 These one-off cancellation/refusal messages are not persistent queue feedback.
@@ -704,9 +704,11 @@ before capture. The snapshot and resumed scene therefore share the same boundary
 without a full dungeon end-player pass or surface completion. Save eligibility
 checks remain unchanged; a success message alone does not prohibit another save.
 
-**Ctrl+Q** is a Redux-only direct active-slot reload, independent of Confirm Quick
-Save. Either physical Control key works, without Shift/Alt/Meta; Caps Lock has no
-effect. It has no confirmation or slot selection. It uses the stored reviewed
+**Ctrl+Q** is a Redux-only active-slot reload. With Confirm Quick Save On it first
+shows a modal `Load last save?` Y/N/Escape prompt (Y loads, N/Escape leaves the
+game as it is); with it Off, or with no active slot, it acts at once. Either
+physical Control key works, without Shift/Alt/Meta; Caps Lock has no
+effect. It has no slot selection. It uses the stored reviewed
 revision, never Latest or a newly adopted revision. Externally changed, deleted,
 corrupt, or incompatible slots require ordinary reviewed Load; failure retains
 the current scene, generation, provenance and source input, and reports a

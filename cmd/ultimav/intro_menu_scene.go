@@ -821,7 +821,8 @@ func (m *IntroMenuScene) showLegacySaveFailure(game *Game, directory string, err
 	placement := sprites.PercentBasedPlacement{StartPercentX: 0, EndPercentX: 1, StartPercentY: 0, EndPercentY: 1}
 	menu = widgets.NewButtonListModal("Original Save Unavailable", back, m.keyboard, &placement)
 	menu.SetDescriptionRowCapacity(setupDescriptionRows)
-	menu.SetDescription("Active game folder: " + directory + "\n" + legacySavePreparationMessage(err) + "\n" + err.Error())
+	logging.Warnf(logging.CategoryUI, "Original save could not be imported: %v", err)
+	menu.SetDescription("Active game folder: " + directory + "\n" + legacySavePreparationMessage(err))
 	menu.SetEscapeLabel(setupBackLabel)
 	menu.AddButton("Check Again", func() {
 		back()
@@ -916,10 +917,10 @@ func legacySavePreparationMessage(err error) string {
 
 	var snapshotValidation *save_snapshot.ValidationError
 	if errors.As(err, &snapshotValidation) && len(snapshotValidation.Issues) > 0 {
-		return "Legacy save state is unsupported: " + snapshotValidation.Issues[0].Message
+		return legacySaveDamagedMessage
 	}
 
-	return "That legacy save could not be read."
+	return "That original save could not be read."
 }
 
 func legacySaveSourceValidationMessage(issue legacy_save.ValidationIssue) string {
@@ -936,12 +937,14 @@ func legacySaveSourceValidationMessage(issue legacy_save.ValidationIssue) string
 		}
 
 		return "Multiple SAVED.OOL files were found beside SAVED.GAM."
-	case "invalid_length":
-		return issue.Message
 	default:
-		return "Legacy save data is invalid: " + issue.Message
+		return legacySaveDamagedMessage
 	}
 }
+
+// legacySaveDamagedMessage replaces the checker's own wording, which is kept in the log.
+const legacySaveDamagedMessage = "This original save looks damaged and cannot be imported. " +
+	"Try another copy of SAVED.GAM and SAVED.OOL."
 
 func (m *IntroMenuScene) openPlayerSaveBrowser(
 	game *Game,

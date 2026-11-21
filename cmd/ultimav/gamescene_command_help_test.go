@@ -98,7 +98,7 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 				require.Equal(t, context == references.CombatMapType, entry.Unavailable != "")
 			}
 			if entry.Key == "Ctrl+N" {
-				require.Contains(t, entry.NextInput, "current sextant fix")
+				require.Contains(t, entry.NextInput, "Needs a sextant reading")
 				if context == references.LargeMapType {
 					require.Empty(t, entry.Unavailable)
 				} else {
@@ -106,11 +106,11 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 				}
 			}
 			if entry.Key == commandHelpHelpKeys {
-				require.Contains(t, entry.NextInput, "Space: Next page")
+				require.Contains(t, entry.NextInput, "Space turns the page")
 			}
 			if entry.Key == "C" {
-				require.Contains(t, entry.NextInput, "Casting spends MP and one mixture.")
-				require.Contains(t, entry.NextInput, "Cancelling beforehand costs no MP, mixture, or gameplay time")
+				require.Contains(t, entry.NextInput, "Casting spends M.P. and one mixture.")
+				require.Contains(t, entry.NextInput, "Cancelling costs nothing")
 				require.NotContains(t, entry.NextInput, "before choice")
 				require.NotContains(t, entry.NextInput, "does not refund")
 				require.NotContains(t, entry.NextInput, "Cancelling uses the combat action")
@@ -131,19 +131,19 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 				}
 			}
 			if entry.Key == "Y" && context == references.LargeMapType {
-				require.Contains(t, entry.NextInput, "toggles sails immediately")
+				require.Contains(t, entry.NextInput, "raises or lowers the sails")
 			}
 			if entry.Key == "0 / 1-6" && context == references.CombatMapType {
-				require.Contains(t, entry.NextInput, "passes the current actor")
+				require.Contains(t, entry.NextInput, "act alone while the others pass")
 			}
 			if entry.Key == "A" && context == references.SmallMapType {
-				require.Contains(t, entry.NextInput, "Space: Pass")
+				require.Contains(t, entry.NextInput, "Space passes the turn")
 				foundDirection = true
 			}
 			if context == references.SmallMapType || context == references.LargeMapType {
 				switch entry.Key {
 				case "A", "G", "J", "L", "O", "P", "S", "T":
-					require.Contains(t, entry.NextInput, "Esc: Cancel without spending a turn")
+					require.Contains(t, entry.NextInput, "costs no turn")
 					require.NotContains(t, entry.NextInput, "not Esc")
 				case "K":
 					require.Contains(t, entry.NextInput, "Esc cancels an uncommitted direction")

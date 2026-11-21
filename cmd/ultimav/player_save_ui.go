@@ -102,22 +102,20 @@ func playerSaveSlotView(summary player_save.SlotSummary, mode playerSaveBrowserM
 	switch summary.Status {
 	case player_save.SlotCorrupt:
 		if summary.Revision != "" {
-			problem = "This save cannot be loaded. You can deliberately overwrite this slot when saving or importing. " +
-				"Its existing data will be permanently replaced."
+			problem = "This save cannot be loaded. You can still save or import over it; what it holds will be lost."
 
 			break
 		}
 		problem = fmt.Sprintf(
-			"This save is damaged and cannot be loaded or overwritten. Choose another slot. "+
-				"To reclaim this slot, close the game, back up %s.json from the configured save directory, "+
-				"then move that file out of the directory. Reopen the game to use the empty slot.",
+			"This save is damaged and cannot be loaded or replaced. Choose another slot. "+
+				"To free this one, close the game, copy %s.json out of the saves folder to somewhere safe, "+
+				"and delete it there.",
 			summary.Slot,
 		)
 	case player_save.SlotIncompatible:
-		problem = "This save is not compatible with this game version or game data. " +
-			"Use a compatible version to load it, or choose another slot."
+		problem = "This save does not work with this version of the game or these game files. Choose another slot."
 	case player_save.SlotUnavailable:
-		problem = "This save could not be read. Check access to the configured save directory, then reopen this screen."
+		problem = "This save could not be read. Check access to the saves folder, then reopen this screen."
 	case player_save.SlotEmpty, player_save.SlotReady:
 	}
 
@@ -144,7 +142,7 @@ func playerSaveFailureMessage(action string, err error) string {
 		return playerSaveErrorDetail(err)
 	}
 
-	return action + " failed. " + playerSaveErrorDetail(err)
+	return action + " failed: " + playerSaveErrorDetail(err)
 }
 
 func playerSaveErrorDetail(err error) string {
@@ -152,22 +150,22 @@ func playerSaveErrorDetail(err error) string {
 	case errors.Is(err, player_save.ErrStaleRevision):
 		return "This save changed since you opened the screen. Review the slot and try again."
 	case errors.Is(err, ErrNoActivePlayerSaveSlot):
-		return "Save or load a player slot first."
+		return "Save or load a game first."
 	case errors.Is(err, game_state.ErrSaveSnapshotNotRepresentable),
 		errors.Is(err, ErrGameSceneSnapshotNotRepresentable):
-		return "Saving is not available right now. Finish the current action and try again."
+		return "You cannot save just now. Finish what you are doing and try again."
 	case errors.Is(err, ErrPlayerSaveSceneIneligible):
-		return "The game could not complete this operation. Check the game log for details."
+		return "That did not work. The game log has the details."
 	case errors.Is(err, player_save.ErrSlotNotFound), errors.Is(err, fs.ErrNotExist):
 		return "The save could not be found. Reopen the save screen and choose another slot."
 	case errors.Is(err, player_save.ErrIncompatible), errors.Is(err, save_snapshot.ErrUnsupportedSnapshotVersion):
 		return "This save needs a compatible game version or game data. Choose another save."
 	case errors.Is(err, save_snapshot.ErrInvalidEnvelope), errors.Is(err, save_snapshot.ErrInvalidSnapshot):
-		return "The save data could not be validated. Check the game log for details."
+		return "This save looks damaged. The game log has the details."
 	case errors.Is(err, fs.ErrPermission):
-		return "Check file permissions for the configured save directory and try again."
+		return "Check file permissions for the saves folder and try again."
 	case errors.Is(err, ErrPlayerSaveUnavailable):
-		return "Save storage is unavailable. Check the configured save directory and try again."
+		return "The saves folder cannot be reached. Check it and try again."
 	default:
 		return "Please try again. If the problem continues, check the game log for details."
 	}
@@ -176,13 +174,13 @@ func playerSaveErrorDetail(err error) string {
 func playerQuickLoadErrorDetail(err error) string {
 	switch {
 	case errors.Is(err, ErrNoActivePlayerSaveSlot):
-		return "Save or load a player slot first."
+		return "Save or load a game first."
 	case errors.Is(err, player_save.ErrStaleRevision):
 		return "The active save changed. Use Load to review the slot before loading it."
 	case errors.Is(err, player_save.ErrSlotNotFound), errors.Is(err, fs.ErrNotExist):
 		return "The active save could not be found. Use Load to review your slots."
 	case errors.Is(err, ErrPlayerSaveUnavailable):
-		return "Load services are unavailable. Check the configured save directory and try again."
+		return "The saves folder cannot be reached. Check it and try again."
 	case errors.Is(err, player_save.ErrIncompatible), errors.Is(err, save_snapshot.ErrUnsupportedSnapshotVersion):
 		return "The active save needs compatible game data or a compatible game version. Use Load to review your slots."
 	case errors.Is(err, save_snapshot.ErrInvalidEnvelope), errors.Is(err, save_snapshot.ErrInvalidSnapshot):
@@ -221,7 +219,7 @@ func playerSaveDetails(summary player_save.SlotSummary) []widgets.SaveSlotDetail
 		return []widgets.SaveSlotDetail{{Label: "", Value: "No save data."}}
 	}
 	if summary.Status == player_save.SlotCorrupt || summary.Status == player_save.SlotUnavailable {
-		return []widgets.SaveSlotDetail{{Label: "", Value: "No readable save metadata."}}
+		return []widgets.SaveSlotDetail{{Label: "", Value: "This save cannot be read."}}
 	}
 
 	metadata := summary.Metadata
@@ -369,7 +367,7 @@ func playerSaveDescriptionNotice(summary player_save.SlotSummary, playthroughID 
 			". Its existing data will be permanently replaced."
 	}
 	if summary.Status == player_save.SlotEmpty {
-		return "Save this checkpoint to " + playerSaveSlotName(summary.Slot) + "."
+		return "Save to " + playerSaveSlotName(summary.Slot) + "."
 	}
 	notice := "Replaces " + summary.Metadata.AvatarName + "'s save"
 	if !summary.Metadata.CreatedAt.IsZero() {
@@ -377,7 +375,7 @@ func playerSaveDescriptionNotice(summary player_save.SlotSummary, playthroughID 
 	}
 	notice += "."
 	if summary.Metadata.PlaythroughID != playthroughID || playthroughID == "" {
-		notice += " This slot belongs to another playthrough."
+		notice += " This slot holds a different game."
 	}
 
 	return notice

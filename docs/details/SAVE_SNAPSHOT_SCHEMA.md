@@ -1150,8 +1150,8 @@ pass. Existing snapshot eligibility and optimistic revision protection remain
 mandatory; combat Q cannot save.
 
 **Ctrl+Q** directly reloads that same active slot and stored reviewed revision,
-independent of the Q preference, without confirmation, slot selection, outgoing
-save, or rollback capture. This Redux shortcut is available at normal exploration
+asking `Load last save?` first when Confirm Quick Save is On, without slot
+selection, outgoing save, or rollback capture. This Redux shortcut is available at normal exploration
 input and player-controlled combat turns, including controlled monsters. Input
 owners such as enemy actions, targeting, readers, modals and workflows block it;
 incidental damage labels/action cards do not. Blocked/held chords are suppressed

@@ -449,7 +449,7 @@ func TestIntroMenuFailedJourneyOnwardPreservesIntro(t *testing.T) {
 	require.NoError(t, game.Update())
 
 	assert.Same(t, scene, game.currentScene)
-	assert.Equal(t, "Load failed. Please try again. If the problem continues, check the game log for details.", scene.notice)
+	assert.Equal(t, "Load failed: Please try again. If the problem continues, check the game log for details.", scene.notice)
 }
 
 func TestIntroMenuModalInputPreemptsMenuNavigation(t *testing.T) {
@@ -888,14 +888,14 @@ func TestLegacySavePreparationMessageReportsTypedCause(t *testing.T) {
 			err: &legacy_save.ValidationError{Issues: []legacy_save.ValidationIssue{{
 				Code: "invalid_length", Message: "SAVED.GAM must be exactly 4192 bytes; got 10",
 			}}},
-			want: "SAVED.GAM must be exactly 4192 bytes; got 10",
+			want: "This original save looks damaged and cannot be imported. Try another copy of SAVED.GAM and SAVED.OOL.",
 		},
 		{
 			name: "native conversion",
 			err: &save_snapshot.ValidationError{Issues: []save_snapshot.Issue{{
 				Code: "unsupported", Message: "active spell code is unsupported",
 			}}},
-			want: "Legacy save state is unsupported: active spell code is unsupported",
+			want: "This original save looks damaged and cannot be imported. Try another copy of SAVED.GAM and SAVED.OOL.",
 		},
 	}
 	for _, test := range tests {
@@ -941,8 +941,14 @@ func TestOriginFrameDrawOptionsVerticallyInvertsFlippedStage(t *testing.T) {
 }
 
 func newIntroInputTestScene() *IntroMenuScene {
+	// The outputs InvalidateResolution refits, built as production builds them.
+	noticeFont := text.NewUltimaFont(text.GetIntroNoticeFontSize())
+
 	return &IntroMenuScene{
-		keyboard: newPresentationTestKeyboard(),
+		noticeFont:    noticeFont,
+		noticeOutput:  text.NewOutput(noticeFont, noticeFont.TextFace.Metrics().HAscent*1.2, introNoticeLineCount, 80),
+		versionOutput: newIntroVersionOutput(),
+		keyboard:      newPresentationTestKeyboard(),
 		config: &config.UltimaVConfiguration{
 			SavedConfigData:       &config.UltimaVConfigurationFlags{},
 			AudioConfiguration:    &config.AudioConfiguration{},

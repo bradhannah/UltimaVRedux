@@ -76,7 +76,7 @@ func (d *ConfigurationDialog) updateDisplayApplying() bool {
 		return true
 	}
 	if d.displayTransitionTicks >= configurationDisplayTransitionTimeout {
-		d.saveError = "Display change timed out. Previous settings restored."
+		d.saveError = "No answer in time. The old display settings are back."
 		d.beginDisplayRollback(false)
 	}
 

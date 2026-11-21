@@ -239,8 +239,8 @@ func TestSaveDescriptionDefaultsAndInputContract(t *testing.T) {
 	draft := playerSaveDescriptionDraft{}
 	assert.Equal(t, "Destination note", playerSaveDescriptionInitial(summary, testPlaythroughID, &draft))
 	assert.Empty(t, playerSaveDescriptionInitial(summary, otherTestPlaythroughID, &draft))
-	assert.Contains(t, playerSaveDescriptionNotice(summary, otherTestPlaythroughID), "This slot belongs to another playthrough.")
-	assert.NotContains(t, playerSaveDescriptionNotice(summary, testPlaythroughID), "another playthrough")
+	assert.Contains(t, playerSaveDescriptionNotice(summary, otherTestPlaythroughID), "This slot holds a different game.")
+	assert.NotContains(t, playerSaveDescriptionNotice(summary, testPlaythroughID), "different game")
 	draft = playerSaveDescriptionDraft{slot: summary.Slot, text: "", set: true}
 	assert.Empty(t, playerSaveDescriptionInitial(summary, testPlaythroughID, &draft))
 	// An older, longer note is offered cut to the box's limit, never as an empty box.

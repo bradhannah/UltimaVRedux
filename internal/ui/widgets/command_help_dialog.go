@@ -118,14 +118,14 @@ func (d *CommandHelpDialog) ensureLayout() {
 	})
 	font, output := GetScaledFontWithOutput(FontConfig{
 		Size: FontSizeBody, MaxLines: 1, MaxChars: commandHelpInitialChars,
-		LineSpacing: 0, LineSpacingMultiplier: commandHelpSpacing,
+		LineSpacingMultiplier: commandHelpSpacing,
 	})
 	chars := max(1, font.CharsForWidth(d.border.GetInteriorBounds().Dx()-2*commandHelpPadding))
 	d.output = text.NewOutput(font, output.GetLineSpacing(), max(1,
 		(len(d.entries)+len(d.status.Worn)+len(d.status.Effects)+1)*commandHelpEntryRows), chars)
 	_, d.title = GetScaledFontWithOutput(FontConfig{
 		Size: FontSizeTitle, MaxLines: 1, MaxChars: commandHelpInitialChars,
-		LineSpacing: 0, LineSpacingMultiplier: commandHelpSpacing,
+		LineSpacingMultiplier: commandHelpSpacing,
 	})
 	d.title.AppendLine().Text("HELP", DialogHeaderColor).Done()
 	d.header = text.NewOutput(font, output.GetLineSpacing(), 1, chars)
@@ -175,7 +175,7 @@ func (d *CommandHelpDialog) populateFooter() {
 	d.footer.Reset()
 	title := [helpPageCount]string{"KEYS THAT WORK RIGHT NOW", "COMMAND HELP", "STATUS HELP"}[d.page]
 	d.footer.AppendLine().Text(title, DialogHeaderColor).
-		Text("   No time or resources spent", DialogControlHintColor).WordWrap().Done()
+		Text("   Costs no turn", DialogControlHintColor).WordWrap().Done()
 	scrollKey, scrollHint, scroll := DialogControlKeyColor, DialogControlHintColor, " More below   "
 	switch {
 	case last == 0:

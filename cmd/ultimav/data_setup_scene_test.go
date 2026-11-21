@@ -150,7 +150,7 @@ func TestDataSetupSceneCandidateValidationFailureReturnsToSameChooser(t *testing
 	selected, selectedOK := browser.GetSelectedView()
 	require.True(t, selectedOK)
 	assert.Equal(t, failed.Path, selected.ID)
-	assert.Contains(t, scene.status, "no longer usable")
+	assert.Contains(t, scene.status, "no longer works")
 }
 
 func TestDataSetupSceneCancelsSearchWithoutAcceptingLateResult(t *testing.T) {
@@ -249,10 +249,10 @@ func TestDataSetupSceneRevalidatesCandidateBeforePersisting(t *testing.T) {
 	game := &Game{}
 
 	scene.useCandidate(game, originaldata.Candidate{Path: filepath.Join(t.TempDir(), "UltimaV")})
-	updateDataSetupUntil(t, scene, game, func() bool { return strings.Contains(scene.status, "no longer usable") })
+	updateDataSetupUntil(t, scene, game, func() bool { return strings.Contains(scene.status, "no longer works") })
 
 	assert.Equal(t, previous, configuration.PersistedDataFilePath())
-	assert.Contains(t, scene.status, "no longer usable")
+	assert.Contains(t, scene.status, "no longer works")
 }
 
 func TestDataSetupSceneCandidateValidationIsAsyncAndCancelable(t *testing.T) {
@@ -374,9 +374,9 @@ func TestDataSetupSceneFirstRunReloadFailureReturnsToRecovery(t *testing.T) {
 	game := &Game{}
 
 	scene.useCandidate(game, originaldata.Candidate{Path: filepath.Join(t.TempDir(), "UltimaV")})
-	updateDataSetupUntil(t, scene, game, func() bool { return strings.Contains(scene.status, "reload failed") })
+	updateDataSetupUntil(t, scene, game, func() bool { return strings.Contains(scene.status, "no longer works") })
 
-	assert.Contains(t, scene.status, "reload failed")
+	assert.Contains(t, scene.status, "The game log has the details")
 	assert.Equal(t, previous, configuration.PersistedDataFilePath())
 	_, ok := scene.dialogStack.PeekTopModalDialog().(*widgets.ButtonListModal)
 	assert.True(t, ok)

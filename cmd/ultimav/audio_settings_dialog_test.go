@@ -567,7 +567,7 @@ func TestConfigurationDialogStagesGameplayAndPreservesSectionSelections(t *testi
 	assert.Equal(t, 1, dialog.focusedGameplayIndex)
 
 	dialog.prepareGameplayDetail()
-	assert.Contains(t, strings.Join(strings.Fields(dialog.detailOutput.GetOutputStr(false)), " "), "hidden doors and pits between visits")
+	assert.Contains(t, strings.Join(strings.Fields(dialog.detailOutput.GetOutputStr(false)), " "), "hidden doors and pits you find stay found")
 }
 
 func TestConfigurationDialogFitsEverySupportedResolution(t *testing.T) {
@@ -595,7 +595,7 @@ func TestConfigurationDialogFitsEverySupportedResolution(t *testing.T) {
 			dialog.layout.bodyRect.Max.Y)
 		assert.Equal(t, 1, dialog.focusedGameplayIndex)
 
-		detailInset := max(1, dialog.layout.pixelUnit*audioSettingsCenterDivisor)
+		detailInset := gameplayDetailMargin(dialog.layout.pixelUnit)
 		detailChars := dialog.detailOutput.Font.CharsForWidth(
 			dialog.layout.gameplayDetail.Dx() - detailInset*audioSettingsCenterDivisor,
 		)
@@ -729,7 +729,7 @@ func TestConfigurationDialogFlexibleSextantKeyboardApplyCancelAndReload(t *testi
 		dialog.prepareGameplayDetail()
 		require.Equal(t, "X", dialog.gameplayCheckmark(gameplayFlexibleSextantUseIndex))
 		require.Contains(t, dialog.detailOutput.GetOutputStr(false), "Flexible Sextant Use")
-		require.Contains(t, dialog.detailOutput.GetOutputStr(false), "Redux:")
+		require.Contains(t, dialog.detailOutput.GetOutputStr(false), "Value: On")
 		require.LessOrEqual(t, dialog.detailOutput.GetPanelContentLineCount(), audioSettingsDetailLines)
 	}
 	pressAudioSettingsKey(dialog, ebiten.KeyEscape)

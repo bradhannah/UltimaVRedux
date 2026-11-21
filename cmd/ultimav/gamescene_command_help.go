@@ -53,50 +53,50 @@ func (g *GameScene) showCommandHelp() {
 }
 
 func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelpEntry {
-	direction := "Arrow/keypad direction; Space: Pass (not Esc)."
+	direction := "Arrows or keypad choose the direction. Space passes the turn."
 	if context == references.SmallMapType || context == references.LargeMapType {
-		direction = "Arrow/keypad direction; Esc: Cancel without spending a turn. Space: Pass with the normal command cost."
+		direction = "Arrows or keypad choose the direction. Esc cancels and costs no turn; Space passes the turn."
 	}
 	entries := []widgets.CommandHelpEntry{
 		{Key: commandHelpMovementKeys, Purpose: "Move", NextInput: "Move one step; hold to repeat."},
-		{Key: commandKeyLabelSpace, Purpose: "Pass", NextInput: "Wait once immediately; hold to repeat in exploration. Release after a dialog or context change."},
+		{Key: commandKeyLabelSpace, Purpose: "Pass", NextInput: "Wait one turn; hold to keep waiting."},
 		{Key: "A", Purpose: "Attack", NextInput: direction},
 		{Key: "B", Purpose: "Board a vehicle", NextInput: "Stand on a boardable vehicle."},
 		{Key: "C", Purpose: "Cast a prepared spell", NextInput: "Choose a caster and a spell. Enter names the next step: " +
 			"a spell with no aim is cast at once; any other asks who or where first. " +
-			"Casting spends MP and one mixture. Cancelling beforehand costs no MP, mixture, or gameplay time."},
+			"Casting spends M.P. and one mixture. Cancelling costs nothing."},
 		{Key: "E", Purpose: "Enter a location", NextInput: "Stand on a town, dungeon or other entrance."},
 		{Key: "F", Purpose: "Fire a cannon", NextInput: direction},
 		{Key: "G", Purpose: "Get an item", NextInput: direction},
-		{Key: "H", Purpose: "Hole up and camp", NextInput: "Follow the camp prompts. During sleeping, press Space once to speed up the remaining rest. Each new camp starts normally."},
-		{Key: "I", Purpose: "Ignite a torch", NextInput: "Requires a carried torch; consumes it immediately."},
+		{Key: "H", Purpose: "Hole up and camp", NextInput: "Follow the camp prompts. While the party sleeps, Space hurries the rest along."},
+		{Key: "I", Purpose: "Ignite a torch", NextInput: "Lights one of your torches."},
 		{Key: "J", Purpose: "Jimmy a lock", NextInput: direction + " Choose a character when asked."},
 		{Key: "K", Purpose: "Klimb", NextInput: "Use a ladder or climbable terrain; choose direction when asked."},
 		{Key: "L", Purpose: "Look", NextInput: direction},
 		{Key: "M", Purpose: "Mix reagents", NextInput: "Choose a spell, then how many: Left/Right or digits set the amount, M the most that fits, Enter mixes. Tab opens Experiment to try other ingredients."},
-		{Key: "N", Purpose: "New party order", NextInput: "Select members to exchange; Avatar remains first."},
+		{Key: "N", Purpose: "New party order", NextInput: "Swap two members. The Avatar must lead."},
 		{Key: "O", Purpose: "Open", NextInput: direction},
 		{Key: "P", Purpose: "Push", NextInput: direction},
-		{Key: "Q", Purpose: "Quick save", NextInput: "Save to the active player slot. Confirm Quick Save defaults On: answer Y/N, then acknowledge the result. Off saves immediately with a message; errors still need acknowledgement. Save or load a slot first."},
-		{Key: "Ctrl+Q", Purpose: "Quick load", NextInput: "Reload the active player slot immediately, without confirmation or saving the current game. Works at normal player input, including controlled-monster combat turns. Unavailable chords are discarded; release before retrying. No Shift/Alt/Meta; Caps Lock is neutral."},
-		{Key: "R", Purpose: "Ready equipment", NextInput: "Choose character/item; Enter applies the displayed Equip/Unready operation immediately. Space pages longer details."},
+		{Key: "Q", Purpose: "Quick save", NextInput: "Saves to the slot you last saved or loaded. Asks first unless Confirm Quick Save is off. Save or load a slot once before using it."},
+		{Key: "Ctrl+Q", Purpose: "Quick load", NextInput: "Reloads the slot you last saved or loaded, without saving first. Asks first unless Confirm Quick Save is off."},
+		{Key: "R", Purpose: "Ready equipment", NextInput: "Choose a member and an item; Enter readies or unreadies it. Space shows more detail."},
 		{Key: "S", Purpose: commandLabelSearch, NextInput: direction},
-		{Key: "T", Purpose: "Talk", NextInput: direction + " Type topics or phrases; Enter submits. NAME/JOB/BYE; PgUp reviews this conversation only."},
-		{Key: "U", Purpose: "Use an item", NextInput: "Choose item/user, then follow its target prompt."},
-		{Key: "V", Purpose: "View with a gem", NextInput: "Requires a gem; acknowledge the map view."},
-		{Key: "X", Purpose: "Exit a vehicle", NextInput: "Must currently be riding or aboard."},
+		{Key: "T", Purpose: "Talk", NextInput: direction + " Type a word and press Enter. Try NAME, JOB and BYE. PgUp rereads this conversation."},
+		{Key: "U", Purpose: "Use an item", NextInput: "Choose an item and who uses it, then answer what it asks."},
+		{Key: "V", Purpose: "View with a gem", NextInput: "Uses one gem. Any key closes the view."},
+		{Key: "X", Purpose: "Exit a vehicle", NextInput: "Step off your horse, carpet or ship."},
 		{Key: "Y", Purpose: "Yell", NextInput: "Type words, then Enter."},
-		{Key: "Z", Purpose: "Inspect party statistics", NextInput: "Navigate the dossier; Esc closes."},
+		{Key: "Z", Purpose: "Inspect party statistics", NextInput: "Look over each member; Esc closes."},
 		{Key: commandHelpPartyKeys, Purpose: "Active party member", NextInput: "0 selects all; 1-6 selects a party position."},
-		{Key: commandHelpJournalKeys, Purpose: "Quest journal", NextInput: "Review discovered information; Esc closes."},
+		{Key: commandHelpJournalKeys, Purpose: "Quest journal", NextInput: "Read what you have learned; Esc closes."},
 		{Key: commandHelpMapKeys, Purpose: "Traveller's map", NextInput: "Browse places, notes and your position; Esc closes. Time stops while it is open."},
-		{Key: commandHelpMarkKey, Purpose: "Mark current position", NextInput: "On the surface overworld, open the map note editor at your current sextant fix. Requires a usable sextant; Esc returns to the map."},
-		{Key: "F4", Purpose: "Last battle summary", NextInput: "Review collected totals from the last completed encounter in this session; Enter/Esc closes. No turn is spent."},
-		{Key: "Ctrl+M", Purpose: "Toggle music", NextInput: "Toggle music from primary input."},
-		{Key: commandHelpRunesKeys, Purpose: "Runic alphabet reference", NextInput: "Toggle the right-side chart during exploration, sign reading or conversation. Translate the runes yourself; no time is spent."},
-		{Key: commandHelpHelpKeys, Purpose: "Context command help", NextInput: "PgUp/PgDn to read; Space: Next page; Esc closes. Available only at primary input."},
+		{Key: commandHelpMarkKey, Purpose: "Mark current position", NextInput: "Writes a Map note where you stand. Needs a sextant reading, outdoors on the surface. Esc goes back."},
+		{Key: "F4", Purpose: "Last battle summary", NextInput: "Shows what the last battle gave you. Enter or Esc closes. Costs no turn."},
+		{Key: "Ctrl+M", Purpose: "Music on or off", NextInput: "Turns the music on or off."},
+		{Key: commandHelpRunesKeys, Purpose: "Runic alphabet reference", NextInput: "Shows or hides the rune chart on the right, while exploring, reading a sign or talking. The reading is up to you. No time passes."},
+		{Key: commandHelpHelpKeys, Purpose: "Context command help", NextInput: "PgUp and PgDn scroll; Space turns the page; Esc closes."},
 		{Key: commandKeyLabelEscape, Purpose: "Game menu", NextInput: "Choose Help, Save, Load or Configure; Esc returns."},
-		{Key: "D / W", Purpose: "Unassigned command keys", Unavailable: "No player action is assigned to these keys."},
+		{Key: "D / W", Purpose: "Unused keys", Unavailable: "D and W do nothing."},
 	}
 	for index := range entries {
 		entry := &entries[index]
@@ -111,29 +111,27 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 			}
 			switch entry.Key {
 			case commandKeyLabelSpace:
-				entry.NextInput = "Pass one action per fresh press; holding does not repeat in combat."
+				entry.NextInput = "Passes once per press. Holding the key does not repeat in battle."
 			case "G", "J", "O", "P", "S":
-				entry.NextInput = "Arrow/keypad direction; Esc: Cancel for free. Space: Pass spends the action. " +
+				entry.NextInput = "Arrows or keypad choose the direction. Esc cancels and costs no turn; Space passes the action. " +
 					"In solo mode during enemy turns, silently queue one G/O/J/P/S verb; another replaces it, Esc clears. " +
 					"Early directions must be released and pressed afresh when ready."
 			case "K":
-				entry.NextInput = "Ordinary direction: Esc cancels for free; Space passes the action. Underfoot ladders and the U/D ladder selector use their displayed route."
+				entry.NextInput = "Ordinary direction: Esc cancels and costs no turn; Space passes the action. Underfoot ladders and the U/D ladder selector use their displayed route."
 			case "A":
 				entry.NextInput = "Arrows/keypad aim; Enter or A attacks. Escape cancels before the first attack, " +
 					"then skips the remaining weapon. Space skips at your own square and attacks elsewhere."
 			case "C":
 				entry.NextInput = "Choose a spell for the acting caster. Enter names the next step: " +
 					"a spell with no aim is cast at once; any other is aimed first. " +
-					"Casting spends MP and one mixture. " +
-					"Cancelling beforehand costs no MP, mixture, or gameplay time and preserves the combat action."
+					"Casting spends M.P. and one mixture. " +
+					"Cancelling costs nothing and preserves the combat action."
 			case "R":
 				entry.NextInput = "Choose equipment for the acting character; Enter applies the displayed Equip/Unready operation immediately."
 			case commandHelpPartyKeys:
-				entry.NextInput = "Top-row 0 restores all-party control even during enemy or skipped turns and clears any queued verb. " +
-					"The current action finishes normally; subsequent eligible turns follow DEX order. " +
-					"At a ready turn, 1-6 selects another PC and passes the current actor until that PC can act."
+				entry.NextInput = "1-6 lets that member act alone while the others pass. 0 on the top row gives the whole party its turns back, at any time."
 			case commandKeyLabelEscape:
-				entry.Purpose, entry.NextInput = "Leave the battlefield", "Exit when permitted, normally after victory. Dungeon rooms require a chosen exit route."
+				entry.Purpose, entry.NextInput = "Leave the battlefield", "Leave once the battle is won. In a dungeon room, choose the way out."
 			}
 		case references.DungeonMapType:
 			switch entry.Key {
@@ -147,46 +145,46 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 			case "L", "S":
 				entry.NextInput = "Choose a character, then Up: Ahead, Down: Here, Left/Right. Space or Esc: Pass."
 			case "A":
-				entry.NextInput = "Attacks a wanderer directly ahead using the current facing."
+				entry.NextInput = "Attacks a creature straight ahead."
 			case "B", "E", "F", "T", "P", "X":
-				entry.Unavailable = "No corresponding interaction in dungeon corridors."
+				entry.Unavailable = "Not used in dungeon corridors."
 			}
 		case references.SmallMapType:
 			if entry.Key == "K" {
-				entry.NextInput += " Esc cancels an uncommitted direction without spending a turn."
+				entry.NextInput += " Esc cancels an uncommitted direction and costs no turn."
 			}
 			if entry.Key == commandHelpPartyKeys {
 				entry.NextInput = "0 selects all; 1-6 selects a party position. At a harpsichord, number keys play notes instead."
 			}
 			if entry.Key == "E" {
-				entry.Unavailable = "Already inside a location; leave through its boundary."
+				entry.Unavailable = "You are already inside. Walk off the edge of the map to leave."
 			}
 			if entry.Key == "F" {
 				entry.NextInput = "Automatically finds an adjacent cannon."
 			}
 		case references.LargeMapType:
 			if entry.Key == "A" {
-				entry.NextInput = "Arrow/keypad direction; Esc: Cancel without spending a turn. Space also ends this prompt without spending a turn."
+				entry.NextInput = "Arrows or keypad choose the direction. Esc or Space cancels and costs no turn."
 			}
 			if entry.Key == "K" {
-				entry.NextInput += " Esc cancels an uncommitted direction without spending a turn."
+				entry.NextInput += " Esc cancels an uncommitted direction and costs no turn."
 			}
 			if entry.Key == commandHelpMovementKeys {
 				entry.NextInput = "Move; hold to repeat. A frigate with raised sails continues automatically; Space stops sailing."
 			}
 			if entry.Key == "Y" {
-				entry.NextInput = "On a frigate, toggles sails immediately. Otherwise type words and press Enter."
+				entry.NextInput = "On a frigate, raises or lowers the sails. Elsewhere, type the words and press Enter."
 			}
 		case references.CampingMapType:
-			entry.Unavailable = "Camping owns input; follow the active camp prompt."
+			entry.Unavailable = "Answer the camp prompt first."
 		}
 	}
 	if context == references.CombatMapType {
 		entries = append(entries,
-			widgets.CommandHelpEntry{Key: "Tab", Purpose: "Auto advance / attack", NextInput: "Acts toward a reachable enemy."},
-			widgets.CommandHelpEntry{Key: "F2", Purpose: "Combat details", NextInput: "Toggle the combat detail panel."},
-			widgets.CommandHelpEntry{Key: "F3", Purpose: "Noteworthy combat results", NextInput: "Jump to the oldest pending pickup, discovery, or trap; otherwise review the latest result. No turn is spent."},
-			widgets.CommandHelpEntry{Key: commandHelpHistoryKeys, Purpose: "Combat message history", NextInput: "Review older/newer events; End returns live."},
+			widgets.CommandHelpEntry{Key: "Tab", Purpose: "Auto advance / attack", NextInput: "Moves toward an enemy, or attacks one in reach."},
+			widgets.CommandHelpEntry{Key: "F2", Purpose: "Combat details", NextInput: "Shows or hides the combat details."},
+			widgets.CommandHelpEntry{Key: "F3", Purpose: "Noteworthy combat results", NextInput: "Jumps to the oldest find, pickup or trap you have not looked at; otherwise shows the latest. Costs no turn."},
+			widgets.CommandHelpEntry{Key: commandHelpHistoryKeys, Purpose: "Combat message history", NextInput: "Scrolls back through the battle; End returns to now."},
 		)
 	}
 	for index := range entries {

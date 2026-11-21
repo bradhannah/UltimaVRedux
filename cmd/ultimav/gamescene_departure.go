@@ -96,7 +96,7 @@ func (g *GameScene) quickSaveBeforeDeparture(game *Game, departure escapeDepartu
 	g.openEscapeDeparturePrompt(
 		game,
 		departure,
-		"Quick Save failed: "+playerSaveErrorDetail(err),
+		"Quick save failed: "+playerSaveErrorDetail(err),
 	)
 }
 
@@ -168,7 +168,7 @@ func escapeDepartureTitle(departure escapeDeparture) string {
 
 func escapeDepartureDescription(departure escapeDeparture) string {
 	if departure == escapeDepartureMainMenu {
-		return "Your current game will close. Save your progress before returning to the main menu?"
+		return "Save before returning to the main menu?"
 	}
 
 	return "Unsaved progress will be lost. Save before leaving Ultima V Redux?"
@@ -176,7 +176,7 @@ func escapeDepartureDescription(departure escapeDeparture) string {
 
 func escapeDepartureWithoutSaveLabel(departure escapeDeparture) string {
 	if departure == escapeDepartureMainMenu {
-		return "Discard & Main Menu"
+		return "Main Menu Without Saving"
 	}
 
 	return "Exit Without Save"

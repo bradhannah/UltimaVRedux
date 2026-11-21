@@ -116,8 +116,10 @@ avoiding full end-player processing. Ordinary combat Q remains rejected. This
 preference reduces repeated save keystrokes without relaxing save eligibility or
 optimistic revision checks.
 
-**REDUX DEVIATION:** Exact **Ctrl+Q** reloads the same active slot directly, with
-no confirmation, new preference, outgoing save, or rollback capture. Either
+**REDUX DEVIATION:** Exact **Ctrl+Q** reloads the same active slot without an
+outgoing save or rollback capture. With **Confirm Quick Save** On it first asks
+`Load last save?` (Y loads; N/Escape cancels); with it Off the reload is
+immediate. With no active slot it fails at once without asking. Either
 physical Control key is accepted; Shift/Alt/Meta are excluded and Caps Lock is
 neutral. It supports normal exploration and player-controlled combat input,
 including controlled-monster turns, for quick retries. Enemy/action owners,
@@ -128,7 +130,7 @@ minute, resource or gameplay RNG. Canonical native candidate activation and
 replacement retain the old scene/provenance on failure, dispose its transient
 owners safely on success, and report success on the replacement. Stale revisions
 are refused rather than refreshed; use ordinary reviewed Load for a changed or
-unusable checkpoint. The preference affects Q only, not Ctrl+Q or menu/departure
+unusable checkpoint. The preference covers Q and Ctrl+Q, not menu/departure
 confirmations. These are Redux native-save/input extensions, not claims about
 original keyboard or file-write behavior.
 

@@ -81,8 +81,8 @@ func TestPlayerSaveBrowserModelShowsProblems(t *testing.T) {
 	require.Len(t, model.views, 1)
 	assert.Equal(t, "Corrupt", model.views[0].Status)
 	assert.NotContains(t, model.views[0].Problem, summary.Problem)
-	assert.Contains(t, model.views[0].Problem, "back up slot-04.json")
-	assert.Contains(t, model.views[0].Problem, "Reopen the game to use the empty slot.")
+	assert.Contains(t, model.views[0].Problem, "copy slot-04.json out of the saves folder")
+	assert.Contains(t, model.views[0].Problem, "delete it there.")
 	assert.Contains(t, model.views[0].Problem, "slot-04.json")
 }
 
@@ -99,8 +99,8 @@ func TestPlayerSaveFailureMessagesUseTypedErrors(t *testing.T) {
 				{fs.ErrPermission, "Check file permissions"},
 				{player_save.ErrSlotNotFound, "could not be found"},
 				{player_save.ErrIncompatible, "compatible game version"},
-				{ErrGameSceneSnapshotNotRepresentable, "Finish the current action"},
-				{ErrNoActivePlayerSaveSlot, "Save or load a player slot first"},
+				{ErrGameSceneSnapshotNotRepresentable, "Finish what you are doing"},
+				{ErrNoActivePlayerSaveSlot, "Save or load a game first"},
 				{errors.New("secret path: low-level failure"), "check the game log"},
 			} {
 				message := playerSaveFailureMessage(action, fmt.Errorf("private diagnostic: %w", test.err))
@@ -117,19 +117,19 @@ func TestQuickLoadErrorsDescribeLoadRecoveryWithoutBrowserOrSaveClaims(t *testin
 		err  error
 		want string
 	}{
-		{ErrNoActivePlayerSaveSlot, "Save or load a player slot first"},
+		{ErrNoActivePlayerSaveSlot, "Save or load a game first"},
 		{player_save.ErrStaleRevision, "Use Load to review"},
 		{player_save.ErrSlotNotFound, "Use Load to review"},
 		{save_snapshot.ErrInvalidEnvelope, "could not be validated"},
 		{save_snapshot.ErrInvalidSnapshot, "could not be validated"},
 		{player_save.ErrIncompatible, "compatible game"},
-		{ErrPlayerSaveUnavailable, "Load services are unavailable"},
+		{ErrPlayerSaveUnavailable, "saves folder cannot be reached"},
 		{fs.ErrPermission, "Check file permissions"},
 	} {
 		message := playerQuickLoadErrorDetail(fmt.Errorf("private-path: %w", test.err))
 		assert.Contains(t, message, test.want)
 		assert.NotContains(t, message, "since you opened")
-		assert.NotContains(t, message, "Saving is not available")
+		assert.NotContains(t, message, "You cannot save just now")
 		assert.NotContains(t, message, "private-path")
 	}
 }

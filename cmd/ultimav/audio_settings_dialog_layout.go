@@ -32,6 +32,9 @@ const (
 	audioSettingsDisplayPresetLines      = 3
 	audioSettingsGameplayListRatio       = 0.62 // Wide enough for the longest setting on one line.
 	audioSettingsDisplayLabelRatio       = 0.36
+	audioSettingsDetailMarginUnits       = 3   // Room between the description and its frame.
+	audioSettingsListTopUnits            = 2   // Room between the list's frame and its first row.
+	audioSettingsReadingLineSpacing      = 1.2 // Description and hint text: normal line spacing.
 )
 
 type audioSettingsLayout struct {
@@ -126,7 +129,7 @@ func (d *ConfigurationDialog) ensureLayout(width, height int) {
 	d.musicSlider.SetBounds(sliderRects[0])
 	d.sfxSlider.SetBounds(sliderRects[1])
 	d.ambientSlider.SetBounds(sliderRects[2])
-	d.configurePaneTextWidths(textInset)
+	d.configurePaneTextWidths()
 	d.ensureGameplaySelectionVisible()
 }
 
@@ -143,14 +146,15 @@ func (metrics *audioSettingsMetrics) fitCardHeight(availableHeight int) {
 	}
 }
 
-func (d *ConfigurationDialog) configurePaneTextWidths(textInset int) {
+func (d *ConfigurationDialog) configurePaneTextWidths() {
 	d.gameplayOutput.SetMaxCharsPerLine(max(
 		1,
 		d.gameplayOutput.Font.CharsForWidth(d.gameplayTextWidth(d.layout.gameplayListRect.Dx(), d.layout.pixelUnit)),
 	))
 	d.detailOutput.SetMaxCharsPerLine(max(
 		1,
-		d.detailOutput.Font.CharsForWidth(d.layout.gameplayDetail.Dx()-textInset*audioSettingsCenterDivisor),
+		d.detailOutput.Font.CharsForWidth(
+			d.layout.gameplayDetail.Dx()-gameplayDetailMargin(d.layout.pixelUnit)*audioSettingsCenterDivisor),
 	))
 	d.labelOutput.SetMaxCharsPerLine(max(1, d.labelOutput.Font.CharsForWidth(d.layout.displayLabels[0].Dx())))
 	d.valueOutput.SetMaxCharsPerLine(max(1, d.valueOutput.Font.CharsForWidth(d.layout.displayValues[0].Dx())))
@@ -207,14 +211,12 @@ func (d *ConfigurationDialog) layoutIsCurrent(width, height int) bool {
 func (d *ConfigurationDialog) initializeLayoutOutputs(width int) {
 	_, d.titleOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeTitle,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	}, width)
 	_, d.tabOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
@@ -227,43 +229,37 @@ func (d *ConfigurationDialog) initializeLayoutOutputs(width int) {
 	}
 	_, d.gameplayOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              gameplayLines,
 		MaxChars:              1,
 	}, width)
 	_, d.detailOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
-		LineSpacingMultiplier: 0,
+		LineSpacingMultiplier: audioSettingsReadingLineSpacing,
 		MaxLines:              audioSettingsDetailLines,
 		MaxChars:              1,
 	}, width)
 	_, d.labelOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	}, width)
 	_, d.valueOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              1,
 		MaxChars:              1,
 	}, width)
 	_, d.presetOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
 		LineSpacingMultiplier: 0,
 		MaxLines:              audioSettingsDisplayPresetLines,
 		MaxChars:              1,
 	}, width)
 	_, d.footerOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 		Size:                  widgets.FontSizeBody,
-		LineSpacing:           0,
-		LineSpacingMultiplier: 0,
+		LineSpacingMultiplier: audioSettingsReadingLineSpacing,
 		MaxLines:              audioSettingsFooterLines,
 		MaxChars:              1,
 	}, width)
@@ -334,7 +330,7 @@ func (d *ConfigurationDialog) measureLayout(pixelUnit, contentWidth int) audioSe
 func (d *ConfigurationDialog) measureGameplayHeight(pixelUnit, contentWidth, padding int) int {
 	gameplayListWidth := int(math.Round(float64(contentWidth) * audioSettingsGameplayListRatio))
 	gameplayInset := max(1, pixelUnit*audioSettingsCenterDivisor)
-	gameplayHeight := gameplayInset*audioSettingsCenterDivisor +
+	gameplayHeight := gameplayInset*audioSettingsCenterDivisor + pixelUnit*audioSettingsListTopUnits +
 		pixelUnit*audioSettingsGameplayRowGapUnits*(audioSettingsGameplayCount-1)
 	for _, setting := range gameplaySettings() {
 		measurement := text.MeasureText(
@@ -347,7 +343,7 @@ func (d *ConfigurationDialog) measureGameplayHeight(pixelUnit, contentWidth, pad
 			pixelUnit*audioSettingsGameplayRowPaddingUnits +
 			d.gameplayValueLineHeight(gameplayListWidth, pixelUnit, setting)
 	}
-	detailWidth := contentWidth - gameplayListWidth - gameplayInset*audioSettingsCenterDivisor
+	detailWidth := contentWidth - gameplayListWidth - gameplayDetailMargin(pixelUnit)*audioSettingsCenterDivisor
 	detailChars := max(1, d.detailOutput.Font.CharsForWidth(detailWidth))
 	d.detailOutput.SetMaxCharsPerLine(detailChars)
 	detailLines := 1
@@ -361,7 +357,7 @@ func (d *ConfigurationDialog) measureGameplayHeight(pixelUnit, contentWidth, pad
 	}
 
 	return max(gameplayHeight, int(math.Ceil(d.detailOutput.GetTotalHeightForLines(detailLines)))+
-		padding*audioSettingsCenterDivisor)
+		gameplayDetailMargin(pixelUnit)*audioSettingsCenterDivisor+padding)
 }
 
 func (d *ConfigurationDialog) buildGameplayRects(
@@ -385,13 +381,18 @@ func (d *ConfigurationDialog) buildGameplayRects(
 		rowHeights[index] = int(math.Ceil(measurement.TotalHeight)) + pixelUnit*audioSettingsGameplayRowPaddingUnits +
 			d.gameplayValueLineHeight(listRect.Dx(), pixelUnit, setting)
 	}
-	rowTop := listRect.Min.Y + inset
+	rowTop := listRect.Min.Y + inset + pixelUnit*audioSettingsListTopUnits
 	for index, rowHeight := range rowHeights {
 		rows[index] = image.Rect(listRect.Min.X, rowTop, listRect.Max.X-inset, rowTop+rowHeight)
 		rowTop += rowHeight + rowGap
 	}
 
 	return listRect, rows, detailRect
+}
+
+// gameplayDetailMargin is the room between a description and its frame.
+func gameplayDetailMargin(pixelUnit int) int {
+	return max(1, pixelUnit*audioSettingsDetailMarginUnits)
 }
 
 // gameplayCheckboxWidth fits the checkbox cell that starts every row.
@@ -479,7 +480,8 @@ func (d *ConfigurationDialog) gameplayValueLineHeight(listWidth, pixelUnit int, 
 func (d *ConfigurationDialog) gameplayViewport() image.Rectangle {
 	inset := max(1, d.layout.pixelUnit*audioSettingsCenterDivisor)
 
-	return image.Rect(d.layout.gameplayListRect.Min.X, d.layout.gameplayListRect.Min.Y+inset,
+	return image.Rect(d.layout.gameplayListRect.Min.X,
+		d.layout.gameplayListRect.Min.Y+inset+d.layout.pixelUnit*audioSettingsListTopUnits,
 		d.layout.gameplayListRect.Max.X-inset, d.layout.gameplayListRect.Max.Y-inset)
 }
 

@@ -21,6 +21,7 @@ func TestQuickLoadReplacementProtectsHeldChordAndFreshQStillSaves(t *testing.T) 
 			candidate, _, _, _ := newRunicReferenceTestScene(t, references.Britain)
 			setQuickSaveConfirmationForTest(candidate, false)
 			candidate.keyboard = input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return held[key] })
+			setQuickSaveConfirmationForTest(old, false)
 			game, repository := quickLoadGameForTest(old, candidate)
 			builds := 0
 			game.playerSaveSceneBuilder = func(*config.UltimaVConfiguration, save_snapshot.SaveSnapshot) (Scene, error) {
@@ -75,7 +76,7 @@ func TestQuickLoadNoSlotFailureAndHeldReleaseRecovery(t *testing.T) {
 			before, calls := scene.gameState.DateTime, scene.gameState.GetRNG().Calls()
 			held[ebiten.KeyControlRight], held[ebiten.KeyQ] = true, true
 			require.NoError(t, scene.Update(game))
-			assert.Contains(t, callbacks.Messages, "Load failed: Save or load a player slot first.")
+			assert.Contains(t, callbacks.Messages, "Load failed: Save or load a game first.")
 			require.Zero(t, scene.dialogStack.Count())
 			delete(held, firstReleased)
 			held[ebiten.KeyEnter] = true
