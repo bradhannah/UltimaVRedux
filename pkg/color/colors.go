@@ -8,7 +8,6 @@ const (
 	AlphaOpaque          = 255
 	AlphaSemiTransparent = 128
 	AlphaVeryTransparent = 60
-	AlphaSubtle          = 40
 	AlphaHeavy           = 200
 	AlphaLight           = 100
 )
@@ -163,11 +162,6 @@ func (cb *ColorBuilder) SemiTransparent() *ColorBuilder {
 // VeryTransparent sets alpha to 60 (very transparent)
 func (cb *ColorBuilder) VeryTransparent() *ColorBuilder {
 	return cb.Alpha(AlphaVeryTransparent)
-}
-
-// Subtle sets alpha to 40 (subtle transparency)
-func (cb *ColorBuilder) Subtle() *ColorBuilder {
-	return cb.Alpha(AlphaSubtle)
 }
 
 // Heavy sets alpha to 200 (heavy/strong transparency)
