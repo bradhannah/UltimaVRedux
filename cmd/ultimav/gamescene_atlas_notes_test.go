@@ -4,17 +4,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAtlasNoteChildOwnsInputAndContinuousPause(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().WithRandomSeed(42).Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().WithRandomSeed(42).Build()
 	state.PartyState.Inventory.QuestItems.Set(references.Sextant, 1)
 	state.DateTime.Hour = 19
 	state.ElapsedMs = 321
@@ -88,7 +88,7 @@ func TestAtlasNoteChildOwnsInputAndContinuousPause(t *testing.T) {
 }
 
 func TestAtlasGameReplacementRemovesExactChild(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
 	state.PartyState.Inventory.QuestItems.Set(references.Sextant, 1)
 	state.DateTime.Hour = 19
 	scene := &GameScene{gameState: state, keyboard: input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld), now: func() time.Time { return time.Unix(100, 0) }}
@@ -97,7 +97,7 @@ func TestAtlasGameReplacementRemovesExactChild(t *testing.T) {
 	scene.openAtlas(nil)
 	scene.handleAtlasNoteIntent(widgets.AtlasNoteIntent{Action: widgets.AtlasNoteMark})
 	require.Equal(t, 3, scene.dialogStack.Count())
-	replacement, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
+	replacement, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
 	scene.gameState = replacement
 	scene.updateAtlasSession()
 	require.Nil(t, scene.atlasSession)

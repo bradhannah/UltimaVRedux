@@ -33,7 +33,7 @@ var IntroChoices = []IntroChoice{
 	{Label: "Journey Onward", Children: nil, Muted: false},
 	{Label: "Select Save Game", Children: nil, Muted: false},
 	{Label: "New Game", Children: []string{"Create New Character", "Import from Legacy"}, Muted: false},
-	{Label: "Configure", Children: []string{"Display", "Audio", "Gameplay", "Set Data Directory"}, Muted: false},
+	{Label: "Configure", Children: []string{"Display", "Audio", "Gameplay", "Set Game Files"}, Muted: false},
 	{Label: "Ultima V Introduction", Children: nil, Muted: false},
 	{Label: "Acknowledgments", Children: nil, Muted: true},
 	{Label: "Return to the View", Children: nil, Muted: true},
@@ -112,7 +112,8 @@ func IntroMenuFramePlacement() sprites.PercentBasedPlacement {
 }
 
 // GetIntroFontSize calculates the font point size needed to fill the target height
-// at 1:1 scale (no geometric stretching). This ensures crisp text rendering.
+// as a fraction of screen height, with no geometric stretching. The size is not
+// rounded to the font's pixel grid, so it does not land on whole pixels.
 func GetIntroFontSize() float64 {
 	dm := display.GetManager()
 	_, screenHeight := dm.GetCurrentSize()

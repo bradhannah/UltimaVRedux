@@ -7,6 +7,9 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
+// Test support: fixtures and seams that tests in other packages use. The
+// dead-code check treats this file as test support.
+
 // GetHours returns the hours of rest currently chosen.
 func (p *HoursPrompt) GetHours() int { return p.hours }
 
@@ -420,11 +423,6 @@ func (b *SaveSlotBrowser) GetSelectedView() (SaveSlotView, bool) {
 	}
 
 	return cloneSaveSlotView(*view), true
-}
-
-// GetScrollOffset returns the index of the first visible item.
-func (s *ScrollableListState) GetScrollOffset() int {
-	return s.scrollOffset
 }
 
 // HasPendingTravelIntent reports whether D selected an available reviewed escort.

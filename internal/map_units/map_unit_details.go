@@ -56,7 +56,6 @@ type MapUnit interface {
 type MapUnitDetails struct {
 	Position references.Position
 	Floor    references.FloorNumber
-	// aiType   references.AiType
 
 	overriddenAiType     references.AiType
 	aiOverrideProvenance references.AIOverrideProvenance

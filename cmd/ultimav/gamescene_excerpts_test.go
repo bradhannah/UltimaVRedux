@@ -4,18 +4,19 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGardnerJournalRetainsSubmittedExchanges(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
 		WithRandomSeed(42).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state, keyboard: input.NewKeyboardWithKeyStateSource(-1, noSceneTestKeyHeld),
 		activePlaythrough: playthroughMetadata{id: "0123456789abcdef0123456789abcdef", userDescription: ""}}
@@ -111,6 +112,12 @@ func TestShiftJTypesWhileAConversationKeywordIsBeingEntered(t *testing.T) {
 
 	dialog.waitingForKeypressContinue = false
 	require.True(t, scene.textEntryFocused(), "keyword entry takes Shift+J as a capital J")
+
+	scene.dialogStack.PushModalDialog(widgets.NewSaveDescriptionEntryModal(widgets.SaveDescriptionEntryModalConfig{
+		Title: "Save", Prompt: "Description", Keyboard: scene.keyboard, MaxRunes: 22,
+		OnResult: func(string, bool) {},
+	}))
+	require.True(t, scene.textEntryFocused(), "a save description takes Shift+J as a capital J")
 }
 
 func TestConversationExcerptWaitIsolationAndPresentedTail(t *testing.T) {

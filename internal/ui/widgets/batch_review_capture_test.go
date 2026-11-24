@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/atlasterrain"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ import (
 // This is bounded production-renderer acceptance, not an input/playthrough test.
 // Assertions always run; only PNG writing requires ULTIMA5_BATCH_REVIEW_DIR.
 func TestBatchReviewAtlasAndEditors(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().WithRandomSeed(1).Build()
 	state.PartyState.Inventory.QuestItems.Set(references.Sextant, 0)
 	dossier := state.CurrentAtlasDossier()

@@ -453,7 +453,7 @@ func (g *GameState) resolveCombatProjectileSpell(
 			PreArmorDamage:  combatInstantKillDamage,
 			PostArmorDamage: combatInstantKillDamage,
 		}
-		finalDamage := CombatApplyMagicDamageModifiers(damage.Damage, monster.MonsterType().IsUndead(), monster.HasAbility(references.Immortal))
+		finalDamage := CombatApplyMagicDamageModifiers(damage.Damage, monster.HasAbility(references.Immortal))
 		g.applyCombatProjectileDamage(pending, monster, damage, finalDamage)
 
 		return
@@ -465,7 +465,6 @@ func (g *GameState) resolveCombatProjectileSpell(
 	damage := CombatCalcMagicDamage(maxDamage, monster.EnemyRef().Armour, g.AsRandomProvider())
 	finalDamage := CombatApplyMagicDamageModifiers(
 		damage.Damage,
-		monster.MonsterType().IsUndead(),
 		monster.HasAbility(references.Immortal),
 	)
 	g.applyCombatProjectileDamage(

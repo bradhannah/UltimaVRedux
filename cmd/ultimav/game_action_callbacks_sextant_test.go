@@ -9,12 +9,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProductionSemanticItem72GrantRecordsGreyhavenOnce(t *testing.T) {
 	for _, location := range []references.Location{references.Greyhaven, references.Fogsbane} {
-		state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
+		state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
 		state.PartyState.Inventory.QuestItems.Set(references.Sextant, 0)
 		state.GameConfig.GameplayConfiguration.FlexibleSextantUse = false
 		state.DateTime.Hour = 12

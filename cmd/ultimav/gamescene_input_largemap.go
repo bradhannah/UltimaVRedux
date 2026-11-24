@@ -135,7 +135,6 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Look-")
 		g.secondaryKeyState = LookDirectionInput
 	case ebiten.KeyE:
-		g.debugMessage = "Enter a place"
 		outcome := g.gameState.ResolveEnterLargeMap()
 		if outcome == game_state.EnterLargeMapDoomTransition && game != nil {
 			game.acceptDoomEntry(g, doomCandidate, doomCandidateErr)
@@ -152,7 +151,6 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.secondaryKeyState = OpenDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyJ:
-		g.debugMessage = "Jimmy"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Jimmy-")
 		if !g.gameState.PartyState.Inventory.Provisions.Keys.HasSome() && !g.gameState.HasAdjacentKnownSafeSurfaceChest() {
 			g.gameState.ActionJimmyLargeMapWithCharacter(references.NoneDirection, nil)
@@ -163,7 +161,6 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.secondaryKeyState = JimmyDoorDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyI:
-		g.debugMessage = "Ignite Torch"
 		result = surfaceResultFromSuccess(g.gameState.ActionIgnite(), originMapType)
 	case ebiten.KeyT:
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Talk-")
@@ -226,7 +223,6 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		result = newSurfaceCommandResult(surfaceCommandCompleted, originMapType)
 		result.ConsumesNormalCycle = false
 	case ebiten.KeyM:
-		g.debugMessage = "Mix Reagents"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Mix Reagents")
 		if g.gameState.ActionMixLargeMap() {
 			g.startReagentMixingWorkflowWithCompletion(func() {
@@ -252,7 +248,6 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandRejected, originMapType)
 		}
 	case ebiten.KeyH:
-		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Hole up & camp...")
 		if g.gameState.ActionHoleUpLargeMap() {
 			result = newSurfaceCommandResult(surfaceCommandDeferred, originMapType)
 			// The camping workflow owns completion, including free setup cancellation.

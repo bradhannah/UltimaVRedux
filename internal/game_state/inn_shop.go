@@ -367,10 +367,10 @@ func (g *GameState) RestAtInn(session MerchantSession, request InnRestRequest) (
 			character.SetStatus(party_state.Sleep)
 		}
 	}
-	// REDUX DEVIATION: Inn services clears active effect and duration counter on
+	// REDUX DEVIATION: CAMP-0007: Inn services clears active effect and duration counter on
 	// entering the Inn conversation. Redux clears them only after paid Rest is
 	// committed so Leave, Pick Up, cancellation, and refusal preserve the effect.
-	// See ref:MERCH-0010.
+	// See ref:CAMP-0007, ref:MERCH-0010.
 	g.ClearDurationEffect()
 
 	for range 12 {
@@ -711,6 +711,9 @@ func (g *GameState) buildInnGuestRow(
 	}
 	switch {
 	case character.Status == party_state.Dead:
+		// REDUX DEVIATION: MERCH-0011: original pickup does not refuse a Dead guest and
+		// restores full HP while it stays Dead. Redux lists the guest but cannot collect
+		// it, avoiding that result. See ref:MERCH-0011.
 		row.BlockReason, row.Confirmable = InnPickupBlockDead, false
 	case state.PartySize >= party_state.MaxActiveParty:
 		row.BlockReason, row.Confirmable = InnPickupBlockPartyFull, false

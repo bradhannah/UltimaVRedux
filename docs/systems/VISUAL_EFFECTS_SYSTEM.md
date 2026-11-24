@@ -813,10 +813,11 @@ Persistent conditions such as Poisoned can coexist; this projection never
 mutates the party roster to force a colour or label.
 
 The top-right party panel uses the same portraits, two-line name/HP/status/MP
-layout, XLarge font, and line spacing in combat and exploration. In particular,
+layout, Body font role, and line spacing in combat and exploration. In particular,
 `Pois.` remains in its ordinary status column with its ordinary typography;
 entering combat does not shrink portraits or move status text into a compact
-block. A detached text overlay supplies each original party entry's exact combat
+block. Only a long expanded combat label such as `Possessed - 8/12 turns` is
+scaled down to fit its status cell. A detached text overlay supplies each original party entry's exact combat
 conditions without inheriting its clones' conditions or changing persistent roster
 status. Text precedence is Dead, Possessed/Charmed, Poisoned, Sleep, then Good.
 Possession uses semantic light blue and the full `Possessed` label; the status

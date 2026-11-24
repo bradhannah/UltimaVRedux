@@ -14,7 +14,7 @@ import (
 // changed Deed Experience level is confirmed before it is applied.
 // ref:PROGRESS-0004
 
-const deedExperienceConfirmHint = "[Enter] Apply   [Esc] Go back"
+const deedExperienceConfirmHint = "[Enter] Apply   [Esc] Back"
 
 // deedExperienceChangeNotes says what applying a level does to deed pay. Only
 // a level that pays carries a warning.

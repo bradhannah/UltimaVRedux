@@ -419,12 +419,7 @@ func (g *GameState) jimmySurfaceChest(
 
 	difficulty := (combatTreasureDiceSides + chest.SurfaceChestTreasureValue() - int(player.Dexterity)) /
 		combatChestJimmyDifficultyDivisor
-	if g.jimmySuccessForTesting == nil && g.RandomIntInRange(1, combatTreasureDiceSides) <= difficulty {
-		g.PartyState.Inventory.Provisions.Keys.DecrementByOne()
-
-		return JimmyBrokenPick
-	}
-	if g.jimmySuccessForTesting != nil && !g.jimmySuccessForTesting(player) {
+	if g.RandomIntInRange(1, combatTreasureDiceSides) <= difficulty {
 		g.PartyState.Inventory.Provisions.Keys.DecrementByOne()
 
 		return JimmyBrokenPick
@@ -461,11 +456,6 @@ func (g *GameState) jimmyDungeon(_ references.Direction, _ *party_state.PlayerCh
 }
 
 func (g *GameState) isJimmySuccessful(player *party_state.PlayerCharacter) bool {
-	// Testing override
-	if g.jimmySuccessForTesting != nil {
-		return g.jimmySuccessForTesting(player)
-	}
-
 	// Physical unlocking succeeds when Dexterity exceeds a draw in 0..29.
 	// Dexterity 30 always succeeds; Dexterity 1 succeeds only on zero.
 	// The prisoner and door paths use the same bound. ref:PROV-0004
@@ -544,11 +534,6 @@ func (g *GameState) jimmyPrisoner(targetPos *references.Position, player *party_
 // isJimmyPrisonerSuccessful requires Dexterity greater than a draw in
 // 0..29. Dexterity 30 always succeeds; Dexterity 1 succeeds only on zero. ref:CRIME-0005
 func (g *GameState) isJimmyPrisonerSuccessful(player *party_state.PlayerCharacter) bool {
-	// Testing override
-	if g.jimmyPrisonerSuccessForTesting != nil {
-		return g.jimmyPrisonerSuccessForTesting(player)
-	}
-
 	roll := g.RandomIntInRange(0, prisonerDexCheckMax) // Matches random(0,29) from original
 
 	return int(player.Dexterity) > roll

@@ -23,17 +23,21 @@ JSON data, and a list of what Redux does differently.
 > Linux; see [platform status](docs/INSTALL.md#platform-status) for what has been
 > verified on each.
 
-This is a free, non-commercial fan project. Project-authored source code remains
-MIT-licensed; bundled media has separate terms described in [Asset credits](ASSET_CREDITS.md).
+Ultima V Redux is an unofficial, free, non-commercial fan project. It is not
+affiliated with, endorsed by or sponsored by the owners of Ultima V: Warriors of
+Destiny or of the Ultima name. Ultima and Ultima V: Warriors of Destiny are
+trademarks of their respective owners, named here only to identify the game this
+project recreates. Project-authored source code remains MIT-licensed; bundled
+media has separate terms described in [Asset credits](ASSET_CREDITS.md).
 
 ## Journey onward
 
 Explore Britannia's towns, wilderness, and dungeons. Meet its inhabitants, assemble
 your party, and face tactical battles in a world of magic and mystery.
 
-![The party explores the wooded coastline of West Winds by torchlight, with six companions and supplies alongside the map](screenshots/overworld-gameplay.png)
+![The party crosses a wooded island in East Winds by day, near a keep, with six companions and supplies alongside the map](screenshots/overworld-gameplay.png)
 
-*Explore West Winds by torchlight: a wooded coastline, a full party, and the journey ahead.*
+*Explore East Winds: a wooded island, a full party, and the journey ahead.*
 
 <table>
   <tr>
@@ -45,13 +49,13 @@ your party, and face tactical battles in a world of magic and mystery.
     </td>
     <td align="center">
       <a href="screenshots/britain-after-dark.png">
-        <img src="screenshots/britain-after-dark.png" alt="Exploring Britain at night, with illuminated buildings and the party status panel" width="260">
+        <img src="screenshots/britain-after-dark.png" alt="Exploring Britain at night, with torchlit halls and the party status panel" width="260">
       </a>
       <br><strong>Britain after dark</strong>
     </td>
     <td align="center">
       <a href="screenshots/mapping-britannia.png">
-        <img src="screenshots/mapping-britannia.png" alt="The map of Britannia with the moonstone category selected and a location highlighted near the Deep Forest" width="260">
+        <img src="screenshots/mapping-britannia.png" alt="The map of Britannia with the Keeps category selected and the Lycaeum highlighted" width="260">
       </a>
       <br><strong>Mapping Britannia</strong>
     </td>

@@ -421,7 +421,7 @@ func (d *AtlasDialog) detailFields() [][2]string {
 	e := d.entries[d.selection]
 	var fields [][2]string
 	if e.Note.ID != 0 {
-		label := "Map label"
+		label := "Map note"
 		if e.Kind == AtlasJournalNoteKind {
 			label = "Journal note"
 		}
@@ -525,7 +525,7 @@ func (d *AtlasDialog) emptyCategoryText() string {
 // rows stay short enough to read without paging.
 func (d *AtlasDialog) noNotesFields() [][2]string {
 	fields := [][2]string{
-		{"", "No notes yet. To plant a flag here:"},
+		{"", "No notes yet. To add a note here:"},
 		{"N", "on this Map."},
 		{"Ctrl+N", "while exploring."},
 		{"", "Both need a sextant reading."},
@@ -534,7 +534,7 @@ func (d *AtlasDialog) noNotesFields() [][2]string {
 		fields = append(fields, [2]string{"By day", "Configure, Flexible Sextant Use."})
 	}
 
-	return append(fields, [2]string{"", "Flags also appear in the Journal."})
+	return append(fields, [2]string{"", "Notes also appear in the Journal."})
 }
 
 func (d *AtlasDialog) drawDetails(screen *ebiten.Image) {

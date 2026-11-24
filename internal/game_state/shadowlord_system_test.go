@@ -211,7 +211,7 @@ func TestTrySummonShadowlord_SpawnFailureRestoresState(t *testing.T) {
 	assert.False(t, gs.ShadowlordState.Summoned)
 	assert.Equal(t, references.NoShadowlord, gs.ShadowlordState.LastCalled)
 	assert.Empty(t, mockCallbacks.ShadowlordSummonedTriggered)
-	assert.Contains(t, mockCallbacks.Messages, "Nothing happens.")
+	assert.Contains(t, mockCallbacks.Messages, "No effect!")
 }
 
 func TestTrySummonShadowlord_NotAtKeep(t *testing.T) {
@@ -228,9 +228,9 @@ func TestTrySummonShadowlord_NotAtKeep(t *testing.T) {
 
 	assert.False(t, result, "Yell should return false outside Keep")
 	assert.False(t, gs.ShadowlordState.Summoned, "No Shadowlord should be summoned")
-	// Should show "Nothing happens." message via ShowActionFeedback (which adds to Messages when alsoAddToOutput=true)
+	// Should show "No effect!" message via ShowActionFeedback (which adds to Messages when alsoAddToOutput=true)
 	assert.True(t, len(mockCallbacks.Messages) > 0, "Should have feedback message")
-	assert.Contains(t, mockCallbacks.Messages[len(mockCallbacks.Messages)-1], "Nothing happens", "Should show 'Nothing happens' message")
+	assert.Contains(t, mockCallbacks.Messages[len(mockCallbacks.Messages)-1], "No effect", "Should show 'No effectens' message")
 	assert.Empty(t, mockCallbacks.TimeAdvanced(), "the dialog workflow owns failed-Yell turn completion")
 }
 

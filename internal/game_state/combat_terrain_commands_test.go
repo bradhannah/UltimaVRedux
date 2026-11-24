@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
-	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
@@ -130,7 +129,7 @@ func TestActionJimmyCombatMapRestraintOutcomes(t *testing.T) {
 			fixture := newCombatPushFixture(t, test.restraint, references.Left)
 			state := fixture.state
 			state.PartyState.Inventory.Provisions.Keys.Set(test.keys)
-			state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return test.succeeds }
+			setJimmyOutcome(state, test.succeeds)
 			fixture.callbacks.Reset()
 
 			handled, chest := state.ActionJimmyCombatMapWithDisarm(references.Left)

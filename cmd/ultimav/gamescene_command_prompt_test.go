@@ -8,15 +8,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 // TestMapCommandHandlersUseOriginalPrompt prevents directional command echoes
 // from bypassing the bitmap marker used by the original command loop.
 func TestMapCommandHandlersUseOriginalPrompt(t *testing.T) {
-	gameState, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gameState, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.LordBritishsCastle).
 		WithSystemCallbacks().
 		Build()

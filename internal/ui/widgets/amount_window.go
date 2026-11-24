@@ -317,7 +317,7 @@ func overflowNote(lost int) []amountNote {
 // named, and then what asking anyway will do.
 func shortOfGoldNotes(what string, cost, gold int, consequences ...string) []amountNote {
 	notes := []amountNote{
-		{text: "Not enough gold. " + what, tone: amountWarning},
+		{text: "Thou hast not enough gold. " + what, tone: amountWarning},
 		{text: fmt.Sprintf("%d and the party has %d.", cost, gold), tone: amountWarning},
 	}
 	if len(consequences) > 0 {

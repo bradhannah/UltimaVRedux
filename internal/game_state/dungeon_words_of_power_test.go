@@ -11,33 +11,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
 
-func TestGetDungeonForWord(t *testing.T) {
-	tests := []struct {
-		name     string
-		word     string
-		expected references.Location
-		exists   bool
-	}{
-		{"Valid word FALLAX", "FALLAX", references.Deceit, true},
-		{"Valid word lowercase", "fallax", references.Deceit, true},
-		{"Valid word mixed case", "FaLlAx", references.Deceit, true},
-		{"Valid word with spaces", " FALLAX ", references.Deceit, true},
-		{"All valid words", "VILIS", references.Despise, true},
-		{"VERAMOCOR for Doom", "VERAMOCOR", references.Doom, true},
-		{"Invalid word", "INVALID", references.Location(0), false},
-		{"Empty word", "", references.Location(0), false},
-		{"Partial word", "FALL", references.Location(0), false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dungeon, exists := GetDungeonForWord(tt.word)
-			assert.Equal(t, tt.expected, dungeon)
-			assert.Equal(t, tt.exists, exists)
-		})
-	}
-}
-
 func TestGetDungeonForResponseRequiresCompleteCanonicalWordInsideInput(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -105,10 +78,10 @@ func TestProcessWordOfPowerRequiresMatchingCardinalEntranceTileAndPlane(t *testi
 	state.MapState.PlayerLocation.Position = entrance.Right().Right()
 	assert.False(t, state.ProcessWordOfPower("FALLAX"))
 	assert.False(t, state.IsDungeonOpen(references.Deceit))
-	assert.Contains(t, callbacks.Messages, "Nothing happens.")
+	assert.Contains(t, callbacks.Messages, "No effect!")
 	callbacks.Reset()
 	assert.False(t, state.ProcessWordOfPower(""))
-	assert.Contains(t, callbacks.Messages, "Nothing happens.")
+	assert.Contains(t, callbacks.Messages, "No effect!")
 
 }
 
@@ -155,7 +128,7 @@ func TestProcessWordOfPowerRefusesDoomOnTheSurface(t *testing.T) {
 	)
 
 	assert.False(t, state.ProcessWordOfPower("VERAMOCOR"))
-	assert.Contains(t, callbacks.Messages, "Nothing happens.")
+	assert.Contains(t, callbacks.Messages, "No effect!")
 }
 
 func TestProcessWordOfPowerRejectsWrongTileAndUsesWestSouthEastNorthPriority(t *testing.T) {

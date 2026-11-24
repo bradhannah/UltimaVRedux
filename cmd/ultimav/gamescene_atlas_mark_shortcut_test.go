@@ -9,6 +9,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,7 @@ func newAtlasMarkShortcutScene(t *testing.T, location references.Location, floor
 	*GameScene, map[ebiten.Key]bool, func(), *game_state.MockSystemCallbacks,
 ) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithFloor(floor).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithFloor(floor).
 		WithPlayerAt(1, 1).WithSystemCallbacks().WithRandomSeed(42).Build()
 	state.DebugOptions.MonsterGen = false
 	state.PartyState.Inventory.QuestItems.Set(references.Sextant, 1)

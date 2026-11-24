@@ -478,10 +478,6 @@ func (g *GameState) processNonCombatWorldActorPhaseForCommand(pass bool) {
 		logging.Warnf(logging.CategoryGameState, "ProcessTurnEffects called with unsupported map type: %v",
 			g.MapState.PlayerLocation.Location.GetMapType())
 	}
-
-	// Move map units and generate enemies only when time is NOT stopped.
-	g.moveNonCombatMapMapUnitsToNextMove()
-	g.GenerateAndCleanupEnemies()
 }
 
 func (g *GameState) shouldProcessNonCombatWorldActors() bool {
@@ -778,29 +774,6 @@ func (g *GameState) processDamageOnAdvanceTimeNonCombat() {
 	// to match original Ultima V behavior where wind updates happen continuously
 }
 
-// moveNonCombatMapMapUnitsToNextMove
-// Moves non-combat map units to their next move
-func (g *GameState) moveNonCombatMapMapUnitsToNextMove() {
-	// Movement is owned by the map-specific actor controllers; this legacy hook is inert.
-}
-
-// GenerateAndCleanupEnemies retains the legacy hook; map controllers own spawning.
-func (g *GameState) GenerateAndCleanupEnemies() {
-	switch g.MapState.PlayerLocation.Location.GetMapType() {
-	case references.SmallMapType:
-		return
-	case references.LargeMapType:
-		// g.GetCurrentLayeredMap().
-		// g.largeMapGenerateAndCleanupEnemies()
-	case references.DungeonMapType:
-	case references.CombatMapType:
-	case references.CampingMapType:
-	default:
-		// Unsupported map type for enemy generation - log warning and continue
-		logging.Warnf(logging.CategoryGameState, "GenerateAndCleanupEnemies called with unsupported map type: %v", g.MapState.PlayerLocation.Location.GetMapType())
-	}
-}
-
 // checkHourlyFoodConsumption observes hour changes after time advances
 // and applies meal processing at hours 6, 12 and 18. The recorded last
 // processed boundary prevents repeating an already processed meal. ref:PROV-0002
@@ -851,7 +824,7 @@ func (g *GameState) applyStarvationDamageWithFeedback() {
 	for _, index := range deadIndexes {
 		character := g.PartyState.GetCharacter(index)
 		if character != nil {
-			g.SystemCallbacks.Message.AddRowStr(character.GetNameAsString() + " has died!")
+			g.SystemCallbacks.Message.AddRowStr("Alas! " + character.GetNameAsString() + " has died!")
 			g.ShowDeathFeedback()
 		}
 	}

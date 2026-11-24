@@ -55,7 +55,7 @@ func TestSaveSnapshotV24NotesCheckpointIsolationAndStaleDraft(t *testing.T) {
 	require.NoError(t, err)
 	restored, checkpoint := roundTripPersonalSnapshot(t, state)
 	_, err = restored.CommitAtlasNote(stale, "Never committed", "")
-	require.ErrorContains(t, err, "stale")
+	require.ErrorContains(t, err, "opened too long ago")
 	require.Equal(t, []journal.AtlasNoteRecord{note}, restored.CaptureAtlasNotes().Records)
 	_, err = state.CommitAtlasNote(stale, "Later edit", "")
 	require.NoError(t, err)

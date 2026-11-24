@@ -19,6 +19,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCinematicMapLayoutFitsCenteredElevenTileRoomInRightPane(t *testing.T) {
@@ -71,7 +72,7 @@ func TestMapUnitRenderSelectionUsesFloorOnlyOnSmallMaps(t *testing.T) {
 }
 
 func TestMapUnitOverlayIsSuppressedDuringCombat(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -91,7 +92,7 @@ func TestMapUnitOverlayIsSuppressedDuringCombat(t *testing.T) {
 }
 
 func TestPerformingBardSuppressesChairOnlyWhileRenderable(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().

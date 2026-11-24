@@ -233,7 +233,7 @@ func (l *LayeredMap) IsPositionVisible(pos *references.Position, timeOfDay datet
 	var nToShow int
 
 	if bIsBasement {
-		nToShow = 1 // helpers.RoundUp(float32(xUp) * timeOfDay.GetVisibilityFactorWithoutTorch(baselineVisibilityFactor))
+		nToShow = 1 // The basement always shows one tile around the party.
 	} else {
 		nToShow = helpers.RoundUp(float32(xUp) * timeOfDay.GetVisibilityFactorWithoutTorch(baselineVisibilityFactor))
 	}

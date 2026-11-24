@@ -74,6 +74,25 @@ func LoadGameData() (*config.UltimaVConfiguration, *references.GameReferences, e
 	return cfg, refs, nil
 }
 
+// IntegrationFixtureSource returns the loader a game-state integration fixture
+// reads its data through: fresh configuration, cached references and the
+// bootstrap save. The test is skipped or failed when the original game data is
+// unavailable. Its result is a game_state.IntegrationFixtureSource; this
+// package cannot name that type because game_state's own tests import it.
+func IntegrationFixtureSource(
+	t *testing.T,
+) func() (*config.UltimaVConfiguration, *references.GameReferences, []byte) {
+	t.Helper()
+
+	return func() (*config.UltimaVConfiguration, *references.GameReferences, []byte) {
+		t.Helper()
+		cfg, refs, err := LoadGameData()
+		originaldata.Check(t, err)
+
+		return cfg, refs, LoadBootstrapSaveData(t)
+	}
+}
+
 // LoadTestGameReferences loads the game references for config, failing the test on error.
 func LoadTestGameReferences(t *testing.T, config *config.UltimaVConfiguration) *references.GameReferences {
 	t.Helper()

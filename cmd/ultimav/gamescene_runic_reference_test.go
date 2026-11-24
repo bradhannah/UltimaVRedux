@@ -11,13 +11,14 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func newRunicReferenceTestScene(t *testing.T, location references.Location) (
 	*GameScene, map[ebiten.Key]bool, func(), *game_state.MockSystemCallbacks,
 ) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).WithPlayerAt(1, 1).WithRandomSeed(42).WithSystemCallbacks().Build()
 	state.DebugOptions.MonsterGen = false
 	scene := newOwnedSurfaceCompletionTestScene(t, state)

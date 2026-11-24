@@ -7,11 +7,12 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuestJournalCompleteCodexSearchAndPaging(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithPlayerAt(10, 20).
 		WithSystemCallbacks().Build()
 	state.DiscoverWordOfPowerKnowledge("doom", game_state.RevelationKnowledgeSource("Codex of Ultimate Wisdom"))

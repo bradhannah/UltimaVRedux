@@ -9,12 +9,12 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDebugShardUseRejectsStaleStateAndQueuesSelectedShardWithoutMutation(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Lycaeum).
 		WithFloor(2).
 		WithPlayerAt(15, 9).
@@ -61,7 +61,7 @@ func TestDebugShardUseRejectsStaleStateAndQueuesSelectedShardWithoutMutation(t *
 }
 
 func TestDebugShardUseRejectsStaleSelectedOwnership(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
 	state.PartyState.Inventory.QuestItems.Set(references.ShardOfCowardice, 1)
 	scene := &GameScene{gameState: state, gameReferences: state.GameReferences}
 	review := newShardUseReviewResult(state, references.ShardOfCowardice)
@@ -74,7 +74,7 @@ func TestDebugShardUseRejectsStaleSelectedOwnership(t *testing.T) {
 }
 
 func TestDebugUsableInventoryPresetReturnsExactSemanticChangesAndRejectsStaleReview(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	review, err := state.ReviewUsableInventoryPreset()
 	require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestDebugUsableInventoryPresetReturnsExactSemanticChangesAndRejectsStaleRev
 }
 
 func TestDebugRitualStateMutationsAreBlockedDuringGameplayWorkflow(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	state.EventQueueManager.Workflow("active_gameplay").
 		Priority(event_queue.PriorityNormal).

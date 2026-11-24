@@ -5,3 +5,8 @@ package map_state
 func (ls *LighthouseState) GetCurrentAngle() int {
 	return ls.currentAngle
 }
+
+// AdvanceTurn advances the lighting by one elapsed minute.
+func (l *Lighting) AdvanceTurn() {
+	l.AdvanceMinutes(1)
+}

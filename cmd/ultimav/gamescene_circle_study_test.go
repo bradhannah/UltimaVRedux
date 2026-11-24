@@ -22,6 +22,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
 
@@ -31,7 +32,7 @@ const ladyJanellDialogNumber = 11
 // a Wizard and a Fighter at level 7 and enough gold for two of them.
 func newCircleStudyTalkFixture(t *testing.T) *merchantTalkFixture {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Lycaeum).
 		WithSystemCallbacks().
 		WithRandomSeed(1).
@@ -193,7 +194,7 @@ func TestCircleStudyOptionsExplainEveryRow(t *testing.T) {
 	party.Inventory.Gold.Set(game_state.CircleStudyPrice - 1)
 	poor := fixture.scene.circleStudyOptions()[0]
 	assert.Equal(t, widgets.CharacterSelectionUnavailable, poor.State)
-	assert.Equal(t, "Short | Circle 7 to 8 | Cost 3000 gold | Gold 2999 | Not enough gold to study.", describe(poor))
+	assert.Equal(t, "Short | Circle 7 to 8 | Cost 3000 gold | Gold 2999 | Thou hast not enough gold to study.", describe(poor))
 }
 
 // A playtest at 1440p showed a title cut to its last word and names cut with

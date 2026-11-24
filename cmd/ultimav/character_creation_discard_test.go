@@ -38,15 +38,15 @@ func TestCharacterCreationDiscardCardUsesScreenTypographyAndClassicFrame(t *test
 			for index := range lines {
 				lines[index] = strings.TrimSpace(lines[index])
 			}
-			assert.Equal(t, []string{"Discard this character?", "Y / N", "Escape continues creation."}, lines)
+			assert.Equal(t, []string{"Discard this character?", "[Y] Discard   [N/Esc] Keep creating"}, lines)
 			require.True(t, bounds.In(logical))
 			assert.InDelta(t, float64(size.X)/2, float64(bounds.Min.X+bounds.Max.X)/2, 1)
 			assert.InDelta(t, float64(size.Y)/2, float64(bounds.Min.Y+bounds.Max.Y)/2, 1)
 			assert.Equal(t, widgets.ClassicUIPixelUnit(size.X, size.Y), pixelUnit)
 			assert.Equal(t, max(pixelUnit*4, int(math.Ceil(output.GetFontHeight()))), padding)
 			interior := bounds.Inset(padding)
-			assert.GreaterOrEqual(t, output.GetLineCapacity(interior.Dy()), 3)
-			for _, line := range []string{"Discard this character?", "Y / N", "Escape continues creation."} {
+			assert.GreaterOrEqual(t, output.GetLineCapacity(interior.Dy()), 2)
+			for _, line := range []string{"Discard this character?", "[Y] Discard   [N/Esc] Keep creating"} {
 				width, _ := output.Font.MeasureString(line)
 				assert.LessOrEqual(t, width, float64(interior.Dx()))
 			}

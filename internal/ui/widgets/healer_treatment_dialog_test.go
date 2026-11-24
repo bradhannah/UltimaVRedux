@@ -82,7 +82,7 @@ func TestHealerTreatmentDialogShowsEffectRowsAndShortfall(t *testing.T) {
 	tests := []struct{ name, text string }{
 		{"resurrect", "Resurrect Dupre Have Then HP 0 +60 60 Max HP 90 -30 60 Gold 312 -200 112 " +
 			"Dead becomes Good. [Enter] Resurrect [Esc] Back"},
-		{"short", "Resurrect Dupre Not enough gold. It costs 200 and the party has 50. " +
+		{"short", "Resurrect Dupre Thou hast not enough gold. It costs 200 and the party has 50. " +
 			"The healer will refuse. [Enter] Resurrect anyway [Esc] Back"},
 		{"heal", "Heal Iolo Have Then HP 18 +42 60 Still Sleeping. Free care. No payment. [Enter] Heal [Esc] Back"},
 		{"all", "Resurrect All 1 party member needs it Have Then Gold 312 -200 112 [Enter] Resurrect [Esc] Back"},

@@ -459,7 +459,7 @@ func (g *GameScene) dungeonKlimbSecondaryInput() {
 		direction = game_state.DungeonKlimbUp
 	case ebiten.KeyDown, ebiten.KeyD, ebiten.KeyNumpad2:
 		direction = game_state.DungeonKlimbDown
-	case ebiten.KeySpace:
+	case ebiten.KeySpace, ebiten.KeyEscape:
 		token := g.dungeonKlimbCommandToken
 		g.dungeonKlimbCommandToken = game_state.DungeonCommandCycle{}
 		g.secondaryKeyState = PrimaryInput

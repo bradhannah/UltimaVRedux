@@ -75,11 +75,11 @@ func NewArmsTradeDialog(config ArmsTradeDialogConfig) *ArmsTradeDialog {
 	refusal := armsTradeRefusal(config.Intent)
 	switch {
 	case refusal != ArmsTradeNoRefusal:
-		validateArmsFinalizedText("refusal", config.Prose.Refusal)
+		requireFinalizedText("Arms widgets", "refusal", config.Prose.Refusal)
 	case config.Intent.Mode == ArmsShopBuy:
-		validateArmsFinalizedText("purchase pitch", config.Prose.Pitch)
+		requireFinalizedText("Arms widgets", "purchase pitch", config.Prose.Pitch)
 	case config.Intent.Mode == ArmsShopSell:
-		validateArmsFinalizedText("sale offer", config.Prose.Offer)
+		requireFinalizedText("Arms widgets", "sale offer", config.Prose.Offer)
 	}
 
 	dialog := &ArmsTradeDialog{

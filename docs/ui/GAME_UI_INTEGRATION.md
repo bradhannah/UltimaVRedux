@@ -326,7 +326,7 @@ part of native or legacy saves and must not be used for gameplay decisions.
   draws above the stack on surface, dungeon, and combat scenes.
 - Resource order is Food, Gold, Keys, Gems, Torches, Skull keys. Only changed
   resources appear, ordinarily as `Food +20 -6  Now 218`. Actual food losses use
-  a featured normal-title-size `FOOD -6` heading, with remaining stock and any
+  a featured `FOOD -6` heading at the Title text role, with remaining stock and any
   simultaneous gross gain on separate body-size lines. Other resources retain
   their compact grid beside it, or below it when width requires stacking. This
   is recent actual loss, not a last-meal record or consumption-rate prediction.

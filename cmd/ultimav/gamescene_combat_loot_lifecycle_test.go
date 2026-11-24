@@ -10,11 +10,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCombatLootShutdownCleansDeferredActionOnce(t *testing.T) {
 	for _, updates := range []int{0, 1, 4} {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 		require.NoError(t, state.TransitionToCombatMap(0, references.BritanniaCombatTerritory, game_state.CombatEntryNorth))
 		scene := newProductionCastTestScene(state)
 		scene.spriteSheet = sharedPresentationTestSpriteSheet()

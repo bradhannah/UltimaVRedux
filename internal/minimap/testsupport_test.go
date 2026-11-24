@@ -63,3 +63,12 @@ func scriptStepDuration(step *ScriptStep) int {
 		return 0
 	}
 }
+
+// GetCurrentStep returns the active step for presentation rendering.
+func (e *ScriptExecutor) GetCurrentStep() *ScriptStep {
+	if e.IsComplete() {
+		return nil
+	}
+
+	return &e.script.Steps[e.currentStepIndex]
+}

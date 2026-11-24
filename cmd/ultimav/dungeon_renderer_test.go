@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	gametext "github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
 
@@ -434,7 +435,7 @@ func TestDungeonRenderPlanUsesFixedSubduedBrightnessOnlyWithoutGameplayLight(t *
 }
 
 func TestDungeonSurfaceEntryRenderPlanShowsUpperLadderAndWallAhead(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()

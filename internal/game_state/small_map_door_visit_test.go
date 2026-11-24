@@ -35,7 +35,7 @@ func TestSmallMapDoorVisitUnlockMethods(t *testing.T) {
 				state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
 				switch method {
 				case "Jimmy":
-					state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+					setJimmyOutcome(state, true)
 					require.Equal(t, JimmyUnlocked, state.JimmyDoor(references.Up, state.PartyState.GetCharacter(0)))
 				case "An Sanct":
 					require.Equal(t, AnSanctDoorUnlocked, state.CastAnSanct(&target.Position))
@@ -186,7 +186,7 @@ func TestSmallMapDoorVisitFailedJimmyDoesNotRetainUnlock(t *testing.T) {
 	state, _ := NewIntegrationTestBuilder(t).WithLocation(references.LordBritishsCastle).WithSystemCallbacks().Build()
 	target := findDoorVisitSourceAtLocation(t, state, references.LordBritishsCastle, indexes.LockedDoor)
 	state.TransitionToLocation(target.Location, target.Floor, target.Position.Down(), TransitionFullLocation, false)
-	state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return false }
+	setJimmyOutcome(state, false)
 	for _, keys := range []uint16{0, 2} {
 		state.PartyState.Inventory.Provisions.Keys.Set(keys)
 		want, remaining := JimmyDoorNoLockPicks, uint16(0)

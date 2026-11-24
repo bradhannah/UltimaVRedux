@@ -14,6 +14,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDungeonGemViewRetainsCommandThroughDismissal(t *testing.T) {
@@ -405,7 +406,7 @@ func newDungeonViewTestSceneAt(
 	location references.Location,
 ) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithFloor(2).
 		WithPlayerAt(3, 4).

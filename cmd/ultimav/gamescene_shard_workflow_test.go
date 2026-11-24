@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSmallMapUseSelectorDispatchesEachSelectedShard(t *testing.T) {
@@ -314,7 +315,7 @@ func TestShardWorkflowRejectsWrongFlameBeforeEarthquakes(t *testing.T) {
 
 func newShardWorkflowTestScene(t *testing.T) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Lycaeum).
 		WithFloor(2).
 		WithPlayerAt(15, 9).

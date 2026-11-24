@@ -139,7 +139,7 @@ func (g *GameScene) drawMapFadeEffect(screen *ebiten.Image) {
 }
 
 // drawScreenFlashEffect renders a colored screen flash overlay (for fire damage, etc.)
-// Supports both legacy duration-based pattern and new event queue pattern
+// The flash intensity is driven by the event queue.
 // Only affects the map area, leaving status bars unaffected.
 func (g *GameScene) drawScreenFlashEffect(screen *ebiten.Image) {
 	// Event queue pattern: intensity set directly via SetScreenFlashIntensity()

@@ -4,10 +4,14 @@ import (
 	"math"
 
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/pkg/helpers"
 )
 
 const (
+	// REDUX DEVIATION: LIGHT-0006: original light is ten equal illumination-10 static
+	// sources with sight thresholds 10 and 18. Redux uses presentation-oriented radii
+	// (torch 3, In Lor and Vas Lor 5) for coloured, blended, breathing sources.
+	// See ref:LIGHT-0006.
+
 	// TorchTileDistance is the illumination radius of a carried torch.
 	TorchTileDistance = 3
 	// DefaultTorchDurationMinutes is the initial fuel time of a lit torch.
@@ -24,7 +28,7 @@ const (
 	// ArtifactLightDistance is the radius in tiles of the stronger light from Lord British's Artifacts.
 	ArtifactLightDistance = 4
 
-	// MagicLightTileDistance is the original U5 radius for both In Lor and Vas Lor.
+	// MagicLightTileDistance is the Redux radius shared by In Lor and Vas Lor.
 	MagicLightTileDistance = 5
 	// InLorTileDistance is the radius in tiles of the In Lor spell light.
 	InLorTileDistance = MagicLightTileDistance
@@ -168,7 +172,7 @@ func (l *Lighting) AdvanceMinutes(minutes int) {
 	if minutes <= 0 {
 		return
 	}
-	l.torchMinutesRemaining = helpers.Max(l.torchMinutesRemaining-minutes, 0)
+	l.torchMinutesRemaining = max(l.torchMinutesRemaining-minutes, 0)
 }
 
 // BuildGameScreenDistanceMap builds the distance map for a light at centrePos sized to the whole game screen.

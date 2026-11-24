@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDeathKarmaReportWaitsForAcknowledgementAndCleansUp(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
 	scene := &GameScene{
 		gameState: state,
 		keyboard:  input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld),

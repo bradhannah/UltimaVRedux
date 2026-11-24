@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSpellFeedbackRenderedPositionAndExactDismissal(t *testing.T) {
@@ -28,7 +29,7 @@ func TestSpellFeedbackRenderedPositionAndExactDismissal(t *testing.T) {
 			if combat {
 				state, _ = newProductionCombatCastState(t)
 			} else {
-				state, _ = game_state.NewIntegrationTestBuilder(t).
+				state, _ = gamefixture.NewIntegrationTestBuilder(t).
 					WithLocation(references.Britain).
 					WithSystemCallbacks().
 					Build()

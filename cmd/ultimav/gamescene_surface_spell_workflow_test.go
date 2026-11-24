@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceDirectionalSpellProductionDispatchOwnsResourcesAndTime(t *testing.T) {
@@ -32,7 +33,7 @@ func TestSurfaceDirectionalSpellProductionDispatchOwnsResourcesAndTime(t *testin
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, mock := game_state.NewIntegrationTestBuilder(t).
+			state, mock := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithPlayerAt(10, 10).
 				WithSystemCallbacks().
@@ -143,7 +144,7 @@ func TestCoreSurfaceSpellProductionDispatchOwnsResourcesAndTime(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, mock := game_state.NewIntegrationTestBuilder(t).
+			state, mock := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(10, 10).
 				WithSystemCallbacks().
@@ -186,7 +187,7 @@ func TestCoreSurfaceSpellProductionDispatchOwnsResourcesAndTime(t *testing.T) {
 }
 
 func TestRelHurProductionBuilderHandlesRejectedDirection(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -205,7 +206,7 @@ func TestRelHurProductionBuilderHandlesRejectedDirection(t *testing.T) {
 }
 
 func TestWisAnYlemProductionWorkflowUsesFixedAuthenticDuration(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -260,7 +261,7 @@ func surfaceSpellFixtureState(state *game_state.GameState) *spellCastingWorkflow
 }
 
 func TestParseMoonPhaseInputRejectsCancellationAndInvalidInput(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()
@@ -308,7 +309,7 @@ func TestVasRelPorProductionDispatchOwnsTransitionResourcesAndOneMinute(t *testi
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, mock := game_state.NewIntegrationTestBuilder(t).
+			state, mock := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.start).
 				WithPlayerAt(10, 10).
 				WithSystemCallbacks().
@@ -361,7 +362,7 @@ func TestVasRelPorProductionDispatchOwnsTransitionResourcesAndOneMinute(t *testi
 }
 
 func TestActualMoongateTeleportUsesDestinationWithoutOwningTimeOrSyntheticDaytimeGate(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().

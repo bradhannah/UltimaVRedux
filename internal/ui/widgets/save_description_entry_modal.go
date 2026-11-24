@@ -156,6 +156,11 @@ func newSaveDescriptionEntryModal(
 	return modal
 }
 
+// AcceptsText reports that letter keys type into this field.
+func (m *SaveDescriptionEntryModal) AcceptsText() bool {
+	return !m.finished
+}
+
 // Draw renders the modal, description field, and keyboard hints.
 func (m *SaveDescriptionEntryModal) Draw(screen *ebiten.Image) {
 	if screen == nil {

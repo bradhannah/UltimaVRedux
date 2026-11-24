@@ -182,6 +182,11 @@ func parseMerchantTexts(data []byte, wordDict *WordDict) (map[MerchantTextID]str
 		if err != nil {
 			return nil, fmt.Errorf("expanding record %q: %w", record.id, err)
 		}
+		// The shop windows treat every line as present; a blank one is refused here,
+		// where a damaged file is reported at startup.
+		if strings.TrimSpace(expanded) == "" {
+			return nil, fmt.Errorf("%w: record %q is blank", errCorruptMerchantText, record.id)
+		}
 		texts[record.id] = expanded
 	}
 

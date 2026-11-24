@@ -16,6 +16,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSmallMapMovementKeyMapsSmashedDirections(t *testing.T) {
@@ -144,7 +145,7 @@ func newSmashedInputTestScene(
 	seed uint64,
 ) (*GameScene, *game_state.GameState, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().

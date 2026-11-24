@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 )
 
@@ -75,12 +76,12 @@ func notesMessage(err error) string {
 	if errors.Is(err, journal.ErrNotesFull) {
 		return "Notebook full. Delete a note to write another."
 	}
-	message := strings.TrimPrefix(err.Error(), journal.ErrInvalidNotes.Error()+": ")
-	if message == "" {
-		return "That change could not be made."
+	if plain := journal.PlainProblem(err); plain != "" {
+		return plain
 	}
+	logging.Warnf(logging.CategoryUI, "Note change failed: %v", err)
 
-	return strings.ToUpper(message[:1]) + message[1:] + "."
+	return "That change could not be made."
 }
 
 // notePlace names where the party really is, as the Save screen does; combat,
@@ -228,7 +229,7 @@ func (g *GameScene) openMapNoteEditor(session *journalSession, id uint64) {
 		Submit: func(label, description string) error {
 			record, err := g.gameState.CommitAtlasNote(draft, label, description)
 			if err != nil {
-				return fmt.Errorf("save atlas note: %w", err)
+				return noteSentenceError(notesMessage(err))
 			}
 			session.dialog.MapNotesChanged(g.gameState.CaptureAtlasNotes().Records, record.ID, "Map note saved.")
 			g.closeNotesChild()

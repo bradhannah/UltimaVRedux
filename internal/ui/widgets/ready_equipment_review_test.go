@@ -13,12 +13,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func newReadyReviewFixture(t *testing.T) (*game_state.GameState, *ReadyEquipmentDialog, map[ebiten.Key]bool) {
 	t.Helper()
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	character := state.PartyState.GetAvatar()
 	character.Strength = 20
 	for slot := references.SlotHelm; slot <= references.SlotAmulet; slot++ {

@@ -222,7 +222,7 @@ pane holds `[N] New here`, `[E] Edit` and `[D] Delete`. A key that cannot be
 used is dimmed and the bar's second row says why in words: the sextant reason
 for N, or that no note is selected for E and D. With nothing to explain, the
 keys sit centred in the bar. An empty My Notes tab names the
-two ways to plant a flag (N on the Map, Ctrl+N while exploring), that both need
+two ways to add a note (N on the Map, Ctrl+N while exploring), that both need
 a sextant reading, and, when only daylight is in the way, the Flexible Sextant
 Use setting.
 
@@ -902,7 +902,7 @@ and resize clamps it. Paging owns no transaction, session, or gameplay time.
 
 `merchantModalFrame` shares placement, bounds, insets, classic pixel geometry,
 and resize caching for nested approvals. `newOutputs` builds their title-size
-header, body and footer outputs from a per-dialog budget (a body either fits its
+header and body-size body and footer outputs from a per-dialog budget (a body either fits its
 area or keeps a fixed line count), and `drawOutputs` draws them. It is not a
 Widget and owns no text content, input, callbacks, requests, Preview state, or
 lifecycle. Each concrete dialog uses its change-reporting layout method to

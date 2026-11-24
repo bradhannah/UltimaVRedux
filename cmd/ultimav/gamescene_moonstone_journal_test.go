@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +24,7 @@ func TestMoonstoneJournalSceneMoongateUsesReviewedPhaseAndArrivalClock(t *testin
 		{"dawn", 5, false}, {"dusk", 18, true}, {"noon phase changes", 11, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(187, 167).WithSystemCallbacks().Build()
 			state.DateTime = datetime.UltimaDate{Year: 139, Month: 4, Day: 2, Hour: 4}
 			state.PartyState.Inventory.QuestItems.Set(references.Sextant, 1)

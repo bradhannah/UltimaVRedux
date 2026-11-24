@@ -78,6 +78,7 @@ func TestSimpleNotesModeSkipsJournalNoticeAndKeepExcerpt(t *testing.T) {
 	scene.gameConfig = &config.UltimaVConfiguration{GameplayConfiguration: config.DefaultGameplayConfiguration()}
 	scene.gameConfig.GameplayConfiguration.SimpleNotesMode = true
 	require.NotContains(t, dialog.conversationFooterGuidance(1000), "Keep excerpt")
+	dialog.waitingForKeypressContinue = true
 	require.Contains(t, dialog.conversationFooterGuidance(1000), "[Shift+J] Journal")
 
 	scene.output.Clear()

@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -81,7 +82,7 @@ func TestWorldEnemyProjectilesRenderThroughProductionWorkflow(t *testing.T) {
 
 func newWorldProjectileTestScene(t *testing.T, kind references.MonsterType, blocked bool) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithFloor(0).WithPlayerAt(0, 0).WithSystemCallbacks().Build()
 	require.NotNil(t, state)
 	state.CurrentNPCAIController = state.GetCurrentLargeMapNPCAIController()

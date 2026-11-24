@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +21,7 @@ func (g *GameScene) updateJournalNotice() { g.updateJournalNoticeAfterFrame(fals
 
 func newMapNoticeScene(t *testing.T) (*GameScene, *time.Time) {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
 	now := time.Unix(100, 0)
 	scene := &GameScene{gameState: state, gameConfig: state.GameConfig, keyboard: input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld),
 		output: text.NewOutput(nil, 1, 64, 80), now: func() time.Time { return now }}

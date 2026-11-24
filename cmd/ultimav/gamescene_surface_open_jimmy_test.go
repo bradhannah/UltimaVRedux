@@ -16,6 +16,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -33,7 +34,7 @@ func TestSurfaceReturnUsesMapSpecificRejectionAndCycleOwnership(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -70,7 +71,7 @@ func TestSurfacePeriodAndTownReturnAreFreeWhatFallbacks(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -89,7 +90,7 @@ func TestSurfacePeriodAndTownReturnAreFreeWhatFallbacks(t *testing.T) {
 }
 
 func TestLargeMapJimmyRoutesImmediateDirectionAndCompletesOnce(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithRandomSeed(385).
@@ -126,7 +127,7 @@ func TestLargeMapJimmyRoutesImmediateDirectionAndCompletesOnce(t *testing.T) {
 func TestSurfaceActorShortcutUsesSameGoodOrPoisonedEligibilityAsDialog(t *testing.T) {
 	for _, status := range []party_state.CharacterStatus{party_state.Good, party_state.Poisoned} {
 		t.Run(characterSelectionStatus(status), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(50, 50).
 				WithSystemCallbacks().
@@ -150,7 +151,7 @@ func TestSurfaceActorShortcutUsesSameGoodOrPoisonedEligibilityAsDialog(t *testin
 }
 
 func TestLargeMapJimmyWithoutActiveCharacterDefersToSelection(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithSystemCallbacks().
@@ -198,7 +199,7 @@ func TestLargeMapOpenRoutesAuthoritativeSuccessAndExplicitRejection(t *testing.T
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(50, 50).
 				WithSystemCallbacks().
@@ -242,7 +243,7 @@ func TestOpenAndJimmyDirectionEscapeCancelsWithoutCost(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithSystemCallbacks().
 				Build()
@@ -284,7 +285,7 @@ func TestOpenAndJimmyDirectionEscapeCancelsWithoutCost(t *testing.T) {
 }
 
 func TestSmallMapChestJimmyDialogCancellationDefersCompletion(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.LordBritishsCastle).
 		WithSystemCallbacks().
 		Build()
@@ -316,7 +317,7 @@ func TestSmallMapChestJimmyDialogCancellationDefersCompletion(t *testing.T) {
 }
 
 func TestSmallMapChestJimmyThenOpenProductionPathCompletesOnceEach(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.LordBritishsCastle).
 		WithRandomSeed(382).
 		WithSystemCallbacks().
@@ -425,7 +426,7 @@ func TestSmallMapChestJimmyThenOpenProductionPathCompletesOnceEach(t *testing.T)
 }
 
 func TestLordBritishChestExistingLootIsPreservedThroughTrappedOpenAndOneCommandCycle(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.LordBritishsCastle).
 		WithRandomSeed(1).
 		WithSystemCallbacks().

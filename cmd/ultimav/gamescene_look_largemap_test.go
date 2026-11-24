@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestLargeMapLookCompletesOneNormalOutdoorCycle(t *testing.T) {
@@ -20,7 +21,7 @@ func TestLargeMapLookCompletesOneNormalOutdoorCycle(t *testing.T) {
 	} {
 		for _, open := range []bool{false, true} {
 			t.Run(fmt.Sprintf("floor=%d/open=%t", floor, open), func(t *testing.T) {
-				state, callbacks := game_state.NewIntegrationTestBuilder(t).
+				state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 					WithLocation(references.BritanniaUnderworld).
 					WithFloor(floor).
 					WithSystemCallbacks().

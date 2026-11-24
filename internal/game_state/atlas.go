@@ -122,9 +122,9 @@ func (g *GameState) observeAtlasLandmark(position references.Position, kind, nam
 		observation.NameSource = source
 		observation.NamedAt = sample.at
 	}
-	// REDUX DEVIATION: original Use reports only the Avatar on request. Redux
+	// REDUX DEVIATION: VIEW-0006: original Use reports only the Avatar on request. Redux
 	// remembers exact locally inspected targets under the same sextant gates.
-	// See ref:ASTRO-0006.
+	// See ref:VIEW-0006, ref:ASTRO-0006.
 	if !observation.Survey.Measured && EvaluateSextantEligibility(sample.sextant) == SextantReady {
 		observation.Survey = journal.SurveyedLocation{Measured: true, Flexible: sample.sextant.Flexible, Location: observation.Site, RecordedAt: sample.at}
 		observation.SurveySource = source

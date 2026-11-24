@@ -94,6 +94,23 @@ func TestGraphRejectsInternalAndExternalTestOnlyDependencies(t *testing.T) {
 	}
 }
 
+func TestGraphRejectsTestCodeInProductionClosureOnly(t *testing.T) {
+	for _, testOnly := range []string{"testing", modulePath + "/test/helpers"} {
+		packages := []packageMetadata{
+			{ImportPath: testRoot, Imports: []string{"helper"}},
+			{ImportPath: "helper", Imports: []string{testOnly}},
+			{ImportPath: testOnly},
+		}
+		err := checkGraph(packages, []string{testRoot})
+		require.ErrorIs(t, err, errDependencyGraph)
+		assert.Contains(t, err.Error(), testRoot+" -> helper -> "+testOnly)
+	}
+	packages := testGraph(false)
+	packages[1].Imports = []string{"testing"}
+	packages = append(packages, packageMetadata{ImportPath: "testing"})
+	require.NoError(t, checkGraph(packages, []string{testRoot}), "test variants may link test code")
+}
+
 func TestGraphFollowsImportMapWithoutCollapsingTestVariants(t *testing.T) {
 	packages := testGraph(false)
 	alias := "helper [" + testRoot + ".test]"

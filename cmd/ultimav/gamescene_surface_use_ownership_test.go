@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceUsePotionShutdownBeforeTargetPreservesInventoryAndCompletesOnce(t *testing.T) {
@@ -252,7 +253,7 @@ func newSurfaceUseOwnershipSceneAt(
 	position references.Position,
 ) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithFloor(floor).
 		WithPlayerAt(int(position.X), int(position.Y)).

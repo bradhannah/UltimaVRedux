@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 // IsVisible returns whether the dialog is currently visible.
@@ -181,7 +182,7 @@ func countEqual[T comparable](values []T, want T) int {
 // Britannia combat territory from the north.
 func newBritainCombatTestState(t *testing.T, seed uint64) (*game_state.GameState, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	gs, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(seed).

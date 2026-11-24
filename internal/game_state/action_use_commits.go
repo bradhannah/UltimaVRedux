@@ -277,6 +277,8 @@ func (g *GameState) CommitPotionEffect(outcome *PotionUseOutcome, targetIndex in
 	case 1:
 		finalPotion = references.Potion(g.RandomIntInRange(0, potionRandomPotionMax-1))
 	}
+	// REDUX DEVIATION: CONSUME-0002: the original emits no mislabel warning. Redux flags a
+	// resolved color that differs from the label so the player is told. See ref:CONSUME-0002.
 	outcome.Mislabelled = finalPotion != outcome.FinalPotion
 	outcome.FinalPotion = finalPotion
 
@@ -338,6 +340,9 @@ func (g *GameState) CommitPotionEffect(outcome *PotionUseOutcome, targetIndex in
 	case references.Orange:
 		if character.IsGood() {
 			if outcome.context == UsageCombat {
+				// REDUX DEVIATION: CONSUME-0002: the original passes the roster index to a
+				// queue-indexed sleep operation that can hit another entry. Redux sleeps the
+				// exact drinking PC or clone. See ref:CONSUME-0002.
 				g.setCombatPCSleeping(outcome.combatIdentity, true)
 			} else {
 				character.SetStatus(party_state.Sleep)

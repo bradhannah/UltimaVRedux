@@ -1,5 +1,8 @@
 package map_units
 
+// Test support: fixtures and seams that tests in other packages use. The
+// dead-code check treats this file as test support.
+
 // hullWarningHP is the hull strength below which a damaged ship warns.
 const hullWarningHP = 10
 

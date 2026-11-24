@@ -9,7 +9,6 @@ import (
 	rng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 
 	"github.com/bradhannah/UltimaVRedux/internal/audio"
-	"github.com/bradhannah/UltimaVRedux/internal/camping"
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
@@ -138,7 +137,8 @@ func (d *DissolveEffectState) Cleanup() {
 	d.level = 0.0
 }
 
-// GameScene is another scene (e.g., the actual game)
+// GameScene is the in-game scene. It draws the map and status panels, turns
+// keyboard input into GameState actions, and owns dialogs and presentation effects.
 type GameScene struct {
 	gameConfig              *config.UltimaVConfiguration
 	gameReferences          *references.GameReferences
@@ -191,7 +191,6 @@ type GameScene struct {
 	tavernMealTableOverlay           *tavernMealTableOverlay
 	appendInputChars                 func([]rune) []rune
 
-	debugMessage string
 	// lastUsedItem is the item last picked in Use. The picker opens on it again.
 	lastUsedItem *game_state.UseableItemInfo
 
@@ -288,7 +287,6 @@ type GameScene struct {
 	wandererDissolve DissolveEffectState // Wanderer dissolve state (GPU-accelerated)
 	mapFadeLevel     float64             // 0.0 = fully visible, 1.0 = fully black
 
-	// Note: Death scene dissolve fields removed - now uses generic tile dissolve system
 	inputBlocked bool // true when all input should be blocked
 
 	// Generic tile dissolve system (supports multiple simultaneous dissolves)
@@ -565,14 +563,13 @@ func (g *GameScene) thenExecuteCampingSequence(hours int, guardIndex int, comple
 		return q.If(
 			func() bool { return true },
 			func(subQ *event_queue.SequentialEventBuilder) {
-				originalPlayerLocation := g.gameState.MapState.SavePlayerLocation()
-
-				campingMapRef, err := references.LoadCampingMap(g.gameState.GameConfig)
+				// With nothing queued, the workflow ends and its Finally step cleans up.
+				campingScene, err := g.gameState.NewSurfaceCampingScene(hours, guardIndex)
 				if err != nil {
-					// Startup validated the original data, so the camp map must load.
-					panic(fmt.Sprintf("GameScene camping: loading camping map: %v", err))
+					g.gameState.ReportCampingCouldNotBegin(err)
+
+					return
 				}
-				campingScene := camping.NewCampingSceneWithCombatRef(hours, guardIndex, originalPlayerLocation, campingMapRef)
 
 				g.gameState.AddCampingSequenceToBuilder(
 					subQ,

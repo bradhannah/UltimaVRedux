@@ -6,16 +6,16 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/conversation"
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestTalkProductionFreeTextAndKeyWait(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).WithRandomSeed(42).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).WithRandomSeed(42).WithSystemCallbacks().Build()
 	var actor *map_units.NPCFriendly
 	for _, unit := range *state.CurrentNPCAIController.GetNpcs() {
 		if npc, ok := unit.(*map_units.NPCFriendly); ok && npc.MapUnitDetails().NPCNum == 17 {
@@ -67,7 +67,7 @@ func TestTalkProductionFreeTextAndKeyWait(t *testing.T) {
 func TestTalkProductionAskNameUsesActivePartyAndActorFlag(t *testing.T) {
 	for _, value := range []string{"Iolo", "A"} {
 		t.Run(value, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).WithRandomSeed(42).WithSystemCallbacks().Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).WithRandomSeed(42).WithSystemCallbacks().Build()
 			var actor *map_units.NPCFriendly
 			for _, unit := range *state.CurrentNPCAIController.GetNpcs() {
 				if npc, ok := unit.(*map_units.NPCFriendly); ok && npc.MapUnitDetails().NPCNum == 17 {
@@ -107,7 +107,7 @@ func TestKristiProductionPaymentRefusal(t *testing.T) {
 	for _, gold := range []uint16{0, 99, 100} {
 		for _, next := range []string{"NO", "NAME", "BYE", "JOB"} {
 			t.Run(fmt.Sprintf("%d/%s", gold, next), func(t *testing.T) {
-				state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
+				state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
 					WithRandomSeed(42).WithSystemCallbacks().Build()
 				state.PartyState.Inventory.Gold.Set(gold)
 				state.PartyState.Inventory.Provisions.SkullKeys.Set(0)

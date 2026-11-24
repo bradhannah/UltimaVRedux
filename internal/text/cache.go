@@ -64,8 +64,8 @@ func drawTextLayout(target *ebiten.Image, layout *beradtext.Layout, options *ebi
 func drawPaintedTextLayout(
 	target *ebiten.Image, layout *beradtext.Layout, options *ebiten.DrawImageOptions, palette beradtext.Palette,
 ) {
-	// Ultima's former cached-image canvas clipped overhangs at the local origin.
-	// Preserve that game presentation policy without narrowing SDK ink geometry.
+	// Game text images clip overhanging ink at the local origin; keep that
+	// presentation policy without narrowing SDK ink geometry.
 	bounds := layout.Bounds()
 	localClip := image.Rect(0, 0, int(bounds.Width())+legacyRasterPadding, int(bounds.Height())+legacyRasterPadding)
 	drawLayoutWithClip(target, layout, options, palette, &localClip)

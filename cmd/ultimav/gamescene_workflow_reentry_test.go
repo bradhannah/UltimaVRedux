@@ -15,10 +15,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestWishingWellEscapeCompletesWorkflowAndPreservesResources(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Paws).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -69,8 +70,8 @@ func TestWishingWellZeroGoldYesCompletesAndReleasesInput(t *testing.T) {
 	drainWishingWellWorkflow(t, scene)
 
 	assert.Contains(t, dialog.TranscriptText(), "Drop a coin?  > Yes")
-	assert.Contains(t, dialog.TranscriptText(), "Not enough gold!")
-	assert.Contains(t, scene.output.GetOutputStr(false), "Not enough gold!")
+	assert.Contains(t, dialog.TranscriptText(), "Thou hast not enough gold!")
+	assert.Contains(t, scene.output.GetOutputStr(false), "Thou hast not enough gold!")
 	assert.Equal(t, uint16(0), scene.gameState.PartyState.Inventory.Gold.Get())
 	assert.False(t, scene.dialogStack.HasOpenDialog())
 	assert.False(t, scene.keyboard.IsWaitingForRelease())
@@ -162,7 +163,7 @@ func TestWishingWellLookOwnsOneDeferredSurfaceCycle(t *testing.T) {
 }
 
 func TestSpellExpiredPopupCoalescesIdenticalLiveWorkflow(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithSystemCallbacks().
 		Build()
 	scene := &GameScene{
@@ -193,7 +194,7 @@ func TestShrineAndCodexWorkflowsCoalesceDuplicateStarts(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
 			scene := &GameScene{
 				gameState: state,
 				keyboard:  input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld),
@@ -208,7 +209,7 @@ func TestShrineAndCodexWorkflowsCoalesceDuplicateStarts(t *testing.T) {
 }
 
 func TestFailedDeathWorkflowRestoresEntityVisibility(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
 	scene := &GameScene{
 		gameState: state,
 		keyboard:  input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld),
@@ -235,7 +236,7 @@ func TestDeathWorkflowReleasesAmbientOwnershipOnShutdown(t *testing.T) {
 			name = "hidden"
 		}
 		t.Run(name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithSystemCallbacks().Build()
 			for _, character := range state.ActivePartyCharacters() {
 				state.PartyState.GetCharacter(character.Slot).SetStatus(party_state.Dead)
 			}
@@ -256,7 +257,7 @@ func TestDeathWorkflowReleasesAmbientOwnershipOnShutdown(t *testing.T) {
 }
 
 func TestStonegateKeepsAlreadyLiveDeathWorkflow(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Stonegate).
 		WithPlayerAt(15, 16).
 		WithSystemCallbacks().
@@ -288,7 +289,7 @@ func TestStonegateKeepsAlreadyLiveDeathWorkflow(t *testing.T) {
 
 func newWishingWellWorkflowTestScene(t *testing.T, gold uint16) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Paws).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().

@@ -1131,7 +1131,7 @@ func (g *GameScene) thenShowCastUseDirectionPrompt(
 	onDirection func(references.Direction),
 	onCancel func(),
 ) event_queue.Sequence {
-	return g.thenShowDirectionPromptWithCancellation(message, "Arrow/keypad; Esc/Space cancels",
+	return g.thenShowDirectionPromptWithCancellation(message, "Arrows/keypad; Esc/Space cancels",
 		directionPromptChars, onDirection, onCancel, true)
 }
 

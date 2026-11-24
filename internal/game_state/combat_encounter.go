@@ -525,7 +525,7 @@ func (g *GameState) processPendingDirectMonsterDamage() bool {
 	for _, damage := range hit.MemberDamage {
 		if damage.Died {
 			character := g.PartyState.GetCharacter(damage.MemberIndex)
-			g.SystemCallbacks.Message.AddRowStr(character.GetNameAsString() + " has died!")
+			g.SystemCallbacks.Message.AddRowStr("Alas! " + character.GetNameAsString() + " has died!")
 		}
 	}
 	if hit.PartyWiped {

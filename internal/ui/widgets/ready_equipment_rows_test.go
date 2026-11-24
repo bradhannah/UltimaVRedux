@@ -8,12 +8,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
 func TestReadyCompactTypographyAndThreePaneColumnBudget(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	dialog := NewReadyEquipmentDialog(newWidgetTestKeyboard(-1), &sprites.SpriteSheet{}, state, game_state.ReadyEquipmentRequest{})
 	require.Equal(t, GetScaledFont(FontSizeCompact).TextFace.Size, dialog.font.TextFace.Size)
 	require.Equal(t, GetScaledFont(FontSizeTitle).TextFace.Size, dialog.titleFont.TextFace.Size)
@@ -22,7 +23,7 @@ func TestReadyCompactTypographyAndThreePaneColumnBudget(t *testing.T) {
 }
 
 func TestReadyEveryGearRowFitsWithMarkersIconsAndFullQuantity(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	for _, size := range []image.Point{{1280, 720}, {1366, 768}, {1920, 1080}, {2560, 1440}, {3840, 2160}} {
 		t.Run(size.String(), func(t *testing.T) {
 			setResponsiveDialogTestResolution(t, size.X, size.Y)

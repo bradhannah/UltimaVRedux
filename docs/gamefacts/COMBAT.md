@@ -96,7 +96,10 @@ key comparison without initializing its local key value. Their field-expiry and
 duration tail is therefore undefined, not guaranteed original behavior.
 Redux deliberately resolves this deterministically using loyalty **at dispatch**:
 a party-loyal exceptional dispatch receives its standing effect once and duration
-decrement, but no invented field-expiry rolls. An already monster-loyal dispatch
+decrement, but no invented field-expiry rolls. One exception keeps a battle from
+locking: when no party-loyal actor can act at all, such a dispatch also makes the
+ordinary field-expiry roll, so a sleeper standing on a sleep field is not put back
+to sleep forever. An already monster-loyal dispatch
 receives no player-side duration tail. Initial Chaos interception occurs before
 input. Immediate and presentation-stepped scheduling share that policy, preserving
 events, forecast, standing effects, draw count, and next RNG state.

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/bradhannah/UltimaVRedux/internal/audio"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
@@ -145,7 +143,7 @@ func (g *GameScene) handleAtlasNoteIntent(intent widgets.AtlasNoteIntent) {
 	}
 	draft, err := g.gameState.BeginAtlasNoteDraft(intent.ID)
 	if err != nil {
-		session.dialog.SetStatus(err.Error())
+		session.dialog.SetStatus(notesMessage(err))
 
 		return
 	}
@@ -157,14 +155,14 @@ func (g *GameScene) handleAtlasNoteIntent(intent widgets.AtlasNoteIntent) {
 		Submit: func(label, description string) error {
 			if intent.Action == widgets.AtlasNoteDelete {
 				if err := g.gameState.DeleteAtlasNote(draft); err != nil {
-					return fmt.Errorf("delete atlas note: %w", err)
+					return noteSentenceError(notesMessage(err))
 				}
 				session.dialog.Refresh(g.gameState.CurrentAtlasDossier())
 				session.dialog.SetStatus("Note deleted.")
 			} else {
 				record, err := g.gameState.CommitAtlasNote(draft, label, description)
 				if err != nil {
-					return fmt.Errorf("save atlas note: %w", err)
+					return noteSentenceError(notesMessage(err))
 				}
 				session.dialog.NoteCommitted(g.gameState.CurrentAtlasDossier(), record.ID)
 			}

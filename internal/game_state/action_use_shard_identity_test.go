@@ -155,7 +155,6 @@ func TestDestroyedShardDoesNotRematerializeAfterRitual(t *testing.T) {
 
 	state.MapState.PlayerLocation.Location = references.BritanniaUnderworld
 	state.MapState.PlayerLocation.Floor = references.Basement
-	state.RefreshQuestItemsOnMap()
 	assert.False(t, state.IsShardVisible(references.Position{X: 192, Y: 80}, fixture.shard))
 	assert.True(t, state.IsShardVisible(
 		references.Position{X: 130, Y: 65},

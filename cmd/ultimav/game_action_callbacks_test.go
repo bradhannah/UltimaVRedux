@@ -17,10 +17,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestGameActionCallbacksJoinPartyTypedFailures(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -197,7 +198,7 @@ func TestGameActionCallbacksDiscoverKnowledgeMapsAllLoreAndPreservesFirstMetadat
 }
 
 func TestGameActionCallbacksGoToJailDelegatesToCanonicalSentence(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -224,7 +225,7 @@ func TestGameActionCallbacksGoToJailDelegatesToCanonicalSentence(t *testing.T) {
 }
 
 func TestGameActionCallbacksCallGuardsOwnsCriminalStatusAndContinuesOnActivationError(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

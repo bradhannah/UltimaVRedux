@@ -3,9 +3,9 @@ package main
 import (
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 func TestMixWorkflowShutdownRemovesOwnedDialogWithoutCompletingCommand(t *testing.T) {
 	for _, started := range []bool{false, true} {
 		t.Run(map[bool]string{false: "before first update", true: "dialog mounted"}[started], func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
 			scene := newProductionCastTestScene(state)
 			beforeTime, beforeRNG := state.DateTime, state.GetRNG().Calls()
@@ -42,7 +42,7 @@ func TestMixWorkflowShutdownRemovesOwnedDialogWithoutCompletingCommand(t *testin
 }
 
 func TestMixWorkflowDismissalCompletesOnceAndCleansUp(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().Build()
 	scene := newProductionCastTestScene(state)
 	completions := 0

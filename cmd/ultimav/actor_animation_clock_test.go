@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestActorAnimationClockPreservesFractionAcrossRateBoundaries(t *testing.T) {
@@ -63,7 +64,7 @@ func TestActorAnimationClockLongIntervalAndNewEpoch(t *testing.T) {
 }
 
 func TestActorAnimationSurfaceLifecycleOffscreenAndReplacement(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	var reference references.NPCReference
 	reference.SetKeyIndex(indexes.RatKeyIndex)
 	actor := map_units.NewNPCFriendly(reference, 7)

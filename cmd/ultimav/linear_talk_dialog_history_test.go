@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +66,7 @@ func TestTalkHistoryResizePreservesLiveInputPauseAndKeyWait(t *testing.T) {
 	for _, mode := range []string{"input", "pause", "keywait"} {
 		t.Run(mode, func(t *testing.T) {
 			setTalkHistoryTestResolution(t, 3840, 2160)
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithRandomSeed(42).WithSystemCallbacks().Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithRandomSeed(42).WithSystemCallbacks().Build()
 			held := make(map[ebiten.Key]bool)
 			keyboard := input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return held[key] })
 			scene := &GameScene{gameState: state, keyboard: keyboard}

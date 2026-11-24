@@ -1,0 +1,2735 @@
+{
+  "format": "ultima5redux-native-snapshot",
+  "envelopeVersion": 2,
+  "metadata": {
+    "name": "Slot 1",
+    "description": "Saved during gameplay.",
+    "createdAt": "2026-11-01T12:00:00Z",
+    "gameVersion": "zz",
+    "playthroughId": "0123456789abcdef0123456789abcdef"
+  },
+  "snapshot": {
+    "version": 25,
+    "party": {
+      "roster": [
+        {
+          "occupied": true,
+          "name": "Avatar",
+          "gender": 11,
+          "class": 65,
+          "status": 71,
+          "strength": 11,
+          "dexterity": 26,
+          "intelligence": 32,
+          "currentMp": 27,
+          "currentHp": 155,
+          "maximumHp": 210,
+          "experience": 100,
+          "level": 1,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 38,
+          "shield": 7,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Shamino",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 22,
+          "dexterity": 22,
+          "intelligence": 17,
+          "currentMp": 0,
+          "currentHp": 164,
+          "maximumHp": 180,
+          "experience": 2235,
+          "level": 6,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 38,
+          "shield": 7,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Iolo",
+          "gender": 11,
+          "class": 66,
+          "status": 71,
+          "strength": 19,
+          "dexterity": 22,
+          "intelligence": 17,
+          "currentMp": 8,
+          "currentHp": 179,
+          "maximumHp": 180,
+          "experience": 1863,
+          "level": 6,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 38,
+          "shield": 7,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Julia",
+          "gender": 12,
+          "class": 66,
+          "status": 71,
+          "strength": 23,
+          "dexterity": 20,
+          "intelligence": 19,
+          "currentMp": 9,
+          "currentHp": 177,
+          "maximumHp": 180,
+          "experience": 1899,
+          "level": 6,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 7,
+          "shield": 38,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Gwenno",
+          "gender": 12,
+          "class": 66,
+          "status": 71,
+          "strength": 17,
+          "dexterity": 24,
+          "intelligence": 19,
+          "currentMp": 9,
+          "currentHp": 174,
+          "maximumHp": 180,
+          "experience": 2143,
+          "level": 6,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 7,
+          "shield": 38,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Jaana",
+          "gender": 12,
+          "class": 77,
+          "status": 71,
+          "strength": 16,
+          "dexterity": 20,
+          "intelligence": 23,
+          "currentMp": 23,
+          "currentHp": 175,
+          "maximumHp": 180,
+          "experience": 1862,
+          "level": 6,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 14,
+          "weapon": 38,
+          "shield": 7,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 0
+        },
+        {
+          "occupied": true,
+          "name": "Mariah",
+          "gender": 12,
+          "class": 77,
+          "status": 71,
+          "strength": 12,
+          "dexterity": 20,
+          "intelligence": 22,
+          "currentMp": 22,
+          "currentHp": 2,
+          "maximumHp": 90,
+          "experience": 278,
+          "level": 3,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 255,
+          "armor": 9,
+          "weapon": 16,
+          "shield": 255,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Dupre",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 22,
+          "dexterity": 18,
+          "intelligence": 16,
+          "currentMp": 0,
+          "currentHp": 90,
+          "maximumHp": 90,
+          "experience": 268,
+          "level": 3,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 12,
+          "weapon": 33,
+          "shield": 255,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Katrina",
+          "gender": 12,
+          "class": 70,
+          "status": 71,
+          "strength": 22,
+          "dexterity": 21,
+          "intelligence": 18,
+          "currentMp": 0,
+          "currentHp": 150,
+          "maximumHp": 150,
+          "experience": 800,
+          "level": 5,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 255,
+          "armor": 9,
+          "weapon": 18,
+          "shield": 255,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Sentri",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 23,
+          "dexterity": 20,
+          "intelligence": 19,
+          "currentMp": 0,
+          "currentHp": 60,
+          "maximumHp": 60,
+          "experience": 101,
+          "level": 2,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 0,
+          "armor": 10,
+          "weapon": 23,
+          "shield": 4,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Geoffrey",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 24,
+          "dexterity": 21,
+          "intelligence": 16,
+          "currentMp": 0,
+          "currentHp": 90,
+          "maximumHp": 90,
+          "experience": 260,
+          "level": 3,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 3,
+          "armor": 12,
+          "weapon": 24,
+          "shield": 6,
+          "ring": 255,
+          "amulet": 46,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Johne",
+          "gender": 11,
+          "class": 77,
+          "status": 71,
+          "strength": 14,
+          "dexterity": 20,
+          "intelligence": 24,
+          "currentMp": 24,
+          "currentHp": 90,
+          "maximumHp": 90,
+          "experience": 206,
+          "level": 3,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 255,
+          "armor": 10,
+          "weapon": 16,
+          "shield": 255,
+          "ring": 255,
+          "amulet": 45,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Gorn",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 21,
+          "dexterity": 19,
+          "intelligence": 15,
+          "currentMp": 0,
+          "currentHp": 60,
+          "maximumHp": 60,
+          "experience": 134,
+          "level": 2,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 12,
+          "weapon": 18,
+          "shield": 5,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Maxwell",
+          "gender": 11,
+          "class": 70,
+          "status": 71,
+          "strength": 21,
+          "dexterity": 19,
+          "intelligence": 14,
+          "currentMp": 0,
+          "currentHp": 30,
+          "maximumHp": 30,
+          "experience": 42,
+          "level": 1,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 1,
+          "armor": 10,
+          "weapon": 22,
+          "shield": 4,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Toshi",
+          "gender": 11,
+          "class": 66,
+          "status": 71,
+          "strength": 17,
+          "dexterity": 21,
+          "intelligence": 16,
+          "currentMp": 8,
+          "currentHp": 30,
+          "maximumHp": 30,
+          "experience": 64,
+          "level": 1,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 255,
+          "armor": 9,
+          "weapon": 20,
+          "shield": 255,
+          "ring": 43,
+          "amulet": 255,
+          "partyMap": 255
+        },
+        {
+          "occupied": true,
+          "name": "Saduj",
+          "gender": 11,
+          "class": 66,
+          "status": 71,
+          "strength": 21,
+          "dexterity": 26,
+          "intelligence": 20,
+          "currentMp": 10,
+          "currentHp": 120,
+          "maximumHp": 120,
+          "experience": 541,
+          "level": 4,
+          "monthsAtInn": 255,
+          "armorClass": 7,
+          "helmet": 2,
+          "armor": 12,
+          "weapon": 25,
+          "shield": 255,
+          "ring": 255,
+          "amulet": 255,
+          "partyMap": 255
+        }
+      ],
+      "karma": 50,
+      "metNpcs": [],
+      "deadNpcs": []
+    },
+    "inventory": {
+      "food": 999,
+      "gold": 0,
+      "gems": 0,
+      "torches": 0,
+      "keys": 1,
+      "skullKeys": 0,
+      "equipment": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "spells": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "scrolls": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "potions": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "reagents": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "questItems": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "moonstones": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "world": {
+      "position": {
+        "location": 2,
+        "x": 15,
+        "y": 15,
+        "floor": 0
+      },
+      "lastLargeMapPosition": {
+        "location": 0,
+        "x": 0,
+        "y": 0,
+        "floor": 0
+      },
+      "calendar": {
+        "year": 140,
+        "month": 1,
+        "day": 23,
+        "hour": 12,
+        "minute": 0,
+        "turns": 0
+      },
+      "elapsedMs": 0,
+      "lastProcessedHour": 12,
+      "lastCamped": 0,
+      "lastWandererMonth": 0,
+      "combatSequence": 0,
+      "isSailing": false
+    },
+    "progression": {
+      "searchFound": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "skullKeysFoundDay": 0,
+      "reagentCachesFoundDay": [
+        0,
+        0,
+        0
+      ],
+      "moonstones": [
+        {
+          "x": 224,
+          "y": 133,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 96,
+          "y": 102,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 38,
+          "y": 224,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 50,
+          "y": 37,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 166,
+          "y": 19,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 104,
+          "y": 194,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 23,
+          "y": 126,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        },
+        {
+          "x": 187,
+          "y": 167,
+          "map": 0,
+          "level": 0,
+          "state": 0,
+          "isFound": false
+        }
+      ],
+      "shrines": [
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        },
+        {
+          "active": false,
+          "completed": false,
+          "ruined": false
+        }
+      ],
+      "dungeons": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "dungeonRooms": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "shadowlords": {
+        "alive": [
+          true,
+          true,
+          true
+        ],
+        "townAssignments": [
+          0,
+          0,
+          0
+        ],
+        "lastCalled": -1,
+        "summoned": false,
+        "automaticPresence": -1
+      },
+      "recipes": [
+        {
+          "known": true,
+          "mask": 1
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": true,
+          "mask": 6
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        },
+        {
+          "known": false,
+          "mask": 0
+        }
+      ],
+      "hmsCapeActivated": false
+    },
+    "effects": {
+      "durationType": 0,
+      "durationTurns": 0,
+      "durationToggleOnly": false,
+      "magicLightMinutesRemaining": 0,
+      "carriedTorchMinutesRemaining": 0,
+      "quicknessWorldActorSkip": false,
+      "townMountedActorSkip": false,
+      "townQuicknessActorSkip": false,
+      "outdoorMountedActorSkip": false,
+      "amulet": {
+        "active": false,
+        "turns": 0
+      },
+      "crown": {
+        "active": false,
+        "turns": 0
+      },
+      "badge": {
+        "active": false,
+        "turns": 0
+      },
+      "drunk": 0,
+      "smashed": 0
+    },
+    "wind": {
+      "direction": 0,
+      "updateCounter": 0,
+      "nextTickMs": 55
+    },
+    "random": {
+      "seed": 1,
+      "sourceCalls": 0
+    },
+    "continuation": {
+      "activePlayerIndex": -1,
+      "isCriminal": false,
+      "hmsCapeAutomaticWaitActorSkip": false,
+      "beggarKarmaCounter": 255,
+      "openingCampaignEncounterReduction": false,
+      "combatActionTimeCounter": 5
+    },
+    "redux": {
+      "dungeonDiscoveries": [],
+      "playerKnowledge": [],
+      "questJournal": [],
+      "lordBritishPassageOpen": true
+    },
+    "presentation": {
+      "history": "",
+      "visits": {
+        "revision": 0,
+        "changes": [],
+        "seen": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "lastConversation": {
+      "exchanges": null,
+      "truncated": false
+    },
+    "excerpts": null,
+    "dungeonJournal": [
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "known": false,
+        "wordUsed": false,
+        "sites": [
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          },
+          {
+            "seen": false,
+            "location": {
+              "map": 0,
+              "floor": 0,
+              "x": 0,
+              "y": 0
+            },
+            "open": false,
+            "observedAt": {
+              "known": false,
+              "time": {
+                "year": 0,
+                "month": 0,
+                "day": 0,
+                "hour": 0,
+                "minute": 0
+              }
+            },
+            "survey": {
+              "measured": false,
+              "flexible": false,
+              "location": {
+                "map": 0,
+                "floor": 0,
+                "x": 0,
+                "y": 0
+              },
+              "recordedAt": {
+                "known": false,
+                "time": {
+                  "year": 0,
+                  "month": 0,
+                  "day": 0,
+                  "hour": 0,
+                  "minute": 0
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "moonstoneJournal": [
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      },
+      {
+        "originalSiteRetired": false,
+        "known": false,
+        "firstSource": "",
+        "discoveredAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "siteKnown": false,
+        "site": {
+          "map": 0,
+          "floor": 0,
+          "x": 0,
+          "y": 0
+        },
+        "placed": false,
+        "lastContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        },
+        "observedAt": {
+          "known": false,
+          "time": {
+            "year": 0,
+            "month": 0,
+            "day": 0,
+            "hour": 0,
+            "minute": 0
+          }
+        },
+        "survey": {
+          "measured": false,
+          "flexible": false,
+          "location": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "recordedAt": {
+            "known": false,
+            "time": {
+              "year": 0,
+              "month": 0,
+              "day": 0,
+              "hour": 0,
+              "minute": 0
+            }
+          }
+        },
+        "surveyContext": {
+          "source": "",
+          "observer": {
+            "map": 0,
+            "floor": 0,
+            "x": 0,
+            "y": 0
+          },
+          "hasSextant": false
+        }
+      }
+    ],
+    "atlasLandmarks": null,
+    "dungeon": null,
+    "partyVehicle": null,
+    "mapUnits": [
+      {
+        "world": 0,
+        "controllerOrder": 0,
+        "kind": "npc",
+        "referenceId": 1,
+        "npcNum": 1,
+        "position": {
+          "location": 2,
+          "x": 5,
+          "y": 18,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 1,
+        "kind": "npc",
+        "referenceId": 2,
+        "npcNum": 2,
+        "position": {
+          "location": 2,
+          "x": 15,
+          "y": 2,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 1,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 2,
+        "kind": "npc",
+        "referenceId": 3,
+        "npcNum": 3,
+        "position": {
+          "location": 2,
+          "x": 2,
+          "y": 3,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 1,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 3,
+        "kind": "npc",
+        "referenceId": 4,
+        "npcNum": 4,
+        "position": {
+          "location": 2,
+          "x": 8,
+          "y": 1,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 1,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 4,
+        "kind": "npc",
+        "referenceId": 5,
+        "npcNum": 5,
+        "position": {
+          "location": 2,
+          "x": 5,
+          "y": 4,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 5,
+        "kind": "npc",
+        "referenceId": 6,
+        "npcNum": 6,
+        "position": {
+          "location": 2,
+          "x": 23,
+          "y": 16,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 6,
+        "kind": "npc",
+        "referenceId": 7,
+        "npcNum": 7,
+        "position": {
+          "location": 2,
+          "x": 23,
+          "y": 15,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 7,
+        "kind": "npc",
+        "referenceId": 8,
+        "npcNum": 8,
+        "position": {
+          "location": 2,
+          "x": 5,
+          "y": 21,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 8,
+        "kind": "npc",
+        "referenceId": 9,
+        "npcNum": 9,
+        "position": {
+          "location": 2,
+          "x": 4,
+          "y": 27,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 9,
+        "kind": "npc",
+        "referenceId": 10,
+        "npcNum": 10,
+        "position": {
+          "location": 2,
+          "x": 4,
+          "y": 30,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 10,
+        "kind": "npc",
+        "referenceId": 11,
+        "npcNum": 11,
+        "position": {
+          "location": 2,
+          "x": 1,
+          "y": 7,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 11,
+        "kind": "npc",
+        "referenceId": 12,
+        "npcNum": 12,
+        "position": {
+          "location": 2,
+          "x": 15,
+          "y": 16,
+          "floor": 0
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 1,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 12,
+        "kind": "npc",
+        "referenceId": 13,
+        "npcNum": 13,
+        "position": {
+          "location": 2,
+          "x": 21,
+          "y": 6,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      },
+      {
+        "world": 0,
+        "controllerOrder": 13,
+        "kind": "npc",
+        "referenceId": 14,
+        "npcNum": 14,
+        "position": {
+          "location": 2,
+          "x": 24,
+          "y": 8,
+          "floor": 1
+        },
+        "visible": true,
+        "skipNextTurn": false,
+        "wantsToAutoTalk": false,
+        "overriddenAi": -1,
+        "aiOverrideProvenance": "none",
+        "arrivedScheduleSlot": 0,
+        "currentPath": null,
+        "vehicle": null,
+        "enemyVariant": "",
+        "enemyCurrentHp": 0,
+        "enemyFacing": 0,
+        "shadowlord": null,
+        "surfaceChestAssessment": 0,
+        "surfaceChestAuthored": false,
+        "surfaceChestTransient": false
+      }
+    ],
+    "itemStacks": [],
+    "mapMutations": [],
+    "openDoor": null,
+    "basementChestHistory": [
+      {
+        "lastOpened": null
+      },
+      {
+        "lastOpened": null
+      },
+      {
+        "lastOpened": null
+      }
+    ],
+    "atlasNotes": {
+      "lastId": 0,
+      "records": null
+    },
+    "atlasFleet": {
+      "lastId": 0
+    },
+    "codexRevelationComplete": false
+  }
+}

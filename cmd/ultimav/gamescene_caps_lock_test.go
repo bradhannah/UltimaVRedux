@@ -51,15 +51,21 @@ func TestCapsLockPlainLettersRetainCommandRouting(t *testing.T) {
 		for _, key := range []ebiten.Key{ebiten.KeyM, ebiten.KeyJ} {
 			t.Run(fmt.Sprintf("caps=%t/%s", caps, key), func(t *testing.T) {
 				scene, held, _, update := newReaderInputClockScene(t)
+				var prompts []string
+				show := scene.gameState.SystemCallbacks.Message.ShowCommandPrompt
+				scene.gameState.SystemCallbacks.Message.ShowCommandPrompt = func(prompt string) {
+					prompts = append(prompts, prompt)
+					show(prompt)
+				}
 				held[ebiten.KeyCapsLock], held[key] = caps, true
 				update()
 				require.Nil(t, scene.atlasSession)
 				require.Nil(t, scene.journalSession)
+				command := "Jimmy-"
 				if key == ebiten.KeyM {
-					require.Equal(t, "Mix Reagents", scene.debugMessage)
-				} else {
-					require.Equal(t, "Jimmy", scene.debugMessage)
+					command = "Mix Reagents"
 				}
+				require.Contains(t, prompts, command, "the plain letter still runs its command")
 			})
 		}
 	}

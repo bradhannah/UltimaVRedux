@@ -31,6 +31,7 @@ func TestSoundDiagnosticsOwnsInputAndCapturesOnlyOnRequest(t *testing.T) {
 	provider := &diagnosticsAudioStub{name: "first cue"}
 	dialog := newConfigurationDialogForTab(&sprites.PercentBasedPlacement{StartPercentX: 0.1, EndPercentX: 0.9, StartPercentY: 0.1, EndPercentY: 0.9},
 		newPresentationTestKeyboard(), func() {}, dialogConfiguration(&config.AudioConfiguration{}), provider, audioSettingsAudioTab)
+	dialog.ultimaConfig.DeveloperTools = true
 	staged := dialog.stagedAudio
 	pressAudioSettingsKey(dialog, ebiten.KeyD)
 	require.NotNil(t, dialog.audioReport)

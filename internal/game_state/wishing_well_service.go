@@ -67,7 +67,7 @@ func (g *GameState) ReviewWishingWell(wellPosition references.Position) (Wishing
 		CanAfford:    g.PartyState.Inventory.Gold.Get() > 0,
 	}
 	if !review.CanAfford {
-		review.Message = "Not enough gold!"
+		review.Message = "Thou hast not enough gold!"
 	}
 	review.Fingerprint = g.wishingWellFingerprint(review)
 

@@ -10,9 +10,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-// ActionEnterLargeMap handles entering buildings from the large map.
-// Deprecated callers needing only broad command acceptance may use this wrapper;
-// orchestration that depends on the destination must use ResolveEnterLargeMap.
+// Test support: fixtures and seams that tests in other packages use. The
+// dead-code check treats this file as test support.
+
+// ActionEnterLargeMap reports only whether entering from the large map was
+// accepted. The game uses ResolveEnterLargeMap, which also names the destination.
 func (g *GameState) ActionEnterLargeMap() bool {
 	return g.ResolveEnterLargeMap().Accepted()
 }
@@ -20,7 +22,7 @@ func (g *GameState) ActionEnterLargeMap() bool {
 // Creating distinguishes a newly captured point from an existing-note edit.
 func (d *AtlasNoteDraft) Creating() bool { return d.creating }
 
-// ResetAllFoundStatus clears all found flags (useful for new games)
+// ResetAllFoundStatus clears all found flags, so a fixture starts with nothing found.
 func (aslm *AuthenticSearchLocationManager) ResetAllFoundStatus() {
 	aslm.objFound = [24]byte{}
 }
@@ -197,15 +199,6 @@ func (g *GameState) GetActiveMoongatePositions() []references.Position {
 	location := g.MapState.PlayerLocation
 
 	return g.moonstoneSystem.GetActiveMoongatePositions(location.Location, location.Floor)
-}
-
-// GetMoonstoneIndexForMoonPhase returns the moonstone index for given moon phase
-func (ms *MoonstoneSystem) GetMoonstoneIndexForMoonPhase(phase int) int {
-	if phase >= 0 && phase <= 7 {
-		return phase // Direct 1:1 mapping in original Ultima V
-	}
-
-	return 0 // Default to first moonstone
 }
 
 // SpawnShadowlordNPCAtPosition creates a Shadowlord enemy NPC at an explicit

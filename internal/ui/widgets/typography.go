@@ -27,8 +27,8 @@ const (
 // Line spacing multipliers for specific use cases
 const (
 	// MainScreenLineSpacingMultiplier is the line spacing ratio for mainscreen summaries
-	// (character_summary, provision_summary). Calculated from original values: 35/22 ≈ 1.59
-	// This provides extra spacing for readability in the compact main game display.
+	// (character_summary, provision_summary). It gives the compact main game display
+	// extra spacing for readability.
 	MainScreenLineSpacingMultiplier = 1.59
 )
 

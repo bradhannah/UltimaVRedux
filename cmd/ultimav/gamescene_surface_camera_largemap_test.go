@@ -15,11 +15,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func newLargeMapCameraTestScene(t *testing.T, floor references.FloorNumber, origin references.Position) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithFloor(floor).
 		WithPlayerAt(int(origin.X), int(origin.Y)).WithRandomSeed(469).WithSystemCallbacks().Build()
 	state.DebugOptions.MonsterGen = false

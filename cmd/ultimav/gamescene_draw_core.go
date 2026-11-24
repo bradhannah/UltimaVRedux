@@ -237,12 +237,13 @@ func (g *GameScene) Draw(screen *ebiten.Image) {
 	}
 
 	// draw the dialogs - but stacked on top of each other
-	// All MessageDialog instances are now managed via dialog stack (no persistent messageDialog)
+	// Dialogs live on the dialog stack.
 	g.drawDialogs(screen)
 
 	// Render the game scene debug info
 	if !isDungeon && !usesCinematicSplit && g.showRendererDiagnostics() {
-		ebitenutil.DebugPrint(screen, g.debugMessage)
+		pos := g.gameState.MapState.PlayerLocation.Position
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("%d, %d", pos.X, pos.Y))
 	}
 }
 
@@ -413,7 +414,6 @@ func (g *GameScene) drawMap(screen *ebiten.Image) {
 	// Draw map tiles without screen shake offset (handled at top level)
 	opts := &ebiten.DrawImageOptions{}
 	screen.DrawImage(g.unscaledMapImage, opts)
-	g.debugMessage = fmt.Sprintf("%d, %d", g.gameState.MapState.PlayerLocation.Position.X, g.gameState.MapState.PlayerLocation.Position.Y)
 }
 
 // applyLightTinting applies light source tinting to draw options for a given position.

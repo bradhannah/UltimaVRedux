@@ -727,3 +727,8 @@ func outputText(output *text.Output) string {
 
 	return output.GetOutputStr(false)
 }
+
+// GetScrollOffset returns the index of the first visible item.
+func (s *ScrollableListState) GetScrollOffset() int {
+	return s.scrollOffset
+}

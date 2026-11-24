@@ -7,12 +7,12 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,7 +59,7 @@ func TestQuickLoadPhysicalChordReplacesAllNormalMapBoundaries(t *testing.T) {
 }
 
 func TestQuickLoadUnderworldBoundary(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithFloor(-1).WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 	scene := newOwnedSurfaceCompletionTestScene(t, state)
 	initializeDungeonUpdateTestScene(scene, state)
@@ -214,6 +214,28 @@ func TestQuickLoadExtraModifiersNeverBecomeSave(t *testing.T) {
 			assert.Zero(t, scene.dialogStack.Count())
 		})
 	}
+}
+
+func TestShiftQIsTypedIntoATextFieldButReservedInPlay(t *testing.T) {
+	scene, held, _, _ := newRunicReferenceTestScene(t, references.Deceit)
+	press := func(keys ...ebiten.Key) bool {
+		clear(held)
+		scene.quickLoadChordHeld = false
+		for _, key := range keys {
+			held[key] = true
+		}
+		scene.captureQuickLoadRequest(scene.beginTransientCommandInputFrame())
+
+		return scene.quickLoadChordHeld
+	}
+	require.True(t, press(ebiten.KeyShiftLeft, ebiten.KeyQ), "in play a modified Q never becomes plain Q")
+
+	scene.dialogStack.PushModalDialog(widgets.NewSaveDescriptionEntryModal(widgets.SaveDescriptionEntryModalConfig{
+		Title: "Save", Prompt: "Description", Keyboard: scene.keyboard, MaxRunes: 22,
+		OnResult: func(string, bool) {},
+	}))
+	require.False(t, press(ebiten.KeyShiftLeft, ebiten.KeyQ), "a capital Q belongs to the text field")
+	require.True(t, press(ebiten.KeyControlLeft, ebiten.KeyShiftLeft, ebiten.KeyQ), "other chords stay reserved")
 }
 
 func TestQuickLoadBlockedChordCannotReviveAfterSecondaryOrModalCloses(t *testing.T) {

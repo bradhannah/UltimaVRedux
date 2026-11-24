@@ -59,15 +59,17 @@ func (g *GameState) ActionHoleUpLargeMap() bool {
 	if g.EventQueueManager.HasActiveWorkflows() {
 		return false
 	}
-	g.SystemCallbacks.Message.AddRowStr("Hole up & ")
-
 	// Ship repair check - must come BEFORE camping vehicle check
 	// Original Ultima V: original command rules check ship first
 	// Ship repair is separate from camping (quick 25-minute action, no guard/hours)
 	// See ref:CAMP-0005.
+	// The echo names what the command does here, as the original's does.
 	if g.isOnFrigate() {
+		g.SystemCallbacks.Message.ShowCommandPrompt("Hole up & repair...")
+
 		return g.ActionHoleUpRepairShip()
 	}
+	g.SystemCallbacks.Message.ShowCommandPrompt("Hole up & camp...")
 
 	return g.actionHoleUpLargeMap(DefaultCampingHours, NoGuardAssigned, false, false, true)
 }
@@ -123,16 +125,12 @@ func (g *GameState) actionHoleUpLargeMap(hours int, guardIndex int, forceWandere
 		g.SystemCallbacks.Flow.Rest.RequestCampDuration()
 	} else {
 		// Debug mode - execute camping directly with specified parameters
-		// Save current player location to return after camping
-		originalPlayerLocation := g.MapState.SavePlayerLocation()
-
-		// Load the camping combat map reference for authentic positions
-		campingMapRef, err := references.LoadCampingMap(g.GameConfig)
+		campingScene, err := g.NewSurfaceCampingScene(hours, guardIndex)
 		if err != nil {
-			// Startup validated the original data, so the camp map must load.
-			panic(fmt.Sprintf("GameState camping: loading camping map: %v", err))
+			g.ReportCampingCouldNotBegin(err)
+
+			return false
 		}
-		campingScene := camping.NewCampingSceneWithCombatRef(hours, guardIndex, originalPlayerLocation, campingMapRef)
 
 		// Create a temporary event queue for debug camping and add sequence to it
 		q := g.EventQueueManager.Workflow("camping_debug_workflow").
@@ -147,6 +145,25 @@ func (g *GameState) actionHoleUpLargeMap(hours int, guardIndex int, forceWandere
 	}
 
 	return true
+}
+
+// NewSurfaceCampingScene builds the camp scene for the party's current place,
+// which the party returns to afterwards. The camp map is read from the original
+// game data here, before anything about the camp is committed, so a missing or
+// damaged file comes back as an error.
+func (g *GameState) NewSurfaceCampingScene(hours, guardIndex int) (*camping.CampingScene, error) {
+	campingMapRef, err := references.LoadCampingMap(g.GameConfig)
+	if err != nil {
+		return nil, fmt.Errorf("preparing the camp: %w", err)
+	}
+
+	return camping.NewCampingSceneWithCombatRef(hours, guardIndex, g.MapState.SavePlayerLocation(), campingMapRef), nil
+}
+
+// ReportCampingCouldNotBegin logs why a camp could not be prepared and tells the player.
+func (g *GameState) ReportCampingCouldNotBegin(err error) {
+	logging.Errorf(logging.CategoryGameState, "Camping could not begin: %v", err)
+	g.SystemCallbacks.UI.ShowActionFeedback("Camping could not begin.", true)
 }
 
 // CampingState tracks the state of camping across Event Queue callbacks
@@ -254,8 +271,9 @@ func (g *GameState) addCampingSequenceToBuilder(
 	q.
 		Then(func() {
 			campingScene.StartCamping()
+			// NewSurfaceCampingScene read this same file moments ago.
 			if err := g.TransitionToCampingMap(); err != nil {
-				panic("Failed to transition to camping map - critical system error")
+				panic(fmt.Sprintf("GameState camping: the camp map stopped loading after the camp was prepared: %v", err))
 			}
 			g.SystemCallbacks.Screen.SetMessageDialogFadeDurations(WandererFadeAnimationMs, WandererFadeAnimationMs)
 			g.initializeCampingPartyRings(campingState)

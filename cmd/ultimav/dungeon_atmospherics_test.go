@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
 
@@ -336,7 +337,7 @@ func TestDrawDungeonGraffitiUsesInverseRunicCells(t *testing.T) {
 }
 
 func TestDungeonAtmosphericPlanningAndDrawingAreStableAndDoNotMutateState(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		WithRandomSeed(264).

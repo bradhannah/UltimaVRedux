@@ -53,7 +53,7 @@ func TestInnActionDialogRestAffordableAndUnaffordableAreConfirmable(t *testing.T
 		Keyboard: keyboard, Intent: poorIntent, IsKeyPressed: func(ebiten.Key) bool { return false },
 	})
 	body = compactInnText(dialog.window.flatText())
-	require.Contains(t, body, "Not enough gold. It costs 1234 and the party has 100.")
+	require.Contains(t, body, "Thou hast not enough gold. It costs 1234 and the party has 100.")
 	require.Contains(t, body, "The keeper turns the party out.")
 	require.NotContains(t, body, "will die")
 	require.Contains(t, compactInnText(dialog.GetFooterGuidance()), "[Enter] Rest anyway")
@@ -127,7 +127,7 @@ func TestInnActionDialogPickupShowsPoisonAndInsufficientGuardWarnings(t *testing
 		Keyboard: keyboard, Intent: guard, IsKeyPressed: func(ebiten.Key) bool { return false },
 	})
 	body = compactInnText(dialog.window.flatText())
-	require.Contains(t, body, "Not enough gold. It costs 4936 and the party has 4321.")
+	require.Contains(t, body, "Thou hast not enough gold. It costs 4936 and the party has 4321.")
 	require.Contains(t, body, "Asking anyway calls the guards.")
 	require.Contains(t, body, "[Enter] Pick Up anyway")
 	requireAmountWindowHoldsItsText(t, dialog.window, "pick up short")

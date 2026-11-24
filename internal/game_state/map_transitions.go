@@ -332,7 +332,6 @@ func (g *GameState) updateMapAfterFloorChange() {
 	case references.LargeMapType:
 		// Large maps: switch overworld/underworld authority and refresh floor-specific state.
 		g.CurrentNPCAIController = g.GetCurrentLargeMapNPCAIController()
-		g.RefreshQuestItemsOnMap()
 		g.UpdateLighthouseForLargeMap()
 		if currentMap := g.GetCurrentLayeredMap(); currentMap != nil {
 			currentMap.InvalidateLightSourceCache()

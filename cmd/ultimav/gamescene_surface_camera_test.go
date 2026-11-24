@@ -20,6 +20,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceCameraCurves(t *testing.T) {
@@ -50,7 +51,7 @@ func TestSurfaceCameraCurves(t *testing.T) {
 
 func newSurfaceCameraTestScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithPlayerAt(15, 15).
 		WithRandomSeed(469).WithSystemCallbacks().Build()
 	state.DebugOptions.MonsterGen = false

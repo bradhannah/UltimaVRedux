@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -262,7 +263,7 @@ func newSurfaceSearchActorScene(
 ) (*GameScene, *game_state.MockSystemCallbacks, references.Direction, uint64) {
 	t.Helper()
 	seed := surfaceSearchLowIntelligenceSeed(t)
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.LordBritishsCastle).
 		WithFloor(references.MainFloor).
 		WithRandomSeed(seed).
@@ -318,7 +319,7 @@ func surfaceSearchLowIntelligenceSeed(t *testing.T) uint64 {
 
 func newCharacterSelectionProfileScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

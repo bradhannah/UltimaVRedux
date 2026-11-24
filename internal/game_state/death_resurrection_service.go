@@ -6,6 +6,7 @@ import (
 	"hash"
 
 	"github.com/bradhannah/UltimaVRedux/internal/datetime"
+	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
@@ -110,6 +111,14 @@ func (g *GameState) CommitDeathResurrection(
 		})
 	}
 
+	// The original revives the party on foot: it resets the party object to the
+	// player shape. A ship must not follow the party into the castle, where a
+	// frigate under sail could neither move nor be exited ("Under sail!"). Horse
+	// and carpet stay as they are; both can be dismounted where the party wakes.
+	if vehicle := g.PartyVehicle.GetVehicleDetails().VehicleType; vehicle == references.FrigateVehicle ||
+		vehicle == references.SkiffVehicle {
+		g.PartyVehicle = map_units.NewNPCFriendlyVehiceNoVehicle()
+	}
 	g.TransitionToLocation(
 		g.GetResurrectionLocation(),
 		g.GetResurrectionFloor(),

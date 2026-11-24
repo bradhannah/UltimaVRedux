@@ -19,6 +19,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCombatPartySpriteIndexUsesOriginalInvisiblePlayerTile(t *testing.T) {
@@ -36,7 +37,7 @@ func TestCombatConditionPlainTextExplainsQuicknessSuppression(t *testing.T) {
 }
 
 func TestCombatEventAudioRequestsOneResultCueAndSkipsAreaEvents(t *testing.T) {
-	gs, callbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().Build()
 	require.NoError(t, gs.TransitionToCombatMap(0, references.BritanniaCombatTerritory, game_state.CombatEntryNorth))
 	scene := &GameScene{gameState: gs}

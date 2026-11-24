@@ -6,7 +6,7 @@ import (
 )
 
 // Test support: fixtures and seams that tests in other packages use. The
-// dead-code check treats this file as test support (workshop deadcode config).
+// dead-code check treats this file as test support.
 
 // NewShrineMap creates a new shrine map with default positions
 func NewShrineMap() *Map {

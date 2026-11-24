@@ -26,7 +26,7 @@ const (
 	armsShopMaximumVisibleRows = 7
 	armsShopMinimumInset       = 4
 	armsShopInsetDivisor       = 64
-	armsShopLineSpacing        = 1.05
+	armsShopLineSpacing        = 1.06
 	armsShopMinimumTextChars   = 8
 	armsShopDetailLines        = 4
 	armsShopCellInsetUnits     = 2
@@ -442,7 +442,7 @@ func (d *ArmsShopDialog) ApplyTerminalRefusal(display ArmsTradeResultDisplay) {
 
 // ApplySessionError disables trading until the shop is dismissed.
 func (d *ArmsShopDialog) ApplySessionError(message string) {
-	validateArmsFinalizedText("session error", message)
+	requireFinalizedText("Arms widgets", "session error", message)
 	d.latestExchange = message
 	d.receiptText = ""
 	d.clearAwaiting()
@@ -1407,20 +1407,14 @@ func validateArmsBuyRequestQuantity(quote game_state.ArmsBuyQuote, quantity uint
 }
 
 func validateArmsShopProse(prose ArmsShopDialogProse) {
-	validateArmsFinalizedText("greeting", prose.Greeting)
-	validateArmsFinalizedText("buy prompt", prose.BuyPrompt)
-	validateArmsFinalizedText("sell prompt", prose.SellPrompt)
-	validateArmsFinalizedText("capacity refusal", prose.CapacityRefusal)
-	validateArmsFinalizedText("funds refusal", prose.FundsRefusal)
+	requireFinalizedText("Arms widgets", "greeting", prose.Greeting)
+	requireFinalizedText("Arms widgets", "buy prompt", prose.BuyPrompt)
+	requireFinalizedText("Arms widgets", "sell prompt", prose.SellPrompt)
+	requireFinalizedText("Arms widgets", "capacity refusal", prose.CapacityRefusal)
+	requireFinalizedText("Arms widgets", "funds refusal", prose.FundsRefusal)
 }
 
 func validateArmsResultDisplay(display ArmsTradeResultDisplay) {
-	validateArmsFinalizedText("merchant exchange", display.MerchantExchange)
-	validateArmsFinalizedText("receipt", display.Receipt)
-}
-
-func validateArmsFinalizedText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("Arms widgets: finalized " + label + " is required")
-	}
+	requireFinalizedText("Arms widgets", "merchant exchange", display.MerchantExchange)
+	requireFinalizedText("Arms widgets", "receipt", display.Receipt)
 }

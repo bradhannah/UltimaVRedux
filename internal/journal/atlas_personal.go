@@ -94,7 +94,7 @@ func ValidateAtlasNoteText(label, description string) error {
 	if strings.TrimSpace(label) == "" || strings.TrimSpace(label) != label ||
 		utf8.RuneCountInString(label) > MaxAtlasNoteLabelRunes ||
 		utf8.RuneCountInString(description) > MaxAtlasNoteDescriptionRunes {
-		return fmt.Errorf("%w: label required (1-32 characters); description at most 500", ErrInvalidAtlasPersonal)
+		return fmt.Errorf("%w: the map label needs 1 to 32 letters; the description holds 500", ErrInvalidAtlasPersonal)
 	}
 	for field, value := range []string{label, description} {
 		for _, r := range value {
@@ -102,7 +102,7 @@ func ValidateAtlasNoteText(label, description string) error {
 				continue
 			}
 			if r < ' ' || r > '~' {
-				return fmt.Errorf("%w: use printable game-font characters", ErrInvalidAtlasPersonal)
+				return fmt.Errorf("%w: use only letters the game can show", ErrInvalidAtlasPersonal)
 			}
 		}
 	}

@@ -50,25 +50,13 @@ type windSystemCallbacksAdapter struct {
 }
 
 func (w *windSystemCallbacksAdapter) ShowWindUI(_ environment.WindDirection) {
-	// NOTE: The original Ultima V does not display a message when the wind changes,
-	// so this is commented out to match that behavior.
-	// If you want to enable it, uncomment the following lines.
-
-	// if w.systemCallbacks != nil && w.systemCallbacks.Message.AddRowStr != nil {
-	//     w.systemCallbacks.Message.AddRowStr(direction.GetUIString())
-	// }
+	// The original Ultima V shows no message when the wind changes.
 }
 
 func (w *windSystemCallbacksAdapter) AddRowStr(message string) {
 	if w.systemCallbacks != nil && w.systemCallbacks.Message.AddRowStr != nil {
 		w.systemCallbacks.Message.AddRowStr(message)
 	}
-}
-
-// logEnvironmentalHazard provides debug logging for environmental hazard events
-func (g *GameState) logEnvironmentalHazard(_ environment.HazardResult) {
-	// This could be expanded for more detailed logging if needed
-	// For now, the SystemCallbacks already handle user-facing messages
 }
 
 type playerUpdateStatusCache struct {
@@ -181,7 +169,6 @@ func (g *GameState) ProcessEnvironmentalHazardsOnTurnAdvancement() {
 		return
 	}
 
-	g.logEnvironmentalHazard(hazardResult)
 	if hazardResult.Type == environment.PoisonSwamp && len(hazardResult.Affected) > 0 {
 		g.SystemCallbacks.UI.ShowTransientIcon(TransientIconPoisonOnset)
 	}

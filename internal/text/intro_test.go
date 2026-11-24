@@ -55,7 +55,7 @@ func TestIntroMenuTreeKeepsSevenTopLevelRows(t *testing.T) {
 	}
 	wantChildren := map[string][]string{
 		"New Game":  {"Create New Character", "Import from Legacy"},
-		"Configure": {"Display", "Audio", "Gameplay", "Set Data Directory"},
+		"Configure": {"Display", "Audio", "Gameplay", "Set Game Files"},
 	}
 	for _, choice := range IntroChoices {
 		want, isParent := wantChildren[choice.Label]
@@ -137,7 +137,7 @@ func TestIntroSubmenuChildrenFollowTheOpenParent(t *testing.T) {
 	}
 	configure := IntroMenuState{Selection: 3, Enabled: nil, SubmenuOpen: true, SubmenuSelection: 1}
 	if children := introSubmenuChildren(configure); len(children) != 4 || children[2] != "Gameplay" {
-		t.Fatalf("Configure children = %v, want Display, Audio, Gameplay, Set Data Directory", children)
+		t.Fatalf("Configure children = %v, want Display, Audio, Gameplay, Set Game Files", children)
 	}
 	leaf := IntroMenuState{Selection: 0, Enabled: nil, SubmenuOpen: true, SubmenuSelection: 0}
 	if children := introSubmenuChildren(leaf); len(children) != 0 {

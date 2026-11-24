@@ -556,14 +556,14 @@ func (d *QuestJournalDialog) calculateLayout() {
 	d.calculateTabs()
 	d.rebuildMoonstoneOutputs()
 
-	d.titleOutput.SetMaxCharsPerLine(len("Quest Journal"))
+	d.titleOutput.SetMaxCharsPerLine(len("Journal"))
 	d.tabOutput.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(d.layout.tabRects[0].Dx())))
 	d.footerOutput.SetMaxCharsPerLine(max(1, d.font.CharsForWidth(d.footerContentRect().Dx())))
 }
 
 func (d *QuestJournalDialog) drawHeader(screen *ebiten.Image) {
 	d.titleOutput.Reset()
-	d.titleOutput.AppendLine().WithAlignment(etext.AlignCenter).Text("Quest Journal", DialogHeaderColor).Done()
+	d.titleOutput.AppendLine().WithAlignment(etext.AlignCenter).Text("Journal", DialogHeaderColor).Done()
 	d.titleOutput.DrawPanelContent(screen, d.layout.titleRect.Min, d.layout.titleRect.Dx(), etext.AlignCenter)
 
 	if d.notesOnly() {

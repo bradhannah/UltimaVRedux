@@ -15,10 +15,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestProductionCastPathCreatesAndOwnsSpellCastingDialog(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -70,7 +71,7 @@ func TestProductionCastPathCreatesAndOwnsSpellCastingDialog(t *testing.T) {
 }
 
 func TestProductionKeyboardCastConsumesResourcesAndExactlyOneMinute(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -431,7 +432,7 @@ func TestProductionVasRelPorPhaseWorkflowCommitsOnlyValidSelection(t *testing.T)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, mock := game_state.NewIntegrationTestBuilder(t).
+			state, mock := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(10, 10).
 				WithSystemCallbacks().
@@ -491,7 +492,7 @@ func TestProductionVasRelPorPhaseWorkflowCommitsOnlyValidSelection(t *testing.T)
 }
 
 func TestProductionCastAbsorptionUsesValidationFeedbackWithoutConsumption(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Stonegate).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -520,7 +521,7 @@ func TestProductionCastAbsorptionUsesValidationFeedbackWithoutConsumption(t *tes
 }
 
 func TestSpellCapabilityDistinguishesClassFromCurrentMP(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -564,7 +565,7 @@ func TestCastEligibilityFailuresUseTemporaryOverlay(t *testing.T) {
 
 		scene.smallMapInputHandler(ebiten.KeyC)
 		overlay := waitForTimedOverlay(t, scene)
-		assert.Equal(t, avatar.GetNameAsString()+" has no M.P. remaining!", overlay.GetMessage())
+		assert.Equal(t, avatar.GetNameAsString()+" has no MP remaining!", overlay.GetMessage())
 		assertTemporaryCastOverlayDismisses(t, scene)
 		drainProductionCastWorkflow(t, scene)
 		assert.False(t, scene.surfaceSpellWorkflowOwnsCycle)
@@ -573,7 +574,7 @@ func TestCastEligibilityFailuresUseTemporaryOverlay(t *testing.T) {
 
 func newCastFailureTestScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().

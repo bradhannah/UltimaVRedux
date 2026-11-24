@@ -10,12 +10,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 // TestCombatVisibility_IgnoresExplorationLighting prevents dungeon combatants
 // spawning outside a fixed center light pool from being hidden.
 func TestCombatVisibility_IgnoresExplorationLighting(t *testing.T) {
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -32,7 +33,7 @@ func TestCombatVisibility_IgnoresExplorationLighting(t *testing.T) {
 }
 
 func TestCombatVisibility_DisablesLightTinting(t *testing.T) {
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -55,7 +56,7 @@ func TestCombatVisibility_DisablesLightTinting(t *testing.T) {
 }
 
 func TestDuskAmbientTintDoesNotChangeVisibilityLight(t *testing.T) {
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

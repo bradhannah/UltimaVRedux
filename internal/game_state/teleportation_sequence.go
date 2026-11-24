@@ -89,9 +89,9 @@ func (gs *GameState) buildTeleportationSequence(
 				gs.SystemCallbacks.Visual.StabilizeTeleportationDestinationRenderer(destination)
 				gs.SystemCallbacks.Screen.UpdateDisplay()
 				if destination.Location == references.SkaraBrae {
-					gs.SystemCallbacks.Message.AddRowStr("The moongate whisks you to the ruins of Skara Brae!")
+					gs.SystemCallbacks.Message.AddRowStr("The moongate whisks thee to the ruins of Skara Brae!")
 				} else {
-					gs.SystemCallbacks.Message.AddRowStr("The moongate whisks you away!")
+					gs.SystemCallbacks.Message.AddRowStr("The moongate whisks thee away!")
 				}
 
 				// Keep dissolve and fade at maximum during teleportation

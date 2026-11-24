@@ -3,6 +3,9 @@ package extractor
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -371,4 +374,18 @@ func questionRecord(parts ...[]byte) []byte {
 	}
 
 	return append(record, questionMarker, lastQuestionID, recordEndByte)
+}
+
+// A lowercase copy of the original must work on case-sensitive file systems.
+func TestReadInputsAcceptsLowercaseFileNames(t *testing.T) {
+	t.Parallel()
+
+	directory := t.TempDir()
+	for _, filename := range sourceFilenames() {
+		require.NoError(t, os.WriteFile(filepath.Join(directory, strings.ToLower(filename)), []byte{1}, 0o600))
+	}
+
+	inputs, _, err := readInputs(directory)
+	require.NoError(t, err)
+	assert.Len(t, inputs, len(sourceFilenames()))
 }

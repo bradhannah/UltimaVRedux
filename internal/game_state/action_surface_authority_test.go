@@ -62,7 +62,7 @@ func TestSmallMapChestJimmyOpenSharePersistentAuthority(t *testing.T) {
 	chestNumber := chest.MapUnitDetails().NPCNum
 	state.PartyState.Inventory.Provisions.Keys.Set(2)
 	state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
-	state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+	setJimmyOutcome(state, true)
 	callbacks.Reset()
 
 	require.True(t, state.ActionJimmySmallMap(direction))
@@ -178,13 +178,12 @@ func TestDirectSurfaceActionsUseActivePoisonedCharacter(t *testing.T) {
 			}
 			active := state.PartyState.GetCharacter(1)
 			require.True(t, state.SetActivePlayer(1))
-			var selected *party_state.PlayerCharacter
 			if test.jimmy {
 				state.PartyState.Inventory.Provisions.Keys.Set(2)
-				state.jimmySuccessForTesting = func(character *party_state.PlayerCharacter) bool {
-					selected = character
-					return true
-				}
+				// Only the active member can pick this lock, so an unlocked chest
+				// shows who made the attempt.
+				setJimmyOutcome(state, false)
+				active.Dexterity = jimmyAlwaysSucceeds
 			} else {
 				state.SetRandomSeed(findDungeonTrapSeed(t, state, TrapAcid))
 			}
@@ -193,7 +192,6 @@ func TestDirectSurfaceActionsUseActivePoisonedCharacter(t *testing.T) {
 			require.True(t, test.action(state, direction))
 
 			if test.jimmy {
-				assert.Same(t, active, selected)
 				assert.False(t, chest.SurfaceChestLocked())
 				assert.Equal(t, uint16(2), state.PartyState.Inventory.Provisions.Keys.Get())
 			} else {
@@ -322,7 +320,7 @@ func TestSmallMapChestJimmyFailureAndNoKeyDoNotSplitState(t *testing.T) {
 			chest.RestoreSurfaceChestNumber(number)
 			state.PartyState.Inventory.Provisions.Keys.Set(test.keys)
 			state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
-			state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return test.succeeds }
+			setJimmyOutcome(state, test.succeeds)
 			callbacks.Reset()
 
 			assert.False(t, state.ActionJimmySmallMap(direction))
@@ -343,7 +341,7 @@ func TestSmallMapChestTileWithoutObjectAuthorityRejects(t *testing.T) {
 	state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapOverrideLayer, target, indexes.Chest)
 	state.PartyState.Inventory.Provisions.Keys.Set(2)
 	state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
-	state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+	setJimmyOutcome(state, true)
 	callbacks.Reset()
 
 	assert.False(t, state.ActionJimmySmallMap(references.Up))
@@ -389,7 +387,7 @@ func TestLargeMapJimmyUsesLargeMapAuthority(t *testing.T) {
 			smallMap.SetTileByLayer(map_state.MapOverrideLayer, &smallTarget, indexes.LockedDoorView)
 			state.PartyState.Inventory.Provisions.Keys.Set(test.keys)
 			state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
-			state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return test.succeeds }
+			setJimmyOutcome(state, test.succeeds)
 			callbacks.Reset()
 
 			assert.Equal(t, test.wantSuccess, state.ActionJimmyLargeMap(references.Right))
@@ -413,7 +411,7 @@ func TestLargeMapJimmyMutationRoundTrips(t *testing.T) {
 	state.GetCurrentLayeredMap().SetTileByLayer(map_state.MapOverrideLayer, target, indexes.LockedDoor)
 	state.PartyState.Inventory.Provisions.Keys.Set(2)
 	state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
-	state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+	setJimmyOutcome(state, true)
 	require.True(t, state.ActionJimmyLargeMap(references.Left))
 
 	restored := roundTripSaveSnapshot(t, state)

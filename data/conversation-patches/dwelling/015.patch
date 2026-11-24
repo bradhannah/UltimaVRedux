@@ -7,7 +7,7 @@
 +++ b/dwelling/015.yaml
 @@ -1,4 +1,5 @@
  schema: ultima5redux.conversation/v1
-+# REDUX DEVIATION: DWELLING.TLK 15 has a missing affirmative key. Repair it and link the existing coin story after recognition rather than requiring keyword guesses.
++# REDUX DEVIATION: DWELLING.TLK 15 has a missing affirmative key. Repair it and link the existing coin story after recognition rather than requiring keyword guesses. See ref:TALK-0006.
  protocol: ultima5
  id: original.dwelling.015
  origin:

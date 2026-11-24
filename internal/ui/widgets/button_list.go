@@ -12,7 +12,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
-	"github.com/bradhannah/UltimaVRedux/pkg/helpers"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
@@ -294,7 +293,7 @@ func (b *ButtonListModal) GoUp() {
 	if b.currentSelectionIndex == 0 {
 		b.currentSelectionIndex = len(b.items) - 1
 	} else {
-		b.currentSelectionIndex = helpers.Max(b.currentSelectionIndex-1, 0)
+		b.currentSelectionIndex = max(b.currentSelectionIndex-1, 0)
 	}
 }
 

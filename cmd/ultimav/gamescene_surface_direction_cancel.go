@@ -31,6 +31,7 @@ func (g *GameScene) cancelSurfaceDirectionInput() bool {
 	}
 	// REDUX DEVIATION: CMD-0003: original direction input excludes Escape.
 	// Redux lets an accidental, uncommitted surface command be abandoned for free.
+	// Talk's direction prompt uses this too; see ref:TALK-0005.
 	g.appendToCurrentRowStr("Cancelled")
 	g.secondaryKeyState = PrimaryInput
 	// Registration consumes Escape through release without delaying the next key.

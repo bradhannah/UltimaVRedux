@@ -12,10 +12,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDebugHoleUpRejectsStaleRosterAndQueuesWithoutPreStartSceneMutation(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithPlayerAt(100, 100).
 		WithSystemCallbacks().
 		Build()
@@ -47,7 +48,7 @@ func TestDebugHoleUpRejectsStaleRosterAndQueuesWithoutPreStartSceneMutation(t *t
 }
 
 func TestDebugHoleUpValidatesCallbacksBeforeQueueMutation(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
 	state.SystemCallbacks.Screen.CreateAndPushMessageDialog = nil
 	scene := &GameScene{gameState: state}
 	result := scene.ExecuteDebugCommand(debugging.Request{CommandID: debugging.CommandTestHoleUp, Arguments: map[string]json.RawMessage{
@@ -61,7 +62,7 @@ func TestDebugHoleUpValidatesCallbacksBeforeQueueMutation(t *testing.T) {
 }
 
 func TestDebugSearchQueuesMapAwareProductionAction(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	result := scene.ExecuteDebugCommand(debugging.Request{CommandID: debugging.CommandTestSearch, Arguments: map[string]json.RawMessage{
 		"direction": json.RawMessage(`"right"`),
@@ -78,7 +79,7 @@ func TestDebugSearchQueuesMapAwareProductionAction(t *testing.T) {
 }
 
 func TestDebugMoongateTravelUsesReviewedRouteAndDefersEffects(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(224, 133).
 		WithSystemCallbacks().
@@ -178,7 +179,7 @@ func TestDebugMoongateTravelHandsOffSpiritualityRouteAndRestoresSourceOnCancel(t
 }
 
 func TestDebugMoongateTravelRejectsStaleSourceWithoutMutation(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithPlayerAt(100, 100).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	callbacks.Reset()
 	result := scene.ExecuteDebugCommand(debugging.Request{CommandID: debugging.CommandMoongateTravel, Arguments: map[string]json.RawMessage{
@@ -193,7 +194,7 @@ func TestDebugMoongateTravelRejectsStaleSourceWithoutMutation(t *testing.T) {
 }
 
 func TestDebugMoongateTravelRejectsStaleSpiritualityRouteAtBoundary(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(224, 133).
 		WithSystemCallbacks().
@@ -225,7 +226,7 @@ func TestDebugMoongateTravelRejectsStaleSpiritualityRouteAtBoundary(t *testing.T
 }
 
 func TestDebugMoongateTravelRequiresDisplayRefreshBeforeQueueMutation(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(224, 133).
 		WithSystemCallbacks().

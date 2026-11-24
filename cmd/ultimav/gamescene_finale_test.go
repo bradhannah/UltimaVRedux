@@ -21,6 +21,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 const (
@@ -334,7 +335,7 @@ func TestFinaleQuestionTextSeparatesSourceReplyPrompt(t *testing.T) {
 }
 
 func TestFinaleActorDepartureFizzlesAtMoongate(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -407,7 +408,7 @@ func TestFinaleCertificateAcknowledgementReturnsToMainMenu(t *testing.T) {
 }
 
 func TestFinaleCancellationCleansPresentationOwnedState(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -443,7 +444,7 @@ func TestFinaleCancellationCleansPresentationOwnedState(t *testing.T) {
 
 func newLordBritishFinaleWorkflowTestScene(t *testing.T, hasBox bool) *GameScene {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Doom).
 		WithFloor(7).
 		WithPlayerAt(5, 7).

@@ -18,6 +18,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type escapeMenuCaptureScene struct {
@@ -49,7 +50,7 @@ func TestEscapeMenuDeparturePromptsOfferSaveChoicesAndCancelBackToMenu(t *testin
 		withoutLabel string
 	}{
 		{name: "main menu", buttonIndex: 4, withoutLabel: "Main Menu Without Saving"},
-		{name: "application", buttonIndex: 5, withoutLabel: "Exit Without Save"},
+		{name: "application", buttonIndex: 5, withoutLabel: "Exit Without Saving"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			scene := newEscapeMenuTestScene()
@@ -436,7 +437,7 @@ func TestEscapeMenuSaveWritesEmptyDirectlyAndDisablesUnsafeSlots(t *testing.T) {
 func TestEscapeMenuSaveRemovesBrowserBeforeRealGameSceneCapture(t *testing.T) {
 	for _, status := range []player_save.SlotStatus{player_save.SlotEmpty, player_save.SlotReady} {
 		t.Run(string(status), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(100, 100).
 				WithSystemCallbacks().

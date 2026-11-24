@@ -4,17 +4,17 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEbExcerptAttributionWithoutNameQuestion(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 		WithRandomSeed(42).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state, keyboard: input.NewKeyboardWithKeyStateSource(-1, noSceneTestKeyHeld),
 		activePlaythrough: playthroughMetadata{id: "0123456789abcdef0123456789abcdef"}}

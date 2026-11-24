@@ -1,7 +1,7 @@
 package sprites
 
 // Test support: fixtures and seams that tests in other packages use. The
-// dead-code check treats this file as test support (workshop deadcode config).
+// dead-code check treats this file as test support.
 
 // ClearBorderCache retires shared frame references between independent native
 // scene fixtures. Production scenes share the application-lifetime cache.

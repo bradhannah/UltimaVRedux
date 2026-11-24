@@ -11,7 +11,7 @@ import (
 const lightSourceCacheGridSize = 5
 
 // Test support: fixtures and seams that tests in other packages use. The
-// dead-code check treats this file as test support (workshop deadcode config).
+// dead-code check treats this file as test support.
 
 // RecalculateVisibleTilesWithMoongates recalculates visible tiles including moongate light sources
 func (l *LayeredMap) RecalculateVisibleTilesWithMoongates(
@@ -112,12 +112,7 @@ func (ls *LightSourceTintingState) IsTileLit(pos references.Position) bool {
 	return ok && len(contributions) > 0
 }
 
-// GetLitTileCount returns the number of tiles currently lit (for debugging).
+// GetLitTileCount returns the number of tiles currently lit.
 func (ls *LightSourceTintingState) GetLitTileCount() int {
 	return len(ls.litTilesMap)
-}
-
-// AdvanceTurn is retained for callers that explicitly model one elapsed minute.
-func (l *Lighting) AdvanceTurn() {
-	l.AdvanceMinutes(1)
 }

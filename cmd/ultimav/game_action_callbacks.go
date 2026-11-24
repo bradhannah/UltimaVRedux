@@ -19,26 +19,7 @@ import (
 
 var errUnsupportedConversationKnowledge = errors.New("unsupported conversation knowledge")
 
-const (
-	conversationEquipmentLimit = 0x40
-	conversationProvisionFirst = 0x41
-	selflessDonationKarma      = 3
-)
-
-// Offsets within the original conversation provision/tool grant block (TALK-0003).
-const (
-	conversationGiftFood = iota
-	conversationGiftGold
-	conversationGiftKeys
-	conversationGiftGems
-	conversationGiftTorches
-	conversationGiftGrapple
-	conversationGiftCarpet
-	conversationGiftSextant
-	conversationGiftSpyglass
-	conversationGiftBadge
-	conversationGiftSkullKeys
-)
+const selflessDonationKarma = 3
 
 // GameActionCallbacks implements the ActionCallbacks interface to integrate
 // the semantic conversation engine with the game's state and UI systems
@@ -217,7 +198,7 @@ func (g *GameActionCallbacks) DecreaseKarma() {
 
 // GoToJail delegates the Redux conversation action to the canonical Yew sentence.
 func (g *GameActionCallbacks) GoToJail() {
-	g.dialogOutput.AddTextWithColor("Guards grab you and throw you in jail!", ucolor.EGAYellow)
+	g.dialogOutput.AddTextWithColor("Guards grab thee and throw thee in jail!", ucolor.EGAYellow)
 	g.gameScene.gameState.ExecuteJailSentence()
 }
 
@@ -228,90 +209,20 @@ func (g *GameActionCallbacks) BeginCircleStudy() {
 }
 
 // GiveItem gives the specified item to the player's inventory.
-// Maps original Ultima V item IDs to current inventory system with proper limits.
-//
-// Item ID Mapping (ref:TALK-0003):
-// - itemID < 64 (0x40): Equipment items (direct Equipment enum mapping)
-// - itemID 65-75 (0x41-0x4B): Provisions and special items
-//
-// Provisions/Special Items (itemID - 65):
-//
-//	0: Food, 1: Gold, 2: Keys, 3: Gems, 4: Torches,
-//	5: Grapples, 6: Carpets, 7: Sextant, 8: Spyglass,
-//	9: Badge, 10: Skull Keys
-//
+// Maps original Ultima V item IDs to current inventory system with proper limits
+// (ref:TALK-0003; the mapping lives in GameState.GiveConversationItem).
 // A gift at its carrying limit grants nothing, and the receipt says so.
 func (g *GameActionCallbacks) GiveItem(itemID int) {
-	name, quantity, grant, known := g.conversationGift(itemID)
-	if !known {
+	name, outcome := g.gameScene.gameState.GiveConversationItem(itemID)
+	switch outcome {
+	case game_state.GiftUnknown:
 		logging.Warnf(logging.CategoryConversation, "GiveItem: Unknown itemID %d", itemID)
 		g.dialogOutput.AddTextWithColor(fmt.Sprintf("Received: Item #%d", itemID), ucolor.EGAYellow)
-
-		return
-	}
-	before := quantity()
-	grant()
-	if quantity() == before {
+	case game_state.GiftAtLimit:
 		g.dialogOutput.AddTextWithColor("Thou canst carry no more "+name+"!", ucolor.EGAYellow)
-
-		return
-	}
-	logging.Infof(logging.CategoryConversation, "GiveItem: %s (itemID %d)", name, itemID)
-	g.dialogOutput.AddTextWithColor("Received: "+name, ucolor.EGAYellow)
-}
-
-// conversationGift resolves an original conversation grant ID to its name, a
-// quantity reader and the grant itself.
-func (g *GameActionCallbacks) conversationGift(itemID int) (string, func() uint16, func(), bool) {
-	state := g.gameScene.gameState
-	inventory := &state.PartyState.Inventory
-	if itemID < conversationEquipmentLimit {
-		equipment := references.Equipment(itemID)
-
-		return equipment.String(), func() uint16 { return inventory.Equipment.Get(equipment) },
-			func() { inventory.Equipment.IncrementByOne(equipment) }, true
-	}
-	provision := func(name string, quantity interface {
-		Get() uint16
-		IncrementByOne()
-	}) (string, func() uint16, func(), bool) {
-		return name, quantity.Get, quantity.IncrementByOne, true
-	}
-	questItem := func(item references.QuestItem, name string) (string, func() uint16, func(), bool) {
-		if name == "" {
-			name = state.GameReferences.InventoryItemReferences.GetQuestItemDisplayName(item)
-		}
-
-		return name, func() uint16 { return inventory.QuestItems.Get(item) },
-			func() { inventory.QuestItems.IncrementByOne(item) }, true
-	}
-	switch itemID - conversationProvisionFirst {
-	case conversationGiftFood:
-		return provision("Food", &inventory.Provisions.Food)
-	case conversationGiftGold:
-		return provision("Gold", &inventory.Gold)
-	case conversationGiftKeys:
-		return provision("Keys", &inventory.Provisions.Keys)
-	case conversationGiftGems:
-		return provision("Gems", &inventory.Provisions.Gems)
-	case conversationGiftTorches:
-		return provision("Torches", &inventory.Provisions.Torches)
-	case conversationGiftSkullKeys:
-		return provision("Skull Keys", &inventory.Provisions.SkullKeys)
-	case conversationGiftGrapple:
-		return questItem(references.Grapple, "")
-	case conversationGiftCarpet:
-		return questItem(references.Carpet, "")
-	case conversationGiftSpyglass:
-		return questItem(references.Spyglass, "Spyglass")
-	case conversationGiftBadge:
-		return questItem(references.BlackBadge, "Black Badge")
-	case conversationGiftSextant:
-		name, quantity, _, _ := questItem(references.Sextant, "Sextant")
-
-		return name, quantity, state.GrantSextant, true
-	default:
-		return "", nil, nil, false
+	case game_state.GiftGranted:
+		logging.Infof(logging.CategoryConversation, "GiveItem: %s (itemID %d)", name, itemID)
+		g.dialogOutput.AddTextWithColor("Received: "+name, ucolor.EGAYellow)
 	}
 }
 
@@ -451,8 +362,7 @@ func conversationWordOfPowerKnowledge(knowledge semantic.KnowledgeID) (string, b
 func (g *GameActionCallbacks) DeductGoldSimple(amount int, npcName string) error {
 	currentGold := int(g.gameScene.gameState.PartyState.Inventory.Gold.Get())
 	if currentGold < amount {
-		g.dialogOutput.AddTextWithColor(fmt.Sprintf("Thou dost not have %d gold pieces!", amount),
-			ucolor.EGAYellow)
+		g.dialogOutput.AddTextWithColor("Thou hast not enough gold!", ucolor.EGAYellow)
 
 		return fmt.Errorf("%w: have %d gold, need %d", conversation.ErrInsufficientPayment, currentGold, amount)
 	}

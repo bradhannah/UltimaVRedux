@@ -33,9 +33,9 @@ Use table tests for related inputs and subtests for cases with distinct setup. K
 
 ### Integration Tests
 
-Integration tests cover behavior that depends on real Ultima V files or multiple initialized systems. The primary game-state helper is `NewIntegrationTestBuilder` in `internal/game_state/test_builder_helpers.go`.
+Integration tests cover behavior that depends on real Ultima V files or multiple initialized systems. The primary game-state helper is `NewIntegrationTestBuilder`. Tests inside `internal/game_state` call it directly; tests in other packages call `gamefixture.NewIntegrationTestBuilder` from `test/gamefixture`. Both return the builder in `internal/game_state/test_builder_helpers.go`.
 
-The builder can configure location, floor, player position, callbacks, and a deterministic random seed. It loads real references and `SAVED.GAM`, then initializes the selected map. Only genuinely absent optional data skips. Explicitly selected missing files, malformed data/configuration, and loader failures fail with their original diagnostic. `FailIfNoGameData` or `ULTIMA5_REQUIRE_DATA=1` also makes optional absence fatal.
+The builder can configure location, floor, player position, callbacks, and a deterministic random seed. It loads real references and `SAVED.GAM`, then initializes the selected map. Only genuinely absent optional data skips. Explicitly selected missing files, malformed data/configuration, and loader failures fail with their original diagnostic. `ULTIMA5_REQUIRE_DATA=1` also makes optional absence fatal.
 
 Because `make test-integration` filters test names with `-run Integration`, an integration test intended for that target must include `Integration` in its Go test function name. A filename ending in `_integration_test.go` is useful organization but does not affect Go test selection.
 
@@ -239,7 +239,7 @@ use pixel assertions when the rendering operation itself is the contract.
 
 | Scope | Start here | Important boundary |
 |---|---|---|
-| Real-data gameplay | `internal/game_state/test_builder_helpers.go`: `NewIntegrationTestBuilder`, `WithLocation`, `WithFloor`, `WithPlayerAt`, `WithRandomSeed`, `WithSystemCallbacks` | Configure before the action; original-data failures are not passing early returns. |
+| Real-data gameplay | `NewIntegrationTestBuilder` (in `internal/game_state` tests, or `test/gamefixture` from other packages), then `WithLocation`, `WithFloor`, `WithPlayerAt`, `WithRandomSeed`, `WithSystemCallbacks` | Configure before the action; original-data failures are not passing early returns. |
 | Isolated callback contract | `internal/game_state/mock_callbacks_helpers.go`: `NewMockSystemCallbacks`, `ToSystemCallbacks`, assertion methods, `Reset` | Use the builder's callbacks when it already owns setup. |
 | Semantic conversation | `internal/conversation/semantic_engine_test.go`: `semanticTestConversation`, `semanticTestCallbacks`, `TestSemanticConversationEngineProtocolFlow` | All gameplay conversations and inspection use the semantic catalog. |
 | Authentic semantic import | `internal/conversation/extractor/` and `internal/conversation/catalog/` tests | Test extraction and the patched runtime catalog when original content matters. |
@@ -335,7 +335,7 @@ The `Makefile` is the command authority:
 | `make test-provisioned` / `make test-race-provisioned` | Require explicit original data and zero test/subtest skips, without/with the race detector. |
 | `make lint-config-check` | Verify pinned v2 schema and detect both intentional errcheck fixture violations. |
 | `make lint-all` | Run the pinned configured linters across all packages without per-linter caps, same-message caps, or line deduplication. Existing path exclusions and production-only test handling still apply. |
-| `make core-dependencies-check` | Check transitive production and internal/external-test dependency closures for all six core roots. |
+| `make core-dependencies-check` | Check transitive production and internal/external-test dependency closures for all six core roots, and that their production closures hold no test code. |
 | `make web-build` | Install locked frontend dependencies, run frontend tests, and build Debug Workbench assets. |
 | `make web-test-browser` | Build current source UI, then run four real Chromium smoke tests with mock transport; headless shell must already be installed. |
 | `make check` | Run formatting checks, lint, vet, and logic Go tests. |
@@ -440,7 +440,12 @@ cutoff (`issues.new*`), then runs it against a fixture. It requires two errcheck
 findings (unchecked type assertion and blank-assigned error) and clean checked
 controls. `core-dependencies-check` uses `go list -deps -test`
 including import remapping for GameState, party/map state, AI, references, and
-config; missing/incomplete metadata fails closed.
+config; missing/incomplete metadata fails closed. The same check keeps test
+code out of the game: the production closure of those roots may not reach the
+standard `testing` package or anything under `test/`. The recording callbacks
+and the fixture builder stay in `internal/game_state` because its own tests and
+other packages' tests share them. They take the small `TestingT` interface and
+get their test data handed in, so they import neither.
 
 `test-gate -suite=logic|render|all` accepts only those closed scopes (default: all).
 It inventories every `./...` package, uses `partitionPackages` to classify the

@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestProductionDungeonPackedSpellWorkflowMatrix(t *testing.T) {
@@ -299,7 +300,7 @@ func TestProductionDungeonTimeSpellsActivateInDeceitAndDoom(t *testing.T) {
 		for _, test := range tests {
 			t.Run(location.String()+"/"+references.GetSpellName(test.spell), func(t *testing.T) {
 				start := dungeonSpellPassagePosition(t, location, 1)
-				state, _ := game_state.NewIntegrationTestBuilder(t).
+				state, _ := gamefixture.NewIntegrationTestBuilder(t).
 					WithLocation(location).
 					WithFloor(1).
 					WithPlayerAt(int(start.X), int(start.Y)).
@@ -337,7 +338,7 @@ func TestProductionDungeonTimeSpellsActivateInDeceitAndDoom(t *testing.T) {
 
 func TestProductionDungeonAnTymAtMoongateBoundaryCompletesWithoutDeadlock(t *testing.T) {
 	start := dungeonSpellPassagePosition(t, references.Deceit, 1)
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Deceit).
 		WithFloor(1).
 		WithPlayerAt(int(start.X), int(start.Y)).
@@ -379,7 +380,7 @@ func TestProductionDungeonVasRelPorCompletesTokenBeforeExactTravel(t *testing.T)
 	for _, location := range []references.Location{references.Deceit, references.Doom} {
 		t.Run(location.String(), func(t *testing.T) {
 			start := dungeonSpellPassagePosition(t, location, 1)
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(location).
 				WithFloor(1).
 				WithPlayerAt(int(start.X), int(start.Y)).
@@ -440,7 +441,7 @@ func TestProductionDungeonVasRelPorCompletesTokenBeforeExactTravel(t *testing.T)
 func TestProductionDungeonVasRelPorInstallsCrossDungeonDestination(t *testing.T) {
 	start := dungeonSpellPassagePosition(t, references.Deceit, 1)
 	destination := dungeonSpellPassagePosition(t, references.Doom, 1)
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Deceit).
 		WithFloor(1).
 		WithPlayerAt(int(start.X), int(start.Y)).
@@ -504,7 +505,7 @@ func TestProductionDungeonVasRelPorUnavailableAndCancelledPathsRemainAtomic(t *t
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Deceit).
 				WithFloor(1).
 				WithPlayerAt(1, 1).
@@ -567,7 +568,7 @@ func dungeonSpellPassagePosition(
 	floor references.FloorNumber,
 ) references.Position {
 	t.Helper()
-	probe, _ := game_state.NewIntegrationTestBuilder(t).
+	probe, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithFloor(floor).
 		WithPlayerAt(1, 1).

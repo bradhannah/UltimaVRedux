@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -31,7 +32,7 @@ func TestControlHintSegmentsSeparateKeysFromActionsWithoutChangingCopy(t *testin
 }
 
 func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	character := state.PartyState.GetAvatar()
 	character.Strength = 30
 	for slot := references.SlotHelm; slot <= references.SlotAmulet; slot++ {
@@ -69,7 +70,7 @@ func TestReadyFooterMatchesAuthoritativeSelection(t *testing.T) {
 }
 
 func TestCastGuidanceUsesResolvedTargetAndScope(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	state.PartyState.GetAvatar().Class = party_state.Wizard
 	for _, test := range []struct {
 		spell   references.Spell

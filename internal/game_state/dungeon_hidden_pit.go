@@ -149,9 +149,9 @@ func (g *GameState) planDungeonHiddenPitFalls() []dungeonHiddenPitFallStep {
 		}
 		step := dungeonHiddenPitFallStep{sourceFloor: floor, destinationFloor: floor, bottomFloor: false}
 		if floor == references.DungeonFloorCount-1 {
-			// REDUX DEVIATION: original dungeon rules increment level seven and reads undefined
+			// REDUX DEVIATION: ENV-0005: original dungeon rules increment level seven and reads undefined
 			// a ninth dungeon floor. Redux reveals and damages once while clamping to the valid bottom floor.
-			// See ref:DNG-0007.
+			// See ref:ENV-0005, ref:DNG-0007.
 			step.bottomFloor = true
 			steps = append(steps, step)
 

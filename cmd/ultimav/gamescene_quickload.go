@@ -19,7 +19,7 @@ func (g *GameScene) captureQuickLoadRequest(inputAllowed bool) bool {
 
 		return false
 	}
-	if !sample.Held[ebiten.KeyQ] || !sample.HasModifiers() {
+	if !sample.Held[ebiten.KeyQ] || !sample.HasModifiers() || g.shiftQIsTyped() {
 		return false
 	}
 	g.quickLoadChordHeld = true
@@ -31,6 +31,19 @@ func (g *GameScene) captureQuickLoadRequest(inputAllowed bool) bool {
 	g.keyboard.SuppressUntilRelease(ebiten.KeyQ)
 
 	return accepted
+}
+
+// shiftQIsTyped reports a capital Q typed with Shift alone while a text field or
+// a reader has the keyboard. That is a letter, not a rejected chord, and it
+// cannot become plain Q: the Journal and Map return before commands run, and a
+// text field owns its keys.
+func (g *GameScene) shiftQIsTyped() bool {
+	if g.keyboard.IsModifierPressed(input.ModifierCtrl) || g.keyboard.IsModifierPressed(input.ModifierAlt) ||
+		g.keyboard.IsModifierPressed(input.ModifierMeta) {
+		return false
+	}
+
+	return g.journalSession != nil || g.atlasSession != nil || g.textEntryFocused()
 }
 
 // quickLoadInputEligible is an input-owner check, deliberately not snapshot

@@ -1,31 +1,5 @@
-// Package helpers provides shared numeric, reflection, and slice utilities.
+// Package helpers provides shared numeric and slice utilities.
 package helpers
-
-import (
-	"cmp"
-)
-
-// Max returns the greater value, choosing b when the comparison is unordered.
-//
-//nolint:ireturn // The result retains the caller's concrete ordered type.
-func Max[T cmp.Ordered](a, b T) T {
-	if a > b {
-		return a
-	}
-
-	return b
-}
-
-// Min returns the lesser value, choosing b when the comparison is unordered.
-//
-//nolint:ireturn // The result retains the caller's concrete ordered type.
-func Min[T cmp.Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-
-	return b
-}
 
 // AbsInt returns the absolute value of a, subject to integer overflow.
 func AbsInt(a int) int {

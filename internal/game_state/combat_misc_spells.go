@@ -95,7 +95,7 @@ func (g *GameState) CastCombatEarthquakeResult(casterIdx int) CombatAreaSpellRes
 		}
 		monsterIdx := target.EntityIndex
 		monster := g.CombatScene.MonsterManager.GetMonster(monsterIdx)
-		finalDamage := CombatApplyMagicDamageModifiers(damage, monster.MonsterType().IsUndead(), monster.HasAbility(references.Immortal))
+		finalDamage := CombatApplyMagicDamageModifiers(damage, monster.HasAbility(references.Immortal))
 		hpBefore := monster.CurrentHP()
 		monster.TakeDamage(finalDamage)
 		hpLost := hpBefore - monster.CurrentHP()

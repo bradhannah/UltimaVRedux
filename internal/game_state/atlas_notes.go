@@ -57,7 +57,7 @@ func (g *GameState) BeginAtlasNoteDraft(id uint64) (*AtlasNoteDraft, error) {
 	}
 	position := moonstoneJournalSite(fix)
 	if !journal.ValidAtlasSurfacePosition(position) {
-		return nil, fmt.Errorf("%w: unsupported fix", journal.ErrInvalidAtlasPersonal)
+		return nil, fmt.Errorf("%w: this position cannot be marked", journal.ErrInvalidAtlasPersonal)
 	}
 	draft.context, draft.location = g.CurrentSextantContext(), g.MapState.PlayerLocation
 	if isSurfaceSextantSettlement(draft.context.Location) {
@@ -71,7 +71,7 @@ func (g *GameState) BeginAtlasNoteDraft(id uint64) (*AtlasNoteDraft, error) {
 		}
 	}
 	if len(g.atlasNotes.Records) >= journal.MaxAtlasNotes || g.atlasNotes.LastID == journal.MaxAtlasIdentity {
-		return nil, fmt.Errorf("%w: map notes full (%d); edit or delete a note", journal.ErrInvalidAtlasPersonal, journal.MaxAtlasNotes)
+		return nil, fmt.Errorf("%w: the map is full of notes (%d); edit or delete one", journal.ErrInvalidAtlasPersonal, journal.MaxAtlasNotes)
 	}
 	draft.creating = true
 	draft.original = journal.AtlasNoteRecord{Position: position, RecordedAt: g.sampleDungeonObservation().at.Time}
@@ -81,13 +81,13 @@ func (g *GameState) BeginAtlasNoteDraft(id uint64) (*AtlasNoteDraft, error) {
 
 func (g *GameState) validateAtlasDraft(draft *AtlasNoteDraft) error {
 	if draft == nil || draft.owner != g || draft.session != g.atlasNoteSession || !draft.session.active || draft.consumed {
-		return fmt.Errorf("%w: stale note session", journal.ErrInvalidAtlasPersonal)
+		return fmt.Errorf("%w: this note was opened too long ago; open it again", journal.ErrInvalidAtlasPersonal)
 	}
 	if draft.creating {
 		fix, ok := g.CurrentSextantFix()
 		if !ok || draft.context != g.CurrentSextantContext() || draft.location != g.MapState.PlayerLocation ||
 			draft.original.RecordedAt != g.sampleDungeonObservation().at.Time || moonstoneJournalSite(fix) != draft.original.Position {
-			return fmt.Errorf("%w: captured fix has changed", journal.ErrInvalidAtlasPersonal)
+			return fmt.Errorf("%w: the party has moved; mark the position again", journal.ErrInvalidAtlasPersonal)
 		}
 
 		return nil
@@ -109,7 +109,7 @@ func (g *GameState) CommitAtlasNote(draft *AtlasNoteDraft, label, description st
 	}
 	for _, r := range label {
 		if r < ' ' || r > '~' {
-			return absent, fmt.Errorf("%w: label must be a printable single line", journal.ErrInvalidAtlasPersonal)
+			return absent, fmt.Errorf("%w: use only letters the game can show", journal.ErrInvalidAtlasPersonal)
 		}
 	}
 	label = strings.TrimSpace(label)
@@ -120,11 +120,11 @@ func (g *GameState) CommitAtlasNote(draft *AtlasNoteDraft, label, description st
 	record.Label, record.Description = label, description
 	if draft.creating {
 		if len(g.atlasNotes.Records) >= journal.MaxAtlasNotes || g.atlasNotes.LastID >= journal.MaxAtlasIdentity {
-			return absent, fmt.Errorf("%w: map notes full", journal.ErrInvalidAtlasPersonal)
+			return absent, fmt.Errorf("%w: the map is full of notes; edit or delete one", journal.ErrInvalidAtlasPersonal)
 		}
 		for _, existing := range g.atlasNotes.Records {
 			if existing.Position == record.Position {
-				return absent, fmt.Errorf("%w: position already has a note", journal.ErrInvalidAtlasPersonal)
+				return absent, fmt.Errorf("%w: this spot already has a note", journal.ErrInvalidAtlasPersonal)
 			}
 		}
 		record.ID = g.atlasNotes.LastID + 1

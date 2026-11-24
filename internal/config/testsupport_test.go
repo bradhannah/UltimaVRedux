@@ -42,3 +42,20 @@ func (uc *UltimaVConfiguration) SaveAudioConfiguration() error {
 
 	return nil
 }
+
+// SaveGameplayConfiguration immediately persists current gameplay settings.
+func (uc *UltimaVConfiguration) SaveGameplayConfiguration() error {
+	if uc.ConfigurationEditing() {
+		return ErrConfigurationEditing
+	}
+	if uc.GameplayConfiguration == nil {
+		return ErrGameplayConfigNil
+	}
+	if err := uc.saveConfiguration(func(candidate *viper.Viper) {
+		setGameplayConfiguration(candidate, *uc.GameplayConfiguration)
+	}); err != nil {
+		return fmt.Errorf("saving gameplay configuration: %w", err)
+	}
+
+	return nil
+}

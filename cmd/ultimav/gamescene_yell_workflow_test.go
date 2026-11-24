@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestOutdoorYellDefersSurfaceCompletionUntilWordEffectCleanup(t *testing.T) {
@@ -92,7 +93,7 @@ func TestOutdoorYellCompletionRunsCodexCheckpointExactlyOnce(t *testing.T) {
 
 func newOutdoorYellWorkflowScene(t *testing.T) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithFloor(references.FloorNumber(references.OVERWORLD)).
 		WithSystemCallbacks().

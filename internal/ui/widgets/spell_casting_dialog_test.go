@@ -11,12 +11,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func newCastBrowserTest(t *testing.T) (*game_state.GameState, *SpellCastingDialog, func(...ebiten.Key)) {
 	t.Helper()
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	state.PartyState.GetAvatar().Class = party_state.Wizard
 	state.PartyState.GetAvatar().Level = 8
 	state.PartyState.GetAvatar().SetMp(30)

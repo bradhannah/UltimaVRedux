@@ -219,6 +219,27 @@ func ValidateNoteSectionName(name string) error {
 	return nil
 }
 
+// PlainProblem returns the part of a note error written for the player, as a
+// sentence. It is empty when the error is not about a note's content.
+func PlainProblem(err error) string {
+	for _, sentinel := range []error{ErrInvalidNotes, ErrInvalidAtlasPersonal} {
+		if !errors.Is(err, sentinel) {
+			continue
+		}
+		_, detail, found := strings.Cut(err.Error(), sentinel.Error()+": ")
+		if !found || detail == "" {
+			return ""
+		}
+		if !strings.HasSuffix(detail, ".") {
+			detail += "."
+		}
+
+		return strings.ToUpper(detail[:1]) + detail[1:]
+	}
+
+	return ""
+}
+
 // ValidateNoteText accepts an optional single-line title and paragraphs of text.
 // A note needs a title or some text, in the game's printable ASCII repertoire.
 func ValidateNoteText(title, text string) error {
@@ -231,7 +252,7 @@ func ValidateNoteText(title, text string) error {
 		return fmt.Errorf("%w: write a title or some text", ErrInvalidNotes)
 	}
 	if !printableNoteText(title, false) || !printableNoteText(text, true) {
-		return fmt.Errorf("%w: use printable game-font characters", ErrInvalidNotes)
+		return fmt.Errorf("%w: use only letters the game can show", ErrInvalidNotes)
 	}
 
 	return nil

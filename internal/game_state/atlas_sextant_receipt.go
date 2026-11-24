@@ -26,10 +26,10 @@ func (g *GameState) GrantSextant() {
 	}
 	before := *observation
 	sample := g.sampleDungeonObservation()
-	// REDUX DEVIATION: original item-use rules restricts sextant Use to outdoors at night. Redux records
+	// REDUX DEVIATION: VIEW-0006: original item-use rules restricts sextant Use to outdoors at night. Redux records
 	// this one local exterior when the sextant is actually received in Greyhaven,
 	// including strict daytime/interior receipt; it never enables an interior fix.
-	// See ref:ASTRO-0006.
+	// See ref:VIEW-0006, ref:ASTRO-0006.
 	observation.Source, observation.ObservedAt = journal.AtlasSourceSextantReceipt, sample.at
 	observation.Survey = journal.SurveyedLocation{Measured: true, Flexible: sample.sextant.Flexible, Location: observation.Site, RecordedAt: sample.at}
 	observation.SurveySource = journal.AtlasSourceSextantReceipt

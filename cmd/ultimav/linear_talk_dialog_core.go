@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -90,7 +91,7 @@ type LinearTalkDialog struct {
 	conversationCompleted      bool
 	currentResponse            *conversation.ConversationResponse
 
-	// Pause animation state (Phase 3)
+	// Pause animation state
 	isPausing            bool                       // Currently animating a pause
 	pauseStartMs         int64                      // When current pause animation started
 	animatedText         string                     // Text displayed before current pause marker
@@ -132,6 +133,7 @@ func NewLinearTalkDialog(gameScene *GameScene, npc *map_units.NPCFriendly) *Line
 	defer func() {
 		if r := recover(); r != nil {
 			// If UI initialization fails, return nil instead of crashing
+			logging.Errorf(logging.CategoryConversation, "Talk dialog setup failed: %v\n%s", r, debug.Stack())
 			dialog = nil
 		}
 	}()
@@ -142,6 +144,7 @@ func NewLinearTalkDialog(gameScene *GameScene, npc *map_units.NPCFriendly) *Line
 	defer func() {
 		if r := recover(); r != nil {
 			// If conversation startup fails, return nil instead of crashing
+			logging.Errorf(logging.CategoryConversation, "Conversation start failed: %v\n%s", r, debug.Stack())
 			dialog = nil
 		}
 	}()

@@ -76,9 +76,9 @@ func (g *GameState) QueueOutdoorCampingAmbush(
 	if err != nil {
 		return CampingAmbushResult{}, err
 	}
-	// REDUX DEVIATION: original rest rules reseeds from wall-time seeding before selecting gollums.
-	// Redux retains the centralized GameState RNG so gameplay remains reproducible.
-	// See ref:CAMP-0002.
+	// REDUX DEVIATION: CAMP-0003: original rest rules reseeds from wall-time seeding before
+	// selecting gollums. Redux retains the centralized GameState RNG so gameplay remains
+	// reproducible. See ref:CAMP-0003, ref:CAMP-0002.
 	ambusher := references.GetCampingAmbusher(g.AsRandomProvider())
 	result, err := g.populateOutdoorCampingCombat(combat, ambusher)
 	if err != nil {

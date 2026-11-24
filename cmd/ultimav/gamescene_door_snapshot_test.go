@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDoorPlayerSlotSaveLoadAfterManualAndAutomaticOpening(t *testing.T) {
@@ -25,7 +25,7 @@ func TestDoorPlayerSlotSaveLoadAfterManualAndAutomaticOpening(t *testing.T) {
 			name = "movement auto-open"
 		}
 		t.Run(name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.SerpentsHold).
 				WithPlayerAt(10, 14).WithRandomSeed(673).WithSystemCallbacks().Build()
 			// Isolate the opening/save lifecycle from unrelated NPC conversations;
 			// retain the real controller and its normal actor-phase execution.

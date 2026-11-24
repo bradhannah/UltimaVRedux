@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceJimmyWithoutKeysRejectsBeforeDirectionPrompt(t *testing.T) {
@@ -23,7 +24,7 @@ func TestSurfaceJimmyWithoutKeysRejectsBeforeDirectionPrompt(t *testing.T) {
 		{"overworld", references.BritanniaUnderworld, (*GameScene).largeMapInputHandler, game_state.DefaultLargeMapMinutesPerTurn},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(test.location).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(test.location).
 				WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 			state.DebugOptions.MonsterGen = false
 			state.PartyState.Inventory.Provisions.Keys.Set(0)

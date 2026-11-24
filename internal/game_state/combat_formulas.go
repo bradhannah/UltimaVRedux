@@ -289,7 +289,7 @@ func CombatApplyDamageModifiers(damage int, isUndead, isImmortal, isMagicWeapon 
 
 // CombatApplyMagicDamageModifiers bypasses the physical undead penalty while
 // preserving the original immunity of immortal monsters.
-func CombatApplyMagicDamageModifiers(damage int, _ bool, isImmortal bool) int {
+func CombatApplyMagicDamageModifiers(damage int, isImmortal bool) int {
 	if isImmortal {
 		return 0
 	}

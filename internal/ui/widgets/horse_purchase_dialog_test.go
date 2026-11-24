@@ -45,7 +45,7 @@ func TestHorsePurchaseDialogUnaffordableRemainsConfirmable(t *testing.T) {
 		keyboard := newWidgetTestKeyboard(0)
 		dialog := NewHorsePurchaseDialog(HorsePurchaseDialogConfig{Keyboard: keyboard, Intent: intent})
 
-		assert.Equal(t, "Buy Horse Not enough gold. It costs 170 and the party has 50. "+
+		assert.Equal(t, "Buy Horse Thou hast not enough gold. It costs 170 and the party has 50. "+
 			"Buying anyway ends the talk. [Enter] Buy anyway [Esc] Back", dialog.window.flatText())
 		requireAmountWindowHoldsItsText(t, dialog.window, fmt.Sprintf("%dx%d", size.X, size.Y))
 

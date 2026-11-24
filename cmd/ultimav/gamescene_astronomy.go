@@ -119,7 +119,7 @@ func (g *GameScene) thenApplySunDamage() func(*event_queue.SequentialEventBuilde
 		return q.ThenSequence(
 
 			game_state.NewPartyStateBuilder(g.gameState).
-					WithFixedDamage(1).
+					WithFixedDamage(game_state.TelescopeSunDamage).
 					ToCharacter(targetIndex).
 					WithFlash(200, 1.0, 1.0, 0.8, 0.7).
 					WithSound(game_state.SoundWhiteNoiseDamage).

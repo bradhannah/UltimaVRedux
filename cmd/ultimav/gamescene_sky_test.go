@@ -29,6 +29,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
 
@@ -60,7 +61,7 @@ func TestSkyAllPhasesAndHourlyBoundaries(t *testing.T) {
 
 func newSkyTestScene(t *testing.T, origin references.PlayerLocation) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(634).Build()
 	state.MapState.PlayerLocation = origin
 	state.DateTime = datetime.UltimaDate{Year: 139, Month: 4, Day: 8, Hour: 22}

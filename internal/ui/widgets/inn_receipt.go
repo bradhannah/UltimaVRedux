@@ -12,18 +12,18 @@ import (
 // Death announcements remain in the accompanying merchant exchange.
 func FormatInnReceipt(display InnActionResultDisplay) string {
 	if display.Refused {
-		outcome := "You could not stay the night."
+		outcome := "Thou couldst not stay the night."
 		if display.Action == InnActionPickup {
 			outcome = display.CharacterName + " remains at the inn. The guards have been called."
 		}
 
-		return fmt.Sprintf("%s You need %d gold; no gold was paid.", outcome, display.ListedCharge)
+		return fmt.Sprintf("%s Thou hast need of %d gold; none was paid.", outcome, display.ListedCharge)
 	}
 	if display.Action == InnActionLeave {
 		return display.CharacterName + " will stay at the inn. No charge today."
 	}
 
-	outcome := "You rest until morning."
+	outcome := "Thou dost rest until morning."
 	if display.Action == InnActionPickup {
 		outcome = display.CharacterName + " has been returned to the party."
 	}

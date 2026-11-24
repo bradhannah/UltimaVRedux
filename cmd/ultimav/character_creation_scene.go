@@ -993,31 +993,27 @@ func (scene *CharacterCreationScene) drawDiscardConfirmation(screen *ebiten.Imag
 
 func (scene *CharacterCreationScene) prepareDiscardConfirmation(screen image.Rectangle) (int, int) {
 	const title = "Discard this character?"
-	const choices = "Y / N"
-	const hint = "Escape continues creation."
+	const hint = "[Y] Discard   [N/Esc] Keep creating"
 	width, height := screen.Dx(), screen.Dy()
 	if scene.discardOutput == nil || scene.discardScreenWidth != width {
 		_, scene.discardOutput = widgets.GetScaledFontWithOutputForWidth(widgets.FontConfig{
 			Size: widgets.FontSizeCompact, LineSpacingMultiplier: 1.3,
-			MaxLines: 3, MaxChars: max(len(title), len(choices), len(hint)),
+			MaxLines: 2, MaxChars: max(len(title), len(hint)),
 		}, width)
 		scene.discardOutput.AppendLine().White(title).Done()
-		scene.discardOutput.AppendLine().Text("Y", widgets.DialogControlKeyColor).
-			Text(" / ", widgets.DialogControlHintColor).Text("N", widgets.DialogControlKeyColor).Done()
-		scene.discardOutput.AppendLine().Text("Escape", widgets.DialogControlKeyColor).
-			Text(" continues creation.", widgets.DialogControlHintColor).Done()
+		widgets.AppendControlHints(scene.discardOutput.AppendLine(), hint).Done()
 		scene.discardScreenWidth = width
 	}
 	output := scene.discardOutput
 	textWidth := 0.0
-	for _, line := range [...]string{title, choices, hint} {
+	for _, line := range [...]string{title, hint} {
 		lineWidth, _ := output.Font.MeasureString(line)
 		textWidth = max(textWidth, lineWidth)
 	}
 	pixelUnit := widgets.ClassicUIPixelUnit(width, height)
 	padding := max(pixelUnit*4, int(math.Ceil(output.GetFontHeight())))
 	cardWidth := int(math.Ceil(textWidth)) + padding*2
-	cardHeight := int(math.Ceil(output.GetTotalHeightForLines(3))) + padding*2
+	cardHeight := int(math.Ceil(output.GetTotalHeightForLines(2))) + padding*2
 	origin := screen.Min.Add(image.Pt((width-cardWidth)/2, (height-cardHeight)/2))
 	scene.discardBounds = image.Rectangle{Min: origin, Max: origin.Add(image.Pt(cardWidth, cardHeight))}
 

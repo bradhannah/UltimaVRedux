@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -43,4 +44,20 @@ func TestRotateCrashLogPreservesMostRecentFullLog(t *testing.T) {
 	oldContents, err := os.ReadFile(path + ".old")
 	require.NoError(t, err)
 	assert.Equal(t, "previous crash", strings.TrimSpace(string(oldContents)))
+}
+
+func TestSoundFailureRestartsSilentOnlyOnce(t *testing.T) {
+	sound := errors.New("audio: audio error: oto: no device")
+	assert.True(t, restartsWithoutSound(nil, sound))
+	assert.False(t, restartsWithoutSound([]string{"--sound-unavailable"}, sound), "a silent start is not restarted")
+	assert.False(t, restartsWithoutSound([]string{"--no-sound"}, sound))
+	assert.False(t, restartsWithoutSound(nil, errors.New("display is unavailable")))
+}
+
+func TestLaunchFailureMessagePointsToNoSoundWhenSoundFails(t *testing.T) {
+	sound := launchFailureMessage(errors.New("oto: ALSA device initialization failed: no device"))
+	assert.Contains(t, sound, "--no-sound")
+
+	other := launchFailureMessage(errors.New("display is unavailable"))
+	assert.Equal(t, "display is unavailable", other)
 }

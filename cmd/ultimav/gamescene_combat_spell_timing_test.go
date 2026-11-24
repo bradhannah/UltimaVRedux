@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCombatTimingConePropagationHoldAndCancellationEveryRate(t *testing.T) {
@@ -160,7 +161,7 @@ func TestCombatTimingPlayerTeleportPhasesAndCancellation(t *testing.T) {
 	for _, rate := range combatTimingTestRates() {
 		for _, cancel := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%g/cancel=%t", rate, cancel), func(t *testing.T) {
-				state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+				state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 					WithSystemCallbacks().WithRandomSeed(1).Build()
 				require.NoError(t, state.TransitionToCombatMap(0, references.BritanniaCombatTerritory, game_state.CombatEntryNorth))
 				t.Cleanup(state.EventQueueManager.Shutdown)

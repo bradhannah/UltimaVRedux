@@ -10,10 +10,10 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/datetime"
 	"github.com/bradhannah/UltimaVRedux/internal/display"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/mainscreen"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +30,7 @@ func TestBatchReviewHUDAmmunition(t *testing.T) {
 		t.Run(fmt.Sprintf("%dp", size.Y), func(t *testing.T) {
 			bounds := logicalGameBounds(size.X, size.Y)
 			manager.PublishLogicalSize(bounds.Dx(), bounds.Dy())
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 				WithSystemCallbacks().WithRandomSeed(42).Build()
 			scene := &GameScene{gameState: state, gameConfig: state.GameConfig}
 			state.DateTime = datetime.UltimaDate{Year: 65535, Month: 13, Day: 28, Hour: 12, Minute: 59}

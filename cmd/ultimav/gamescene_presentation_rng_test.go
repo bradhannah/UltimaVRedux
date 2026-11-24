@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/visual"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 var sharedPresentationTestSpriteSheet = sync.OnceValue(sprites.NewSpriteSheet)
@@ -71,7 +71,7 @@ func TestTileDissolveOptionsProduceStablePresentation(t *testing.T) {
 }
 
 func TestDeathEarthquakePreservesGameplayRNG(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(8675309).

@@ -2,6 +2,9 @@ package audio
 
 import "github.com/bradhannah/UltimaVRedux/internal/references"
 
+// Test support: fixtures and seams that tests in other packages use. The
+// dead-code check treats this file as test support.
+
 // GetCurrentTrack returns the name of the currently playing track
 func (mm *MusicManager) GetCurrentTrack() string {
 	mm.mutex.RLock()

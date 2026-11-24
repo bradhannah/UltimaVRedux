@@ -390,7 +390,7 @@ func TestInnShopDialogResultReceiptPreviewStopAndReceiptClearing(t *testing.T) {
 	require.Equal(t, InnShopBrowse, dialog.GetPhase())
 	require.Equal(t, "3031", dialog.GetShell().GetHeaderView().PartyGold)
 	receipt := dialog.GetReceiptText()
-	require.Equal(t, "You rest until morning. Paid 1234 gold. 56 more gold was stolen! Thou hast 3031 gold left.", receipt)
+	require.Equal(t, "Thou dost rest until morning. Paid 1234 gold. 56 more gold was stolen! Thou hast 3031 gold left.", receipt)
 	require.NotContains(t, receipt, "Faulinei")
 
 	pressInnShopKey(dialog, keyboard, ebiten.KeyL)

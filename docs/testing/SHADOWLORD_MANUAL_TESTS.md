@@ -256,7 +256,7 @@ Restore the baseline or leave the keep before testing the next summon.
 
 Expected:
 
-- The game reports `Nothing happens.`
+- The game reports `No effect!`
 - World Diagnostics reports no yell-summoned Shadowlord.
 - The yell consumes the normal failed-yell turn.
 - No summon fizz, summon cue, or presence presentation runs.

@@ -30,7 +30,7 @@ const (
 	healerShopCenterDivisor         = 2
 	healerShopDoubleInset           = 2
 	healerShopCellInsetUnits        = 2
-	healerShopLineSpacing           = 1.05
+	healerShopLineSpacing           = 1.06
 	healerShopMinimumTextChars      = 8
 	healerShopDetailLines           = 5
 	healerShopServiceLines          = 1
@@ -328,8 +328,8 @@ func (d *HealerShopDialog) ApplyServiceResult(
 		panic("HealerShopDialog.ApplyServiceResult: result does not match the accepted request")
 	}
 	d.applyRefreshedState(refreshed, d.awaitingRequest)
-	validateFinalizedMerchantText("healer result exchange", display.MerchantExchange)
-	validateFinalizedMerchantText("healer result receipt", display.Receipt)
+	requireFinalizedText("HealerShopDialog", "healer result exchange", display.MerchantExchange)
+	requireFinalizedText("HealerShopDialog", "healer result receipt", display.Receipt)
 	d.latestExchange = display.MerchantExchange
 	d.receiptText = display.Receipt
 	d.receiptColor = DialogDeltaPositive
@@ -356,8 +356,8 @@ func (d *HealerShopDialog) ApplyAllServiceResult(
 		display.Receipt += fmt.Sprintf(" Batch stopped: %d of %d treated.", len(result.CharacterIndexes), count)
 	}
 	d.applyRefreshedState(refreshed, d.awaitingRequest)
-	validateFinalizedMerchantText("aggregate healer result exchange", display.MerchantExchange)
-	validateFinalizedMerchantText("aggregate healer result receipt", display.Receipt)
+	requireFinalizedText("HealerShopDialog", "aggregate healer result exchange", display.MerchantExchange)
+	requireFinalizedText("HealerShopDialog", "aggregate healer result receipt", display.Receipt)
 	d.latestExchange = display.MerchantExchange
 	d.receiptText = display.Receipt
 	d.receiptColor = DialogDeltaPositive
@@ -376,8 +376,8 @@ func (d *HealerShopDialog) ApplyRefusal(
 		panic("HealerShopDialog.ApplyRefusal: refusal does not match the accepted request")
 	}
 	d.applyRefreshedState(refreshed, request)
-	validateFinalizedMerchantText("healer refusal exchange", display.MerchantExchange)
-	validateFinalizedMerchantText("healer refusal receipt", display.Receipt)
+	requireFinalizedText("HealerShopDialog", "healer refusal exchange", display.MerchantExchange)
+	requireFinalizedText("HealerShopDialog", "healer refusal receipt", display.Receipt)
 	d.latestExchange = display.MerchantExchange
 	d.receiptText = display.Receipt
 	d.receiptColor = DialogLabelColor
@@ -401,7 +401,7 @@ func (d *HealerShopDialog) ApplyPreviewStopped(request game_state.HealerServiceR
 
 // ApplySessionError replaces the exchange and disables further treatments.
 func (d *HealerShopDialog) ApplySessionError(message string) {
-	validateFinalizedMerchantText("healer session error", message)
+	requireFinalizedText("HealerShopDialog", "healer session error", message)
 	d.pendingIntent = nil
 	d.clearAwaitingRequest()
 	d.latestExchange = message
@@ -784,7 +784,7 @@ func (d *HealerShopDialog) detailActionText(eligible bool, affordable bool) (str
 			return "Choose another party member.", DialogControlHintColor
 		}
 		if !affordable {
-			return "Not enough gold for this treatment.", DialogLabelColor
+			return "Thou hast not enough gold for this treatment.", DialogLabelColor
 		}
 
 		return "Enter to review.", DialogControlKeyColor
@@ -1153,9 +1153,9 @@ func healerIneligibleText(
 }
 
 func validateHealerShopProse(prose HealerShopDialogProse) {
-	validateFinalizedMerchantText("healer greeting", prose.Greeting)
-	validateFinalizedMerchantText("healer no-need response", prose.NoNeed)
-	validateFinalizedMerchantText("healer funds refusal", prose.FundsRefusal)
+	requireFinalizedText("HealerShopDialog", "healer greeting", prose.Greeting)
+	requireFinalizedText("HealerShopDialog", "healer no-need response", prose.NoNeed)
+	requireFinalizedText("HealerShopDialog", "healer funds refusal", prose.FundsRefusal)
 }
 
 func validateHealerShopState(state game_state.HealerShopState) {

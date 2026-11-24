@@ -1,10 +1,10 @@
 package widgets
 
 import (
-	"fmt"
 	"image"
 	"unicode/utf8"
 
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -77,7 +77,8 @@ func (e *AtlasNoteEditor) prepareNativeInput() bool {
 	_, _, wasComposing := field.CompositionSelection()
 	handled, err := field.HandleInputWithBounds(e.nativeCaretBounds())
 	if err != nil {
-		e.message = fmt.Sprintf("Note text input failed: %v.", err)
+		logging.Warnf(logging.CategoryUI, "Note text input failed: %v", err)
+		e.message = "Typing stopped working here. Press Esc and open the note again."
 		e.inputFailed = true
 		e.releaseNativeFields()
 		e.blockNativeControls(true)

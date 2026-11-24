@@ -18,6 +18,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -2688,8 +2689,8 @@ func TestInnRestInsufficientFundsIsConfirmableExactTerminalRefusal(t *testing.T)
 	require.True(t, dialog.IsDismissed())
 	require.Equal(t, `"Highwaymen! Cheap, at that! OUT!" screams Donya.`, dialog.GetLatestExchange())
 	require.Contains(t, overlay.GetMessage(), dialog.GetLatestExchange())
-	require.Contains(t, overlay.GetMessage(), "You could not stay the night.")
-	require.Contains(t, overlay.GetMessage(), "no gold was paid")
+	require.Contains(t, overlay.GetMessage(), "Thou couldst not stay the night.")
+	require.Contains(t, overlay.GetMessage(), "none was paid")
 	require.NotContains(t, overlay.GetMessage(), "Faulinei")
 	require.NotContains(t, overlay.GetMessage(), "restored")
 	require.Equal(t, before, fixture.state.CurrentPartyRosterSnapshot())
@@ -2732,7 +2733,7 @@ func TestInnRestSuccessUsesAuthorityReceiptThenTerminalFeedback(t *testing.T) {
 	require.Equal(t, game_state.DurationEffectNone, fixture.state.ActiveDurationEffect.EffectType)
 	require.Equal(t, avatar.GetMaxHp(), avatar.GetCurrentHp())
 	require.Equal(t, goldBefore-quote.Charge, fixture.state.PartyState.Inventory.Gold.Get())
-	require.Contains(t, dialog.GetReceiptText(), "You rest until morning.")
+	require.Contains(t, dialog.GetReceiptText(), "Thou dost rest until morning.")
 	require.Contains(t, dialog.GetReceiptText(), "restored.")
 	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Paid %d gold.", quote.Charge))
 	require.NotContains(t, dialog.GetReceiptText(), "Faulinei")
@@ -2823,7 +2824,7 @@ func TestInnPickupGuardRefusalIsTerminalWithoutPaymentOrRosterChange(t *testing.
 
 	require.True(t, dialog.IsDismissed())
 	require.Contains(t, overlay.GetMessage(), dialog.GetLatestExchange())
-	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("You need %d gold; no gold was paid.", row.Charge))
+	require.Contains(t, dialog.GetReceiptText(), fmt.Sprintf("Thou hast need of %d gold; none was paid.", row.Charge))
 	require.Contains(t, dialog.GetReceiptText(), guest.GetNameAsString()+" remains at the inn.")
 	require.Contains(t, dialog.GetReceiptText(), "The guards have been called.")
 	require.NotContains(t, dialog.GetReceiptText(), "Faulinei")
@@ -3010,7 +3011,7 @@ func newMerchantTalkFixture(
 ) *merchantTalkFixture {
 	t.Helper()
 
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithSystemCallbacks().
 		WithRandomSeed(1).

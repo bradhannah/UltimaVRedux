@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestProjectileColorMultipliersUseRequestedMagicMissileColor(t *testing.T) {
@@ -167,7 +167,7 @@ func TestCalculateProjectileDuration(t *testing.T) {
 }
 
 func TestStartProjectileCalculatesDurationFromPixelCoordinates(t *testing.T) {
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

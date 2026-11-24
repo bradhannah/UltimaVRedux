@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestMoongateRendererDerivesRowsFromGameStateStage(t *testing.T) {
@@ -39,7 +40,7 @@ func TestMoongateStageControlsAmbientVolume(t *testing.T) {
 }
 
 func TestMoongateRendererRetainsExposedSourceUntilPickup(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(223, 133).
 		WithSystemCallbacks().
@@ -69,7 +70,7 @@ func TestMoongateRendererRetainsExposedSourceUntilPickup(t *testing.T) {
 }
 
 func TestMoongateSourcesFollowWorldLayerBeforeAndAfterUpdate(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithFloor(0).
 		WithPlayerAt(224, 133).WithSystemCallbacks().Build()
 	state.DateTime.Hour = 21
@@ -122,7 +123,7 @@ func TestRisingMoongateIsMaskedAtGroundLevel(t *testing.T) {
 	t.Cleanup(func() { *manager = saved })
 	const width, height = 400, 208
 	manager.PublishLogicalSize(width, height)
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithPlayerAt(100, 100).
 		WithSystemCallbacks().
 		Build()

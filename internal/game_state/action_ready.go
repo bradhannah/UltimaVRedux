@@ -199,10 +199,10 @@ func (g *GameState) ApplyReadyEquipment(
 	if !g.PartyState.Inventory.Equipment.DecrementByOne(plan.equipment) {
 		panic("ready equipment inventory changed after validation")
 	}
-	// REDUX DEVIATION: equipment selection requires manual unready before replacement.
+	// REDUX DEVIATION: EQUIP-0011: equipment selection requires manual unready before replacement.
 	// A reviewed swap returns every displaced item and applies the final loadout
 	// atomically, so two-handed transitions cannot leave partially removed gear.
-	// See ref:EQUIP-0010.
+	// See ref:EQUIP-0011, ref:EQUIP-0010.
 	for _, slot := range references.EquipmentSlots() {
 		before, after := plan.preview.Before[slot], plan.preview.After[slot]
 		if before == after {

@@ -5,15 +5,15 @@ import (
 	"math"
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMapBorderLabelUsesFriendlyNamesAcrossLocationsFloorsAndContexts(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 		WithSystemCallbacks().WithRandomSeed(1).Build()
 	scene := &GameScene{gameState: state}
 	rngCalls := state.GetRNG().Calls()
@@ -43,7 +43,7 @@ func TestMapBorderLabelUsesFriendlyNamesAcrossLocationsFloorsAndContexts(t *test
 }
 
 func TestMapBorderLabelAllRealNamesFitAndCacheAtSupportedResolutions(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	for _, size := range []image.Point{{1280, 720}, {1366, 768}, {1920, 1080}, {2560, 1440}, {3840, 2160}} {
 		t.Run(size.String(), func(t *testing.T) {
 			setTalkHistoryTestResolution(t, size.X, size.Y)
