@@ -83,7 +83,7 @@ func TestCombatPickupReceiptUsesFullNameAndActualQuantity(t *testing.T) {
 	state.PartyState.Inventory.Potions.Set(references.Blue, 98)
 	require.True(t, state.addCombatLooseItem(*position, references.Blue, 3))
 	callbacks.Reset()
-	result := state.getCombatItem(references.Down)
+	result := state.getCombatItem(references.Down, true)
 	require.True(t, result.Handled)
 	require.Equal(t, "Blue Potion", result.ItemName)
 	require.Equal(t, uint16(1), result.Acquired)

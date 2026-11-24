@@ -34,6 +34,9 @@ type CombatObject struct {
 	// and now orders below every slotted object.
 	originalObjectSlot uint8
 	chestAssessment    references.ChestAssessment
+	// fromChest marks a chest that came out of another chest. Such a chest is
+	// never trapped, so a whole-pile Get may open it.
+	fromChest bool
 }
 
 // LifetimeID survives value copies and slice movement, but not removal and readmission.

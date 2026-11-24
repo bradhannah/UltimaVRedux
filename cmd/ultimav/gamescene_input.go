@@ -34,7 +34,7 @@ var boundKeysGame = []ebiten.Key{
 	ebiten.KeyD, // Original no-op command feedback
 	ebiten.KeyE, // Enter
 	ebiten.KeyF, // Fire/Flee
-	ebiten.KeyG, // Get
+	ebiten.KeyG, // Get / Ctrl+G: get the whole pile
 	ebiten.KeyH, // Hole up/Heal
 	ebiten.KeyI, // Ignite torch
 	ebiten.KeyJ, // Jimmy

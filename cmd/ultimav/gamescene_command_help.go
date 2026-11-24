@@ -67,7 +67,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 			"Casting spends MP and one mixture. Cancelling costs nothing."},
 		{Key: "E", Purpose: "Enter a location", NextInput: "Stand on a town, dungeon or other entrance."},
 		{Key: "F", Purpose: "Fire a cannon", NextInput: direction},
-		{Key: "G", Purpose: "Get an item", NextInput: direction},
+		{Key: "G", Purpose: "Get an item", NextInput: direction + " Ctrl+G takes a whole pile at once, a minute for each item. A chest among the loot stays closed."},
 		{Key: "H", Purpose: "Hole up and camp", NextInput: "Follow the camp prompts. While the party sleeps, Space hurries the rest along. Press again to sleep straight through."},
 		{Key: "I", Purpose: "Ignite a torch", NextInput: "Lights one of your torches."},
 		{Key: "J", Purpose: "Jimmy a lock", NextInput: direction + " Choose a character when asked."},
@@ -118,6 +118,9 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 				entry.NextInput = "Arrows or keypad choose the direction. Esc cancels and costs no turn; Space passes the action. " +
 					"In solo mode during enemy turns, silently queue one G/O/J/P/S verb; another replaces it, Esc clears. " +
 					"Early directions must be released and pressed afresh when ready."
+				if entry.Key == "G" {
+					entry.NextInput += " Ctrl+G takes everything on the square for one action, and opens a chest found inside another chest."
+				}
 			case "K":
 				entry.NextInput = "Ordinary direction: Esc cancels and costs no turn; Space passes the action. Underfoot ladders and the U/D ladder selector use their displayed route."
 			case "A":

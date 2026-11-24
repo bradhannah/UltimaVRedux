@@ -2,6 +2,7 @@ package game_state
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
@@ -158,40 +159,138 @@ func (g *GameState) getFromItemStack(position *references.Position) bool {
 		return true
 	}
 
+	taken := item.Item
+	pickupMessage, ok := g.takeTopOfItemStack(position, item)
+	if !ok {
+		return false
+	}
+	g.SystemCallbacks.Audio.PlaySoundEffect(itemStackPickupSound(taken))
+	g.SystemCallbacks.UI.ShowActionFeedback(pickupMessage, true)
+	g.noteItemStackPickup(taken, position)
+	g.AdvanceOrdinarySurfaceCommandMinutes(1)
+
+	return true
+}
+
+// takeTopOfItemStack moves as much of the pile's top entry as the party can
+// carry into the pack and returns its pickup line. It owns no card, sound or
+// time, so one Get and a whole-pile Get share it.
+func (g *GameState) takeTopOfItemStack(position *references.Position, item *references.ItemAndQuantity) (string, bool) {
 	quantity := g.surfaceLootCollectibleQuantity(*item)
 	if quantity == 0 {
 		g.SystemCallbacks.Message.AddRowStr("Can't take: inventory full!")
 
-		return false
+		return "", false
 	}
 	collected := references.ItemAndQuantity{Item: item.Item, Quantity: quantity}
 	if err := g.PartyState.Inventory.PutItemInInventory(&collected); err != nil {
 		g.reportCannotTake(err)
 
-		return false
+		return "", false
 	}
 	if quantity == item.Quantity {
 		g.ItemStacksMap.Pop(position)
 	} else {
 		item.Quantity -= quantity
 	}
-	itemRef := g.GameReferences.InventoryItemReferences.GetReferenceByItem(item.Item)
-	pickupMessage := itemRef.FullDisplayName() + "!"
-	if questItem, quest := item.Item.(references.QuestItem); quest {
-		pickupMessage = g.GameReferences.InventoryItemReferences.GetQuestItemPickupMessage(questItem)
-		g.SystemCallbacks.Audio.PlaySoundEffect(SoundQuestPickup)
-	} else {
-		g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
+	if questItem, quest := collected.Item.(references.QuestItem); quest {
+		return g.GameReferences.InventoryItemReferences.GetQuestItemPickupMessage(questItem), true
 	}
-	g.SystemCallbacks.UI.ShowActionFeedback(pickupMessage, true)
-	if questItem, ok := item.Item.(references.QuestItem); ok {
+
+	return g.GameReferences.InventoryItemReferences.GetReferenceByItem(collected.Item).FullDisplayName() + "!", true
+}
+
+func itemStackPickupSound(item references.Item) SoundEffect {
+	if _, quest := item.(references.QuestItem); quest {
+		return SoundQuestPickup
+	}
+
+	return SoundItemPickup
+}
+
+// noteItemStackPickup records what a pile pickup means beyond the pack.
+func (g *GameState) noteItemStackPickup(item references.Item, position *references.Position) {
+	if questItem, ok := item.(references.QuestItem); ok {
 		g.recordQuestItemAcquired(questItem)
 	}
-	if item.Item == references.SkullKeys && g.MapState.PlayerLocation.Location == references.Minoc &&
+	if item == references.SkullKeys && g.MapState.PlayerLocation.Location == references.Minoc &&
 		g.MapState.PlayerLocation.Floor == 0 && position.X == 2 && position.Y == 2 {
 		g.recordItemAcquired("minoc-odd-keys")
 	}
+}
+
+// ActionGetAllSmallMap takes a whole adjacent town pile in one command. With no
+// pile there it is an ordinary Get.
+func (g *GameState) ActionGetAllSmallMap(direction references.Direction) bool {
+	if position := g.adjacentItemPile(direction); position != nil {
+		return g.getAllFromItemStack(position)
+	}
+
+	return g.ActionGetSmallMap(direction)
+}
+
+// ActionGetAllLargeMap is the outdoor form of ActionGetAllSmallMap.
+func (g *GameState) ActionGetAllLargeMap(direction references.Direction) bool {
+	if position := g.adjacentItemPile(direction); position != nil {
+		return g.getAllFromItemStack(position)
+	}
+
+	return g.ActionGetLargeMap(direction)
+}
+
+func (g *GameState) adjacentItemPile(direction references.Direction) *references.Position {
+	position := direction.GetNewPositionInDirection(&g.MapState.PlayerLocation.Position)
+	if position == nil || !g.ItemStacksMap.HasItemStackAtPosition(position) {
+		return nil
+	}
+
+	return position
+}
+
+// getAllFromItemStack takes the pile from the top down until it is empty or
+// something cannot be carried: one sound and one card for the lot, and a
+// minute for each item, as if each had been taken by hand.
+//
+// REDUX DEVIATION: CMD-0009: the original Get takes one object per command and
+// has no whole-pile form. Redux adds one behind Ctrl+G, so clearing what a
+// chest spilled costs the same minutes without a command for every item. A
+// chest lying among the loot stays closed: opening it in a town costs karma,
+// so that remains the player's own choice.
+func (g *GameState) getAllFromItemStack(position *references.Position) bool {
+	var lines []string
+	var taken []references.Item
+	sound := SoundItemPickup
+	for g.ItemStacksMap.HasItemStackAtPosition(position) {
+		item := g.ItemStacksMap.Peek(position)
+		if _, moonstone := item.Item.(references.Moonstone); moonstone {
+			// A moonstone keeps its own checked pickup, one command at a time.
+			if len(taken) == 0 {
+				return g.getFromItemStack(position)
+			}
+
+			break
+		}
+		kind := item.Item
+		line, ok := g.takeTopOfItemStack(position, item)
+		if !ok {
+			break
+		}
+		g.SystemCallbacks.Message.AddRowStr(line)
+		lines, taken = append(lines, line), append(taken, kind)
+		if itemStackPickupSound(kind) == SoundQuestPickup {
+			sound = SoundQuestPickup
+		}
+	}
+	if len(taken) == 0 {
+		return false
+	}
+	g.SystemCallbacks.Audio.PlaySoundEffect(sound)
+	g.SystemCallbacks.UI.ShowSearchFeedback(strings.Join(lines, "\n"))
+	for _, kind := range taken {
+		g.noteItemStackPickup(kind, position)
+	}
 	g.AdvanceOrdinarySurfaceCommandMinutes(1)
+	g.AdvanceGameplayMinutes(len(taken) - 1)
 
 	return true
 }
@@ -568,7 +667,8 @@ type CombatPickupResult struct {
 }
 
 // getCombatItem retains original object ordering while returning truthful feedback.
-func (g *GameState) getCombatItem(direction references.Direction) CombatPickupResult {
+// A whole-pile Get passes audible only for its first item, so the lot sounds once.
+func (g *GameState) getCombatItem(direction references.Direction, audible bool) CombatPickupResult {
 	result := CombatPickupResult{Message: "Nothing to get!", Sprite: indexes.NoSprites}
 	if !g.IsInCombat() || g.CombatScene == nil {
 		return result
@@ -598,7 +698,7 @@ func (g *GameState) getCombatItem(direction references.Direction) CombatPickupRe
 	result.ItemType, result.ItemID = item.Item.Type(), item.Item.ID()
 	result.ItemName = g.GameReferences.InventoryItemReferences.GetReferenceByItem(item.Item).FullDisplayName()
 	before := g.combatPickupQuantity(item.Item)
-	message, err := g.collectCombatItem(item)
+	message, err := g.collectCombatItem(item, audible)
 	if err != nil {
 		logging.Warnf(logging.CategoryInventory, "Collecting a battle item failed: %v", err)
 		result.Handled, result.Message = true, "Can't take that!"
@@ -691,14 +791,16 @@ func (g *GameState) combatPickupQuantity(item references.Item) uint16 {
 	}
 }
 
-func (g *GameState) collectCombatItem(item references.ItemAndQuantity) (string, error) {
+func (g *GameState) collectCombatItem(item references.ItemAndQuantity, audible bool) (string, error) {
 	questItem, unique := item.Item.(references.QuestItem)
 	if !unique {
 		if err := g.PartyState.Inventory.PutItemInInventory(&item); err != nil {
 			return "", err
 		}
 		itemReference := g.GameReferences.InventoryItemReferences.GetReferenceByItem(item.Item)
-		g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
+		if audible {
+			g.SystemCallbacks.Audio.PlaySoundEffect(SoundItemPickup)
+		}
 
 		return fmt.Sprintf("Got %d %s!", item.Quantity, itemReference.FullDisplayName()), nil
 	}

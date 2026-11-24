@@ -830,6 +830,12 @@ g.secondaryKeyState = OpenDirectionInput
 g.keyboard.SetAllowKeyPressImmediately()
 ```
 
+Town, overworld and combat Get read Control at the G press. `Ctrl+G` shows
+`Get all-` and marks the pending direction as a whole-pile Get; a plain G clears
+that mark, so a cancelled Ctrl+G cannot change a later Get. The direction step is
+otherwise the ordinary one. In a dungeon corridor Ctrl+G is plain G, since an
+open chest there already gives everything.
+
 `SetAllowKeyPressImmediately` is important when the player presses the command and direction in quick succession. New directional transitions should use it unless the command deliberately requires release or a modal handoff.
 
 Surface primary and secondary handlers return a typed completion result:
