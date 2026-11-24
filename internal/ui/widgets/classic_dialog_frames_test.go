@@ -10,13 +10,14 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCommandDialogsUseConnectedClassicFrames(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 640, 360)
 	screen := ebiten.NewImage(640, 360)
 	t.Cleanup(screen.Dispose)
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

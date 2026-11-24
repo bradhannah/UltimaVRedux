@@ -20,6 +20,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type surfaceCadenceController struct {
@@ -30,7 +31,7 @@ type surfaceCadenceController struct {
 func (c *surfaceCadenceController) AdvanceNextTurnCalcAndMoveNPCs() { c.turns++ }
 
 func TestSurfaceTownPassBypassesMountedGateWithoutResettingIt(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 		WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 	state.PartyVehicle = *map_units.NewNPCFriendlyVehiceNewRef(references.CarpetVehicle,
 		state.MapState.PlayerLocation.Position, state.MapState.PlayerLocation.Floor)
@@ -69,7 +70,7 @@ func TestSurfacePrimaryCompletionUsesFixedPerMapCycle(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(15, 15).
 				WithRandomSeed(387).
@@ -91,7 +92,7 @@ func TestSurfacePrimaryCompletionUsesFixedPerMapCycle(t *testing.T) {
 }
 
 func TestSurfaceSecondaryEscapeCancelsWithoutCycle(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -127,7 +128,7 @@ func TestSurfaceNoOpAndQuitCommandsDoNotConsumeCycle(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -149,7 +150,7 @@ func TestSurfaceNoOpAndQuitCommandsDoNotConsumeCycle(t *testing.T) {
 }
 
 func TestSurfaceQuitRetainsInputWithoutConsumingCycle(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -185,7 +186,7 @@ func TestSurfaceQuitRetainsInputWithoutConsumingCycle(t *testing.T) {
 
 func TestSurfaceMovementCompletionSeparatesBlockedAndMovedOverworldSteps(t *testing.T) {
 	t.Run("blocked overworld movement consumes no cycle", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.BritanniaUnderworld).
 			WithPlayerAt(50, 50).
 			WithSystemCallbacks().
@@ -206,7 +207,7 @@ func TestSurfaceMovementCompletionSeparatesBlockedAndMovedOverworldSteps(t *test
 	})
 
 	t.Run("moved overworld step adds movement-only terrain cost", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.BritanniaUnderworld).
 			WithPlayerAt(50, 50).
 			WithRandomSeed(387).
@@ -239,7 +240,7 @@ func TestSurfaceMovementCompletionSeparatesBlockedAndMovedOverworldSteps(t *test
 
 func TestSurfaceTransitionSuppressesOriginCycleButDeclinedBoundaryConsumesTownCycle(t *testing.T) {
 	t.Run("successful transition", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.Britain).
 			WithSystemCallbacks().
 			Build()
@@ -259,7 +260,7 @@ func TestSurfaceTransitionSuppressesOriginCycleButDeclinedBoundaryConsumesTownCy
 	})
 
 	t.Run("declined boundary", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.Britain).
 			WithSystemCallbacks().
 			Build()
@@ -296,7 +297,7 @@ func TestSurfaceResultContractDistinguishesAllStates(t *testing.T) {
 
 func TestConsumedRejectedAndCancelledTurnsRunCodexCheckpointOnlyAtCompletion(t *testing.T) {
 	for _, commandState := range []surfaceCommandState{surfaceCommandRejected, surfaceCommandCancelled} {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.BritanniaUnderworld).
 			WithFloor(references.FloorNumber(references.OVERWORLD)).
 			WithPlayerAt(0xe9, 0xeb).
@@ -326,7 +327,7 @@ func TestDeferredFreeAndTransitionResultsDoNotRunCodexCheckpoint(t *testing.T) {
 	states = append(states, transition)
 
 	for _, result := range states {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.BritanniaUnderworld).
 			WithFloor(references.FloorNumber(references.OVERWORLD)).
 			WithPlayerAt(0xe9, 0xeb).
@@ -398,7 +399,7 @@ func TestSurfaceReadyAndViewCompleteOnlyAfterModalCleanup(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(15, 15).
 				WithRandomSeed(387).
@@ -458,7 +459,7 @@ func TestDeferredSurfaceCompletionRunsAfterActionWorkflow(t *testing.T) {
 
 	for _, test := range priorities {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithSystemCallbacks().
 				Build()
@@ -495,7 +496,7 @@ func TestDeferredSurfaceCompletionRunsAfterActionWorkflow(t *testing.T) {
 }
 
 func TestDeferredSurfaceCompletionSurvivesShutdownBeforeFirstUpdate(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -515,7 +516,7 @@ func TestDeferredSurfaceCompletionSurvivesShutdownBeforeFirstUpdate(t *testing.T
 
 func TestSurfaceUseOwnershipCleansUpOnCancellationAndNoItemRejection(t *testing.T) {
 	t.Run("cancellation", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.Britain).
 			WithSystemCallbacks().
 			Build()
@@ -544,7 +545,7 @@ func TestSurfaceUseOwnershipCleansUpOnCancellationAndNoItemRejection(t *testing.
 	})
 
 	t.Run("no items", func(t *testing.T) {
-		state, callbacks := game_state.NewIntegrationTestBuilder(t).
+		state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.Britain).
 			WithSystemCallbacks().
 			Build()
@@ -580,7 +581,7 @@ func TestLostPartySeesNothingAndSpendsItsTurnWithoutMoving(t *testing.T) {
 	saved := *manager
 	t.Cleanup(func() { *manager = saved })
 	manager.PublishLogicalSize(320, 200)
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithFloor(references.FloorNumber(references.UNDERWORLD)).WithPlayerAt(123, 126).
 		WithSystemCallbacks().WithRandomSeed(42).Build()
 	state.DebugOptions.MonsterGen = false

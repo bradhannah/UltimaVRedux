@@ -108,7 +108,7 @@ func (setting gameplaySettingDefinition) detailLines() []string {
 		return setting.helpLines
 	}
 
-	return []string{setting.detail}
+	return []string{setting.detail, "", setting.defaultLine}
 }
 
 // Measurement and drawing populate the same Output, including blank rows and

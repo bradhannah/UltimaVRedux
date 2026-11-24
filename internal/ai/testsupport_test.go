@@ -5,9 +5,9 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
 
-// SetAttackAvatar marks appropriate NPCs to attack the Avatar when hostile actions occur.
-// This is triggered by actions like stealing or attacking in towns, causing guards and
-// certain NPCs to become hostile.
+// SetAttackAvatar turns every friendly NPC that attacks the Avatar when trouble
+// starts hostile: it sets the law-enforcement override and clears the NPC's path
+// and pending interaction.
 func (n *NPCAIControllerSmallMap) SetAttackAvatar() {
 	for _, mapUnit := range n.mapUnits {
 		if npc, ok := mapUnit.(*map_units.NPCFriendly); ok {

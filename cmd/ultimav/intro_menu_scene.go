@@ -165,6 +165,11 @@ func createIntroMenuScene(gameConfig *config.UltimaVConfiguration, startAtMenu b
 		startIntroPresentationWorkflow(intro.eventQueueManager, intro.presentation, intro.finishStartupPresentation)
 	}
 
+	if gameConfig.SoundUnavailable {
+		// Said once: later visits to the title screen stay quiet about it.
+		intro.notice = "No sound device was found. The game is running without sound."
+		gameConfig.SoundUnavailable = false
+	}
 	if !gameConfig.SoundDisabled {
 		intro.audioManager, err = audio.NewGameAudioManagerWithConfig(gameConfig.AudioConfiguration)
 		if err != nil {
@@ -392,7 +397,7 @@ func (m *IntroMenuScene) showExitConfirmation(game *Game) {
 	var menu *widgets.ButtonListModal
 	cancel := func() { m.dialogStack.MustRemoveWidgetInstance(menu) }
 	placement := sprites.PercentBasedPlacement{StartPercentX: 0, EndPercentX: 1, StartPercentY: 0, EndPercentY: 1}
-	menu = widgets.NewButtonListModal("Exit Ultima V Redux?", cancel, m.keyboard, &placement)
+	menu = widgets.NewButtonListModal("Exit to DOS?", cancel, m.keyboard, &placement)
 	menu.AddButton("Exit", game.requestExit)
 	menu.AddButton("Cancel", cancel)
 	m.dialogStack.PushModalDialog(menu)
@@ -564,7 +569,7 @@ func (m *IntroMenuScene) activateSubmenuSelection(game *Game) {
 func (m *IntroMenuScene) startDataDirectorySetup(game *Game) {
 	host, err := originaldata.CurrentHostProfile()
 	if err != nil {
-		m.notice = "Data-directory setup could not inspect this computer."
+		m.notice = "Game Files setup could not inspect this computer."
 		logging.Warnf(logging.CategoryUI, "Data-directory host setup failed: %v", err)
 
 		return
@@ -585,7 +590,7 @@ func (m *IntroMenuScene) startDataDirectorySetup(game *Game) {
 		},
 	)
 	if err := game.ReplaceScene(func() (Scene, error) { return setup, nil }); err != nil {
-		m.notice = "Data-directory setup could not be started."
+		m.notice = "Game Files setup could not be started."
 		logging.Warnf(logging.CategoryUI, "Data-directory scene replacement failed: %v", err)
 	}
 }

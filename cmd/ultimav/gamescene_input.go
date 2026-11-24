@@ -462,8 +462,7 @@ func primaryMovementKey(key ebiten.Key) ebiten.Key {
 }
 
 func (g *GameScene) updateDialogs() bool {
-	// Phase 1D: MessageDialog now updates through DialogStack for proper modal isolation
-	// (removed standalone g.messageDialog.Update() call)
+	// Dialogs update through the dialog stack, which keeps modal dialogs isolated.
 
 	modalDialog := g.dialogStack.PeekTopModalDialog()
 	if modalDialog == nil {

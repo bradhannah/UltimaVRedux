@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type surfacePrimaryRouteContext struct {
@@ -241,7 +242,7 @@ func newAuditedSurfaceRouteScene(
 	context surfacePrimaryRouteContext,
 ) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	builder := game_state.NewIntegrationTestBuilder(t).
+	builder := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(context.location).
 		WithPlayerAt(15, 15).
 		WithRandomSeed(467).

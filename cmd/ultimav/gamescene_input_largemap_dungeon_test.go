@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestLargeMapEnterRoutingCompletesOutdoorTurnExactlyOnce(t *testing.T) {
@@ -20,7 +21,7 @@ func TestLargeMapEnterRoutingCompletesOutdoorTurnExactlyOnce(t *testing.T) {
 			name = "success"
 		}
 		t.Run(name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithFloor(0).
 				WithSystemCallbacks().
@@ -77,7 +78,7 @@ func TestLargeMapEnterRoutingCompletesOutdoorTurnExactlyOnce(t *testing.T) {
 
 func TestLargeMapEnterRoutingFinishesNonDungeonTurn(t *testing.T) {
 	shrine := game_state.GetShrineData(0)
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithFloor(0).
 		WithPlayerAt(int(shrine.WorldX), int(shrine.WorldY)).

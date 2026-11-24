@@ -3,16 +3,16 @@ package main
 import (
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStonegateLavaRevealRendersFormerDoorAsLava(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Stonegate).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Stonegate).
 		WithPlayerAt(15, 17).WithRandomSeed(701).WithSystemCallbacks().Build()
 	scene := newSurfaceCompletionTestScene(state)
 	scene.spriteSheet = sharedPresentationTestSpriteSheet()

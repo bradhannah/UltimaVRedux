@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 )
@@ -226,6 +227,20 @@ func TestCommitDeathResurrection_RestoresClassMPInAuthoritativeAndDetachedOutcom
 }
 
 // TestIsAllPartyDead tests party wipe detection
+func TestCommitDeathResurrection_RevivesAShipCrewOnFoot(t *testing.T) {
+	gs := createTestGameStateForDeath(t, 99, 0)
+	frigate := map_units.NewNPCFriendlyVehiceNewRef(
+		references.FrigateVehicle, gs.MapState.PlayerLocation.Position, gs.MapState.PlayerLocation.Floor,
+	)
+	frigate.GetVehicleDetails().SetSailState(map_units.SailRaised)
+	gs.PartyVehicle = *frigate
+
+	commitTestDeathResurrection(t, gs)
+
+	assert.Equal(t, references.NoPartyVehicle, gs.PartyVehicle.GetVehicleDetails().VehicleType,
+		"a ship under sail would leave the revived party unable to move or exit")
+}
+
 func TestIsAllPartyDead(t *testing.T) {
 	tests := []struct {
 		name     string

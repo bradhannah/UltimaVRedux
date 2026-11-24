@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 )
@@ -123,7 +124,9 @@ func (g *GameScene) completeEscapeDeparture(game *Game, departure escapeDepartur
 	switch departure {
 	case escapeDepartureMainMenu:
 		if err := game.returnToMainMenu(g.gameConfig); err != nil {
-			g.openEscapeDeparturePrompt(game, departure, "Main menu failed: "+err.Error())
+			logging.Warnf(logging.CategoryUI, "Returning to the main menu failed: %v", err)
+			g.openEscapeDeparturePrompt(game, departure,
+				"The main menu could not be opened. The game log has the details.")
 		}
 	case escapeDepartureApplication, escapeDepartureWindowClose:
 		game.requestExit()
@@ -179,5 +182,5 @@ func escapeDepartureWithoutSaveLabel(departure escapeDeparture) string {
 		return "Main Menu Without Saving"
 	}
 
-	return "Exit Without Save"
+	return "Exit Without Saving"
 }

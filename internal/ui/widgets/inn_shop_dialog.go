@@ -414,7 +414,7 @@ func (d *InnShopDialog) ApplyResult(
 	if d.phase != InnShopAwaitingResult || request != d.awaitingRequest || display.Action != request.Action {
 		panic("InnShopDialog.ApplyResult: result does not match accepted request")
 	}
-	validateInnFinalizedText("result exchange", display.MerchantExchange)
+	requireFinalizedText("Inn widgets", "result exchange", display.MerchantExchange)
 	refreshed = validatedInnShopState(refreshed)
 	validateInnResultDisplay(request, refreshed, display)
 	d.applyState(refreshed)
@@ -441,7 +441,7 @@ func (d *InnShopDialog) PreviewStop(request InnActionRequest) {
 
 // ApplySessionError disables Inn actions until Enter or Escape acknowledges the error.
 func (d *InnShopDialog) ApplySessionError(message string) {
-	validateInnFinalizedText("session error", message)
+	requireFinalizedText("Inn widgets", "session error", message)
 	d.clearAwaitingAction()
 	d.latestExchange = message
 	d.receiptText = ""
@@ -1487,16 +1487,10 @@ func validateInnWarnings(warnings []game_state.InnWarning) {
 }
 
 func validateInnShopProse(prose InnShopDialogProse) {
-	validateInnFinalizedText("greeting", prose.Greeting)
-	validateInnFinalizedText("Rest prompt", prose.RestPrompt)
-	validateInnFinalizedText("Leave prompt", prose.LeavePrompt)
-	validateInnFinalizedText("Pick Up prompt", prose.PickupPrompt)
-}
-
-func validateInnFinalizedText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("Inn widgets: finalized " + label + " is required")
-	}
+	requireFinalizedText("Inn widgets", "greeting", prose.Greeting)
+	requireFinalizedText("Inn widgets", "Rest prompt", prose.RestPrompt)
+	requireFinalizedText("Inn widgets", "Leave prompt", prose.LeavePrompt)
+	requireFinalizedText("Inn widgets", "Pick Up prompt", prose.PickupPrompt)
 }
 
 func validateInnResultDisplay(

@@ -56,7 +56,7 @@ type CombatLootDialog struct {
 	sheet                      *sprites.SpriteSheet
 	revealed, offset, capacity int
 	ready, dismissed           bool
-	output, heading            *text.Output
+	output, heading, trap      *text.Output
 	rows                       []*text.Output
 	icons                      []*ebiten.Image
 	bounds                     image.Rectangle
@@ -77,7 +77,8 @@ func NewCombatLootDialog(
 
 	return &CombatLootDialog{
 		entries: append([]game_state.CombatLootReveal(nil), entries...), keyboard: keyboard, sheet: sheet, capacity: 1,
-		revealed: 0, offset: 0, ready: false, dismissed: false, output: nil, heading: nil, rows: nil, icons: nil,
+		revealed: 0, offset: 0, ready: false, dismissed: false, output: nil, heading: nil, trap: nil, rows: nil,
+		icons:  nil,
 		bounds: image.Rect(0, 0, 0, 0), width: 0,
 		title: "Chest contents", notice: "These items are on the ground.", trapNotice: "",
 		onDismiss: nil, quantities: nil, summary: nil,
@@ -209,6 +210,10 @@ func (d *CombatLootDialog) Draw(screen *ebiten.Image) {
 	FillClassicPixelRoundedRect(screen, d.bounds, padding/lootSides, ucolor.DialogBackground.RGBA())
 	DrawClassicPixelRoundedFrame(screen, d.bounds, padding/lootSides, DialogRuleColor)
 	d.heading.DrawPanelContent(screen, image.Pt(left+padding, top+padding), width-padding*lootSides, etext.AlignCenter)
+	if d.trap != nil {
+		d.trap.DrawPanelContent(screen, image.Pt(left+padding, top+padding+combatSummaryTextHeight(d.heading)),
+			width-padding*lootSides, etext.AlignCenter)
+	}
 	for row, index := 0, d.offset; index < min(d.revealed, d.offset+d.capacity); row, index = row+1, index+1 {
 		rowTop := top + padding + headingHeight + row*rowHeight
 		icon := d.icons[index]
@@ -268,7 +273,10 @@ func (d *CombatLootDialog) prepareText(width, screenWidth, padding int) (int, in
 	for _, row := range d.rows {
 		rowHeight = max(rowHeight, int(math.Ceil(row.GetTotalHeightForLines(row.GetPanelContentLineCount()))))
 	}
-	headingHeight := int(math.Ceil(d.heading.GetTotalHeightForLines(d.heading.GetPanelContentLineCount()))) + padding
+	headingHeight := combatSummaryTextHeight(d.heading) + padding
+	if d.trap != nil {
+		headingHeight += combatSummaryTextHeight(d.trap)
+	}
 	footerHeight := int(math.Ceil(d.output.GetTotalHeightForLines(d.output.GetPanelContentLineCount()))) + padding
 
 	return rowHeight + padding, headingHeight, footerHeight
@@ -280,13 +288,18 @@ func (d *CombatLootDialog) initializeText(width, screenWidth, padding int) {
 		MaxLines: lootMaximumTextRows, MaxChars: lootInitialTextChars,
 	}, screenWidth)
 	d.output, d.width = output, width
-	d.heading = text.NewOutput(font, output.GetLineSpacing(), lootMaximumTextRows, lootInitialTextChars)
+	_, heading := GetScaledFontWithOutputForWidth(FontConfig{
+		Size: FontSizeTitle, LineSpacingMultiplier: 1,
+		MaxLines: lootMaximumTextRows, MaxChars: lootInitialTextChars,
+	}, screenWidth)
+	d.heading = combatSummaryText(d.title, DialogHeaderColor, heading, width-padding*lootSides)
 	charWidth, _ := font.MeasureString("M")
 	output.SetMaxCharsPerLine(max(1, int(float64(width-padding*lootSides)/charWidth)))
-	d.heading.SetMaxCharsPerLine(max(1, int(float64(width-padding*lootSides)/charWidth)))
-	d.heading.AppendLine().Text(d.title, DialogHeaderColor).WordWrap().Done()
+	d.trap = nil
 	if d.trapNotice != "" {
-		d.heading.AppendLine().Text("TRAP: ", ucolor.CombatReportWarning).
+		d.trap = text.NewOutput(font, output.GetLineSpacing(), lootMaximumTextRows, lootInitialTextChars)
+		d.trap.SetMaxCharsPerLine(max(1, int(float64(width-padding*lootSides)/charWidth)))
+		d.trap.AppendLine().Text("TRAP: ", ucolor.CombatReportWarning).
 			Text(d.trapNotice, DialogValueColor).WordWrap().Done()
 	}
 	iconWidth := int(math.Ceil(output.GetTotalHeightForLines(lootSides)))

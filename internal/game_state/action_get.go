@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/bradhannah/UltimaVRedux/internal/journal"
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -127,7 +128,7 @@ func (g *GameState) getMagicCarpet(carpet *map_units.NPCFriendly) bool {
 	if err := g.PartyState.Inventory.PutItemInInventory(&references.ItemAndQuantity{
 		Item: references.Carpet, Quantity: 1,
 	}); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -165,7 +166,7 @@ func (g *GameState) getFromItemStack(position *references.Position) bool {
 	}
 	collected := references.ItemAndQuantity{Item: item.Item, Quantity: quantity}
 	if err := g.PartyState.Inventory.PutItemInInventory(&collected); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -318,7 +319,7 @@ func (g *GameState) getMoonstoneFromItemStack(pos *references.Position, moonston
 
 	// Add moonstone to inventory
 	if err := g.PartyState.Inventory.PutItemInInventory(item); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -407,7 +408,7 @@ func (g *GameState) getQuestItem(getThingPos *references.Position, getThingTile 
 	}
 
 	if err := g.PartyState.Inventory.PutItemInInventory(itemAndQuantity); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -449,7 +450,7 @@ func (g *GameState) getShardOfEvil(getThingPos *references.Position, _ *map_stat
 	}
 
 	if err := g.PartyState.Inventory.PutItemInInventory(itemAndQuantity); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -485,7 +486,7 @@ func (g *GameState) getQuestItemFromOverlay(questItem references.QuestItem) bool
 	}
 
 	if err := g.PartyState.Inventory.PutItemInInventory(itemAndQuantity); err != nil {
-		g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("Can't take: %v", err))
+		g.reportCannotTake(err)
 
 		return false
 	}
@@ -599,7 +600,8 @@ func (g *GameState) getCombatItem(direction references.Direction) CombatPickupRe
 	before := g.combatPickupQuantity(item.Item)
 	message, err := g.collectCombatItem(item)
 	if err != nil {
-		result.Handled, result.Message = true, fmt.Sprintf("Could not collect item: %v", err)
+		logging.Warnf(logging.CategoryInventory, "Collecting a battle item failed: %v", err)
+		result.Handled, result.Message = true, "Can't take that!"
 		g.SystemCallbacks.Message.AddRowStr(result.Message)
 
 		return result
@@ -720,4 +722,10 @@ func (g *GameState) collectCombatItem(item references.ItemAndQuantity) (string, 
 // ActionGetDungeonMap takes an open chest from the party's current dungeon cell.
 func (g *GameState) ActionGetDungeonMap() bool {
 	return g.actionGetDungeonMap()
+}
+
+// reportCannotTake tells the player in plain words and keeps the cause in the log.
+func (g *GameState) reportCannotTake(err error) {
+	logging.Warnf(logging.CategoryInventory, "Taking an item failed: %v", err)
+	g.SystemCallbacks.Message.AddRowStr("Can't take that!")
 }

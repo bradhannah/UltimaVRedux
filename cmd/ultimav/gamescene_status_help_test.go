@@ -6,12 +6,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStatusHelpUsesVisibleRailIdentitiesAndSpendsNothing(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 		WithRandomSeed(42).WithSystemCallbacks().Build()
 	state.MagicLightMinutesRemaining = 40
 	state.CrownState.IsActive = true

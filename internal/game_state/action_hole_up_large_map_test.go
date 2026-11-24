@@ -98,3 +98,14 @@ func TestActionHoleUpLargeMap_OnFootRequestsDuration(t *testing.T) {
 	assert.True(t, gs.ActionHoleUpLargeMap())
 	assert.True(t, requested)
 }
+
+func TestCampingReportsAMissingCampMapInsteadOfCrashing(t *testing.T) {
+	state, callbacks := newCampingAmbushTestState(t)
+	state.GameConfig.SavedConfigData.DataFilePath = t.TempDir()
+	location := state.MapState.PlayerLocation
+
+	require.False(t, state.ActionHoleUpLargeMapWithDebug(2, NoGuardAssigned, false, false))
+	assert.True(t, callbacks.MessagesContain("Camping could not begin."))
+	assert.Equal(t, location, state.MapState.PlayerLocation)
+	assert.False(t, state.EventQueueManager.HasActiveWorkflows())
+}

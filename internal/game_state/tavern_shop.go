@@ -503,11 +503,11 @@ func (g *GameState) PurchaseTavernDrink(
 		return result, nil
 	}
 
-	// REDUX DEVIATION: alcohol purchase sets smashed and reduces karma
+	// REDUX DEVIATION: KARMA-0014: alcohol purchase sets smashed and reduces karma
 	// before attempting the warned purchase. Redux first revalidates the canonical
 	// request and affordability, then commits payment -> warning effects ->
 	// Faulinei -> drunk so cancellation and failed payment are fully atomic.
-	// See ref:MERCH-0013.
+	// See ref:KARMA-0014, ref:MERCH-0013.
 	if !g.PartyState.Inventory.Gold.DecrementBy(quote.Charge) {
 		panic("validated Tavern drink could not deduct gold")
 	}

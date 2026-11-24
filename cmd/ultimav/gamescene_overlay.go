@@ -5,7 +5,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"strconv"
 
@@ -169,11 +168,6 @@ func (r *OverlayRenderer) renderSearchOverlay(g *GameScene) {
 
 	mapType := g.gameState.MapState.PlayerLocation.Location.GetMapType()
 
-	// Debug counters
-	totalRendered := 0
-	redCount := 0
-	greenCount := 0
-
 	// Render searchable positions within the visible area
 	for tileX := range references.Coordinate(xTilesVisibleOnGameScreen) {
 		for tileY := range references.Coordinate(yTilesVisibleOnGameScreen) {
@@ -204,13 +198,10 @@ func (r *OverlayRenderer) renderSearchOverlay(g *GameScene) {
 				if searchStatus == game_state.SearchLocationAlreadyFound {
 					// Red for already searched locations using EGA constants
 					overlayColor = ucolor.DebugSearchAlreadyFound.Alpha(alpha).RGBA()
-					redCount++
 				} else {
 					// Green for unsearched locations (SearchLocationUnsearched) using EGA constants
 					overlayColor = ucolor.DebugSearchUnsearched.Alpha(alpha).RGBA()
-					greenCount++
 				}
-				totalRendered++
 
 				vector.FillRect(
 					r.overlayImage,
@@ -249,13 +240,6 @@ func (r *OverlayRenderer) renderSearchOverlay(g *GameScene) {
 					float32((tileX+1)*sprites.TileSize-2), float32(tileY*sprites.TileSize),
 					2, float32(sprites.TileSize), borderColor, false)
 			}
-		}
-	}
-
-	// Debug output (only show occasionally to avoid spam)
-	if g.getElapsedMs()%5000 < 100 { // Every 5 seconds for ~100ms
-		if totalRendered > 0 {
-			g.debugMessage = fmt.Sprintf("Search overlay: %d total (%d red, %d green)", totalRendered, redCount, greenCount)
 		}
 	}
 }

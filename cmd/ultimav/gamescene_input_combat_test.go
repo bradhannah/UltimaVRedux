@@ -19,6 +19,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type fastCombatant struct{}
@@ -638,7 +639,7 @@ func newStartedDungeonCombatPushTrapScene(
 	t *testing.T,
 ) (*GameScene, *game_state.MockSystemCallbacks, references.Direction) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(295).
@@ -1016,7 +1017,7 @@ func TestFinishCombatSpellTargetAction_CancelPreservesAction(t *testing.T) {
 }
 
 func TestFinishCombatSpellTargetAction_InvalidKeepsTargetingInput(t *testing.T) {
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1125,7 +1126,7 @@ func TestCombatSpellTargetCancellationRoutesPreserveActionAndResources(t *testin
 }
 
 func TestCombatProjectileAnimationSequenceOwnsOnlyProjectileLifecycle(t *testing.T) {
-	gs, mock := game_state.NewIntegrationTestBuilder(t).
+	gs, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1207,7 +1208,7 @@ func TestCombatUtilitySpellTargetingUsesOriginalContextBehavior(t *testing.T) {
 }
 
 func TestCombatWisQuasEffectProvidesAudioAndVisualFeedback(t *testing.T) {
-	gs, mock := game_state.NewIntegrationTestBuilder(t).
+	gs, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1261,7 +1262,7 @@ func TestCombatEarthquakeEffectShakesScreenAndPlaysSound(t *testing.T) {
 }
 
 func TestCombatSanctLorEffectUsesDoubleLightBluePulseAndLeavesShimmerState(t *testing.T) {
-	gs, mock := game_state.NewIntegrationTestBuilder(t).
+	gs, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1300,7 +1301,7 @@ func TestCombatSanctLorEffectUsesDoubleLightBluePulseAndLeavesShimmerState(t *te
 }
 
 func TestCombatRelTymEffectUsesTwoLightBluePulsesAndCleansUp(t *testing.T) {
-	gs, mock := game_state.NewIntegrationTestBuilder(t).
+	gs, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1465,7 +1466,7 @@ func TestCombatInPorEffectConcealsMovesAndRevealsCaster(t *testing.T) {
 }
 
 func TestFinishSpellCastingWorkflow_AdvancesCommittedCombatQueue(t *testing.T) {
-	gs, mock := game_state.NewIntegrationTestBuilder(t).
+	gs, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -1525,7 +1526,7 @@ func TestCombatEscapeAfterVictoryLeavesInsteadOfOpeningMenu(t *testing.T) {
 }
 
 func TestCombatEscapeWithNoPCsAndSurvivingAllyPreservesDefeat(t *testing.T) {
-	gs, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(42).
@@ -1559,7 +1560,7 @@ func TestCombatEscapeWithNoPCsAndSurvivingAllyPreservesDefeat(t *testing.T) {
 }
 
 func TestCombatEscapeBeforeVictoryReportsRefusalInsteadOfOpeningMenu(t *testing.T) {
-	gs, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(42).

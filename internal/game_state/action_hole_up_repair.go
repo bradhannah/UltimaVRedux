@@ -52,8 +52,6 @@ func (g *GameState) ActionHoleUpRepairShip() bool {
 	if g.activeShipRepair != nil || g.EventQueueManager.HasWorkflow(shipRepairWorkflowName) {
 		return false
 	}
-	g.SystemCallbacks.Message.AddRowStr("repair...")
-
 	// Require lowered sails before repairing the frigate. ref:SHIP-0004
 	if !g.PartyVehicle.GetVehicleDetails().IsSailFurled() {
 		g.SystemCallbacks.Message.AddRowStr("Sails must be")

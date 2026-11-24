@@ -1,5 +1,6 @@
 // Command check-core-dependencies checks the actual production and test import
-// closures of the gameplay roots. Run from the repository root.
+// closures of the gameplay roots: neither may reach presentation code, and the
+// production closure may not reach test code. Run from the repository root.
 package main
 
 import (
@@ -135,7 +136,14 @@ func checkGraph(packages []packageMetadata, roots []string) error {
 	}
 	var violations []error
 	for _, start := range starts {
-		if witness := forbiddenWitness(graph, start); len(witness) != 0 {
+		if witness := forbiddenWitness(graph, start, forbiddenPackage); len(witness) != 0 {
+			violations = append(violations, fmt.Errorf("%w: %s", errDependencyGraph, strings.Join(witness, " -> ")))
+		}
+	}
+	// Only the production roots are held to this rule; their test variants
+	// reach test code by design.
+	for _, root := range roots {
+		if witness := forbiddenWitness(graph, root, testOnlyPackage); len(witness) != 0 {
 			violations = append(violations, fmt.Errorf("%w: %s", errDependencyGraph, strings.Join(witness, " -> ")))
 		}
 	}
@@ -214,12 +222,12 @@ func resolvedImports(metadata packageMetadata) []string {
 
 // Breadth-first traversal with sorted edges yields a deterministic shortest
 // witness, including test-only and remapped package identities.
-func forbiddenWitness(graph map[string]packageMetadata, root string) []string {
+func forbiddenWitness(graph map[string]packageMetadata, root string, forbidden func(string) bool) []string {
 	queue := []string{root}
 	parent := map[string]string{root: ""}
 	for index := 0; index < len(queue); index++ {
 		current := queue[index]
-		if forbiddenPackage(current) {
+		if forbidden(current) {
 			var witness []string
 			for node := current; node != ""; node = parent[node] {
 				witness = append(witness, node)
@@ -264,4 +272,13 @@ func forbiddenPackage(identity string) bool {
 	}
 
 	return false
+}
+
+// testOnlyPackage reports code that only tests may link: the standard testing
+// package and this module's test support. A gameplay root that imports either
+// puts test code into the game.
+func testOnlyPackage(identity string) bool {
+	path, _, _ := strings.Cut(identity, " [")
+
+	return path == "testing" || path == modulePath+"/test" || strings.HasPrefix(path, modulePath+"/test/")
 }

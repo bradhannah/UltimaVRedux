@@ -64,7 +64,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: "B", Purpose: "Board a vehicle", NextInput: "Stand on a boardable vehicle."},
 		{Key: "C", Purpose: "Cast a prepared spell", NextInput: "Choose a caster and a spell. Enter names the next step: " +
 			"a spell with no aim is cast at once; any other asks who or where first. " +
-			"Casting spends M.P. and one mixture. Cancelling costs nothing."},
+			"Casting spends MP and one mixture. Cancelling costs nothing."},
 		{Key: "E", Purpose: "Enter a location", NextInput: "Stand on a town, dungeon or other entrance."},
 		{Key: "F", Purpose: "Fire a cannon", NextInput: direction},
 		{Key: "G", Purpose: "Get an item", NextInput: direction},
@@ -88,7 +88,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: "Y", Purpose: "Yell", NextInput: "Type words, then Enter."},
 		{Key: "Z", Purpose: "Inspect party statistics", NextInput: "Look over each member; Esc closes."},
 		{Key: commandHelpPartyKeys, Purpose: "Active party member", NextInput: "0 selects all; 1-6 selects a party position."},
-		{Key: commandHelpJournalKeys, Purpose: "Quest journal", NextInput: "Read what you have learned; Esc closes."},
+		{Key: commandHelpJournalKeys, Purpose: "Journal", NextInput: "Read what you have learned and keep your own notes under My Notes; N writes a new one. Esc closes."},
 		{Key: commandHelpMapKeys, Purpose: "Traveller's map", NextInput: "Browse places, notes and your position; Esc closes. Time stops while it is open."},
 		{Key: commandHelpMarkKey, Purpose: "Mark current position", NextInput: "Writes a Map note where you stand. Needs a sextant reading, outdoors on the surface. Esc goes back."},
 		{Key: "F4", Purpose: "Last battle summary", NextInput: "Shows what the last battle gave you. Enter or Esc closes. Costs no turn."},
@@ -110,6 +110,8 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 				entry.Unavailable = "Not available during combat."
 			}
 			switch entry.Key {
+			case commandHelpMovementKeys:
+				entry.NextInput = "Move one step. Hold to repeat, if Combat Key Repeat is on in Configure."
 			case commandKeyLabelSpace:
 				entry.NextInput = "Passes once per press. Holding the key does not repeat in battle."
 			case "G", "J", "O", "P", "S":
@@ -119,12 +121,14 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 			case "K":
 				entry.NextInput = "Ordinary direction: Esc cancels and costs no turn; Space passes the action. Underfoot ladders and the U/D ladder selector use their displayed route."
 			case "A":
-				entry.NextInput = "Arrows/keypad aim; Enter or A attacks. Escape cancels before the first attack, " +
-					"then skips the remaining weapon. Space skips at your own square and attacks elsewhere."
+				entry.NextInput = "Arrows/keypad aim; Enter or A attacks. Esc cancels before the first attack, " +
+					"then skips the remaining weapon. Space skips at your own square and attacks elsewhere. " +
+					"Combat Key Repeat set to Fast repeats A while held."
 			case "C":
 				entry.NextInput = "Choose a spell for the acting caster. Enter names the next step: " +
-					"a spell with no aim is cast at once; any other is aimed first. " +
-					"Casting spends M.P. and one mixture. " +
+					"a spell with no aim is cast at once; any other is aimed first: " +
+					"arrows turn or move the aim, and the shaded squares show who it reaches. " +
+					"Casting spends MP and one mixture. " +
 					"Cancelling costs nothing and preserves the combat action."
 			case "R":
 				entry.NextInput = "Choose equipment for the acting character; Enter applies the displayed Equip/Unready operation immediately."
@@ -181,7 +185,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 	}
 	if context == references.CombatMapType {
 		entries = append(entries,
-			widgets.CommandHelpEntry{Key: "Tab", Purpose: "Auto advance / attack", NextInput: "Moves toward an enemy, or attacks one in reach."},
+			widgets.CommandHelpEntry{Key: "Tab", Purpose: "Auto advance / attack", NextInput: "Moves toward an enemy, or attacks one in reach. Hold to repeat, if Combat Key Repeat is on."},
 			widgets.CommandHelpEntry{Key: "F2", Purpose: "Combat details", NextInput: "Shows or hides the combat details."},
 			widgets.CommandHelpEntry{Key: "F3", Purpose: "Noteworthy combat results", NextInput: "Jumps to the oldest find, pickup or trap you have not looked at; otherwise shows the latest. Costs no turn."},
 			widgets.CommandHelpEntry{Key: commandHelpHistoryKeys, Purpose: "Combat message history", NextInput: "Scrolls back through the battle; End returns to now."},

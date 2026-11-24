@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type bridgeCombatSignature struct {
@@ -39,7 +40,7 @@ func TestBridgeTrollSneakingStopsAfterFirstCaughtMember(t *testing.T) {
 }
 
 func TestBridgeTrollSuccessfulPaymentRetainsTollTranscript(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()
@@ -101,7 +102,7 @@ func TestBridgeTrollSuccessfulPaymentRetainsTollTranscript(t *testing.T) {
 }
 
 func TestBridgeTrollEvasionUsesPassiveTranscriptUntilAcknowledgement(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()
@@ -155,7 +156,7 @@ func runBridgeTrollAttackPath(
 	activeMembers int,
 ) ([]bridgeCombatSignature, uint16) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()

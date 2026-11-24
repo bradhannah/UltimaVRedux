@@ -3,13 +3,13 @@ package main
 import (
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ import (
 func TestSignHeldDismissalProductionHandoff(t *testing.T) {
 	for _, key := range []ebiten.Key{ebiten.KeyI, ebiten.KeySpace, ebiten.KeyUp, ebiten.KeyEscape} {
 		t.Run(key.String(), func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).WithPlayerAt(10, 10).WithRandomSeed(42).WithSystemCallbacks().Build()
 			state.DebugOptions.MonsterGen = false
 			state.PartyState.Inventory.Provisions.Torches.Set(3)

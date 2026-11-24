@@ -5,11 +5,12 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuestJournalOppressionSearchRequiresDiscovery(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.SkaraBrae).WithSystemCallbacks().Build()
 	config := testQuestJournalConfig(newWidgetTestKeyboard(0))
 	dialog := NewQuestJournalDialog(state.CurrentQuestJournalDossier(), config)

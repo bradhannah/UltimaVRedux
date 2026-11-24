@@ -289,7 +289,7 @@ func (g *Game) commitCharacterCreationSave(
 		scene,
 		prepared,
 		string(summary.Slot),
-		fmt.Sprintf("Create failed: %v", err),
+		"Create failed: "+playerSaveErrorDetail(err),
 	)
 }
 

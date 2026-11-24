@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/mainscreen"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -117,7 +118,7 @@ func TestAmmunitionMerchantRefillRearmsNextCrossing(t *testing.T) {
 }
 
 func TestAmmunitionHydrationActivationResetAndPresentationChangesStaySilent(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 		WithPlayerAt(15, 15).WithSystemCallbacks().WithRandomSeed(1).Build()
 	scene := &GameScene{gameState: state, gameConfig: state.GameConfig}
 	_, scene.output = newMainOutput(1280)

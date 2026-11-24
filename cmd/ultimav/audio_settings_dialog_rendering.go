@@ -21,10 +21,12 @@ import (
 )
 
 type gameplaySettingDefinition struct {
-	label     string
-	detail    string
-	helpLines []string
-	numeric   *gameplayNumericSetting
+	label  string
+	detail string
+	// defaultLine closes a detail-only row; rows with helpLines carry their own.
+	defaultLine string
+	helpLines   []string
+	numeric     *gameplayNumericSetting
 }
 
 type gameplayNumericSetting struct {
@@ -37,6 +39,7 @@ type gameplayNumericSetting struct {
 const (
 	gameplaySettingOffLabel = "Off"
 	gameplayDefaultOnLine   = "Default: On"
+	gameplayDefaultOffLine  = "Default: Off"
 )
 
 const (
@@ -65,44 +68,44 @@ const (
 func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 	return [...]gameplaySettingDefinition{
 		{
-			label: "Repeated Monster Division",
+			label: "Repeated Monster Division", defaultLine: gameplayDefaultOffLine,
 			detail: "On: a Slime or Gargoyle that survives can divide again and again, as in the original. " +
 				"Off: each divides once, and its child never does.",
 		},
 		{
-			label: "Remember Hidden Dungeon Discoveries",
+			label: "Remember Hidden Dungeon Discoveries", defaultLine: gameplayDefaultOnLine,
 			detail: "On: hidden doors and pits you find stay found. " +
 				"Off: they are hidden again on your next visit.",
 		},
 		{
-			label: "Show Subdued Unlit Dungeons",
+			label: "Show Subdued Unlit Dungeons", defaultLine: gameplayDefaultOnLine,
 			detail: "On: with no light you still make out dim walls and passages, but nothing is lit. " +
 				"Off: no light, no view, as in the original.",
 		},
 		{
-			label: "Batch Merchant Theft",
+			label: "Batch Merchant Theft", defaultLine: gameplayDefaultOnLine,
 			detail: "On: when gold goes missing in a shop, it happens once for the whole purchase. " +
 				"Off: as in the original, once for each item, bundle or patient, which can cut a purchase short.",
 		},
 		{
-			label: "Smooth Surface Movement",
+			label: "Smooth Surface Movement", defaultLine: gameplayDefaultOffLine,
 			detail: "On: the map glides as you walk, ride, fly or sail. " +
 				"Only the look changes; play, battles and dungeons run as before.",
 		},
 		{
-			label: "Hidden Enemy Turns",
+			label: "Hidden Enemy Turns", defaultLine: gameplayDefaultOnLine,
 			detail: "On: an enemy you cannot see (invisible, under an arch or in the dark) " +
 				"still takes its place in Turn Order, as ??? unseen. Off: it is left out. " +
 				"The turns themselves are the same either way.",
 		},
 		{
-			label: "Flexible Sextant Use",
+			label: "Flexible Sextant Use", defaultLine: gameplayDefaultOffLine,
 			detail: "On: the sextant works by day or night, on the world map and inside surface towns. " +
 				"Off: only at night on the world map, as in the original. " +
 				"It never works in dungeons or the Underworld.",
 		},
 		{
-			label: "Ankh Visit Bonus",
+			label: "Ankh Visit Bonus", defaultLine: gameplayDefaultOffLine,
 			detail: "An old players' tale says an Ankh draws Lord British to your camp; " +
 				"the original shows no sign of it. On: each living member wearing an Ankh " +
 				"makes his visit a little more likely. Off: the original odds.",
@@ -118,7 +121,7 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 			},
 		},
 		{
-			label: "Share Kill Experience",
+			label: "Share Kill Experience", defaultLine: gameplayDefaultOffLine,
 			detail: "On: every living member shares a kill's experience equally. " +
 				"Off: it all goes to whoever struck the killing blow, as in the original.",
 		},
@@ -208,7 +211,7 @@ func gameplaySettings() [audioSettingsGameplayCount]gameplaySettingDefinition {
 			helpLines: []string{
 				"On: the Journal shows only My Notes.", "Off: every tab.", "",
 				"Nothing is deleted.", "",
-				"Default: Off",
+				gameplayDefaultOffLine,
 			},
 		},
 	}
@@ -340,7 +343,9 @@ func (d *ConfigurationDialog) updateAudioTab() {
 	//nolint:exhaustive // The keyboard lookup above restricts input to this tab's bindings.
 	switch *boundKey {
 	case ebiten.KeyD:
-		d.openAudioDiagnostics()
+		if d.ultimaConfig.DeveloperTools {
+			d.openAudioDiagnostics()
+		}
 	case ebiten.KeyEscape:
 		d.onCancelClicked()
 	case ebiten.KeyEnter, ebiten.KeyNumpadEnter:
@@ -643,13 +648,12 @@ func (d *ConfigurationDialog) drawDisplayConfirmation(screen *ebiten.Image) {
 		fmt.Sprintf("Game Area: %d x %d (16:9)", logicalWidth, logicalHeight),
 		widgets.DialogValueColor,
 	).Done()
-	d.detailOutput.AppendLine().Text(
-		fmt.Sprintf(
-			"Settings will revert in %d seconds.",
-			(d.displayConfirmationTicks+configurationTicksPerSecond-1)/configurationTicksPerSecond,
-		),
-		widgets.DialogStatusWarningColor,
-	).Done()
+	secondsLeft := (d.displayConfirmationTicks + configurationTicksPerSecond - 1) / configurationTicksPerSecond
+	revertNotice := fmt.Sprintf("Settings will revert in %d seconds.", secondsLeft)
+	if secondsLeft == 1 {
+		revertNotice = "Settings will revert in 1 second."
+	}
+	d.detailOutput.AppendLine().Text(revertNotice, widgets.DialogStatusWarningColor).Done()
 	selection := "[ Keep ]        Revert"
 	if !d.keepDisplaySettings {
 		selection = "Keep        [ Revert ]"
@@ -946,7 +950,10 @@ func (d *ConfigurationDialog) appendConfigurationHints() {
 	case audioSettingsGameplayTab:
 		first = append(first, hintKey{"Space", "Toggle", !onStepped}, hintKey{leftRight, "Adjust", !onCheckbox})
 	case audioSettingsAudioTab:
-		first = append(first, hintKey{leftRight, "Adjust", true}, hintKey{"D", "Diagnostics", true})
+		first = append(first, hintKey{leftRight, "Adjust", true})
+		if d.ultimaConfig.DeveloperTools {
+			first = append(first, hintKey{"D", "Diagnostics", true})
+		}
 	case audioSettingsDisplayTab:
 		first = append(first, hintKey{leftRight, "Change", true})
 	default:

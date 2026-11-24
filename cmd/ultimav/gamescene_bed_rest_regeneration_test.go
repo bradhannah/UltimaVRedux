@@ -13,11 +13,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
 func TestBedRestRunsOneRegenerationRingSweepPerIteration(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -70,7 +71,7 @@ func TestBedRestWorkflowRunsSixteenPreSleepPassesAndAbortsOnlyForAttack(t *testi
 		{name: "attack on final pass aborts", interaction: map_units.PendingNPCInteractionHostileCombat, wantStarted: false},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -140,7 +141,7 @@ func TestBedRestPreSleepUsesFinalNPCCommand(t *testing.T) {
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -166,7 +167,7 @@ func TestBedRestPreSleepUsesFinalNPCCommand(t *testing.T) {
 func TestBedRestPermanentTimeStopDoesNotDeadlockWorkflow(t *testing.T) {
 	for _, turns := range []int{0, game_state.ToggleItemEffectDuration} {
 		t.Run(fmt.Sprintf("duration_%d", turns), func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithPlayerAt(15, 15).
 				WithSystemCallbacks().
@@ -202,7 +203,7 @@ func TestBedRestPermanentTimeStopDoesNotDeadlockWorkflow(t *testing.T) {
 }
 
 func TestBedRestPartyWipeDefersDeathUntilWorkflowCleanup(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().

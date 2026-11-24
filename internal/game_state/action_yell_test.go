@@ -15,12 +15,12 @@ func TestActionYellSmallMap_WordsOfPower(t *testing.T) {
 		{
 			name:      "Word of Power FALLAX",
 			word:      "FALLAX",
-			expectMsg: "The words echo emptily here.",
+			expectMsg: "No effect!",
 		},
 		{
 			name:      "Word of Power VERAMOCOR",
 			word:      "VERAMOCOR",
-			expectMsg: "The words echo emptily here.",
+			expectMsg: "No effect!",
 		},
 		{
 			name:      "Sailing command while walking",
@@ -30,12 +30,12 @@ func TestActionYellSmallMap_WordsOfPower(t *testing.T) {
 		{
 			name:      "Unknown word",
 			word:      "RANDOM",
-			expectMsg: "Nothing happens.",
+			expectMsg: "No effect!",
 		},
 		{
 			name:      "Empty word",
 			word:      "",
-			expectMsg: "Nothing happens.",
+			expectMsg: "No effect!",
 		},
 	}
 

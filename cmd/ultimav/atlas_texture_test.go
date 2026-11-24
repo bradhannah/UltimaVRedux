@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/atlasterrain"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAtlasTextureBorrowSurvivesModalAndSceneReplacement(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().Build()
 	terrain := state.GameReferences.OverworldLargeMapReference
 	input, err := atlasterrain.Capture(func(x, y int) int {

@@ -263,7 +263,7 @@ reported and are not silently rewritten; correct them in the editor and recheck.
 
 The existing setup contract distinguishes first-run recovery from changing a
 working installation: first-run selection continues startup; changing the data
-folder from the title menu (**Configure**, then **Set Data Directory**) takes
+folder from the title menu (**Configure**, then **Set Game Files**) takes
 effect on the next launch. Follow the displayed
 restart instructions.
 
@@ -290,7 +290,7 @@ on Windows.
 | Path | Contents |
 | --- | --- |
 | `config.yaml` | Settings, including the original-data location. |
-| `saves/` | Save slots (`slot-01.json` to `slot-08.json`) and their `excerpts/` notebooks. Start the game with `--player-save-dir <folder>` to use another folder. |
+| `saves/` | Save slots (`slot-01.json` to `slot-08.json`) and their `excerpts/` notebooks. A `slot-NN.vNN.bak` file is a copy of a save written by another version of the game, kept before this version replaced it. Start the game with `--player-save-dir <folder>` to use another folder. |
 | `crash.log`, `redux.log` | Crash details and recent warnings; attach both to a bug report. |
 
 Back up `saves/` to keep your playthroughs. Saves made by `v0.1.0-preview.1` or
@@ -330,6 +330,7 @@ or mixed-display macOS acceptance; see [platform status](#platform-status).
 | Files are missing or unusable | Confirm that the full original data set is present and readable; inspect the setup details. |
 | A custom data path is needed | Edit it in the external settings file, then choose Check Saved Settings and confirm. |
 | A configured folder stopped working | Use setup recovery to select or configure a valid folder. |
+| No sound device, or sound fails to start | The game restarts itself once without sound and says so on the title screen. If it still closes, start it from a terminal with `ultimav --no-sound`. |
 | Build or startup fails | Report the release, OS/architecture, Go version, command, and relevant error text. |
 
 Before attaching diagnostics, remove personal paths or other information you do

@@ -512,6 +512,11 @@ func (d *TavernShopDialog) updateWinePicker() {
 	}
 }
 
+// AcceptsText reports that letter keys type the subject being asked about.
+func (d *TavernShopDialog) AcceptsText() bool {
+	return d.phase == TavernShopBrowse && d.mode == TavernShopConversation && d.state.CustomerEligible
+}
+
 func (d *TavernShopDialog) updateConversation() {
 	if d.keyboard.IsKeyPressedAndRegister(ebiten.KeyEscape) {
 		d.setTopicInput("")
@@ -703,7 +708,7 @@ func (d *TavernShopDialog) PreviewStop(request TavernActionRequest) {
 
 // ApplySessionError disables Tavern actions until Enter or Escape acknowledges the error.
 func (d *TavernShopDialog) ApplySessionError(message string) {
-	validateTavernFinalizedText("session error", message)
+	requireFinalizedText("TavernShopDialog", "session error", message)
 	d.pendingTopic = nil
 	d.clearAwaitingAction()
 	d.latestExchange = message
@@ -962,8 +967,8 @@ func (d *TavernShopDialog) applyState(refreshed game_state.TavernShopState) {
 }
 
 func (d *TavernShopDialog) appendPaidTranscript(entry TavernTranscriptEntry) {
-	validateTavernFinalizedText("paid information question", entry.Question)
-	validateTavernFinalizedText("paid information answer", entry.Answer)
+	requireFinalizedText("TavernShopDialog", "paid information question", entry.Question)
+	requireFinalizedText("TavernShopDialog", "paid information answer", entry.Answer)
 	d.transcript = append(d.transcript, entry)
 	d.transcriptScroll = d.transcriptTailStart()
 }
@@ -1588,29 +1593,23 @@ func validateTavernInformationQuote(quote game_state.TavernInformationQuote, sta
 }
 
 func validateTavernResultDisplay(request TavernActionRequest, display TavernActionResultDisplay) {
-	validateTavernFinalizedText("result exchange", display.MerchantExchange)
+	requireFinalizedText("TavernShopDialog", "result exchange", display.MerchantExchange)
 	if display.PaidInformation == nil {
 		return
 	}
 	if request.Action != TavernActionInformation {
 		panic("TavernShopDialog: paid transcript is valid only for information results")
 	}
-	validateTavernFinalizedText("paid information question", display.PaidInformation.Question)
-	validateTavernFinalizedText("paid information answer", display.PaidInformation.Answer)
+	requireFinalizedText("TavernShopDialog", "paid information question", display.PaidInformation.Question)
+	requireFinalizedText("TavernShopDialog", "paid information answer", display.PaidInformation.Answer)
 }
 
 func validateTavernShopProse(prose TavernShopDialogProse) {
-	validateTavernFinalizedText("greeting", prose.Greeting)
-	validateTavernFinalizedText("Order prompt", prose.OrderPrompt)
-	validateTavernFinalizedText("conversation prompt", prose.ConversationPrompt)
-	validateTavernFinalizedText("conversation exit", prose.ConversationExit)
-	validateTavernFinalizedText("unknown topic response", prose.UnknownTopic)
-}
-
-func validateTavernFinalizedText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("TavernShopDialog: finalized " + label + " is required")
-	}
+	requireFinalizedText("TavernShopDialog", "greeting", prose.Greeting)
+	requireFinalizedText("TavernShopDialog", "Order prompt", prose.OrderPrompt)
+	requireFinalizedText("TavernShopDialog", "conversation prompt", prose.ConversationPrompt)
+	requireFinalizedText("TavernShopDialog", "conversation exit", prose.ConversationExit)
+	requireFinalizedText("TavernShopDialog", "unknown topic response", prose.UnknownTopic)
 }
 
 func tavernParentControlsReleased(isKeyPressed func(ebiten.Key) bool) bool {

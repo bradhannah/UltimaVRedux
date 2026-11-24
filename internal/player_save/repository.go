@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/repositoryfs"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 )
@@ -131,6 +132,7 @@ func (repository *Repository) Save(
 	if err = repository.requireExpectedRevision(slot, expectedRevision); err != nil {
 		return Record{}, err
 	}
+	repository.keepOtherVersionCopy(slot)
 	if err = repository.replaceData(slot, data); err != nil {
 		return Record{}, err
 	}
@@ -333,6 +335,31 @@ func (repository *Repository) lockTransaction() (func(), error) {
 
 func (repository *Repository) path(slot SlotID) string {
 	return filepath.Join(repository.root, string(slot)+".json")
+}
+
+// keepOtherVersionCopy copies a save that another version of the game wrote
+// before this version replaces it. The first save after loading an older file
+// rewrites it in the current format, and a newer build's file cannot be read
+// here at all, so the copy is the only way back to either. It is best effort:
+// a save must never fail because its safety copy could not be written.
+func (repository *Repository) keepOtherVersionCopy(slot SlotID) {
+	previous, occupied, err := repository.readCurrentData(slot)
+	if err != nil || !occupied {
+		return
+	}
+	version, err := save_snapshot.StoredVersion(previous)
+	if err != nil || version == save_snapshot.CurrentVersion {
+		return
+	}
+	copyPath := filepath.Join(repository.root, fmt.Sprintf("%s.v%d.bak", slot, version))
+	if _, statErr := os.Lstat(copyPath); statErr == nil {
+		return // The first copy is the original; keep it.
+	}
+	err = repositoryfs.PublishTemporaryFile(repository.root, ".player-save-*.tmp", previous, fileMode,
+		func(temporaryPath string) error { return os.Rename(temporaryPath, copyPath) })
+	if err != nil {
+		logging.Warnf(logging.CategoryGameState, "Could not keep a copy of %s (version %d): %v", slot, version, err)
+	}
 }
 
 func (repository *Repository) replaceData(slot SlotID, data []byte) error {

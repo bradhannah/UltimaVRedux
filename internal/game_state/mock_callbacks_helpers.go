@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"slices"
 	"strings"
-	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/datetime"
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
@@ -14,10 +13,21 @@ import (
 	"github.com/bradhannah/UltimaVRedux/pkg/semantic_input"
 )
 
+// TestingT is the part of *testing.T that this package's test doubles use. They
+// live here, not in a test file, because tests in other packages share them
+// with this package's own tests. Naming the methods instead of importing
+// "testing" keeps that package out of the game; tests pass their *testing.T.
+type TestingT interface {
+	Helper()
+	Logf(format string, args ...any)
+	Errorf(format string, args ...any)
+	Fatalf(format string, args ...any)
+}
+
 // MockSystemCallbacks provides comprehensive mock implementations for all SystemCallbacks
 // interfaces, with built-in assertion helpers and call tracking.
 type MockSystemCallbacks struct {
-	t            *testing.T
+	t            TestingT
 	gameState    *GameState
 	timeBaseline datetime.UltimaDate
 
@@ -159,7 +169,7 @@ type TalkDialogCall struct {
 }
 
 // NewMockSystemCallbacks creates a new mock system callbacks instance
-func NewMockSystemCallbacks(t *testing.T) *MockSystemCallbacks {
+func NewMockSystemCallbacks(t TestingT) *MockSystemCallbacks {
 	t.Helper()
 
 	return &MockSystemCallbacks{

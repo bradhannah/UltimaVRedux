@@ -20,7 +20,8 @@ domains but does not become authoritative for gameplay state.
 
 `make core-dependencies-check` enforces transitive production and test closures
 for GameState, party/map state, AI, references, and config, including internal
-and external test variants. Plain config values no longer initialize display:
+and external test variants. It also rejects the standard `testing` package and
+`test/` packages in their production closures, so the game links no test code. Plain config values no longer initialize display:
 each configuration owns its Viper source, while `GameScene` owns display
 adaptation. Core styled feedback uses detached `StyledMessage` segments through
 `MessageCallbacks.AppendStyledMessage`, not renderer-bound `text.LineBuilder`.

@@ -16,13 +16,14 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 // The scene starts with initialized X origin 96, then reaches X=120 through the
 // production successful-step writer. Hydration at that final position uses 112.
 func newOutdoorWindowSnapshotScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithFloor(-1).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithFloor(-1).
 		WithPlayerAt(119, 120).WithRandomSeed(35).Build()
 	state.CurrentNPCAIController = state.GetCurrentLargeMapNPCAIController()
 	state.CurrentNPCAIController.GetNpcs().ReplaceWith(nil)

@@ -13,11 +13,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestReadyDecisionDetailsUseInventoryAndAuthoritativeHands(t *testing.T) {
 	setResponsiveDialogTestResolution(t, 1280, 720)
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	character := state.PartyState.GetAvatar()
 	character.Strength = 30
 	for slot := references.SlotHelm; slot <= references.SlotAmulet; slot++ {
@@ -53,7 +54,7 @@ func TestReadyDecisionDetailsUseInventoryAndAuthoritativeHands(t *testing.T) {
 }
 
 func TestExplorationReadyDialogRetainsCharacterKeyboardNavigation(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -78,7 +79,7 @@ func TestExplorationReadyDialogRetainsCharacterKeyboardNavigation(t *testing.T) 
 }
 
 func TestReadyDialogListsAmmoAsNoOpAndKeepsDuplicateReadiedMarker(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -122,7 +123,7 @@ func TestReadyDialogListsAmmoAsNoOpAndKeepsDuplicateReadiedMarker(t *testing.T) 
 }
 
 func TestReadyDialogPresentsAuthorityErrorAndRetainsModal(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

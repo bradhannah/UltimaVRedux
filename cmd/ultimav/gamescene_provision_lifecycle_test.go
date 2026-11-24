@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/mainscreen"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func seedProvisionLifecycleFeedback(t *testing.T, scene *GameScene) {
@@ -43,7 +44,7 @@ func TestProvisionFeedbackContextTransitions(t *testing.T) {
 		}},
 	} {
 		t.Run(scenario.name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).WithFloor(0).WithPlayerAt(50, 50).
 				WithSystemCallbacks().WithRandomSeed(1).Build()
 			scene := &GameScene{gameState: state}
@@ -119,7 +120,7 @@ func TestProvisionFeedbackReadersDoNotRestoreFrozenReceipts(t *testing.T) {
 }
 
 func TestProvisionFeedbackCombatExitFloorChangeAndOrdinaryMovement(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithFloor(0).WithPlayerAt(50, 50).
 		WithSystemCallbacks().WithRandomSeed(1).Build()
 	scene := &GameScene{gameState: state}

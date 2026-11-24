@@ -246,7 +246,7 @@ func TestBasementNestedChestAuthorityAndSameTilePile(t *testing.T) {
 	require.NotNil(t, state.SearchManager.checkChests(&position, 0))
 	child.RestoreSurfaceChestNumber(0x80 | 1)
 	state.PartyState.Inventory.Provisions.Keys.Set(1)
-	state.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+	setJimmyOutcome(state, true)
 	require.True(t, state.ActionJimmySmallMap(references.Right))
 	assert.Equal(t, references.ChestSafe, child.SurfaceChestAssessment())
 	assert.Equal(t, 1, child.SurfaceChestTreasureValue())

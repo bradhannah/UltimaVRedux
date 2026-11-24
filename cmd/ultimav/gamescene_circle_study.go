@@ -153,7 +153,7 @@ func populateCircleStudyOption(
 		}
 		if state.Gold < state.Price {
 			option.Status = "Short"
-			option.Details = []string{"Not enough gold to study."}
+			option.Details = []string{"Thou hast not enough gold to study."}
 
 			return
 		}

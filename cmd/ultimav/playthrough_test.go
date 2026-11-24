@@ -16,11 +16,11 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 const otherTestPlaythroughID = "fedcba9876543210fedcba9876543210"
@@ -258,7 +258,7 @@ func TestSaveDescriptionDefaultsAndInputContract(t *testing.T) {
 }
 
 func TestManualDescriptionNestedRetryRemovesAllDialogsAndDoesNotAdvanceGameplay(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(100, 100).WithRandomSeed(519).WithSystemCallbacks().Build()
 	scene := newEscapeMenuTestScene()
 	scene.gameState = state

@@ -158,8 +158,7 @@ func TestShardVisibilityUsesInventoryAndMatchingShadowlordLife(t *testing.T) {
 
 		gs.PartyState.Inventory.QuestItems.Set(shard.item, 0)
 		gs.ShadowlordState.Kill(shard.lord)
-		gs.RefreshQuestItemsOnMap()
-		assert.False(t, gs.IsShardVisible(shard.pos, shard.item), "%s should remain absent after destruction and refresh", shard.name)
+		assert.False(t, gs.IsShardVisible(shard.pos, shard.item), "%s should remain absent after destruction", shard.name)
 	}
 }
 

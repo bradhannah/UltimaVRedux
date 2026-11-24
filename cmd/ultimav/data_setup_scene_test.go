@@ -393,7 +393,7 @@ func TestDataSetupSceneReportsAsynchronousEditorFailure(t *testing.T) {
 
 	require.NoError(t, scene.Update(game))
 
-	assert.Contains(t, scene.status, "helper exited")
+	assert.Contains(t, scene.status, "text editor reported a problem")
 	assert.True(t, scene.settingsVisible)
 	assert.Equal(t, 1, scene.dialogStack.Count())
 }

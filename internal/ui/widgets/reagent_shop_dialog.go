@@ -29,7 +29,7 @@ const (
 	reagentShopInsetDivisor     = 64
 	reagentShopCellInsetUnits   = 2
 	reagentShopDoubleInset      = 2
-	reagentShopLineSpacing      = 1.08
+	reagentShopLineSpacing      = 1.06
 	reagentShopMinimumTextChars = 8
 )
 
@@ -122,9 +122,9 @@ func NewReagentShopDialog(config ReagentShopDialogConfig) *ReagentShopDialog {
 		panic("ReagentShopDialog: merchant sprite is required")
 	}
 	validateReagentShopState(config.State)
-	validateReagentFinalizedText("greeting", config.Prose.Greeting)
-	validateReagentFinalizedText("rude farewell", config.Prose.RudeFarewell)
-	validateReagentFinalizedText("polite farewell", config.Prose.PoliteFarewell)
+	requireFinalizedText("ReagentShopDialog", "greeting", config.Prose.Greeting)
+	requireFinalizedText("ReagentShopDialog", "rude farewell", config.Prose.RudeFarewell)
+	requireFinalizedText("ReagentShopDialog", "polite farewell", config.Prose.PoliteFarewell)
 
 	state := cloneReagentShopState(config.State)
 	var emptyBounds image.Rectangle
@@ -294,8 +294,8 @@ func (d *ReagentShopDialog) ApplyPurchaseResult(
 		result.ReagentName != refreshed.Offers[selectedIndex].ReagentName {
 		panic("ReagentShopDialog.ApplyPurchaseResult: refreshed state does not contain the authoritative result")
 	}
-	validateReagentFinalizedText("purchase exchange", display.MerchantExchange)
-	validateReagentFinalizedText("purchase receipt", display.Receipt)
+	requireFinalizedText("ReagentShopDialog", "purchase exchange", display.MerchantExchange)
+	requireFinalizedText("ReagentShopDialog", "purchase receipt", display.Receipt)
 
 	d.state = cloneReagentShopState(refreshed)
 	d.listState.Reset(len(d.state.Offers))
@@ -323,7 +323,7 @@ func (d *ReagentShopDialog) ApplyPreviewStopped(request game_state.ReagentPurcha
 
 // ApplySessionError replaces the exchange and disables further purchases.
 func (d *ReagentShopDialog) ApplySessionError(message string) {
-	validateReagentFinalizedText("session error", message)
+	requireFinalizedText("ReagentShopDialog", "session error", message)
 	d.pendingIntent = nil
 	d.clearAwaitingPurchase()
 	d.latestExchange = message
@@ -833,10 +833,4 @@ func cloneReagentOfferQuote(quote game_state.ReagentOfferQuote) game_state.Reage
 	clone.ApprovalViews = append([]game_state.ReagentPurchaseApprovalView(nil), quote.ApprovalViews...)
 
 	return clone
-}
-
-func validateReagentFinalizedText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic(fmt.Sprintf("ReagentShopDialog: finalized %s is required", label))
-	}
 }

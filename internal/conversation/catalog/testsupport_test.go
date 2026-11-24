@@ -6,9 +6,6 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/conversation/semantic"
 )
 
-// Test support: fixtures and seams that tests in other packages use. The
-// dead-code check treats this file as test support (workshop deadcode config).
-
 // New builds an immutable catalog from semantic definitions. Original-origin
 // definitions are also indexed by source and dialog.
 func New(definitions ...*semantic.Conversation) (*Catalog, error) {

@@ -57,7 +57,7 @@ func (g *GameScene) ShowWellInteraction(pos *references.Position) {
 				"Drop a coin?  > Yes",
 				"Thy wish?  > " + strings.Repeat("M", WishMaxLength),
 				"The well answers not.",
-				"Not enough gold!",
+				"Thou hast not enough gold!",
 				"Thy wish can no longer be granted.",
 				"No effect!",
 				"Poof a Horse!",

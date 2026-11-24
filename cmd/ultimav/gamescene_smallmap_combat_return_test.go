@@ -16,6 +16,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestProductionSmallMapAttackInputCompletesOneFullTurnAfterEveryConclusion(t *testing.T) {
@@ -267,7 +268,7 @@ func TestArrestRefusalTalkTurnOwnershipDistinguishesManualAndNPCAutoTalk(t *test
 }
 
 func TestProductionWindemereDevilHostileContactQueuesOrdinaryCombat(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Windemere).
 		WithFloor(references.MainFloor).
 		WithSystemCallbacks().
@@ -341,7 +342,7 @@ func TestProductionVisitLocalRatAndBatBlockedContactOwnsOnlyMovementTurn(t *test
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithFloor(references.MainFloor).
 				WithSystemCallbacks().
@@ -427,7 +428,7 @@ func newSmallMapCombatCommandScene(
 	t *testing.T,
 ) (*GameScene, *game_state.GameState, *game_state.MockSystemCallbacks, *map_units.NPCFriendly, references.Direction) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		WithRandomSeed(319).
@@ -480,7 +481,7 @@ func newProductionShadowlordAttackScene(
 	if sourceKind == game_state.SmallMapEncounterYellShadowlord {
 		location = references.Lycaeum
 	}
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithFloor(references.MainFloor).
 		WithPlayerAt(10, 10).

@@ -17,6 +17,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestStartAutomaticSailingConsumesInputWhileWorkflowNameRemainsLive(t *testing.T) {
@@ -388,7 +389,7 @@ func newAutomaticSailingWorkflowFixture(
 	wind environment.WindDirection,
 ) automaticSailingWorkflowFixture {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithRandomSeed(458).

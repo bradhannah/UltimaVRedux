@@ -7,6 +7,7 @@ import (
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/display"
+	"github.com/bradhannah/UltimaVRedux/internal/logging"
 )
 
 const (
@@ -162,7 +163,8 @@ func (d *ConfigurationDialog) beginDisplayApply() {
 		d.stagedDisplay.WindowWidth,
 		d.stagedDisplay.WindowHeight,
 	); err != nil {
-		d.saveError = fmt.Sprintf("Could not apply display settings: %v", err)
+		logging.Warnf(logging.CategoryConfig, "Applying display settings failed: %v", err)
+		d.saveError = "Could not apply display settings. The game log has the details."
 
 		return
 	}
@@ -181,7 +183,8 @@ func (d *ConfigurationDialog) beginDisplayRollback(resetStaged bool) {
 	if err := d.displayManager.RequestMode(d.rollbackMode, d.rollbackWidth, d.rollbackHeight); err != nil {
 		d.displayPhase = configurationDisplayEditing
 		d.displayRollbackRetry = true
-		d.saveError = fmt.Sprintf("Could not restore display settings: %v", err)
+		logging.Warnf(logging.CategoryConfig, "Restoring display settings failed: %v", err)
+		d.saveError = "Could not restore display settings. The game log has the details."
 
 		return
 	}

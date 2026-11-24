@@ -10,13 +10,14 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAtlasSafeOpeningContexts(t *testing.T) {
 	for _, location := range []references.Location{references.BritanniaUnderworld, references.Britain, references.Deceit} {
-		state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().Build()
+		state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().Build()
 		scene := &GameScene{gameState: state, keyboard: input.NewKeyboardWithKeyStateSource(0, noSceneTestKeyHeld)}
 		require.True(t, scene.canOpenAtlas(), "%s", location)
 		scene.secondaryKeyState = LookDirectionInput
@@ -41,7 +42,7 @@ func TestAtlasSafeOpeningContexts(t *testing.T) {
 }
 
 func TestAtlasFullUpdateFreezesQueuesAndReleaseFrame(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().WithRandomSeed(42).Build()
 	keys := map[ebiten.Key]bool{ebiten.KeyShiftRight: true, ebiten.KeyM: true}
 	keyboard := input.NewKeyboardWithKeyStateSource(0, func(key ebiten.Key) bool { return keys[key] })
@@ -138,7 +139,7 @@ func TestFunctionKeysOpenAndCloseMapAndJournal(t *testing.T) {
 		require.NoError(t, scene.Update(nil))
 	}
 
-	atlasState, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
+	atlasState, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().WithRandomSeed(42).Build()
 	atlasScene := newScene(atlasState)
 	tap(atlasScene, widgets.AtlasFunctionKey)

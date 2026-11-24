@@ -14,6 +14,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDetermineTalkTypeRequiresMatchingAutomaticOverrideProvenance(t *testing.T) {
@@ -232,7 +233,7 @@ func TestFaulineiConversationTheftExcludesMerchantHandler(t *testing.T) {
 
 func newFaulineiNormalTalkFixture(t *testing.T) *merchantTalkFixture {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Stonegate).
 		WithSystemCallbacks().
 		WithRandomSeed(1).

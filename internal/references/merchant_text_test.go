@@ -107,6 +107,14 @@ func TestMerchantTextLoaderRejectsCorruption(t *testing.T) {
 		assert.ErrorContains(t, err, "expanding record")
 	})
 
+	t.Run("blank record", func(t *testing.T) {
+		data := syntheticShoppeData(t, map[MerchantTextID][]byte{
+			"RUDE_ARMS_0": []byte(" "),
+		})
+		_, err := newMerchantReferences(data, syntheticMerchantWordDict(), originalMerchantDefinitions)
+		assert.ErrorContains(t, err, `record "RUDE_ARMS_0" is blank`)
+	})
+
 	t.Run("missing dictionary", func(t *testing.T) {
 		data := syntheticShoppeData(t, nil)
 		_, err := newMerchantReferences(data, nil, originalMerchantDefinitions)

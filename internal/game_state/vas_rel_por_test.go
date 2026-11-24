@@ -180,7 +180,7 @@ func TestTeleportationSequenceMutatesCapturedDestinationWithoutAdvancingTime(t *
 		order = append(order, "display updated")
 	}
 	gs.SystemCallbacks.Message.AddRowStr = func(message string) {
-		assert.Equal(t, "The moongate whisks you away!", message)
+		assert.Equal(t, "The moongate whisks thee away!", message)
 		messageWritten = true
 		order = append(order, "message written")
 	}
@@ -237,14 +237,14 @@ func TestTeleportationSequenceWritesDestinationMessageVariants(t *testing.T) {
 			destination: MoongateDestination{
 				X: 9, Y: 11, Map: uint8(references.SkaraBrae), Location: references.SkaraBrae,
 			},
-			message: "The moongate whisks you to the ruins of Skara Brae!",
+			message: "The moongate whisks thee to the ruins of Skara Brae!",
 		},
 		{
 			name: "default",
 			destination: MoongateDestination{
 				X: 9, Y: 11, Map: uint8(references.Britain), Location: references.Britain,
 			},
-			message: "The moongate whisks you away!",
+			message: "The moongate whisks thee away!",
 		},
 	}
 

@@ -421,9 +421,9 @@ func TestTavernActionDialogSaysWhatAnUnpaidOrderDoesAndStillSendsIt(t *testing.T
 		key  ebiten.Key
 		want string
 	}{
-		"meal": {key: ebiten.KeyM, want: "Order Mutton 4 gold each for 3 diners Not enough gold. It costs 12 and " +
+		"meal": {key: ebiten.KeyM, want: "Order Mutton 4 gold each for 3 diners Thou hast not enough gold. It costs 12 and " +
 			"the party has 5. Ordering anyway ends service. [Enter] Order anyway [Esc] Back"},
-		"rations": {key: ebiten.KeyR, want: "Buy Rations 15 gold for a pack of 25 food Not enough gold. A pack " +
+		"rations": {key: ebiten.KeyR, want: "Buy Rations 15 gold for a pack of 25 food Thou hast not enough gold. A pack " +
 			"costs 15 and the party has 5. Asking anyway ends service. [Enter] Ask anyway [Esc] Back"},
 	}
 	for name, test := range tests {

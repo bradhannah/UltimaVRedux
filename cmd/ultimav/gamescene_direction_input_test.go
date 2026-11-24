@@ -16,6 +16,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceDirectionPromptStaysConciseUntilResolution(t *testing.T) {
@@ -160,7 +161,7 @@ func TestSurfaceDirectionPassCompletionOwnershipAndNextCommand(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithPlayerAt(50, 50).
 				WithSystemCallbacks().
@@ -185,7 +186,7 @@ func TestSurfaceDirectionPassCompletionOwnershipAndNextCommand(t *testing.T) {
 }
 
 func TestRejectedOrdinaryDirectionInputDoesNotConsumeNextKey(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithSystemCallbacks().
@@ -209,7 +210,7 @@ func TestRejectedOrdinaryDirectionInputDoesNotConsumeNextKey(t *testing.T) {
 }
 
 func TestOverworldPushProductionInputAcceptsKeypadAndSpaceDoesNotMutate(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithSystemCallbacks().
@@ -244,7 +245,7 @@ func TestOverworldPushProductionInputAcceptsKeypadAndSpaceDoesNotMutate(t *testi
 }
 
 func TestSpelldirWorkflowIgnoresEscapeAndDiagonalThenPassesOnSpace(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()
@@ -522,7 +523,7 @@ func commandStateName(state InputState) string {
 }
 
 func TestOverworldKlimbFallEndsTheTurnAfterItsDamage(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithSystemCallbacks().

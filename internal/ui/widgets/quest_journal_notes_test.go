@@ -102,7 +102,7 @@ func TestMyNotesTabSectionsKeysSearchAndSimpleMode(t *testing.T) {
 	press(dialog, ebiten.KeyRight, false)
 	press(dialog, ebiten.KeyR, false)
 	press(dialog, ebiten.KeyD, false)
-	require.Contains(t, dialog.footerGuidance(), "Delete section Clues? Its 1 notes move to To Do.")
+	require.Contains(t, dialog.footerGuidance(), "Delete section Clues? Its 1 note moves to To Do.")
 	press(dialog, ebiten.KeyEscape, false)
 	require.False(t, dialog.IsDismissed(), "Esc cancels only the confirmation")
 	require.Equal(t, []NotesIntent{

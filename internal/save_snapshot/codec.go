@@ -331,6 +331,14 @@ func DecodeUnsupportedVersion(data []byte) (Envelope, error) {
 	}, nil
 }
 
+// StoredVersion reports the snapshot version an encoded envelope was written
+// with, without promoting or validating its contents.
+func StoredVersion(data []byte) (int, error) {
+	_, _, version, err := decodeEnvelopeTransport(data, "read stored version")
+
+	return version, err
+}
+
 type encodedEnvelope struct {
 	Format          string          `json:"format"`
 	EnvelopeVersion int             `json:"envelopeVersion"`

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/character_creation"
@@ -103,7 +102,7 @@ func validateInitialResult(result character_creation.Result) error {
 }
 
 func readInitialTemplate(directory, filename string, expectedSize int) ([]byte, error) {
-	templatePath := filepath.Join(directory, filename)
+	templatePath := files.Resolve(directory, filename)
 	//nolint:gosec // The caller supplies the configured original-data directory; filenames are constants.
 	data, err := os.ReadFile(templatePath)
 	if err != nil {

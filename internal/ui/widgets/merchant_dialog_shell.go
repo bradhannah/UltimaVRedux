@@ -660,3 +660,12 @@ func insetRectangle(bounds image.Rectangle, inset int) image.Rectangle {
 		bounds.Max.Y-insetY,
 	)
 }
+
+// requireFinalizedText panics when a shop window is handed blank text. Callers
+// resolve every line before they build or update a window, and blank lines in
+// the game data are refused when it loads, so a blank here is a programming error.
+func requireFinalizedText(owner, label, value string) {
+	if strings.TrimSpace(value) == "" {
+		panic(owner + ": finalized " + label + " is required")
+	}
+}

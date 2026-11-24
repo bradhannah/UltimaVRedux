@@ -2,21 +2,24 @@ package game_state
 
 import (
 	"fmt"
-	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
 	"github.com/bradhannah/UltimaVRedux/internal/environment"
 	"github.com/bradhannah/UltimaVRedux/internal/legacy_save"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
-	"github.com/bradhannah/UltimaVRedux/test/helpers"
-	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
+
+// IntegrationFixtureSource loads what an integration fixture starts from: a
+// fresh configuration, the shared references and the bootstrap save. A source
+// skips or fails its own test when the original game data is unavailable.
+type IntegrationFixtureSource func() (*config.UltimaVConfiguration, *references.GameReferences, []byte)
 
 // IntegrationTestBuilder provides a fluent API for creating integration tests
 // with real game data, comprehensive state setup, and proper cleanup.
 type IntegrationTestBuilder struct {
-	t               *testing.T
+	t               TestingT
+	source          IntegrationFixtureSource
 	gameConfig      *config.UltimaVConfiguration
 	gameRefs        *references.GameReferences
 	gameState       *GameState
@@ -25,21 +28,23 @@ type IntegrationTestBuilder struct {
 	playerX         int
 	playerY         int
 	systemCallbacks *MockSystemCallbacks
-	skipIfNoData    bool
 	randomSeed      *uint64 // Optional random seed for deterministic testing
 }
 
-// NewIntegrationTestBuilder creates a new builder for integration tests
-func NewIntegrationTestBuilder(t *testing.T) *IntegrationTestBuilder {
+// NewIntegrationTestBuilderFrom creates a builder that reads its data through
+// source. Tests call NewIntegrationTestBuilder, in this package's tests or in
+// test/gamefixture, which supplies the source. The source is passed in because
+// loading test data here would make the game depend on test packages.
+func NewIntegrationTestBuilderFrom(t TestingT, source IntegrationFixtureSource) *IntegrationTestBuilder {
 	t.Helper()
 
 	return &IntegrationTestBuilder{
 		t:               t,
+		source:          source,
 		location:        references.BritanniaUnderworld,
 		floor:           references.FloorNumber(0),
 		playerX:         50,
 		playerY:         50,
-		skipIfNoData:    true,
 		systemCallbacks: NewMockSystemCallbacks(t),
 	}
 }
@@ -74,13 +79,6 @@ func (b *IntegrationTestBuilder) WithSystemCallbacks() *IntegrationTestBuilder {
 	return b
 }
 
-// FailIfNoGameData changes the default behavior to fail instead of skip when game data isn't found
-func (b *IntegrationTestBuilder) FailIfNoGameData() *IntegrationTestBuilder {
-	b.skipIfNoData = false
-
-	return b
-}
-
 // WithRandomSeed sets a deterministic random seed for testing
 func (b *IntegrationTestBuilder) WithRandomSeed(seed uint64) *IntegrationTestBuilder {
 	b.randomSeed = &seed
@@ -92,19 +90,12 @@ func (b *IntegrationTestBuilder) WithRandomSeed(seed uint64) *IntegrationTestBui
 func (b *IntegrationTestBuilder) Build() (*GameState, *MockSystemCallbacks) {
 	b.t.Helper()
 
-	// Load game configuration and references (cached)
-	if err := b.loadGameData(); err != nil {
-		if !b.skipIfNoData {
-			b.t.Fatalf("Failed to load Ultima V game data: %v", err)
-		}
-		originaldata.Check(b.t, err)
-
-		return nil, nil
-	}
-
-	// Use the checked-in bootstrap save rather than mutable player progress.
+	// Each build takes a fresh configuration and the checked-in bootstrap save,
+	// never mutable player progress.
+	var bootstrapSave []byte
+	b.gameConfig, b.gameRefs, bootstrapSave = b.source()
 	var err error
-	b.gameState, err = newGameStateFromOriginalSaveBytes(helpers.LoadBootstrapSaveData(b.t), b.gameConfig, b.gameRefs,
+	b.gameState, err = newGameStateFromOriginalSaveBytes(bootstrapSave, b.gameConfig, b.gameRefs,
 		19, 13) // Standard screen dimensions for testing
 	if err != nil {
 		b.t.Fatalf("Failed to load bootstrap test save: %v", err)
@@ -165,9 +156,7 @@ func (b *IntegrationTestBuilder) Build() (*GameState, *MockSystemCallbacks) {
 	case references.SmallMapType:
 		b.gameState.UpdateSmallMap(b.gameRefs.TileReferences, b.gameRefs.LocationReferences)
 	case references.LargeMapType:
-		// For large maps, ensure quest items are properly placed
 		b.gameState.CurrentNPCAIController = b.gameState.GetCurrentLargeMapNPCAIController()
-		b.gameState.RefreshQuestItemsOnMap()
 	case references.CombatMapType, references.CampingMapType:
 		// Focused combat/camping builders materialize their own scene state.
 	}
@@ -184,14 +173,6 @@ func (b *IntegrationTestBuilder) Build() (*GameState, *MockSystemCallbacks) {
 		b.location, b.floor, b.playerX, b.playerY)
 
 	return b.gameState, b.systemCallbacks
-}
-
-// loadGameData loads game configuration and references with caching
-func (b *IntegrationTestBuilder) loadGameData() error {
-	var err error
-	b.gameConfig, b.gameRefs, err = helpers.LoadGameData()
-
-	return err
 }
 
 // newGameStateFromOriginalSaveBytes loads SAVED.GAM bytes the way a player's

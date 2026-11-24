@@ -358,7 +358,7 @@ func TestAtlasNoteEditorNativeErrorsAndFreshReopen(t *testing.T) {
 	f.tick()
 	require.Zero(t, f.cancels, "failed native delivery cannot accidentally cancel")
 	require.False(t, f.fields[0].IsFocused())
-	require.Contains(t, f.editor.message, "service unavailable")
+	require.Contains(t, f.editor.message, "Typing stopped working")
 	f.held[ebiten.KeyEscape] = false
 	f.tick()
 	f.press(ebiten.KeyEscape)

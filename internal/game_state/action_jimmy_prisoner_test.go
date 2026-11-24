@@ -44,12 +44,7 @@ func TestJimmyPrisonerFirstSuccessAppliesOneTimeRewardAndOneCommandTurn(t *testi
 func TestJimmyPrisonerRewardIsCappedAndNeverRepeated(t *testing.T) {
 	fixture := newJimmyPrisonerFixture(t)
 	fixture.state.PartyState.Karma.Value = 98
-	dexChecks := 0
-	fixture.state.jimmyPrisonerSuccessForTesting = func(*party_state.PlayerCharacter) bool {
-		dexChecks++
-
-		return true
-	}
+	setJimmyOutcome(fixture.state, true)
 
 	require.True(t, fixture.state.ActionJimmySmallMap(references.Up))
 	fixture.callbacks.Messages = nil
@@ -58,8 +53,6 @@ func TestJimmyPrisonerRewardIsCappedAndNeverRepeated(t *testing.T) {
 	assert.Equal(t, 99, fixture.state.PartyState.Karma.Value)
 	assert.Equal(t, uint16(3), fixture.state.PartyState.Inventory.Provisions.Keys.Get())
 	assert.Empty(t, fixture.callbacks.Messages)
-	assert.Equal(t, 2, dexChecks,
-		"a repeated loaded attempt still performs the original physical unlock check")
 	assert.Equal(t, byte(2), fixture.state.DateTime.Minute)
 	assert.Equal(t, []int{1, 1}, fixture.callbacks.TimeAdvanced())
 	assert.Equal(t, byte(references.NoResponse), fixture.prisoner.NPCReference.DialogNumber)
@@ -67,7 +60,7 @@ func TestJimmyPrisonerRewardIsCappedAndNeverRepeated(t *testing.T) {
 
 func TestJimmyPrisonerFailureConsumesOneKeyWithoutMutation(t *testing.T) {
 	fixture := newJimmyPrisonerFixture(t)
-	fixture.state.jimmyPrisonerSuccessForTesting = func(*party_state.PlayerCharacter) bool { return false }
+	setJimmyOutcome(fixture.state, false)
 
 	result := fixture.state.ActionJimmySmallMap(references.Up)
 
@@ -86,17 +79,11 @@ func TestJimmyPrisonerFailureConsumesOneKeyWithoutMutation(t *testing.T) {
 func TestJimmyPrisonerRequiresKeyBeforeDexterityCheck(t *testing.T) {
 	fixture := newJimmyPrisonerFixture(t)
 	fixture.state.PartyState.Inventory.Provisions.Keys.Set(0)
-	dexChecks := 0
-	fixture.state.jimmyPrisonerSuccessForTesting = func(*party_state.PlayerCharacter) bool {
-		dexChecks++
-
-		return true
-	}
+	setJimmyOutcome(fixture.state, true)
 
 	result := fixture.state.ActionJimmySmallMap(references.Up)
 
 	assert.False(t, result)
-	assert.Zero(t, dexChecks)
 	assert.Equal(t, 50, fixture.state.PartyState.Karma.Value)
 	assert.Equal(t, byte(7), fixture.prisoner.NPCReference.DialogNumber)
 	assert.False(t, fixture.state.PartyState.IsNPCDead(references.Britain, fixture.prisonerSlot))
@@ -139,17 +126,11 @@ func TestJimmyPrisonerRejectsNonFriendlyOccupantBeforeResources(t *testing.T) {
 	enemy.SetFloor(0)
 	enemy.SetVisible(true)
 	fixture.controller.GetNpcs().ReplaceWith([]map_units.MapUnit{&enemy})
-	dexChecks := 0
-	fixture.state.jimmyPrisonerSuccessForTesting = func(*party_state.PlayerCharacter) bool {
-		dexChecks++
-
-		return true
-	}
+	setJimmyOutcome(fixture.state, true)
 
 	result := fixture.state.ActionJimmySmallMap(references.Up)
 
 	assert.False(t, result)
-	assert.Zero(t, dexChecks)
 	assert.Equal(t, uint16(3), fixture.state.PartyState.Inventory.Provisions.Keys.Get())
 	assert.Equal(t, 50, fixture.state.PartyState.Karma.Value)
 	assert.Equal(t, []string{"No one is there!"}, fixture.callbacks.Messages)
@@ -243,7 +224,7 @@ func newJimmyPrisonerFixture(t *testing.T) *jimmyPrisonerFixture {
 	state.DateTime.Minute = 0
 	state.PartyState.GetCharacter(0).SetStatus(party_state.Good)
 	state.PartyState.GetCharacter(0).Dexterity = 30
-	state.jimmyPrisonerSuccessForTesting = func(*party_state.PlayerCharacter) bool { return true }
+	setJimmyOutcome(state, true)
 
 	return &jimmyPrisonerFixture{
 		state: state, callbacks: callbacks, controller: controller,

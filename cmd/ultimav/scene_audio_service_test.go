@@ -14,12 +14,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestReadersServiceAudioThroughOpeningReadingAndDismissal(t *testing.T) {
 	for _, reader := range []string{"atlas", "journal"} {
 		t.Run(reader, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 				WithSystemCallbacks().WithRandomSeed(42).Build()
 			now := time.Unix(100, 0)
 			config, err := audio.NewAudioConfiguration()

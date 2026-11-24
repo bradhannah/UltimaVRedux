@@ -10,6 +10,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestSummonInputReturnsWithoutTownCycleAtAllFlames(t *testing.T) {
 		for _, vehicle := range []references.VehicleType{references.NoPartyVehicle, references.CarpetVehicle} {
 			for _, priorTurns := range []int{0, 1} {
 				t.Run(fmt.Sprintf("%s/%v/phase%d", ritual.location, vehicle, priorTurns), func(t *testing.T) {
-					state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(ritual.location).
+					state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(ritual.location).
 						WithFloor(ritual.floor).WithPlayerAt(int(ritual.position.X), int(ritual.position.Y)).
 						WithSystemCallbacks().WithRandomSeed(42).Build()
 					scene := newSurfaceCompletionTestScene(state)

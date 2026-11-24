@@ -5,9 +5,20 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 	"github.com/stretchr/testify/require"
+
+	"github.com/bradhannah/UltimaVRedux/test/helpers"
+	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 )
+
+// NewIntegrationTestBuilder creates a builder over the original game data. The
+// test is skipped when that data is not installed. Tests in other packages call
+// the same-named function in test/gamefixture.
+func NewIntegrationTestBuilder(t *testing.T) *IntegrationTestBuilder {
+	t.Helper()
+
+	return NewIntegrationTestBuilderFrom(t, helpers.IntegrationFixtureSource(t))
+}
 
 func TestIntegrationBuilderDataClassification(t *testing.T) {
 	if mode := os.Getenv("ULTIMA5_BUILDER_PROBE"); mode != "" {
@@ -17,11 +28,7 @@ func TestIntegrationBuilderDataClassification(t *testing.T) {
 			}
 			return
 		}
-		builder := NewIntegrationTestBuilder(t)
-		if mode == "require" {
-			builder.FailIfNoGameData()
-		}
-		builder.Build()
+		NewIntegrationTestBuilder(t).Build()
 		return
 	}
 	for _, test := range []struct {
@@ -30,7 +37,6 @@ func TestIntegrationBuilderDataClassification(t *testing.T) {
 	}{
 		{name: "optional absent", mode: "optional", diagnostic: "--- SKIP:"},
 		{name: "strict absent", mode: "optional", strict: "1", diagnostic: "optional original game data unavailable", fail: true},
-		{name: "builder required absent", mode: "require", diagnostic: "Failed to load Ultima V game data", fail: true},
 		{name: "explicit missing", mode: "optional", selected: "missing", diagnostic: "resolving original data directory", fail: true},
 		{name: "explicit tiny DATA.OVL", mode: "optional", selected: ".", diagnostic: "validating DATA.OVL", fail: true},
 		{name: "legacy optional absent", mode: "legacy", diagnostic: "--- SKIP:"},

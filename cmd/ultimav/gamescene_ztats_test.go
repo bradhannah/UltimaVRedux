@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestGameSceneShowZStatsDossierOwnsExactModalLifecycle(t *testing.T) {
@@ -95,7 +96,7 @@ func TestExplorationZStatsRoutingDoesNotFinishTurn(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithSystemCallbacks().
 				Build()

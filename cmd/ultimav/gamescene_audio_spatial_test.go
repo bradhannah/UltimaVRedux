@@ -6,16 +6,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/audio"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestAmbientWorldAndDungeonSeamsProjectNearestUniqueTiles(t *testing.T) {
 	for _, location := range []references.Location{references.BritanniaUnderworld, references.Deceit} {
 		t.Run(location.String(), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithPlayerAt(0, 0).WithSystemCallbacks().Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithPlayerAt(0, 0).WithSystemCallbacks().Build()
 			scene := &GameScene{gameState: state}
 			layered := state.GetLayeredMapByCurrentLocation()
 			require.True(t, layered.IsWrappedMap())
@@ -41,7 +41,7 @@ func TestAmbientWorldAndDungeonSeamsProjectNearestUniqueTiles(t *testing.T) {
 }
 
 func TestAmbientBoundedMapsDoNotWrap(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithPlayerAt(0, 0).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithPlayerAt(0, 0).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	require.False(t, state.GetLayeredMapByCurrentLocation().IsWrappedMap())
 	for _, tile := range scene.getNearbyTilesForAmbientSound(references.Position{}, 3) {
@@ -51,7 +51,7 @@ func TestAmbientBoundedMapsDoNotWrap(t *testing.T) {
 }
 
 func TestAmbientProjectionKeepsEmitterIdentityAcrossWorldSeam(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.BritanniaUnderworld).WithSystemCallbacks().Build()
 	scene := &GameScene{gameState: state}
 	sources := []audio.AmbientSoundSource{{Emitter: "moongate", Position: references.Position{X: 255, Y: 0}}}
 	scene.projectAmbientSources(references.Position{}, sources)

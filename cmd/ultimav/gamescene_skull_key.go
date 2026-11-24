@@ -63,7 +63,7 @@ func (g *GameScene) thenUseCombatSkullKey(canCommit func() bool, didCommit *bool
 				return
 			}
 			g.gameState.SystemCallbacks.Message.AddRowStr("Skull Key")
-			dialog = widgets.NewMessageDialog("Direction-\n\nArrow/keypad; Esc/Space cancels").
+			dialog = widgets.NewMessageDialog("Direction-\n\nArrows/keypad; Esc/Space cancels").
 				WithTextLines(5).
 				WithCharsPerLine(24).
 				WithContentTextAlignment(widgets.ContentAlignCenter).

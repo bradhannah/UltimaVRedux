@@ -329,9 +329,9 @@ func TestCombatCalcMagicDamage_UsesOriginalDamageAndArmorRolls(t *testing.T) {
 }
 
 func TestCombatApplyMagicDamageModifiers_BypassesUndeadButNotImmortal(t *testing.T) {
-	assert.Equal(t, 20, CombatApplyMagicDamageModifiers(20, true, false),
+	assert.Equal(t, 20, CombatApplyMagicDamageModifiers(20, false),
 		"Vas Flam must bypass the physical undead halving rule")
-	assert.Zero(t, CombatApplyMagicDamageModifiers(20, true, true),
+	assert.Zero(t, CombatApplyMagicDamageModifiers(20, true),
 		"original immortal monsters remain immune to magic damage")
 }
 

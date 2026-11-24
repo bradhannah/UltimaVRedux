@@ -11,10 +11,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCombatEncounterOptionsReturnStableSpawnableReferences(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).Build()
 
 	result := executeSecondBatchStateDebugCommand(debugging.Request{
 		SessionID: "test", ID: "options", CommandID: debugging.CommandCombatEncounterOptions,
@@ -72,7 +73,7 @@ func TestCombatEncounterStartValidatesConditionalArgumentsAndTranslatesActiveCom
 }
 
 func TestCombatEncounterStartReturnsResolvedComposition(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).Build()
 
 	result := executeSecondBatchStateDebugCommand(validEncounterDebugRequest(), state)
 
@@ -178,7 +179,7 @@ func TestVehicleCommandsUseNonSinkingHullAuthority(t *testing.T) {
 }
 
 func TestVehicleSpawnAndForceBoardCommandsReturnStructuredChangesAndStableErrors(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).Build()
 	state.MapState.PlayerLocation.Position = references.Position{X: 200, Y: 200}
 
 	spawn := executeSecondBatchStateDebugCommand(debugging.Request{

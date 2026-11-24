@@ -23,7 +23,7 @@ func TestInnReceiptDescribesOnlyObservedChanges(t *testing.T) {
 					StatusAfter: party_state.Good, HPBefore: 1, HPAfter: 30, MPBefore: 0, MPAfter: 12,
 				}},
 			},
-			want: "You rest until morning. Health and magic restored. Paid 8 gold.",
+			want: "Thou dost rest until morning. Health and magic restored. Paid 8 gold.",
 		},
 		{
 			name: "rest without recovery omits unchanged resources",
@@ -33,14 +33,14 @@ func TestInnReceiptDescribesOnlyObservedChanges(t *testing.T) {
 					StatusAfter: party_state.Good, HPBefore: 30, HPAfter: 30, MPBefore: 12, MPAfter: 12,
 				}},
 			},
-			want: "You rest until morning. Paid 2 gold.",
+			want: "Thou dost rest until morning. Paid 2 gold.",
 		},
 		{
 			name: "unusual gold loss does not identify hidden cause",
 			display: InnActionResultDisplay{
 				Action: InnActionRest, ListedCharge: 2, FaulineiTheft: 4, FinalGold: 0,
 			},
-			want: "You rest until morning. Paid 2 gold. 4 more gold was stolen! Thou hast 0 gold left.",
+			want: "Thou dost rest until morning. Paid 2 gold. 4 more gold was stolen! Thou hast 0 gold left.",
 		},
 		{
 			name: "death does not claim recovery even when magic increased",
@@ -51,12 +51,12 @@ func TestInnReceiptDescribesOnlyObservedChanges(t *testing.T) {
 					HPBefore: 20, HPAfter: 0, MPBefore: 0, MPAfter: 12,
 				}},
 			},
-			want: "You rest until morning. Paid 2 gold.",
+			want: "Thou dost rest until morning. Paid 2 gold.",
 		},
 		{
 			name:    "refused rest is not a payment",
 			display: InnActionResultDisplay{Action: InnActionRest, ListedCharge: 8, Refused: true},
-			want:    "You could not stay the night. You need 8 gold; no gold was paid.",
+			want:    "Thou couldst not stay the night. Thou hast need of 8 gold; none was paid.",
 		},
 		{
 			name:    "leave identifies companion without unchanged gold or counts",
@@ -84,7 +84,7 @@ func TestInnReceiptDescribesOnlyObservedChanges(t *testing.T) {
 			display: InnActionResultDisplay{
 				Action: InnActionPickup, CharacterName: "Iolo", ListedCharge: 20, Refused: true,
 			},
-			want: "Iolo remains at the inn. The guards have been called. You need 20 gold; no gold was paid.",
+			want: "Iolo remains at the inn. The guards have been called. Thou hast need of 20 gold; none was paid.",
 		},
 	}
 	for _, test := range tests {

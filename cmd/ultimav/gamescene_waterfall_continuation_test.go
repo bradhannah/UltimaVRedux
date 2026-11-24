@@ -14,6 +14,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceWaterfallCompletionCheckpoint(t *testing.T) {
@@ -61,7 +62,7 @@ func TestSurfaceWaterfallCompletionCheckpoint(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).WithPlayerAt(50, 50).
 				WithSystemCallbacks().WithRandomSeed(123).Build()
 			state.DebugOptions.MonsterGen = false
@@ -194,7 +195,7 @@ func TestSurfaceWaterfallResumesAfterTacticalReturnBeforeQueuedPass(t *testing.T
 }
 
 func TestDeferredSurfaceFireShutdownAtWaterfallBeforeFirstUpdate(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).WithPlayerAt(50, 50).
 		WithSystemCallbacks().WithRandomSeed(123).Build()
 	state.CurrentNPCAIController = state.GetCurrentLargeMapNPCAIController()

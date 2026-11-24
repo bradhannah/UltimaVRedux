@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	ucolor "github.com/bradhannah/UltimaVRedux/pkg/color"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 )
 
@@ -114,11 +114,11 @@ func TestAstronomyDialogGeneratesFreshDeterministicStars(t *testing.T) {
 		StartPercentY: 0.15,
 		EndPercentY:   0.85,
 	}
-	firstState, _ := game_state.NewIntegrationTestBuilder(t).
+	firstState, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithRandomSeed(443).
 		WithSystemCallbacks().
 		Build()
-	matchingState, _ := game_state.NewIntegrationTestBuilder(t).
+	matchingState, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithRandomSeed(443).
 		WithSystemCallbacks().
 		Build()

@@ -7,13 +7,14 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStonegateProductionMovementCommitsBeforeCosmeticDelay(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Stonegate).WithPlayerAt(15, 17).
 		WithRandomSeed(701).WithSystemCallbacks().Build()
 	scene := newSurfaceCompletionTestScene(state)
@@ -60,7 +61,7 @@ func TestStonegatePassAndOtherApproachesUseOneTownCheckpoint(t *testing.T) {
 		{"West", references.Position{X: 17, Y: 16}, ebiten.KeyLeft},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Stonegate).WithPlayerAt(int(test.position.X), int(test.position.Y)).
 				WithRandomSeed(701).WithSystemCallbacks().Build()
 			scene := newSurfaceCompletionTestScene(state)

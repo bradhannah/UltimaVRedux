@@ -3,7 +3,7 @@ package references
 import "github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 
 // Test support: fixtures and seams that tests in other packages use. The
-// dead-code check treats this file as test support (workshop deadcode config).
+// dead-code check treats this file as test support.
 
 // GetListOfAllSmallMaps names every small-map location, Moonglow to Serpent's Hold.
 func GetListOfAllSmallMaps() []string {

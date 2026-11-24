@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type debugWorkbenchStateStub struct {
@@ -537,7 +538,7 @@ func TestExecuteWorldPositionStatus(t *testing.T) {
 }
 
 func TestExecuteMoongateStatusReturnsDetachedMoonstonesAndRoute(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(224, 133).
 		WithSystemCallbacks().
@@ -562,7 +563,7 @@ func TestExecuteMoongateStatusReturnsDetachedMoonstonesAndRoute(t *testing.T) {
 }
 
 func TestExecuteMoongateStatusRepresentsSpiritualityWithoutCoordinates(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()

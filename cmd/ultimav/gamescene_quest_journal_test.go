@@ -14,6 +14,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestGameSceneQuestJournalModalIsNoTimeAcrossGameplayContexts(t *testing.T) {
@@ -32,7 +33,7 @@ func TestGameSceneQuestJournalModalIsNoTimeAcrossGameplayContexts(t *testing.T) 
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(test.location).
 				WithSystemCallbacks().
 				WithRandomSeed(42).
@@ -277,7 +278,7 @@ func TestJournalDisposeDoesNotAcknowledgeAndReleasesPauseOnce(t *testing.T) {
 }
 
 func TestPlainJStillStartsJimmyOnSmallMap(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

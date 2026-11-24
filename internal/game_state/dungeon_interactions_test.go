@@ -128,7 +128,7 @@ func TestDungeonGetAwardsAllLootCategoriesAndSaturates(t *testing.T) {
 	assert.True(t, dungeonLootHasScroll(state))
 	assert.Equal(t, uint64(14), state.GetRNG().Calls()-callsBefore, "seven eligibility and seven award rolls")
 	assert.True(t, dungeonLootMessagesContain(callbacks.Messages, " potion!"))
-	assert.True(t, dungeonLootMessagesContain(callbacks.Messages, " scroll!"))
+	assert.True(t, dungeonLootMessagesContain(callbacks.Messages, "A scroll: "))
 
 	fillDungeonLootInventory(state)
 	state.SetRandomSeed(seed)
@@ -598,9 +598,9 @@ func dungeonLootHasScroll(state *GameState) bool {
 	return false
 }
 
-func dungeonLootMessagesContain(messages []string, suffix string) bool {
+func dungeonLootMessagesContain(messages []string, text string) bool {
 	for _, message := range messages {
-		if strings.HasSuffix(message, suffix) {
+		if strings.Contains(message, text) {
 			return true
 		}
 	}

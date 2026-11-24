@@ -122,18 +122,6 @@ func (gs *GameState) ToggleDungeon(dungeon references.Location) bool {
 	return gs.DungeonStates[index]
 }
 
-// GetDungeonForWord returns the dungeon location for a given Word of Power (case-insensitive)
-func GetDungeonForWord(word string) (references.Location, bool) {
-	upperWord := strings.ToUpper(strings.TrimSpace(word))
-	for _, candidate := range canonicalDungeonWords {
-		if candidate.word == upperWord {
-			return candidate.dungeon, true
-		}
-	}
-
-	return 0, false
-}
-
 // GetDungeonForResponse returns the first complete canonical Word contained in
 // a normalized player response. Canonical order makes multi-word input stable.
 func GetDungeonForResponse(response string) (references.Location, bool) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 
@@ -86,6 +87,14 @@ func (model playerSaveBrowserModel) summary(view widgets.SaveSlotView) (player_s
 	return summary, ok
 }
 
+func playerSavePartySize(members int) string {
+	if members == 1 {
+		return "1 member"
+	}
+
+	return fmt.Sprintf("%d members", members)
+}
+
 func playerSaveSlotView(summary player_save.SlotSummary, mode playerSaveBrowserMode) widgets.SaveSlotView {
 	primaryEnabled := summary.Status == player_save.SlotReady
 	if mode == playerSaveBrowserWrite {
@@ -162,6 +171,8 @@ func playerSaveErrorDetail(err error) string {
 		return "This save needs a compatible game version or game data. Choose another save."
 	case errors.Is(err, save_snapshot.ErrInvalidEnvelope), errors.Is(err, save_snapshot.ErrInvalidSnapshot):
 		return "This save looks damaged. The game log has the details."
+	case errors.Is(err, syscall.ENOSPC):
+		return "The disk is full. Free some space and try again."
 	case errors.Is(err, fs.ErrPermission):
 		return "Check file permissions for the saves folder and try again."
 	case errors.Is(err, ErrPlayerSaveUnavailable):
@@ -229,7 +240,7 @@ func playerSaveDetails(summary player_save.SlotSummary) []widgets.SaveSlotDetail
 	}
 	details = append(details,
 		widgets.SaveSlotDetail{Label: "Location", Value: playerSaveLocationLabel(metadata.Location, metadata.Floor)},
-		widgets.SaveSlotDetail{Label: playerSavePartyLabel, Value: fmt.Sprintf("%d members", metadata.ActivePartyCount)},
+		widgets.SaveSlotDetail{Label: playerSavePartyLabel, Value: playerSavePartySize(metadata.ActivePartyCount)},
 	)
 	calendar := metadata.Calendar
 	if calendar.Year > 0 && calendar.Month > 0 && calendar.Day > 0 {
@@ -368,6 +379,10 @@ func playerSaveDescriptionNotice(summary player_save.SlotSummary, playthroughID 
 	}
 	if summary.Status == player_save.SlotEmpty {
 		return "Save to " + playerSaveSlotName(summary.Slot) + "."
+	}
+	if summary.Status == player_save.SlotIncompatible {
+		return "Replaces a save in " + playerSaveSlotName(summary.Slot) +
+			" that this version of the game cannot open."
 	}
 	notice := "Replaces " + summary.Metadata.AvatarName + "'s save"
 	if !summary.Metadata.CreatedAt.IsZero() {

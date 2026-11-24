@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/config"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
@@ -17,7 +17,7 @@ import (
 func TestCommandHelpPrimaryRouteAcrossMapContexts(t *testing.T) {
 	for _, location := range []references.Location{references.BritanniaUnderworld, references.Deceit} {
 		t.Run(location.String(), func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithPlayerAt(1, 1).WithRandomSeed(42).WithSystemCallbacks().Build()
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithPlayerAt(1, 1).WithRandomSeed(42).WithSystemCallbacks().Build()
 			scene := newSurfaceCompletionTestScene(state)
 			initializeDungeonUpdateTestScene(scene, state)
 			scene.keyboard = input.NewKeyboardWithKeyStateSource(-1, func(key ebiten.Key) bool { return key == ebiten.KeySlash })
@@ -109,7 +109,7 @@ func TestCommandHelpDetachedContextDescriptions(t *testing.T) {
 				require.Contains(t, entry.NextInput, "Space turns the page")
 			}
 			if entry.Key == "C" {
-				require.Contains(t, entry.NextInput, "Casting spends M.P. and one mixture.")
+				require.Contains(t, entry.NextInput, "Casting spends MP and one mixture.")
 				require.Contains(t, entry.NextInput, "Cancelling costs nothing")
 				require.NotContains(t, entry.NextInput, "before choice")
 				require.NotContains(t, entry.NextInput, "does not refund")

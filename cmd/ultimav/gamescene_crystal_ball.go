@@ -107,12 +107,7 @@ func (g *GameScene) StartCrystalBallWorkflow() {
 		func() bool { return selectedCharacterIndex >= 0 },
 		func(subQ *event_queue.SequentialEventBuilder) {
 			subQ.ThenSequence(func(q *event_queue.SequentialEventBuilder) *event_queue.SequentialEventBuilder {
-				character := g.gameState.PartyState.GetCharacter(selectedCharacterIndex)
-
-				roll := g.gameState.RollDice(30)
-				success := roll < int(character.Intelligence)
-
-				if success {
+				if g.gameState.CrystalBallLook(selectedCharacterIndex) {
 					q.Then(func() {
 						g.addRowStr("Strange vision!")
 						transcript.AppendLine("Strange vision!")
@@ -127,7 +122,7 @@ func (g *GameScene) StartCrystalBallWorkflow() {
 					}).ThenSequence(
 
 						game_state.NewPartyStateBuilder(g.gameState).
-							WithFixedDamage(1).
+							WithFixedDamage(game_state.CrystalBallDeathVisionDamage).
 							ToCharacter(selectedCharacterIndex).
 							FlashRed().
 							WithSound(game_state.SoundDeathVision).

@@ -10,10 +10,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestAmbientTerrainSourceIsNotHiddenByAnOccupant(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
 	scene := &GameScene{gameState: state}
 	source := references.Position{X: 11, Y: 10}
@@ -32,7 +33,7 @@ func TestAmbientTerrainSourceIsNotHiddenByAnOccupant(t *testing.T) {
 }
 
 func TestAmbientScanReusesStorageButRefreshesStationaryTerrain(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
 	scene := &GameScene{gameState: state}
 	center := references.Position{X: 10, Y: 10}
@@ -59,7 +60,7 @@ func TestAmbientScanReusesStorageButRefreshesStationaryTerrain(t *testing.T) {
 }
 
 func TestDungeonBackgroundOwnerSurvivesTacticalMapAndExit(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
 	scene := &GameScene{gameState: state}
 	state.MapState.PlayerLocation.Location = references.Deceit
@@ -75,7 +76,7 @@ func TestDungeonBackgroundOwnerSurvivesTacticalMapAndExit(t *testing.T) {
 }
 
 func TestNavalAudioSituationTracksVesselAndSailsNotAutomaticMovement(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
 	scene := &GameScene{gameState: state}
 	vessel, raised := scene.navalAudioSituation()

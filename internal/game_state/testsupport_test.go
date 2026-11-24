@@ -594,3 +594,12 @@ func roundTripSaveSnapshot(t *testing.T, state *GameState) *GameState {
 
 	return hydrated
 }
+
+// GetMoonstoneIndexForMoonPhase returns the moonstone index for given moon phase
+func (ms *MoonstoneSystem) GetMoonstoneIndexForMoonPhase(phase int) int {
+	if phase >= 0 && phase <= 7 {
+		return phase // Direct 1:1 mapping in original Ultima V
+	}
+
+	return 0 // Default to first moonstone
+}

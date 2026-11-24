@@ -3,8 +3,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"image"
+	"io/fs"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -439,6 +441,20 @@ func folderProblemStatus(err error) string {
 	return "That folder no longer works. The game log has the details."
 }
 
+// setupProblemStatus words a settings or start-up failure for the player and
+// keeps the technical error in the log.
+func setupProblemStatus(sentence string, err error) string {
+	logging.Warnf(logging.CategorySystem, "%s %v", sentence, err)
+	switch {
+	case errors.Is(err, fs.ErrPermission):
+		return sentence + " Redux is not allowed to use that file or folder."
+	case errors.Is(err, fs.ErrNotExist):
+		return sentence + " The file or folder is missing."
+	default:
+		return sentence + " The game log has the details."
+	}
+}
+
 func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupValidationResult) {
 	switch result.kind {
 	case dataSetupValidateCandidate:
@@ -457,7 +473,7 @@ func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupVali
 		s.commitCandidate(game, result.candidate)
 	case dataSetupCheckSettings:
 		if result.err != nil {
-			s.status = "Saved settings are not usable yet: " + result.err.Error()
+			s.status = setupProblemStatus("The saved settings cannot be used yet.", result.err)
 			if originaldata.PlainReason(result.err) != "" {
 				s.status = folderProblemStatus(result.err)
 			}
@@ -474,7 +490,7 @@ func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupVali
 			return
 		}
 		if err := s.persistCandidate(result.candidate); err != nil {
-			s.status = "The location is valid but could not be saved: " + err.Error()
+			s.status = setupProblemStatus("The folder is good, but the choice could not be saved.", err)
 			s.showRecoveryActions(game)
 
 			return
@@ -482,7 +498,7 @@ func (s *dataSetupScene) handleValidationResult(game *Game, result dataSetupVali
 		result.playable.AdoptPersistedConfiguration(s.configuration)
 		result.playable.SoundDisabled = s.soundDisabled
 		if err := s.onReady(game, result.playable); err != nil {
-			s.status = "Redux could not continue with these files: " + err.Error()
+			s.status = setupProblemStatus("Redux could not start with these files.", err)
 			s.showRecoveryActions(game)
 		}
 	}
@@ -794,7 +810,7 @@ func (s *dataSetupScene) searchDetailViews() []widgets.SaveSlotView {
 func (s *dataSetupScene) checkAgain(game *Game) {
 	if err := s.configuration.RefreshPersistedConfiguration(); err != nil {
 		s.configurationError = err
-		s.status = "The saved settings could not be reread: " + err.Error()
+		s.status = setupProblemStatus("The saved settings could not be read again.", err)
 		s.showSettingsRecovery(game, false)
 
 		return
@@ -806,7 +822,7 @@ func (s *dataSetupScene) checkAgain(game *Game) {
 func (s *dataSetupScene) useCandidate(game *Game, candidate originaldata.Candidate) {
 	if err := s.configuration.RefreshPersistedConfiguration(); err != nil {
 		s.configurationError = err
-		s.status = "Repair the saved settings before selecting an installation: " + err.Error()
+		s.status = setupProblemStatus("Repair the saved settings before choosing a folder.", err)
 		s.showSettingsRecovery(game, false)
 
 		return
@@ -825,7 +841,7 @@ func (s *dataSetupScene) useCandidate(game *Game, candidate originaldata.Candida
 
 func (s *dataSetupScene) commitCandidate(game *Game, candidate originaldata.Candidate) {
 	if s.configurationError != nil {
-		s.status = "Repair the saved settings before continuing: " + s.configurationError.Error()
+		s.status = setupProblemStatus("Repair the saved settings before continuing.", s.configurationError)
 		s.showSettingsRecovery(game, false)
 
 		return
@@ -834,7 +850,7 @@ func (s *dataSetupScene) commitCandidate(game *Game, candidate originaldata.Cand
 		active := s.candidateIsActive(candidate)
 		pending := s.candidateIsPending(candidate)
 		if err := s.persistCandidate(candidate); err != nil {
-			s.status = "The location could not be saved: " + err.Error()
+			s.status = setupProblemStatus("The choice could not be saved.", err)
 			s.showRecoveryActions(game)
 
 			return
@@ -909,7 +925,7 @@ func (s *dataSetupScene) showSettingsRecoveryWithBack(game *Game, launch bool, o
 	s.settingsBack = onBack
 	path, err := s.configuration.ConfigurationFilePath()
 	if err != nil {
-		s.status = "The settings filename is unavailable: " + err.Error()
+		s.status = setupProblemStatus("The settings file could not be found.", err)
 		onBack()
 
 		return
@@ -951,7 +967,7 @@ func (s *dataSetupScene) updateEditorResult(game *Game) {
 	case err, open := <-s.editorResult:
 		s.editorResult = nil
 		if open && err != nil {
-			s.status = "The editor reported a problem. Edit the settings file manually: " + err.Error()
+			s.status = setupProblemStatus("The text editor reported a problem. Edit the settings file by hand.", err)
 			if s.settingsVisible {
 				s.showSettingsRecoveryWithBack(game, false, s.settingsBack)
 			}
@@ -980,7 +996,7 @@ func (s *dataSetupScene) checkSavedSettings(_ *Game) {
 func (s *dataSetupScene) completeSavedSettings(game *Game, playable *config.UltimaVConfiguration) {
 	if err := s.configuration.RefreshPersistedConfiguration(); err != nil {
 		s.configurationError = err
-		s.status = "Saved settings are not usable yet: " + err.Error()
+		s.status = setupProblemStatus("The saved settings cannot be used yet.", err)
 		s.showSettingsRecoveryWithBack(game, false, s.settingsBack)
 
 		return
@@ -1033,7 +1049,7 @@ func (s *dataSetupScene) cancelSetup(game *Game) {
 
 func (s *dataSetupScene) returnToTitle(game *Game) {
 	if err := s.onReturn(game); err != nil {
-		s.status = "The title menu could not be restored: " + err.Error()
+		s.status = setupProblemStatus("The title menu could not be restored.", err)
 		s.showRecoveryActions(game)
 	}
 }

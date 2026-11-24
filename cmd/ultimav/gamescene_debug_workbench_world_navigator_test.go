@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/minimap"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestWorldPositionStatusReturnsEveryDestinationFloorAndDefault(t *testing.T) {
@@ -573,7 +574,7 @@ func TestWorldPositionSetUsesWorldSetupSceneBlockers(t *testing.T) {
 
 func newWorldNavigatorDebugTestScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithFloor(0).
 		WithPlayerAt(10, 11).

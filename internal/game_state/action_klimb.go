@@ -437,8 +437,7 @@ func (g *GameState) changeFloorBy(delta references.FloorNumber) {
 		// See ref:CMD-0005.
 		g.hardResetSmallMapAfterFloorChange()
 	case references.LargeMapType:
-		// Refresh quest items (shards) on large maps when changing floors
-		g.RefreshQuestItemsOnMap()
+		// Shards are drawn as overlays, so large maps need no floor refresh here.
 	case references.CombatMapType, references.DungeonMapType, references.CampingMapType:
 		// This helper changes the floor without rebuilding these map types.
 	}

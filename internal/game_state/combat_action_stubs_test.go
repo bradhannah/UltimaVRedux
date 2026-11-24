@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
-	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 )
@@ -184,9 +183,7 @@ func TestActionJimmyCombatMap_DoorOutcomes(t *testing.T) {
 			theMap := gs.GetCurrentLayeredMap()
 			theMap.SetTileByLayer(map_state.MapLayer, &target, test.door)
 			gs.PartyState.Inventory.Provisions.Keys.Set(test.keys)
-			gs.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool {
-				return test.succeeds
-			}
+			setJimmyOutcome(gs, test.succeeds)
 
 			assert.Equal(t, test.expectedResult, gs.ActionJimmyCombatMap(references.Right))
 			assert.True(t, theMap.GetTileTopMapOnlyTile(&target).Is(test.expectedTile))
@@ -222,9 +219,7 @@ func TestCombatDoorActions_AdvanceAfterHandledOutcome(t *testing.T) {
 			target := references.Position{X: origin.X + 1, Y: origin.Y}
 			gs.GetCurrentLayeredMap().SetTileByLayer(map_state.MapLayer, &target, test.door)
 			gs.PartyState.Inventory.Provisions.Keys.Set(test.keys)
-			gs.jimmySuccessForTesting = func(*party_state.PlayerCharacter) bool {
-				return test.jimmySucceeds
-			}
+			setJimmyOutcome(gs, test.jimmySucceeds)
 
 			forceNextMonsterTurnForTest(t, gs, 0)
 			gs.CombatScene.presentTurns = true

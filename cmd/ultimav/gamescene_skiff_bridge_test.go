@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_units"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSkiffMovementEntersAndLeavesRiverBridge(t *testing.T) {
@@ -28,7 +28,7 @@ func TestSkiffMovementEntersAndLeavesRiverBridge(t *testing.T) {
 			{"east under vertical bridge", indexes.TrollBridgeVert, references.Right, ebiten.KeyRight},
 		} {
 			t.Run(location.String()+"/"+test.name, func(t *testing.T) {
-				state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).
+				state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).
 					WithPlayerAt(15, 15).WithSystemCallbacks().WithRandomSeed(42).Build()
 				state.DebugOptions.MonsterGen = false
 				state.CurrentNPCAIController.GetNpcs().ReplaceWith(nil)

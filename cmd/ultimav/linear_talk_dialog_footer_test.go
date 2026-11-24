@@ -51,7 +51,7 @@ func TestTalkFooterIsConnectedBelowUnchangedInlineInput(t *testing.T) {
 	require.Equal(t, "FLAM", dialog.TextInput.GetText())
 	require.NotContains(t, interestPlaceholder, "|")
 	require.Equal(t, " name, job, bye", interestPlaceholder)
-	require.Contains(t, dialog.footerOutput.GetOutputStr(false), "Journal")
+	require.NotContains(t, dialog.footerOutput.GetOutputStr(false), "Journal", "Shift+J types a letter while a keyword is entered")
 	require.NotContains(t, dialog.footerOutput.GetOutputStr(false), "History", "command help lists History")
 }
 

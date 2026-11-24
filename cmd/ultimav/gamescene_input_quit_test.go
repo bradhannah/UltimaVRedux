@@ -8,18 +8,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/player_save"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceQuitSaveResultPreservesDestinationAndReportsFailures(t *testing.T) {
 	for _, location := range []references.Location{references.Britain, references.BritanniaUnderworld} {
 		for _, outcome := range []string{"success", "write failure", "no active slot", "unavailable"} {
 			t.Run(location.String()+"/"+outcome, func(t *testing.T) {
-				state, callbacks := game_state.NewIntegrationTestBuilder(t).
+				state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 					WithLocation(location).WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 				scene := newSurfaceCompletionTestScene(state)
 				capture := &escapeMenuCaptureScene{playerSaveTestScene: playerSaveTestScene{

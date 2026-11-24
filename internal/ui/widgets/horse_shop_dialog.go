@@ -22,7 +22,7 @@ const (
 	horseShopInsetDivisor        = 64
 	horseShopDoubleInset         = 2
 	horseShopSpriteHeightUnits   = 32
-	horseShopLineSpacing         = 1.08
+	horseShopLineSpacing         = 1.06
 	horseShopMinimumTextChars    = 8
 	horseShopStatusMinimumLines  = 5
 	horseShopShowroomDetailLines = 2
@@ -343,7 +343,7 @@ func (d *HorseShopDialog) ApplyPreviewStopped(request game_state.HorsePurchaseRe
 
 // ApplySessionError replaces presentation with a terminal workflow/session error.
 func (d *HorseShopDialog) ApplySessionError(message string) {
-	validateHorseDialogText("session error", message)
+	requireFinalizedText("HorseShopDialog", "session error", message)
 	d.pendingIntent = nil
 	d.clearAwaitingPurchase()
 	d.latestExchange = message
@@ -693,16 +693,10 @@ func validateHorseShopState(state game_state.HorseShopState, preview bool) {
 }
 
 func validateHorseShopProse(prose HorseShopDialogProse) {
-	validateHorseDialogText("greeting", prose.Greeting)
-	validateHorseDialogText("rude farewell", prose.RudeFarewell)
-	validateHorseDialogText("polite farewell", prose.PoliteFarewell)
-	validateHorseDialogText("funds refusal", prose.FundsRefusal)
-}
-
-func validateHorseDialogText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("HorseShopDialog: finalized " + label + " is required")
-	}
+	requireFinalizedText("HorseShopDialog", "greeting", prose.Greeting)
+	requireFinalizedText("HorseShopDialog", "rude farewell", prose.RudeFarewell)
+	requireFinalizedText("HorseShopDialog", "polite farewell", prose.PoliteFarewell)
+	requireFinalizedText("HorseShopDialog", "funds refusal", prose.FundsRefusal)
 }
 
 func validateHorseQuoteGold(owner string, quote game_state.HorsePurchaseQuote) {

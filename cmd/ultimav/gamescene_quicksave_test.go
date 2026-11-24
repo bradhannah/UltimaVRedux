@@ -11,6 +11,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,7 @@ func TestQuickSaveSurfaceConfirmationMatrixCapturesOutsideCommandCycle(t *testin
 	} {
 		for _, confirm := range []bool{true, false} {
 			t.Run(place.name+"/"+boolLabel(confirm), func(t *testing.T) {
-				state, callbacks := game_state.NewIntegrationTestBuilder(t).
+				state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 					WithLocation(place.location).WithFloor(place.floor).WithPlayerAt(15, 15).
 					WithRandomSeed(42).WithSystemCallbacks().Build()
 				scene := newOwnedSurfaceCompletionTestScene(t, state)

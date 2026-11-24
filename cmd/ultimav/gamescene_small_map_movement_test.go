@@ -14,6 +14,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestMovementLoggingEnabledAfterStatusLoadRetainsSubsequentMovement(t *testing.T) {
@@ -42,7 +43,7 @@ func TestMovementLoggingEnabledAfterStatusLoadRetainsSubsequentMovement(t *testi
 	})
 	require.True(t, category.Success)
 
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -72,7 +73,7 @@ func TestSmallMapBoundaryMovementPromptsToLeaveWithoutOutOfBoundsMessage(t *test
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gs, callbacks := game_state.NewIntegrationTestBuilder(t).
+			gs, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithPlayerAt(int(test.position.X), int(test.position.Y)).
 				WithSystemCallbacks().
@@ -102,7 +103,7 @@ func TestSmallMapBoundaryMovementPromptsToLeaveWithoutOutOfBoundsMessage(t *test
 }
 
 func TestSmallMapBlockedHeldMovementRequiresPhysicalRelease(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithRandomSeed(426).
 		WithSystemCallbacks().

@@ -11,6 +11,28 @@ noted. Some recordings have been transcoded or divided into clips; playback wind
 and gains are recorded in `internal/audio/assets/library.json`. Attribution does
 not itself grant additional rights to the underlying works.
 
+## What is bundled, in plain terms
+
+This build ships these kinds of material:
+
+- **Taken from the original game:** the tile sheet, the IBM and runic bitmap font
+  sheets, and the application icon made from one tile. They belong to the owners
+  of Ultima V. No permission to redistribute them has been given.
+- **Arranged from the original score:** 16 music tracks, converted from The Exodus
+  Project's MIDI files. No redistribution licence was found for the arrangements,
+  and the compositions belong to their owners.
+- **Non-commercial only:** five sound sources are CC BY-NC (concrete and leaf
+  footsteps, the moongate, the healing MP3s, the troll growl). They suit a free
+  project and nothing else.
+- **No licence on file:** two healing sounds made by the maintainer, not yet given
+  a licence, and two effects of unknown origin (`earthquake_01`,
+  `death_injury_01`).
+- **Everything else:** made for the project or used under the open licences listed
+  below.
+
+The maintainer keeps all of these in the public preview builds, knowing these
+gaps. Being listed here grants no rights to anyone.
+
 ## Original game and project artwork
 
 Original Ultima V material remains credited to Origin Systems and its original
@@ -127,7 +149,3 @@ relative to `internal/audio/assets/`:
 The existing audio manifest retains these unknowns; this document does not invent
 authors or licence grants for them. Credits also do not establish additional
 redistribution permission for original game material.
-The maintainer has chosen to retain the current bundled assets for the initial
-public development preview. The provenance and licence gaps described above remain
-unresolved; this inclusion decision does not certify third-party rights or grant
-additional permissions.

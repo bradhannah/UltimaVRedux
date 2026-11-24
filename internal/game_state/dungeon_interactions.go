@@ -2,6 +2,7 @@ package game_state
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
@@ -210,27 +211,40 @@ func (g *GameState) generateDungeonChestLoot() {
 		case 2:
 			quantity := g.RandomIntInRange(1, 3)
 			g.PartyState.Inventory.Provisions.Keys.IncrementBy(uint16(quantity))
-			g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("%d keys!", quantity))
+			g.SystemCallbacks.Message.AddRowStr(dungeonLootCount(quantity, "key", "keys"))
 		case 3:
 			quantity := g.RandomIntInRange(1, 3)
 			g.PartyState.Inventory.Provisions.Gems.IncrementBy(uint16(quantity))
-			g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("%d gems!", quantity))
+			g.SystemCallbacks.Message.AddRowStr(dungeonLootCount(quantity, "gem", "gems"))
 		case 4:
 			quantity := g.RandomIntInRange(1, 3)
 			g.PartyState.Inventory.Provisions.Torches.IncrementBy(uint16(quantity))
-			g.SystemCallbacks.Message.AddRowStr(fmt.Sprintf("%d torches!", quantity))
+			g.SystemCallbacks.Message.AddRowStr(dungeonLootCount(quantity, "torch", "torches"))
 		case 5:
 			potion := references.Potion(g.RandomIntInRange(0, references.NumberOfPotions-1))
 			g.PartyState.Inventory.Potions.IncrementByOne(potion)
-			g.SystemCallbacks.Message.AddRowStr("A " + potionNames[potion] + " potion!")
+			article := "A "
+			if strings.ContainsAny(potionNames[potion][:1], "AEIOU") {
+				article = "An "
+			}
+			g.SystemCallbacks.Message.AddRowStr(article + potionNames[potion] + " potion!")
 		case 6:
 			scroll := references.Scroll(g.RandomIntInRange(0, references.NumberOfScrolls-1))
 			g.PartyState.Inventory.Scrolls.IncrementByOne(scroll)
-			g.SystemCallbacks.Message.AddRowStr("A " + scrollNames[scroll] + " scroll!")
+			g.SystemCallbacks.Message.AddRowStr("A scroll: " + scrollNames[scroll] + "!")
 		default:
 			panic("unknown dungeon loot category")
 		}
 	}
+}
+
+// dungeonLootCount words a counted find as the original does: "1 key!", "3 keys!".
+func dungeonLootCount(quantity int, singular, plural string) string {
+	if quantity == 1 {
+		return "1 " + singular + "!"
+	}
+
+	return fmt.Sprintf("%d %s!", quantity, plural)
 }
 
 func (g *GameState) applyDungeonChestTrap(characterIndex int) {

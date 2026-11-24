@@ -610,7 +610,7 @@ func tavernMealResultView(result game_state.TavernMealResult) widgets.TavernResu
 	if result.Outcome == game_state.TavernMealInsufficientFunds {
 		view.Title = "Meal Refused"
 		view.ChargeLabel = "Required"
-		view.Note = "Not enough gold for this meal."
+		view.Note = "Thou hast not enough gold for this meal."
 		view.Tone = widgets.TavernResultFailure
 	}
 

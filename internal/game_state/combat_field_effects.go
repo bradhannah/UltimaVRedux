@@ -90,7 +90,7 @@ func (g *GameState) applyCombatFieldToMonster(field CombatField, monster *Combat
 		damage := g.RandomIntInRange(0, 20)
 		if direct {
 			finalDamage := CombatApplyMagicDamageModifiers(
-				damage, monster.MonsterType().IsUndead(), monster.HasAbility(references.Immortal),
+				damage, monster.HasAbility(references.Immortal),
 			)
 			diagnostics = CombatDiagnostics{
 				FinalDamage:  finalDamage,
@@ -113,7 +113,7 @@ func (g *GameState) applyCombatFieldToMonster(field CombatField, monster *Combat
 		if direct {
 			damage := CombatCalcMagicDamage(21, monster.EnemyRef().Armour, g.AsRandomProvider())
 			finalDamage := CombatApplyMagicDamageModifiers(
-				damage.Damage, monster.MonsterType().IsUndead(), monster.HasAbility(references.Immortal),
+				damage.Damage, monster.HasAbility(references.Immortal),
 			)
 			diagnostics = CombatDiagnostics{
 				Damage: damage, FinalDamage: finalDamage,

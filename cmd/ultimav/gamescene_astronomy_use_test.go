@@ -16,6 +16,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestTelescopeDaytimeUsesSourceBoundaries(t *testing.T) {
@@ -44,7 +45,7 @@ func TestAstronomyFeedbackHistoryExactlyOnceAtEveryPopupCap(t *testing.T) {
 	for limit := range 4 {
 		for _, test := range cases {
 			t.Run(fmt.Sprintf("%s/cap-%d", test.name, limit), func(t *testing.T) {
-				state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+				state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 					WithFloor(test.floor).WithRandomSeed(443).WithSystemCallbacks().Build()
 				state.DateTime.Hour = test.hour
 				state.PartyState.Inventory.QuestItems.Set(references.Spyglass, test.owned)
@@ -91,7 +92,7 @@ func TestAstronomyFeedbackHistoryExactlyOnceAtEveryPopupCap(t *testing.T) {
 
 func TestFindingsTelescopeFallbackSkipsSleepingAndCharmedMembers(t *testing.T) {
 	for _, status := range []party_state.CharacterStatus{party_state.Sleep, party_state.Charmed} {
-		state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+		state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 			WithRandomSeed(443).WithSystemCallbacks().Build()
 		state.DateTime.Hour = 6
 		state.PartyState.GetCharacter(0).SetStatus(status)
@@ -107,7 +108,7 @@ func TestFindingsTelescopeFallbackSkipsSleepingAndCharmedMembers(t *testing.T) {
 }
 
 func TestTownTelescopeLookCompletesCommandExactlyOnce(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithRandomSeed(443).
@@ -149,7 +150,7 @@ func TestTelescopeSunDamageTargetsActivePlayerOrLivingFallback(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.Britain).
 				WithRandomSeed(443).
 				WithSystemCallbacks().
@@ -268,7 +269,7 @@ func TestSurfaceKeyURoutesSextantOutputAndCompletesOnce(t *testing.T) {
 func TestSpyglassAcceptsBritanniaAtSourceNightBoundaries(t *testing.T) {
 	for _, hour := range []uint8{0, 5, 19, 23} {
 		t.Run(fmt.Sprintf("hour %d", hour), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithFloor(references.FloorNumber(references.OVERWORLD)).
 				WithSystemCallbacks().
@@ -295,7 +296,7 @@ func TestSpyglassAcceptsBritanniaAtSourceNightBoundaries(t *testing.T) {
 
 func TestSpyglassUsesSourceDayAndLocationFeedback(t *testing.T) {
 	t.Run("18 has no stars", func(t *testing.T) {
-		state, _ := game_state.NewIntegrationTestBuilder(t).
+		state, _ := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.BritanniaUnderworld).
 			WithFloor(references.FloorNumber(references.OVERWORLD)).
 			WithSystemCallbacks().
@@ -317,7 +318,7 @@ func TestSpyglassUsesSourceDayAndLocationFeedback(t *testing.T) {
 	})
 
 	t.Run("basement rejected", func(t *testing.T) {
-		state, _ := game_state.NewIntegrationTestBuilder(t).
+		state, _ := gamefixture.NewIntegrationTestBuilder(t).
 			WithLocation(references.Britain).
 			WithFloor(-1).
 			WithSystemCallbacks().

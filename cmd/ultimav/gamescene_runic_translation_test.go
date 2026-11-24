@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -197,7 +197,7 @@ func TestRunicTranslationProtectsRetainedRawAnyKeyWait(t *testing.T) {
 }
 
 func TestSignTranslationGeneratedWantedPosterPreservesNames(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Yew).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Yew).
 		WithPlayerAt(0x11, 0x16).WithSystemCallbacks().Build()
 	names := []string{"George", "[Iolo]", "Shamino"}
 	for index, name := range names {

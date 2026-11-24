@@ -438,6 +438,10 @@ func (ssm *SearchSystemManager) FormatFoundItems(items []references.ItemAndQuant
 		item := items[0]
 		switch item.Item {
 		case references.Gold:
+			if item.Quantity == 1 {
+				return "1 gold coin!"
+			}
+
 			return fmt.Sprintf("%d gold coins!", item.Quantity)
 		case references.Key:
 			return "a ring of keys!"
@@ -449,7 +453,7 @@ func (ssm *SearchSystemManager) FormatFoundItems(items []references.ItemAndQuant
 			return fmt.Sprintf("%d torches!", item.Quantity)
 		case references.SkullKeys:
 			if item.Quantity == 1 {
-				return "skull keys!"
+				return "a skull key!"
 			}
 
 			return fmt.Sprintf("%d skull keys!", item.Quantity)

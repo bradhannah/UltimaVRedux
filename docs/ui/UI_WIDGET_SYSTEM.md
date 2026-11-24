@@ -41,7 +41,30 @@ Not every utility in the package is a `Widget`. `ScrollableListState` has a purp
 
 Most widgets use `sprites.PercentBasedPlacement`. The canonical display manager provides the current logical render dimensions through `GetCurrentSize`; widgets must not use its window, monitor, or container dimensions for layout. The game loop, presentation widgets, and resolution callbacks share the `display.GetManager()` identity. Configuration contains plain values and an instance-owned preference source, not the display manager; scene adapters apply display requests. Fonts use the shared scaling helpers in `internal/text` and `internal/ui/widgets/typography.go`; production spacing constants live in `dialog_constants.go`.
 
-Text uses four roles from `typography.go`, sized for a 1920-wide screen and scaled to the window: `FontSizeTitle` (26) for the one name at the top of each window; `FontSizeBody` (23) for all readable dialog text, including prompts, conversation, footers and section labels in the heading colour; `FontSizeCompact` (20) only for dense tables measured not to fit at body size, such as Ready's gear, party-picker rows and Dungeon View labels; and `FontSizeHUD` (18) for fixed main-screen indicators. A warning may borrow the title size, as the provisions strip's food-loss heading does. Any other size is a named, measured local exception, such as Dungeon View's 16-size axis tags.
+Text uses four roles from `typography.go`, sized for a 1920-wide screen and scaled to the window: `FontSizeTitle` (26) for the one name at the top of each window; `FontSizeBody` (23) for all readable dialog text, including prompts, conversation, footers and section labels in the heading colour; `FontSizeCompact` (20) only for dense tables measured not to fit at body size, such as Ready's gear, party-picker rows and Dungeon View labels; and `FontSizeHUD` (18) for fixed main-screen indicators. A warning may borrow the title size, as the provisions strip's food-loss heading does. Any other size is a named, measured local exception, listed below.
+
+### Text-size exceptions
+
+| Where | Size | Why |
+| --- | --- | --- |
+| Dungeon View axis tags | 16 | Four-character tags must fit eight adjacent columns. |
+| Provisions strip `FOOD -N` heading | Title (26) | A warning borrowing the title size. |
+| Dungeon debug coordinate overlay | 12 | Not player-facing. |
+| Dungeon View size floor | 10, line space 11 | A lower bound that supported window sizes never reach. |
+| Guard card | Role size, at least 8, stepping down a point at a time to 6 | Steps down until every row and wrapped line fits the card. |
+| Journal moonstone rows and heading | Body (rows) and Title (heading), stepping down a pixel at a time | Shrinks until every phase line fits its pane. |
+| Party status label in combat | Scaled down per label | Long labels such as `Possessed - 8/12 turns` are fitted to the status cell. |
+| Character creation prompt | 10 on a 320x200 canvas | The canvas is then scaled to the window; the bitmap identity text is 8 on that canvas. |
+| Title-screen menu | Fraction of screen height | Choices are about 0.0273 x height, the notice line about 0.0239 x height, sub-menu rows 0.9 x the choice size and the `Esc Back` hint 0.65 x. |
+| Title-screen version line | About 0.012 x width | 0.8 x (6 x width / 400), to sit inside the frame's blue band. |
+| Game-file setup screens | Title-screen choice size | Heading, body and footer all use it. |
+| Runic, IBM and sky bitmap glyphs | Line spacing / 8 | They scale with the line spacing of the text beside them, not its font size, so runes are a little larger than the Latin text and the factor differs by window. The sky strip uses its band height / 8; sign text uses a whole-number scale. |
+| Banner, finale and dungeon graffiti bitmap text | 8 on a fixed canvas | Fixed bitmap size, not a role. |
+| Cast and Mix headers | Title (26) second line | The window draws a second Title-size line under its title: Cast shows the caster's `Level / MP`, Mix shows `Choose a spell to mix` or the result. An exception to one title per window. |
+
+The game font is an 8x8-cell pixel font and text scales by window width / 1920 with no rounding, so a role lands on whole pixels only when its scaled size is a multiple of 8. At the supported window sizes (1280, 1366, 1920, 2560 and 3840 wide) Title 26 and Body 23 never do, Compact 20 does only at 3840 and HUD 18 only at 2560. This is accepted.
+
+Line spacing is chosen per window, not by role. Values in use: 1.0 plain HUD and lists; 1.05 arms and healer shops; 1.06 inn, tavern and ship; 1.08 reagent, guild and horse; about 1.09 the message window; 1.1 party picker and Dungeon View; 1.15 merchant shell, item pickers, Journal and Map; 1.2 most dialogs such as Z-stats, Cast, Mix, Save/Load and Help; 1.3 Talk and credits; about 1.59 main-screen summaries. There is no single standard yet.
 
 Percent placement is the dominant convention, but cached pixel geometry and scaled text resources still require invalidation. There is no shared flex/grid layout or resolution-scaler API. Active responsive dialogs use dimension-remembering layout at construction and update/draw boundaries. A size change rebuilds only derived borders, fonts, outputs, and viewport capacity while preserving selection, workflow, input, pending-result, visibility, and dismissal state. `MessageDialog` refreshes those resources automatically during draw; `Refresh` remains available for explicit reinitialization.
 

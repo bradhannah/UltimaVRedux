@@ -241,6 +241,10 @@ func (d *QuestJournalDialog) searchStatus() string {
 		return "No matching entries."
 	}
 
+	if len(d.searchResults) == 1 {
+		return "1 matching entry"
+	}
+
 	return fmt.Sprintf("%d matching entries", len(d.searchResults))
 }
 

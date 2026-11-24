@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestGuardTributePaymentUsesSharedTalkLifecycle(t *testing.T) {
@@ -345,7 +346,7 @@ func newGuardTributeFixture(
 ) *guardTributeFixture {
 	t.Helper()
 
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(location).
 		WithSystemCallbacks().
 		WithRandomSeed(1).

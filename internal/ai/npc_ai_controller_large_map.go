@@ -255,7 +255,7 @@ func (m *NPCAIControllerLargeMap) calculateNextNPCPosition(mapUnit map_units.Map
 	// Redux policy: Bat and Mongbat use ordinary pursuit. The original repulsion
 	// branch says "mongbat" but tests shape 0xfc (Shadowlord), not Mongbat's 0xf0.
 	// Do not treat that ambiguity as a fidelity rule; ref:ENEMY-0005.
-	// REDUX DEVIATION: Original movement normally attempts pursuit every phase,
+	// REDUX DEVIATION: ENEMY-0005: Original movement normally attempts pursuit every phase,
 	// which chooses a playerward axis and uses random movement only when blocked.
 	// Redux chooses random movement on one in four phases, then waits on one in
 	// four directed opportunities so A* does not increase encounter pressure by
@@ -380,6 +380,10 @@ func (m *NPCAIControllerLargeMap) FreshenExistingNPCsOnMap() {
 
 func (m *NPCAIControllerLargeMap) generateTileBasedMonster() {
 	var deltaX, deltaY references.Coordinate
+	// REDUX DEVIATION: ENEMY-0004: original creation samples the loaded 32x32 region and
+	// requires both wrapped axis distances above six. Redux keeps the thresholds but
+	// samples a perimeter just outside its larger viewport so new actors appear unseen.
+	// See ref:ENEMY-0004.
 	xDistanceAway := m.mapState.XTilesVisibleOnGameScreen/viewportCenterDivisor + spawnViewportBuffer
 	yDistanceAway := m.mapState.YTilesVisibleOnGameScreen/viewportCenterDivisor + spawnViewportBuffer
 

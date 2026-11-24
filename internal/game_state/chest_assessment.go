@@ -17,10 +17,10 @@ func (g *GameState) inspectObjectChest(assessment references.ChestAssessment, ar
 	if armed {
 		difficulty = (combatTreasureDiceSides + value - intelligence) / combatChestDifficultyDivisor
 	}
-	// REDUX DEVIATION: object chest inspection rerolls and can lie on every Search.
+	// REDUX DEVIATION: COMBAT-0010: object chest inspection rerolls and can lie on every Search.
 	// Keep its first INT check, but remember truthful certainty or uncertainty
 	// for the whole party so cautious play does not require deciphering false reports.
-	// See ref:CMD-0007.
+	// See ref:COMBAT-0010, ref:CMD-0007.
 	return chestInspectionResult(g.RollDice(combatTreasureDiceSides) >= difficulty, armed)
 }
 

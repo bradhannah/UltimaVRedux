@@ -58,7 +58,7 @@ func TestShipPurchaseDialogLoadSkiffSteppingAndUnaffordableRemainConfirmable(t *
 	intent := testShipPurchaseIntent(poor, poor.FrigateQuote, false)
 	keyboard := newWidgetTestKeyboard(0)
 	dialog = NewShipPurchaseDialog(ShipPurchaseDialogConfig{Keyboard: keyboard, Intent: intent})
-	require.Equal(t, "Buy Frigate With 2 skiffs aboard Not enough gold. It costs 600 and the party has 100. "+
+	require.Equal(t, "Buy Frigate With 2 skiffs aboard Thou hast not enough gold. It costs 600 and the party has 100. "+
 		"Asking anyway ends the talk. [Enter] Ask anyway [Esc] Back", dialog.window.flatText())
 	requireAmountWindowHoldsItsText(t, dialog.window, "no gold")
 

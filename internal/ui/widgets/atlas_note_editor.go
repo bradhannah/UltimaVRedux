@@ -68,7 +68,9 @@ type AtlasNoteEditor struct {
 	font                      *text.UltimaFont
 	output                    *text.Output
 	validation                *text.Output
+	heading                   *text.Output
 	width, height, lineHeight int
+	titleHeight               int
 	pane                      image.Rectangle
 	fieldRects                [2]image.Rectangle
 	hintRect, validationRect  image.Rectangle
@@ -325,6 +327,16 @@ func (e *AtlasNoteEditor) validFieldText(value string) bool {
 	return true
 }
 
+// noteEditorProblem shows the sentence written for the player. An owner that
+// returns any other error has already worded it.
+func noteEditorProblem(err error) string {
+	if plain := journal.PlainProblem(err); plain != "" {
+		return plain
+	}
+
+	return err.Error()
+}
+
 func (e *AtlasNoteEditor) submit() {
 	label, description := strings.TrimSpace(string(e.fields[0])), string(e.fields[1])
 	validate := journal.ValidateAtlasNoteText
@@ -333,13 +345,13 @@ func (e *AtlasNoteEditor) submit() {
 	}
 	if !e.config.Deleting {
 		if err := validate(label, description); err != nil {
-			e.message = err.Error()
+			e.message = noteEditorProblem(err)
 
 			return
 		}
 	}
 	if err := e.config.Submit(label, description); err != nil {
-		e.message = err.Error()
+		e.message = noteEditorProblem(err)
 
 		return
 	}
@@ -435,10 +447,13 @@ func (e *AtlasNoteEditor) ensureLayout() {
 	e.font, e.output = GetScaledFontWithOutput(config)
 	_, e.validation = GetScaledFontWithOutput(config)
 	e.lineHeight = int(math.Ceil(e.output.GetTotalHeightForLines(1))) + 2
+	config.Size = FontSizeTitle
+	_, e.heading = GetScaledFontWithOutput(config)
+	e.titleHeight = int(math.Ceil(e.heading.GetTotalHeightForLines(1))) + 2
 	margin := max(8, w/80)
 	e.pane = image.Rect(w/8, h/10, w-w/8, h-h/10)
 	left, right := e.pane.Min.X+margin, e.pane.Max.X-margin
-	top := e.pane.Min.Y + margin + 4*e.lineHeight
+	top := e.pane.Min.Y + margin + e.titleHeight + 3*e.lineHeight
 	e.fieldRects[0] = image.Rect(left, top, right, top+2*e.lineHeight)
 	e.fieldRects[1] = image.Rect(left, top+3*e.lineHeight, right, e.pane.Max.Y-margin-4*e.lineHeight)
 	e.layoutEditorFooter()
@@ -491,7 +506,8 @@ func (e *AtlasNoteEditor) Draw(screen *ebiten.Image) {
 	FillClassicPixelRoundedRect(screen, e.pane, unit, ucolor.DialogBackground.RGBA())
 	DrawClassicPixelRoundedFrame(screen, e.pane, unit, DialogLabelColor)
 	target := atlasSubImage(screen, e.pane.Inset(unit))
-	point := e.pane.Min.Add(image.Pt(12, 12))
+	margin := e.fieldRects[0].Min.X - e.pane.Min.X
+	point := e.pane.Min.Add(image.Pt(margin, margin))
 	title := "MARK CURRENT POSITION"
 	if e.config.Record.ID != 0 {
 		title = "EDIT MAP NOTE"
@@ -502,8 +518,9 @@ func (e *AtlasNoteEditor) Draw(screen *ebiten.Image) {
 	if e.config.Text != nil {
 		title = e.config.Text.Heading
 	}
-	e.drawLine(target, title, point, DialogHeaderColor)
-	point.Y += e.lineHeight
+	atlasSingleLine(e.heading, title, DialogHeaderColor)
+	e.heading.DrawPanelContent(target, point, e.pane.Max.X-point.X-8, etext.AlignStart)
+	point.Y += e.titleHeight
 	if e.config.Deleting {
 		e.drawLine(target, e.config.Record.Label, point, DialogValueColor)
 	} else {

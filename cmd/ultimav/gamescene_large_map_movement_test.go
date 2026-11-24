@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestMovementPromptUsesVehicleConfigurationWithoutAutomaticSailing(t *testing.T) {
@@ -46,7 +47,7 @@ func TestMovementPromptUsesVehicleConfigurationWithoutAutomaticSailing(t *testin
 // TestFrigateHeadingChangeFinishesExactlyOneTurn prevents handleMovement and
 // largeMapInputHandler from both processing the same heading-change turn.
 func TestFrigateHeadingChangeFinishesExactlyOneTurn(t *testing.T) {
-	gs, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithRandomSeed(179).
@@ -85,7 +86,7 @@ func TestFrigateHeadingChangeFinishesExactlyOneTurn(t *testing.T) {
 }
 
 func TestHMSCapeProductionFurledFrigateMovementStillAdvancesTwoMinutes(t *testing.T) {
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(50, 50).
 		WithRandomSeed(387).
@@ -123,7 +124,7 @@ func TestRoughSeasProductionMovementDoesNotAddTimeOrProvisionStage(t *testing.T)
 		{name: "carpet", vehicleType: references.CarpetVehicle},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			state, callbacks := game_state.NewIntegrationTestBuilder(t).
+			state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 				WithLocation(references.BritanniaUnderworld).
 				WithPlayerAt(50, 50).
 				WithRandomSeed(543).

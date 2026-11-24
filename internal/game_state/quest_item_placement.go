@@ -176,11 +176,3 @@ func (gs *GameState) GetVisibleQuestItemLights() []map_state.QuestItemLightInfo 
 
 	return questItemLights
 }
-
-// RefreshQuestItemsOnMap is deprecated - shards are now rendered as overlays
-// This function is no longer needed since the overlay system handles all shard rendering
-// and the base tiles should already be grass in the underworld
-func (gs *GameState) RefreshQuestItemsOnMap() {
-	// Function deprecated: Shards are now rendered as overlays in gamescene_draw.go
-	// No tile placement needed - overlay system handles all visual rendering
-}

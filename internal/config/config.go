@@ -243,6 +243,13 @@ type UltimaVConfiguration struct {
 	// SoundDisabled disables runtime audio initialization without changing persisted volume settings.
 	SoundDisabled bool
 
+	// SoundUnavailable marks a session the game restarted without sound because
+	// no sound device could be opened. The title screen says so once.
+	SoundUnavailable bool
+	// DeveloperTools shows developer-only screens. It is set for the session
+	// when the game starts with the Debug Workbench and is never saved.
+	DeveloperTools bool
+
 	// Display configuration for performance settings
 	DisplayConfiguration *DisplayConfiguration
 

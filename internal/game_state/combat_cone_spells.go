@@ -80,7 +80,6 @@ func (g *GameState) applyCombatInFlamHurToTarget(casterIdx int, target CombatTur
 		hpBefore := monster.CurrentHP()
 		finalDamage := CombatApplyMagicDamageModifiers(
 			damage,
-			monster.MonsterType().IsUndead(),
 			monster.HasAbility(references.Immortal),
 		)
 		monster.TakeDamage(finalDamage)
@@ -176,7 +175,7 @@ func (g *GameState) applyCombatPoisonWindToxify(casterIdx int, target CombatTurn
 		}
 	} else {
 		monster := g.CombatScene.MonsterManager.GetMonster(target.EntityIndex)
-		finalDamage = CombatApplyMagicDamageModifiers(damage, monster.MonsterType().IsUndead(), monster.HasAbility(references.Immortal))
+		finalDamage = CombatApplyMagicDamageModifiers(damage, monster.HasAbility(references.Immortal))
 		hpBefore := monster.CurrentHP()
 		monster.TakeDamage(finalDamage)
 		hpLost, fatal = hpBefore-monster.CurrentHP(), monster.IsDead()

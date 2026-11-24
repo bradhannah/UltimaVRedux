@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 const (
@@ -189,7 +190,7 @@ func TestDuplicatePotionWorkflowDoesNotConsumeEitherCommit(t *testing.T) {
 
 func newPotionTestScene(t *testing.T) *GameScene {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

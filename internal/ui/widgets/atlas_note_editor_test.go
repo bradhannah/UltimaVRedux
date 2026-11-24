@@ -176,7 +176,7 @@ func TestAtlasNoteReaderRetainsEveryDescriptionParagraphForPaging(t *testing.T) 
 	dialog := NewAtlasDialog(journal.AtlasDossier{Entries: []journal.AtlasEntry{{Key: "note-1", Name: note.Label, Category: journal.AtlasNotes, Kind: "note", Note: note}}}, nil, newWidgetTestKeyboard(0), &view, func() {})
 	dialog.prepareDetails()
 	require.Greater(t, dialog.details.GetPanelContentLineCount(), 500)
-	require.Contains(t, dialog.details.GetOutputStr(false), "Map label")
+	require.Contains(t, dialog.details.GetOutputStr(false), "Map note")
 	require.Contains(t, dialog.details.GetOutputStr(false), "Z")
 	dialog.detailPage = 1000
 	dialog.prepareDetails()

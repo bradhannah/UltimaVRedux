@@ -98,7 +98,6 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.secondaryKeyState = OpenDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyJ:
-		g.debugMessage = "Jimmy"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Jimmy-")
 		if !g.gameState.PartyState.Inventory.Provisions.Keys.HasSome() && !g.gameState.HasAdjacentKnownSafeSurfaceChest() {
 			g.gameState.ActionJimmySmallMapWithCharacter(references.NoneDirection, nil)
@@ -109,25 +108,20 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.secondaryKeyState = JimmyDoorDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyI:
-		g.debugMessage = "Ignite Torch"
 		result = surfaceResultFromSuccess(g.gameState.ActionIgnite(), originMapType)
 	case ebiten.KeyT:
-		g.debugMessage = "Talk to..."
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Talk-")
 		g.secondaryKeyState = TalkDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyS:
-		g.debugMessage = "Search"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Search-")
 		g.secondaryKeyState = SearchDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyA:
-		g.debugMessage = "Attack"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Attack-")
 		g.secondaryKeyState = AttackDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyU:
-		g.debugMessage = "Use"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Use")
 		g.startSurfaceUseWorkflow()
 		if g.gameState.EventQueueManager.HasWorkflow("use_item_workflow") {
@@ -137,12 +131,10 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result.ConsumesNormalCycle = false
 		}
 	case ebiten.KeyY:
-		g.debugMessage = "Yell"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Yell")
 		g.ShowYellDialogSmallMap()
 		result = newSurfaceCommandResult(surfaceCommandDeferred, originMapType)
 	case ebiten.KeyR:
-		g.debugMessage = "Ready"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Ready...")
 		request, outcome := g.gameState.BeginReadyEquipment(false)
 		if outcome == game_state.ReadyBeginDialog {
@@ -154,7 +146,6 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandCompleted, originMapType)
 		}
 	case ebiten.KeyV:
-		g.debugMessage = "View"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("View...")
 		if g.gameState.ActionViewSurface() {
 			g.startGemViewWorkflowWithCompletion(func() {
@@ -165,13 +156,11 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandRejected, originMapType)
 		}
 	case ebiten.KeyZ:
-		g.debugMessage = "Ztats"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Ztats...")
 		g.gameState.ActionZtats()
 		result = newSurfaceCommandResult(surfaceCommandCompleted, originMapType)
 		result.ConsumesNormalCycle = false
 	case ebiten.KeyM:
-		g.debugMessage = "Mix Reagents"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Mix Reagents")
 		if g.gameState.ActionMixSmallMap() {
 			g.startReagentMixingWorkflowWithCompletion(func() {
@@ -182,12 +171,10 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandRejected, originMapType)
 		}
 	case ebiten.KeyC:
-		g.debugMessage = "Cast"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Cast...")
 		g.startSpellCastingWorkflow()
 		result = newSurfaceCommandResult(surfaceCommandDeferred, originMapType)
 	case ebiten.KeyN:
-		g.debugMessage = "New Order"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("New Order...")
 
 		if g.gameState.ActionNewOrderSmallMap() {
@@ -199,7 +186,6 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandRejected, originMapType)
 		}
 	case ebiten.KeyF:
-		g.debugMessage = "Fire"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Fire-")
 		// Small map Fire auto-detects adjacent cannon - no direction input needed
 		// ref:SHIP-0005: original cannon aiming checks 4 cardinal directions
@@ -210,7 +196,6 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 			result = newSurfaceCommandResult(surfaceCommandRejected, originMapType)
 		}
 	case ebiten.KeyH:
-		g.debugMessage = "Hole Up & Camp"
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Hole up & camp...")
 		if g.gameState.ActionHoleUpSmallMap() {
 			result = newSurfaceCommandResult(surfaceCommandDeferred, originMapType)

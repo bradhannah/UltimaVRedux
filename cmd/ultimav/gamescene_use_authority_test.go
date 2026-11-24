@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSkullKeyWorkflowPassPreservesInventoryAndTime(t *testing.T) {
@@ -55,7 +56,7 @@ func TestCarpetWorkflowStaleCommitDoesNotPartiallyBoard(t *testing.T) {
 
 func newUseAuthorityTestScene(t *testing.T) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(12, 12).
 		WithSystemCallbacks().

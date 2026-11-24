@@ -6,7 +6,6 @@ import (
 	stdcolor "image/color"
 	"math"
 	"strconv"
-	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	etext "github.com/hajimehoshi/ebiten/v2/text/v2"
@@ -29,7 +28,7 @@ const (
 	guildShopCenterDivisor        = 2
 	guildShopDoubleInset          = 2
 	guildShopHeaderBreathingUnits = 3
-	guildShopLineSpacing          = 1.08
+	guildShopLineSpacing          = 1.06
 	guildShopMinimumTextChars     = 8
 	guildShopStatusMinimumLines   = 3
 )
@@ -301,8 +300,8 @@ func (d *GuildShopDialog) ApplyPurchaseResult(
 		display.Receipt += fmt.Sprintf(" Batch stopped: %d of %d bundles purchased.",
 			result.BundleCount, d.awaitingRequest.BundleCount)
 	}
-	validateFinalizedMerchantText("purchase exchange", display.MerchantExchange)
-	validateFinalizedMerchantText("purchase receipt", display.Receipt)
+	requireFinalizedText("GuildShopDialog", "purchase exchange", display.MerchantExchange)
+	requireFinalizedText("GuildShopDialog", "purchase receipt", display.Receipt)
 	offers := validatedGuildOffers(refreshed)
 	selectedProvision := d.awaitingRequest.Provision
 
@@ -335,7 +334,7 @@ func (d *GuildShopDialog) ApplyPreviewStopped(request game_state.GuildPurchaseRe
 
 // ApplySessionError replaces the latest exchange and disables further purchases.
 func (d *GuildShopDialog) ApplySessionError(message string) {
-	validateFinalizedMerchantText("session error", message)
+	requireFinalizedText("GuildShopDialog", "session error", message)
 	d.pendingIntent = nil
 	d.clearAwaitingPurchase()
 	d.latestExchange = message
@@ -669,15 +668,9 @@ func (d *GuildShopDialog) pixelUnit() int {
 }
 
 func validateGuildShopProse(prose GuildShopDialogProse) {
-	validateFinalizedMerchantText("greeting", prose.Greeting)
+	requireFinalizedText("GuildShopDialog", "greeting", prose.Greeting)
 	for _, pitch := range prose.OfferPitches {
-		validateFinalizedMerchantText("offer pitch", pitch)
-	}
-}
-
-func validateFinalizedMerchantText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("GuildShopDialog: finalized " + label + " is required")
+		requireFinalizedText("GuildShopDialog", "offer pitch", pitch)
 	}
 }
 

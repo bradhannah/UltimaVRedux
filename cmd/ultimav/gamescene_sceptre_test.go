@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
@@ -13,10 +12,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestSurfaceSceptreClearsBarriersWithoutDirectionAndCompletesTurn(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -53,7 +53,7 @@ func TestSurfaceSceptreClearsBarriersWithoutDirectionAndCompletesTurn(t *testing
 }
 
 func TestSurfaceSceptreSafeFallbackReportsNoEffectAndCompletesTurn(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().
@@ -80,7 +80,7 @@ func TestSurfaceSceptreSafeFallbackReportsNoEffectAndCompletesTurn(t *testing.T)
 }
 
 func TestLargeMapSceptreUsesWrappedScanAndSurfaceTurnCost(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(0, 0).
 		WithRandomSeed(1).

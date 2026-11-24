@@ -437,7 +437,7 @@ func (d *ShipShopDialog) ApplyTravelPreviewStopped(review game_state.HarbourTrav
 
 // ApplySessionError disables all actions until the terminal message is dismissed.
 func (d *ShipShopDialog) ApplySessionError(message string) {
-	validateShipWidgetText("session error", message)
+	requireFinalizedText("Ship widgets", "session error", message)
 	d.pendingBuy = nil
 	d.pendingTravel = nil
 	d.clearAwaitingPurchase()
@@ -1131,9 +1131,9 @@ func validateShipShopDialogConfig(config ShipShopDialogConfig) {
 		panic("ShipShopDialog: merchant, frigate, and skiff sprites are required")
 	}
 	validateShipShopState(config.State)
-	validateShipWidgetText("greeting", config.Prose.Greeting)
-	validateShipWidgetText("farewell", config.Prose.Farewell)
-	validateShipWidgetText("blocked acknowledgement", config.Prose.BlockedAcknowledgement)
+	requireFinalizedText("Ship widgets", "greeting", config.Prose.Greeting)
+	requireFinalizedText("Ship widgets", "farewell", config.Prose.Farewell)
+	requireFinalizedText("Ship widgets", "blocked acknowledgement", config.Prose.BlockedAcknowledgement)
 }
 
 func validateShipShopState(state game_state.ShipShopState) {
@@ -1348,12 +1348,6 @@ func validateShipTravelAvailability(review game_state.HarbourTravelReview, requi
 }
 
 func validateShipShopResultDisplay(display ShipShopResultDisplay) {
-	validateShipWidgetText("merchant exchange", display.MerchantExchange)
-	validateShipWidgetText("receipt", display.Receipt)
-}
-
-func validateShipWidgetText(label, value string) {
-	if strings.TrimSpace(value) == "" {
-		panic("Ship widgets: finalized " + label + " is required")
-	}
+	requireFinalizedText("Ship widgets", "merchant exchange", display.MerchantExchange)
+	requireFinalizedText("Ship widgets", "receipt", display.Receipt)
 }

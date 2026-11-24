@@ -3,10 +3,10 @@ package main
 import (
 	"testing"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,7 +35,7 @@ func TestAtlasLightingFollowsDarknessAndCarriedLight(t *testing.T) {
 	require.Equal(t, [3]float32{atlasMagicR, atlasMagicG, atlasMagicB}, atlasLightingFor(1, map_state.PlayerLightInLor).Terrain)
 	require.Zero(t, atlasLightingFor(1, map_state.PlayerLightVasLor).Flicker, "magic light is steady")
 
-	dungeon, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Deceit).WithSystemCallbacks().Build()
+	dungeon, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Deceit).WithSystemCallbacks().Build()
 	dungeon.DateTime.Hour = 12
 	scene := &GameScene{gameState: dungeon}
 	requireGrey(map_state.UnlitDarkeningFactor, scene.atlasLighting().Terrain, "dungeons are dark at noon")

@@ -71,7 +71,7 @@ type UseableItemInfo struct {
 func (g *GameState) GetUsableItems() []UseableItemInfo {
 	var items []UseableItemInfo
 
-	// Tool items (formerly SpecialItems - Pocket Watch, Sextant, Carpet, etc.)
+	// Tool items (Pocket Watch, Sextant, Carpet, etc.)
 	// These are now QuestItem indices 6-13
 	for questItem := references.Carpet; questItem <= references.Sextant; questItem++ {
 		qty := g.PartyState.Inventory.QuestItems.Get(questItem)
@@ -266,7 +266,7 @@ func scrollUsageContext(scroll references.Scroll) UsageContext {
 	}
 }
 
-// getCategoryForToolQuestItem maps tool quest items (formerly SpecialItems) to their UI category
+// getCategoryForToolQuestItem maps tool quest items to their UI category
 func getCategoryForToolQuestItem(item references.QuestItem) UseItemCategory {
 	switch item {
 	case references.PocketWatch, references.Sextant, references.Spyglass:
@@ -280,6 +280,11 @@ func getCategoryForToolQuestItem(item references.QuestItem) UseItemCategory {
 	}
 }
 
+// usePocketWatchWithCompletion reads the time without advancing it.
+// REDUX DEVIATION: TIME-0005: original dungeon input is charged before the command.
+// Redux charges the deferred token when the watch is selected, then adds no second
+// minute or surface completion. Cancelling the menu first stays free.
+// See ref:TIME-0005.
 func (g *GameState) usePocketWatchWithCompletion(complete func()) bool {
 	g.CommitCastUseAttempt()
 	timeStr := g.DateTime.GetTimeAsString()
@@ -521,6 +526,9 @@ func (g *GameState) isScrollLocationValid(scroll references.Scroll) bool {
 		return true
 
 	case references.ScrollInQuasWis: // View - dungeon presentation owns a separate command workflow
+		// REDUX DEVIATION: VIEW-0001: the original scroll is consumed before its combat
+		// rejection. Redux rejects the illegal combat View before consuming it, under
+		// its validated-attempt policy. See ref:VIEW-0001.
 		return mapType == references.LargeMapType || mapType == references.SmallMapType
 
 	case references.ScrollKalXenCorp: // Summon Daemon - Combat only
@@ -647,7 +655,7 @@ func (g *GameState) executeScrollView(complete func()) bool {
 	return true
 }
 
-// useQuestItem handles quest items (Amulet, Crown, Sceptre) and tool items (formerly SpecialItems)
+// useQuestItem handles quest items (Amulet, Crown, Sceptre) and tool items
 func (g *GameState) useQuestItem(item references.QuestItem, complete func()) bool {
 	automaticToggle := item == references.Amulet || item == references.Crown || item == references.BlackBadge
 	if automaticToggle {
@@ -793,10 +801,10 @@ func (g *GameState) useSkullKey(complete func()) bool {
 }
 
 // useHMSCape begins the global HMS Cape preference confirmation.
-// REDUX DEVIATION: Original item-use rules permit one-way rigging only while
+// REDUX DEVIATION: SHIP-0002: Original item-use rules permit one-way rigging only while
 // shipboard. Redux makes the persisted setting reversible and usable anywhere
 // once the plans are owned, as an explicit player preference.
-// See ref:CONSUME-0001.
+// See ref:SHIP-0002, ref:CONSUME-0001.
 func (g *GameState) useHMSCape(complete func()) bool {
 	commit, review := g.BeginHMSCapeUse()
 	if commit == nil {

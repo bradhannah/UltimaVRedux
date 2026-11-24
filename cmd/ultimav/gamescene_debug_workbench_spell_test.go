@@ -10,11 +10,12 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/debugging"
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func newSpellWorkbenchTestState(t *testing.T) *game_state.GameState {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

@@ -63,9 +63,8 @@ const (
 
 // GameState owns authoritative gameplay state, clocks, RNG and action mutations.
 type GameState struct {
-	PartyState   party_state.PartyState
-	MapState     map_state.MapState
-	AiController ai.NPCAIController
+	PartyState party_state.PartyState
+	MapState   map_state.MapState
 
 	surfaceCycleOwned          bool
 	completingSurfaceCycle     bool
@@ -167,10 +166,6 @@ type GameState struct {
 	// Event queue system for orchestrated sequences
 	EventQueueManager *event_queue.EventQueueManager
 
-	// Testing overrides
-	jimmySuccessForTesting         func(*party_state.PlayerCharacter) bool
-	jimmyPrisonerSuccessForTesting func(*party_state.PlayerCharacter) bool
-
 	// Active player selection (-1 for none/all, 0-5 for specific character)
 	activePlayerIndex             int
 	merchantSessionSequence       uint64
@@ -207,7 +202,7 @@ type GameState struct {
 	// Camping system
 	CampingScene       *camping.CampingScene // Active camping scene state
 	PreCampingLocation references.Location   // Location before entering camping (for restoration)
-	LastWandererMonth  int                   // Track last month wanderer appeared (prevents multiple per month)
+	LastWandererMonth  int                   // Month stored in saves for the original's wanderer tracking; gameplay does not use it
 
 	// Combat system
 	CombatScene                  *CombatState // Active combat state (nil when not in combat)
@@ -275,8 +270,7 @@ type GameState struct {
 	lordBritishFinale     *LordBritishFinaleState
 
 	// Shrine visual scene system (for 11x11 shrine map with walk animation)
-	ShrineScene       *shrine.Scene       // Active shrine scene state (nil when not in shrine)
-	PreShrineLocation references.Location // Location before entering shrine (for restoration)
+	ShrineScene *shrine.Scene // Active shrine scene state (nil when not in shrine)
 }
 
 func initBlankGameState(gameReferences *references.GameReferences, gameConfig *config.UltimaVConfiguration, xTilesVisibleOnGameScreen,
@@ -1219,8 +1213,6 @@ func (g *GameState) transitionToMiniMap(mapType shrine.MiniMapType, sceneIndex i
 		return fmt.Errorf("loading mini-map type %d: %w", mapType, err)
 	}
 
-	// Store pre-transition location only after the transition is known to be viable.
-	g.PreShrineLocation = g.MapState.PlayerLocation.Location
 	g.resetHarpsichordMelody()
 
 	// Create the scene with loaded map data
@@ -1272,8 +1264,7 @@ func (g *GameState) TransitionFromShrineMap() {
 
 // GetCharacterSpriteForCamping returns the appropriate sprite for a character during camping
 func (g *GameState) GetCharacterSpriteForCamping() indexes.SpriteIndex {
-	// For now, use basic player sprite - can be enhanced with character-specific sprites later
-	// The avatar sprite system handles different character types
+	// Camping characters are drawn as the sleeping body sprite.
 	return indexes.SpriteIndex(indexes.DeadBody)
 }
 

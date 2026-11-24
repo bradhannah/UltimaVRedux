@@ -133,7 +133,7 @@ func (g *GameScene) populateCasterOption(
 	case !character.CanCastSpells():
 		markCharacterUnavailable(option, "No magical ability!")
 	case character.GetCurrentMp() == 0 && !g.gameState.DebugOptions.UnlimitedCastingResources:
-		markCharacterUnavailable(option, "M.P. too low!")
+		markCharacterUnavailable(option, "MP too low!")
 	default:
 		option.Details = []string{"Ready to choose a spell."}
 	}
@@ -146,7 +146,7 @@ func populateSpellTargetOption(
 ) {
 	option.Facts = []widgets.CharacterSelectionFact{hpSelectionFact(character)}
 	spellName := references.GetSpellName(spell)
-	resourceWarning := "The spell and M.P. are spent even with no effect!"
+	resourceWarning := "The spell and MP are spent even with no effect!"
 	//nolint:exhaustive // Only party-target spells with distinct consequences need specialized guidance.
 	switch spell {
 	case references.AnNox:

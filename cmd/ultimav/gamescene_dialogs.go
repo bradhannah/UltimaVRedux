@@ -28,8 +28,7 @@ func (g *GameScene) startReagentMixingWorkflowWithCompletion(complete func()) {
 }
 
 // spellCastingWorkflowState holds all state for the spell casting workflow.
-// Using a struct groups the 13 closure-captured variables that track the multi-stage
-// spell casting process: caster selection → spell selection → targeting → execution.
+// It tracks the multi-stage spell casting process: caster selection → spell selection → targeting → execution.
 type spellCastingWorkflowState struct {
 	// Dialogs - UI components active during workflow stages
 	casterDialog      *widgets.CharacterSelectionDialog // "Who will cast?" dialog
@@ -207,7 +206,7 @@ func (g *GameScene) startSpellCastingWorkflowWithDungeonCommand(token *game_stat
 		unlimitedResources := g.gameState.DebugOptions.UnlimitedCastingResources && caster.GetMaxMp() > 0
 		if !unlimitedResources && caster.GetCurrentMp() == 0 {
 			state.noOneCanCast = true
-			g.showTemporaryCastFailure(caster.GetNameAsString() + " has no M.P. remaining!")
+			g.showTemporaryCastFailure(caster.GetNameAsString() + " has no MP remaining!")
 		}
 	}).If(
 

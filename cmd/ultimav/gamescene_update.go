@@ -48,16 +48,13 @@ func (g *GameScene) updateWindAndEffects() {
 	g.updateTimedOverlay()
 	g.updateCombatReportAttention()
 
-	// Intentionally left minimal; hook up AI, schedules, etc., later.
-
 	// Update visual effects
 	g.updateVisualEffects()
 
 	// Update wind display overlay (animation if needed)
 	g.windDisplay.Update()
 
-	// MessageDialog updates are now handled via dialog stack (no persistent messageDialog)
-	// All dialogs in the stack are automatically updated via drawDialogs()
+	// Dialogs are updated through the dialog stack.
 }
 
 func (g *GameScene) updateNonBlockingDialogs() {

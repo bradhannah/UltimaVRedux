@@ -479,3 +479,32 @@ func TestCombatFieldExpirationRetainsFirstActionFizzleState(t *testing.T) {
 	require.Len(t, expired, 1)
 	assert.True(t, expired[0].createdThisAction)
 }
+
+// With nobody able to act, skipped turns must still let fields fade. Otherwise a
+// lone sleeper on a sleep field is put back to sleep on every turn, forever.
+func TestCombatSleepFieldFadesWhenNobodyCanAct(t *testing.T) {
+	gs, _ := NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(5).Build()
+	for index := 1; index < party_state.MaxActiveParty; index++ {
+		if character := gs.PartyState.GetCharacter(index); character != nil && character.IsInParty() {
+			character.PartyMap = party_state.PartyMapUnrecruited
+		}
+	}
+	require.NoError(t, gs.TransitionToCombatMap(0, references.BritanniaCombatTerritory, CombatEntryNorth))
+	avatar := CombatTurnIdentity{IsPartyMember: true, EntityIndex: 0}
+	require.True(t, gs.CombatScene.AddField(NewCombatField(CombatFieldSleep, gs.CombatScene.PartyPositions[0])))
+	gs.setCombatPCSleeping(avatar, true)
+
+	gs.BeginCombatTurns(CombatTurnsPresented)
+	const stepLimit = 2000
+	steps := 0
+	for ; steps < stepLimit && gs.CombatScene.HasScheduledCombatStep(); steps++ {
+		step, ok := gs.ReviewScheduledCombatStep()
+		require.True(t, ok)
+		require.Equal(t, CombatPresentationAutoPass, step.Kind)
+		require.NoError(t, gs.CompleteScheduledCombatStep(step.Token))
+	}
+
+	require.Less(t, steps, stepLimit, "the sleeper must get a turn again")
+	assert.False(t, gs.CombatScene.isCombatPCSleeping(avatar))
+	assert.Empty(t, gs.CombatScene.Fields(), "the sleep field has faded")
+}

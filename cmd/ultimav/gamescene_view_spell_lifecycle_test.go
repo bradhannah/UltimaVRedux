@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/bradhannah/UltimaVRedux/internal/event_queue"
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestGemViewWorkflowRemovesDialogAfterDismissal(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().
@@ -86,7 +86,7 @@ func TestFinishSpellCastingWorkflowPreservesPreviousXRayState(t *testing.T) {
 }
 
 func TestSurfaceViewTileSourceWrapsAndExcludesUnits(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithPlayerAt(0, 0).
 		WithSystemCallbacks().
@@ -102,7 +102,7 @@ func TestSurfaceViewTileSourceWrapsAndExcludesUnits(t *testing.T) {
 }
 
 func TestGemViewWorkflowDoesNotOwnTimeAdvancement(t *testing.T) {
-	state, mock := game_state.NewIntegrationTestBuilder(t).
+	state, mock := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(10, 10).
 		WithSystemCallbacks().

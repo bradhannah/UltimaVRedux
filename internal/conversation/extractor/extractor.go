@@ -617,7 +617,7 @@ func readInputs(dataDir string) (map[string][]byte, []SourceDigest, error) {
 	inputs := make(map[string][]byte, len(sourceFilenames()))
 	digests := make([]SourceDigest, 0, len(sourceFilenames()))
 	for _, filename := range sourceFilenames() {
-		path := filepath.Join(dataDir, filename)
+		path := files.Resolve(dataDir, filename)
 		data, err := os.ReadFile(path) //nolint:gosec // The explicit data directory supplies fixed original filenames.
 		if err != nil {
 			return nil, nil, fmt.Errorf("reading required original file %q: %w", path, err)

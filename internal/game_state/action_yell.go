@@ -30,15 +30,9 @@ func (g *GameState) ActionYellSmallMap(word string) bool {
 		return false
 	}
 
-	// Check for Words of Power that should work on large map only
-	if _, exists := GetDungeonForWord(word); exists {
-		g.SystemCallbacks.UI.ShowActionFeedback("The words echo emptily here.", true)
-
-		return false
-	}
-
-	// Unknown word or context.
-	g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+	// A word of power used in the wrong place reads the same as an unknown word,
+	// as in the original, so the reply does not confirm which words are real.
+	g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 	return false
 }
@@ -57,7 +51,7 @@ func (g *GameState) TrySummonShadowlord(word string) bool {
 	playerY := g.MapState.PlayerLocation.Position.Y
 	floor := g.MapState.PlayerLocation.Floor
 	if state == nil {
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
@@ -73,21 +67,21 @@ func (g *GameState) TrySummonShadowlord(word string) bool {
 		logging.Debugf(logging.CategoryGameState,
 			"TrySummonShadowlord: FAILED - playerY=%d < 2 (Shadowlord would spawn off map at Y=%d)",
 			playerY, playerY-2)
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
 
 	// Check if this Shadowlord is alive.
 	if !state.IsAlive(lord) {
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
 
 	// Check if another Shadowlord is already summoned
 	if state.Summoned {
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
@@ -97,7 +91,7 @@ func (g *GameState) TrySummonShadowlord(word string) bool {
 	if enemy == nil {
 		logging.Errorf(logging.CategoryGameState,
 			"TrySummonShadowlord: failed to spawn Shadowlord NPC")
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
@@ -153,7 +147,7 @@ func (g *GameState) ProcessWordOfPower(word string) bool {
 		// REDUX DEVIATION: outdoor Yell has a silent coordinate-mismatch
 		// edge case. Redux resolves every submitted failure explicitly and safely.
 		// See ref:WORD-0003.
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
@@ -161,7 +155,7 @@ func (g *GameState) ProcessWordOfPower(word string) bool {
 	// Non-Doom entrances share one sealed state across Britannia and the
 	// Underworld, so the word works beside either side. See ref:WORD-0001.
 	if !DungeonEntranceExistsOnFloor(dungeon, g.MapState.PlayerLocation.Floor) {
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}
@@ -185,7 +179,7 @@ func (g *GameState) ProcessWordOfPower(word string) bool {
 	}
 	entrance := g.GetDungeonEntranceCoordinates()[dungeon]
 	if matchedPosition == nil || !matchedPosition.Equals(&entrance) {
-		g.SystemCallbacks.UI.ShowActionFeedback("Nothing happens.", true)
+		g.SystemCallbacks.UI.ShowActionFeedback("No effect!", true)
 
 		return false
 	}

@@ -98,9 +98,9 @@ func (g *GameState) QueueDungeonCampingAmbush(
 	if plan.centerChest != nil && !combat.AddObject(*plan.centerChest) {
 		panic("generated dungeon camping chest has no original object slot")
 	}
-	// REDUX DEVIATION: original rest rules reseeds from wall time and rolls an unused
+	// REDUX DEVIATION: CAMP-0003: original rest rules reseeds from wall time and rolls an unused
 	// camp encounter choices value here. Redux consumes the roll without reseeding.
-	// See ref:CAMP-0002.
+	// See ref:CAMP-0003, ref:CAMP-0002.
 	_ = references.GetCampingAmbusher(g.AsRandomProvider())
 	for range 4 {
 		_ = g.GetRNG().Intn(8)

@@ -12,6 +12,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestDungeonWandererRenderPlanUsesWrappedSourceGeometry(t *testing.T) {
@@ -267,7 +268,7 @@ func TestDrawDungeonWandererUsesMirroredHalvesCeilingFlipAndScaling(t *testing.T
 }
 
 func TestDungeonWandererRenderingUsesDetachedStateWithoutMutation(t *testing.T) {
-	sourceState, _ := game_state.NewIntegrationTestBuilder(t).
+	sourceState, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		WithRandomSeed(266).

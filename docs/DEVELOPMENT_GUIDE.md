@@ -89,7 +89,7 @@ revision before advancing the dependency; no workspace replacement is required.
 and [Berad Input](https://github.com/bradhannah/berad-sdk/tree/891cf44f456a/modules/berad-input)
 provide engine-free deterministic streams and keyboard mechanisms. The game imports
 the RNG source directly and keeps its `GameState` RNG policy and `pkg/input` adapter;
-saved seed/source-call state and command/repeat policy remain local. SDK checks use `make rng-check` and
+saved seed/source-call state and command/repeat policy remain local. SDK checks (run in the berad-sdk repository, not here) use `make rng-check` and
 `make input-check`; game save, keyboard, widget and scene regressions exercise the
 published pins. See [ADR-013](ADR/ADR-013-berad-rng-input.md),
 [RNG ownership](systems/TIME_SYSTEM.md#shared-rng-ownership) and
@@ -98,7 +98,7 @@ published pins. See [ADR-013](ADR/ADR-013-berad-rng-input.md),
 [Berad Path](https://github.com/bradhannah/berad-sdk/tree/bea6c1522e86/modules/berad-path)
 is the A* route search. `references.FindRoute` adapts it to tile positions; the
 game keeps terrain prices, occupancy, the overworld search window and its edge
-wrapping, and what a unit does without a route. SDK checks use `make path-check`;
+wrapping, and what a unit does without a route. SDK checks (run in the berad-sdk repository) use `make path-check`;
 game AI and combat-assistance tests exercise the published pin.
 
 The consumed Audio/Text runtimes and audio tools have passed the SDK's

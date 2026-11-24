@@ -22,7 +22,9 @@ func (g *GameState) BeginCombatPocketWatchUse(owner CombatUseOwner) *CombatPocke
 
 // CommitCombatPocketWatchUse reads current time at commitment without consuming
 // the watch. Its owning Use workflow awaits dismissal before completing the
-// retained actor action; only the combat scheduler advances time. ref:TIME-0005.
+// retained actor action; only the combat scheduler advances time.
+// REDUX DEVIATION: TIME-0005: combat Use exposes the owned watch and reads the time
+// when the selection commits. Redux adds no independent calendar charge. See ref:TIME-0005.
 func (g *GameState) CommitCombatPocketWatchUse(commit *CombatPocketWatchUseCommit) (string, bool) {
 	if commit == nil || commit.state != g || commit.committed {
 		return "", false

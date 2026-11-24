@@ -57,7 +57,7 @@ const (
 	thunderMsg            = "There is a peal\nof thunder!"
 	strangeWordsMsg       = "Strange words\nare intoned."
 	vertigoMsg            = "Vertigo..."
-	guardiansResurrectMsg = "The Guardians have\nresurrected you!"
+	guardiansResurrectMsg = "The Guardians have\nresurrected thee!"
 )
 
 // Death scene apparition positions on the 11x11 grid (from death_scene.go)

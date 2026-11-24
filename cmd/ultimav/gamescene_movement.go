@@ -83,7 +83,6 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 	key ebiten.Key,
 	reportBlocked bool,
 ) surfaceCommandResult {
-	g.debugMessage = directionStr
 	originMapType := g.gameState.MapState.PlayerLocation.Location.GetMapType()
 
 	// Check if any moongate is animating within visible range - only block movement if moongate is visible
@@ -198,7 +197,7 @@ func (g *GameScene) handleMovementWithBlockedFeedback(
 				// On foot - play walking sound based on tile surface
 				err := g.audioManager.PlayWalkingSound(avatarTopTile)
 				if err != nil {
-					g.debugMessage = fmt.Sprintf("Audio error: %v", err)
+					logging.Warnf(logging.CategoryAudio, "Walking sound failed: %v", err)
 				}
 			case references.HorseVehicle:
 				g.gameState.SystemCallbacks.Audio.PlaySoundEffect(game_state.SoundMoveHorse)

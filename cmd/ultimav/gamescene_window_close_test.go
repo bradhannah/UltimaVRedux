@@ -18,7 +18,7 @@ func TestWindowCloseInGameplayOffersSaveThenSecondCloseQuits(t *testing.T) {
 
 	require.False(t, game.exitRequested, "the first close keeps the window open for the save choices")
 	prompt := requireEscapeMenuDialog[*widgets.ButtonListModal](t, scene)
-	assert.Equal(t, []string{"Quick Save", "Save", "Exit Without Save", "Cancel"}, prompt.ButtonTexts())
+	assert.Equal(t, []string{"Quick Save", "Save", "Exit Without Saving", "Cancel"}, prompt.ButtonTexts())
 
 	game.handleWindowCloseRequest()
 

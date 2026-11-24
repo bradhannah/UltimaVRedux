@@ -9,9 +9,9 @@ const (
 	// SpellNoMagicAbilityMessage distinguishes classes that can never cast spells.
 	SpellNoMagicAbilityMessage = "No magical ability!"
 	// SpellNoMPMessage distinguishes a spellcaster whose MP is fully depleted.
-	SpellNoMPMessage = "No M.P. remaining!"
+	SpellNoMPMessage = "No MP remaining!"
 	// SpellMPTooLowMessage matches the original U5 insufficient-MP message.
-	SpellMPTooLowMessage = "M.P. too low!"
+	SpellMPTooLowMessage = "MP too low!"
 	// SpellNotImplementedMessage identifies an originally legal context that Redux cannot execute yet.
 	SpellNotImplementedMessage = "Not here!"
 	// VasRelPorShipMessage explains the original frigate-only travel restriction.

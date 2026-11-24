@@ -147,8 +147,7 @@ func (n *NPCAIControllerSmallMap) Location() references.Location {
 func (n *NPCAIControllerSmallMap) PopulateMapFirstLoad() {
 	n.generateNPCs()
 
-	for i, npc := range n.mapUnits {
-		_ = i
+	for _, npc := range n.mapUnits {
 		if npc.IsEmptyMapUnit() || !npc.IsVisible() {
 			continue
 		}
@@ -452,9 +451,6 @@ func (n *NPCAIControllerSmallMap) generateNPCs() {
 			continue
 		}
 
-		npcType := npcRef.GetNPCType()
-
-		_ = npcType
 		if npcRef.GetNPCType() == references.Vehicle {
 			vehicle := map_units.NewNPCFriendlyVehicle(
 				npcRef.GetVehicleType(), npcRef)
@@ -1118,8 +1114,6 @@ func (n *NPCAIControllerSmallMap) createFreshPathToScheduledLocation(friendly *m
 func (n *NPCAIControllerSmallMap) wanderOneTileWithinN(
 	friendly *map_units.NPCFriendly, anchorPos references.Position, withinN int,
 ) bool {
-	// Use deterministic RNG instead of time.Now() seeding
-
 	// Define possible moves: up, down, left, right
 	directions := []references.Position{
 		{X: 0, Y: -1}, // Up
@@ -1157,7 +1151,7 @@ func (n *NPCAIControllerSmallMap) wanderOneTileWithinN(
 
 // moveOneTileCloserGreedy uses cardinal approach with a checked fallback; ref:NPC-0003.
 // This simple greedy algorithm tests 4 directions and picks the first one that reduces distance to target.
-// Unlike A* pathfinding, this is lightweight and happens every turn for natural NPC movement.
+// It takes a single step with no route search, so it is cheap enough to run every turn.
 //
 // Algorithm:
 // 1. Test all 4 directions (up/down/left/right)
@@ -1214,7 +1208,9 @@ func (n *NPCAIControllerSmallMap) moveOneTileCloserGreedy(
 		}
 	}
 
-	// No valid moves found
+	// REDUX DEVIATION: NPC-0003: the original fallback past its four candidates reads outside
+	// its distance array, so the outcome is undefined. Redux stays put (the caller then
+	// wanders) rather than reproduce that out-of-bounds read. See ref:NPC-0003.
 	if len(validMoves) == 0 {
 		return false
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/text"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestCrystalBallRetainsFramingTranscriptUntilGemView(t *testing.T) {
@@ -187,7 +188,7 @@ func TestCrystalBallClearsIneligibleActiveViewerBeforeFallback(t *testing.T) {
 
 func newCrystalBallWorkflowTestScene(t *testing.T) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithPlayerAt(15, 15).
 		WithSystemCallbacks().

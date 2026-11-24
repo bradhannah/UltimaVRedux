@@ -13,6 +13,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 type countingDialog struct {
@@ -42,7 +43,7 @@ func TestFinishSpellCastingWorkflowRemovesOwnedPhaseInput(t *testing.T) {
 	saved := *manager
 	t.Cleanup(func() { *manager = saved })
 	manager.PublishLogicalSize(1920, 1080)
-	gs, _ := game_state.NewIntegrationTestBuilder(t).
+	gs, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithSystemCallbacks().
 		Build()
@@ -202,7 +203,7 @@ func TestActionFeedbackInvalidLifecyclePanics(t *testing.T) {
 }
 
 func TestCombatExitCompletesWhileActionFeedbackIsVisible(t *testing.T) {
-	gs, mockCallbacks := game_state.NewIntegrationTestBuilder(t).
+	gs, mockCallbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Britain).
 		WithSystemCallbacks().
 		Build()

@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"math"
+	"strings"
 
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -68,6 +69,16 @@ func (d *LinearTalkDialog) conversationFooterGuidance(width int) string {
 	}
 	if d.historyPanel != nil {
 		return "[Up/Down] Exchange   [Shift+Up/Down/PgUp/PgDn] Read   " + keep + "[Esc] Back"
+	}
+
+	if d.AcceptsText() {
+		// Shift+J types a letter while a keyword is being entered, so the Journal
+		// is offered only at the pauses, where the shortcut works.
+		if keep == "" {
+			return "[Enter] Say   [PgUp] Reread"
+		}
+
+		return strings.TrimRight(keep, " ")
 	}
 
 	// History is left out so these hints fit one row; command help lists PgUp.

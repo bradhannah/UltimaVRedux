@@ -1752,6 +1752,21 @@ func (g *GameState) dispatchSuppressedCombatTurn(entry *TurnQueueEntry, identity
 	return g.combatEndedAfterCompletedTurn()
 }
 
+// partyLoyalActorCanAct reports whether any party-controlled combatant, a member
+// or a charmed monster, can still complete an action of its own.
+func (g *GameState) partyLoyalActorCanAct() bool {
+	for _, entry := range g.CombatScene.TurnQueue.entries {
+		if entry.status != turnQueueActive || !entry.Combatant.IsAlive() || !entry.Combatant.CanTakeTurn() {
+			continue
+		}
+		if g.combatIdentityLoyalty(turnQueueIdentity(entry)) == CombatMonsterLoyaltyParty {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (g *GameState) dispatchSkippedCombatTurn(
 	entry *TurnQueueEntry,
 	identity CombatTurnIdentity,
@@ -1770,6 +1785,14 @@ func (g *GameState) dispatchSkippedCombatTurn(
 		// a tactical action completion concern, separate from this path. COMBAT-0002.
 		g.resolveCombatActorStandingEffects(identity)
 		g.processDurationEffects()
+		// REDUX DEVIATION: the original leaves field expiry undefined on these
+		// skipped turns, and Redux makes no expiry rolls there. With no party-loyal
+		// actor able to act, no action would ever test the fields again, so a
+		// sleeper standing on a sleep field could never wake. Only in that case does
+		// a skipped turn make the ordinary expiry roll. See ref:COMBAT-0002.
+		if !g.partyLoyalActorCanAct() {
+			g.resolveCombatFieldExpiration()
+		}
 		if identity.IsPartyMember && g.CombatScene.presentTurns {
 			g.scheduleCombatPresentationStep(
 				CombatPresentationAutoPass,

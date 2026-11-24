@@ -9,10 +9,11 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestConversationGiftsReportActualFullEquipmentIdentities(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	callbacks := NewGameActionCallbacks(&GameScene{gameState: state}, references.NPCReference{}, nil)
 	output := text.NewOutput(nil, 1, 64, 100)
 	callbacks.SetDialogOutput(output)
@@ -41,14 +42,14 @@ func TestConversationGiftsReportActualFullEquipmentIdentities(t *testing.T) {
 }
 
 func TestConversationGiftAtItsLimitSaysNothingWasReceived(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	callbacks := NewGameActionCallbacks(&GameScene{gameState: state}, references.NPCReference{}, nil)
 	output := text.NewOutput(nil, 1, 64, 100)
 	callbacks.SetDialogOutput(output)
 	keys := &state.PartyState.Inventory.Provisions.Keys
 	keys.Set(99)
 
-	callbacks.GiveItem(conversationProvisionFirst + conversationGiftKeys)
+	callbacks.GiveItem(game_state.ConversationProvisionFirst + game_state.ConversationGiftKeys)
 
 	require.Equal(t, uint16(99), keys.Get())
 	require.Equal(t, "Thou canst carry no more Keys!", strings.TrimSpace(output.GetOutputStr(false)))

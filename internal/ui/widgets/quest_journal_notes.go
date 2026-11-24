@@ -618,6 +618,18 @@ func (d *QuestJournalDialog) handleNotesMove() {
 	}
 }
 
+// sectionNotesMoved says what happens to a deleted section's notes.
+func sectionNotesMoved(total int) string {
+	switch total {
+	case 0:
+		return "It holds no notes."
+	case 1:
+		return "Its 1 note moves to To Do."
+	default:
+		return fmt.Sprintf("Its %d notes move to To Do.", total)
+	}
+}
+
 func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 	view := &d.notesView
 	switch {
@@ -629,7 +641,7 @@ func (d *QuestJournalDialog) notesFooterGuidance(tabs string) string {
 		section := d.selectedSection()
 		total, _ := d.sectionNoteCounts(section.ID)
 
-		return fmt.Sprintf("Delete section %s? Its %d notes move to To Do.  [Enter] Delete  [Esc] Keep", section.Name, total)
+		return fmt.Sprintf("Delete section %s? %s  [Enter] Delete  [Esc] Keep", section.Name, sectionNotesMoved(total))
 	case view.moving:
 		return "[Up/Down] Select  [Enter] Move  [Esc] Cancel"
 	}

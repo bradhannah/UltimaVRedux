@@ -97,7 +97,7 @@ var (
 	DialogStatusOKColor stdcolor.Color = color.EGAGreen
 
 	// DialogStatusWarningColor - Warning or error status messages
-	// Examples: "Cannot equip - strength too low", "Not enough gold"
+	// Examples: "Cannot equip - strength too low", "Thou hast not enough gold"
 	// Visual role: Attention-grabbing, indicates a problem or blocker
 	// Light red: dark EGA red is hard to read as text on black.
 	DialogStatusWarningColor stdcolor.Color = color.EGALightRed

@@ -77,8 +77,6 @@ func TestActionHoleUpRepairShip_SuccessfulRepair(t *testing.T) {
 
 	// Should succeed
 	assert.True(t, result, "Should succeed repair when sails are furled")
-	assert.Contains(t, mockCallbacks.Messages, "repair...",
-		"Should show 'repair...' message")
 
 	// Process event queue for repair to complete
 	for gs.EventQueueManager.HasActiveWorkflows() {
@@ -490,10 +488,8 @@ func TestActionHoleUpLargeMap_FrigateRoutesToRepair(t *testing.T) {
 
 	// Should succeed and route to ship repair
 	assert.True(t, result, "Hole up on frigate should succeed")
-	assert.Contains(t, mockCallbacks.Messages, "Hole up & ",
-		"Should show 'Hole up & ' prefix")
-	assert.Contains(t, mockCallbacks.Messages, "repair...",
-		"Should show 'repair...' (ship repair, not camping)")
+	assert.Equal(t, []string{"Hole up & repair..."}, mockCallbacks.CommandPrompts,
+		"the echo names ship repair, not camping")
 }
 
 // TestActionHoleUpLargeMap_SkiffDoesNotRepair verifies that skiffs don't

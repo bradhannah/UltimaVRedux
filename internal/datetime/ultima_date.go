@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bradhannah/UltimaVRedux/internal/logging"
-	"github.com/bradhannah/UltimaVRedux/pkg/helpers"
 )
 
 // Calendar dimensions and the maximum supported interval per advancement call.
@@ -217,14 +216,14 @@ func (d *UltimaDate) GetVisibilityFactorWithoutTorch(baselineMin float32) float3
 		frac := float32(d.Minute) / float32(MinutesPerHour) // 0‥1
 		val := baselineMin + (1-baselineMin)*frac           // 0.1‥1.0
 
-		return helpers.Min(val, 1) // cheap safety‑clamp
+		return min(val, 1) // cheap safety‑clamp
 
 	case d.Hour == hourOfSunset:
 		// Dusk: 1 → 0 hour
 		frac := float32(d.Minute) / float32(MinutesPerHour) // 0‥1
 		val := 1 - (1-baselineMin)*frac                     // 1.0‥0.1
 
-		return helpers.Max(val, baselineMin) // keep ≥ baseline
+		return max(val, baselineMin) // keep ≥ baseline
 
 	case d.Hour > hourOfSunrise && d.Hour < hourOfSunset:
 		return 1 // full daylight

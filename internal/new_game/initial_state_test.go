@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/bradhannah/UltimaVRedux/internal/character_creation"
@@ -342,4 +343,14 @@ func hasConversionWarning(warnings []legacy_save.ConversionWarning, path, code s
 	}
 
 	return false
+}
+
+// A lowercase copy of the original must work on case-sensitive file systems.
+func TestReadInitialTemplateAcceptsLowercaseFileNames(t *testing.T) {
+	directory := t.TempDir()
+	writeTestFile(t, filepath.Join(directory, strings.ToLower(files.InitOol)), make([]byte, initialObjectsSize))
+
+	if _, err := readInitialTemplate(directory, files.InitOol, initialObjectsSize); err != nil {
+		t.Fatal(err)
+	}
 }

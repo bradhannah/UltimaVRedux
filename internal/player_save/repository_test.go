@@ -464,6 +464,41 @@ func TestRepositoryCompatibilityValidationOnlyReceivesDecodedSnapshots(t *testin
 	}
 }
 
+// The first save after loading an older file rewrites it in the current format,
+// so the original bytes are kept beside the slot once.
+func TestRepositorySaveKeepsACopyOfAnotherVersionsSave(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "player-saves")
+	repository := newTestRepository(t, root, nil)
+	if err := repository.ensureRoot(); err != nil {
+		t.Fatal(err)
+	}
+	older := minimumVersionPlayerSaveData(t, testEnvelope(testTime(1)))
+	if err := os.WriteFile(filepath.Join(root, "slot-01.json"), older, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	record, err := repository.Load(Slot01)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	saved, err := repository.Save(Slot01, record.Envelope, record.Revision)
+	if err != nil {
+		t.Fatalf("Save(over older version) error = %v", err)
+	}
+	copyPath := filepath.Join(root, fmt.Sprintf("slot-01.v%d.bak", save_snapshot.MinimumVersion))
+	if kept, readErr := os.ReadFile(copyPath); readErr != nil || !bytes.Equal(kept, older) {
+		t.Fatalf("older save copy: error=%v, matches original=%t", readErr, bytes.Equal(kept, older))
+	}
+
+	if _, err = repository.Save(Slot01, record.Envelope, saved.Revision); err != nil {
+		t.Fatalf("Save(over current version) error = %v", err)
+	}
+	currentCopy := filepath.Join(root, fmt.Sprintf("slot-01.v%d.bak", save_snapshot.CurrentVersion))
+	if _, statErr := os.Stat(currentCopy); !errors.Is(statErr, os.ErrNotExist) {
+		t.Fatalf("a save of this version must not be copied: %v", statErr)
+	}
+}
+
 func TestRepositoryListsUnsupportedSnapshotVersionAsReclaimableIncompatible(t *testing.T) {
 	t.Parallel()
 	// Older native saves below the compatibility floor are reclaimable just like future ones.
@@ -499,6 +534,10 @@ func TestRepositoryListsUnsupportedSnapshotVersionAsReclaimableIncompatible(t *t
 			replacement := testEnvelope(testTime(2))
 			if _, err = repository.Save(Slot02, replacement, summary.Revision); err != nil {
 				t.Fatalf("Save(reclaim unsupported slot) error = %v", err)
+			}
+			kept, readErr := os.ReadFile(filepath.Join(root, fmt.Sprintf("slot-02.v%d.bak", version)))
+			if readErr != nil || !bytes.Equal(kept, data) {
+				t.Fatalf("reclaimed save copy: error=%v", readErr)
 			}
 			if loaded, loadErr := repository.Load(Slot02); loadErr != nil ||
 				loaded.Envelope.Metadata.Name != replacement.Metadata.Name ||

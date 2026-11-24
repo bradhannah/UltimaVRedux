@@ -12,12 +12,13 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/map_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func TestActionFeedbackHarvestHistoryKeepsRepeatedEventsAtEveryCap(t *testing.T) {
 	for limit := range 4 {
 		t.Run(fmt.Sprint(limit), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 				WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 			scene := newOwnedSurfaceCompletionTestScene(t, state)
 			wireFeedbackOutputForTest(scene)
@@ -47,7 +48,7 @@ func TestActionFeedbackSurfaceSearchAndLookHistoryHaveOneOwnerAtEveryCap(t *test
 	for limit := range 4 {
 		for _, location := range []references.Location{references.Britain, references.BritanniaUnderworld} {
 			t.Run(fmt.Sprintf("cap-%d/location-%d", limit, location), func(t *testing.T) {
-				state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).
+				state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).
 					WithPlayerAt(15, 15).WithSystemCallbacks().Build()
 				scene := newOwnedSurfaceCompletionTestScene(t, state)
 				wireFeedbackOutputForTest(scene)

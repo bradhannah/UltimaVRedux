@@ -6,11 +6,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/stretchr/testify/require"
 
-	"github.com/bradhannah/UltimaVRedux/internal/game_state"
 	"github.com/bradhannah/UltimaVRedux/internal/party_state"
 	"github.com/bradhannah/UltimaVRedux/internal/references"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 )
 
 func spellBrowserTestKeys(scene *GameScene) func(...ebiten.Key) {
@@ -42,7 +42,7 @@ func waitForSpellBrowserState(t *testing.T, scene *GameScene, ready func() bool)
 func TestCastMixShortcutReturnsToSameSelectorAndChargesOnlyMixOnCancel(t *testing.T) {
 	for _, location := range []references.Location{references.Britain, references.Deceit} {
 		t.Run(location.String(), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().WithRandomSeed(42).Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().WithRandomSeed(42).Build()
 			scene := newProductionCastTestScene(state)
 			press := spellBrowserTestKeys(scene)
 			require.True(t, state.SetActivePlayer(0))
@@ -101,7 +101,7 @@ func TestCastMixShortcutReturnsToSameSelectorAndChargesOnlyMixOnCancel(t *testin
 func TestCastPrerequisiteRefusalRetainsBrowserWithoutSpendingResources(t *testing.T) {
 	for _, location := range []references.Location{references.Britain, references.Deceit} {
 		t.Run(location.String(), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).
 				WithSystemCallbacks().WithRandomSeed(42).Build()
 			scene := newProductionCastTestScene(state)
 			press := spellBrowserTestKeys(scene)
@@ -139,7 +139,7 @@ func TestCastPrerequisiteRefusalRetainsBrowserWithoutSpendingResources(t *testin
 func TestZStatsMixShortcutRefreshesSameSection(t *testing.T) {
 	for _, location := range []references.Location{references.Britain, references.Deceit} {
 		t.Run(location.String(), func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().Build()
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(location).WithSystemCallbacks().Build()
 			scene := newProductionCastTestScene(state)
 			press := spellBrowserTestKeys(scene)
 			state.PartyState.Inventory.Reagent.Set(references.SulfurAsh, 6)
@@ -179,7 +179,7 @@ func TestZStatsMixShortcutRefreshesSameSection(t *testing.T) {
 }
 
 func TestZStatsNestedMixShutdownClosesSuspendedDossier(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	scene := newProductionCastTestScene(state)
 	press := spellBrowserTestKeys(scene)
 	scene.ShowZStatsDossier(state.CurrentZStatsDossier())
@@ -193,7 +193,7 @@ func TestZStatsNestedMixShutdownClosesSuspendedDossier(t *testing.T) {
 }
 
 func TestCastNestedMixShutdownCleansBothModals(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().Build()
 	scene := newProductionCastTestScene(state)
 	press := spellBrowserTestKeys(scene)
 	require.True(t, state.SetActivePlayer(0))
@@ -211,7 +211,7 @@ func TestCastNestedMixShutdownCleansBothModals(t *testing.T) {
 func TestCastMixCancellationAndFailureResumeParent(t *testing.T) {
 	for _, failed := range []bool{false, true} {
 		t.Run(map[bool]string{false: "cancel", true: "failed recipe"}[failed], func(t *testing.T) {
-			state, _ := game_state.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
+			state, _ := gamefixture.NewIntegrationTestBuilder(t).WithLocation(references.Britain).
 				WithSystemCallbacks().WithRandomSeed(42).Build()
 			scene := newProductionCastTestScene(state)
 			press := spellBrowserTestKeys(scene)

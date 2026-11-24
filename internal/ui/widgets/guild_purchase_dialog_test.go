@@ -138,7 +138,7 @@ func TestGuildPurchaseDialogZeroMaxStatesAllowOnlyEscape(t *testing.T) {
 		{
 			name:   "insufficient money",
 			quote:  testGuildQuote(references.Key, 3, 10, 10, 1),
-			reason: "Not enough gold. A bundle costs 10 and the party has 1.",
+			reason: "Thou hast not enough gold. A bundle costs 10 and the party has 1.",
 		},
 	}
 	for _, test := range tests {

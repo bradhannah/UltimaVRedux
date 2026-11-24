@@ -21,6 +21,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/save_snapshot"
 	"github.com/bradhannah/UltimaVRedux/internal/sprites/indexes"
 	"github.com/bradhannah/UltimaVRedux/internal/text"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	"github.com/bradhannah/UltimaVRedux/test/originaldata"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
@@ -164,7 +165,7 @@ func TestLaterAcceptedDoomEntrySupersedesCheckpointAndAssociation(t *testing.T) 
 }
 
 func TestDoomRunAssociationClearsAfterLeavingDoom(t *testing.T) {
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Doom).
 		WithFloor(0).
 		WithSystemCallbacks().
@@ -353,7 +354,7 @@ func TestReturnBeforeDoomFailuresRetainTerminalSceneAndCheckpoint(t *testing.T) 
 
 func newDoomEntryRecoveryScene(t *testing.T, livingShadowlords int) (*GameScene, *game_state.MockSystemCallbacks) {
 	t.Helper()
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithFloor(references.FloorNumber(references.UNDERWORLD)).
 		WithRandomSeed(465).
@@ -379,7 +380,7 @@ func newDoomEntryRecoveryScene(t *testing.T, livingShadowlords int) (*GameScene,
 
 func newDoomRecoverySource(t *testing.T, runID string) (*GameScene, save_snapshot.SaveSnapshot) {
 	t.Helper()
-	state, _ := game_state.NewIntegrationTestBuilder(t).
+	state, _ := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.BritanniaUnderworld).
 		WithFloor(references.FloorNumber(references.UNDERWORLD)).
 		WithSystemCallbacks().

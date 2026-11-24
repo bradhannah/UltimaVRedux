@@ -19,6 +19,7 @@ import (
 	"github.com/bradhannah/UltimaVRedux/internal/sprites"
 	"github.com/bradhannah/UltimaVRedux/internal/ui/widgets"
 	"github.com/bradhannah/UltimaVRedux/pkg/input"
+	"github.com/bradhannah/UltimaVRedux/test/gamefixture"
 	beradrng "github.com/bradhannah/berad-sdk/modules/berad-rng"
 )
 
@@ -27,7 +28,7 @@ func newDungeonInputTestScene(
 ) (*GameScene, *game_state.GameState, *game_state.MockSystemCallbacks) {
 	t.Helper()
 
-	state, callbacks := game_state.NewIntegrationTestBuilder(t).
+	state, callbacks := gamefixture.NewIntegrationTestBuilder(t).
 		WithLocation(references.Deceit).
 		WithFloor(0).
 		WithPlayerAt(1, 1).
@@ -1668,25 +1669,28 @@ func TestDungeonKlimbDualRouteRetainsTokenUntilValidChoice(t *testing.T) {
 }
 
 func TestDungeonKlimbDualRoutePassUsesFullCompletion(t *testing.T) {
-	scene, state, callbacks := newDungeonInputTestScene(t)
-	state.MapState.PlayerLocation.Floor = 3
-	position := state.MapState.PlayerLocation.Position
-	setDungeonInputTestCellAtFloor(t, state, 3, position, 0x30)
-	state.ActiveDurationEffect = game_state.DurationEffect{
-		EffectType:     game_state.DurationEffectProtection,
-		TurnsRemaining: 5,
+	// Esc passes like Space, as it does at the Look and Search prompts.
+	for _, passKey := range []ebiten.Key{ebiten.KeySpace, ebiten.KeyEscape} {
+		scene, state, callbacks := newDungeonInputTestScene(t)
+		state.MapState.PlayerLocation.Floor = 3
+		position := state.MapState.PlayerLocation.Position
+		setDungeonInputTestCellAtFloor(t, state, 3, position, 0x30)
+		state.ActiveDurationEffect = game_state.DurationEffect{
+			EffectType:     game_state.DurationEffectProtection,
+			TurnsRemaining: 5,
+		}
+		callbacks.Reset()
+
+		scene.dungeonMapInputHandler(ebiten.KeyK)
+		scene.keyboard.SimulateKeyPress(passKey)
+		scene.dungeonMapHandleSecondaryInput(nil)
+
+		assert.Equal(t, references.FloorNumber(3), state.MapState.PlayerLocation.Floor)
+		assert.Equal(t, 4, state.ActiveDurationEffect.TurnsRemaining)
+		assert.Contains(t, callbacks.Messages, "Pass")
+		assert.Equal(t, PrimaryInput, scene.secondaryKeyState)
+		assert.True(t, state.IsAtDungeonCommandBoundary())
 	}
-	callbacks.Reset()
-
-	scene.dungeonMapInputHandler(ebiten.KeyK)
-	scene.keyboard.SimulateKeyPress(ebiten.KeySpace)
-	scene.dungeonMapHandleSecondaryInput(nil)
-
-	assert.Equal(t, references.FloorNumber(3), state.MapState.PlayerLocation.Floor)
-	assert.Equal(t, 4, state.ActiveDurationEffect.TurnsRemaining)
-	assert.Contains(t, callbacks.Messages, "Pass")
-	assert.Equal(t, PrimaryInput, scene.secondaryKeyState)
-	assert.True(t, state.IsAtDungeonCommandBoundary())
 }
 
 func TestDungeonKlimbDualRouteAcceptsLetterDForDown(t *testing.T) {

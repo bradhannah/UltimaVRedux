@@ -14,6 +14,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	//nolint:gosec // Profiling handlers are served only by the explicit opt-in loopback profiler below.
@@ -77,9 +78,72 @@ func finalScreenGeometry(destination, source image.Rectangle) ebiten.GeoM {
 func main() {
 	configureCrashOutput()
 	if err := runApplication(); err != nil {
+		if restartWithoutSound(os.Args[1:], err) {
+			return
+		}
+		// A double-clicked launch has no terminal, so the reason goes to redux.log too.
+		message := launchFailureMessage(err)
+		logging.Errorf(logging.CategorySystem, "Ultima V Redux could not continue: %s", message)
 		// Application-level fatal: launch/game failure is reported only after deferred cleanup has run.
-		log.Fatal(err)
+		log.Fatal(message)
 	}
+}
+
+const (
+	noSoundFlag          = "no-sound"
+	soundUnavailableFlag = "sound-unavailable"
+)
+
+// soundDeviceFailed recognises the engine's sound device error, which it
+// reports only by ending the game.
+func soundDeviceFailed(err error) bool {
+	message := err.Error()
+
+	return strings.Contains(message, "oto:") || strings.Contains(message, "audio:")
+}
+
+// restartsWithoutSound reports whether a failed start should be tried once
+// more without sound. Only a plain start is: one given options, which includes
+// a start that was already silent, ends with the usual message instead.
+func restartsWithoutSound(arguments []string, err error) bool {
+	return len(arguments) == 0 && soundDeviceFailed(err)
+}
+
+// restartWithoutSound starts the game again, silent, after the sound device
+// failed. It reports whether the new copy is running.
+func restartWithoutSound(arguments []string, failure error) bool {
+	if !restartsWithoutSound(arguments, failure) {
+		return false
+	}
+	executable, err := os.Executable()
+	if err != nil {
+		logging.Warnf(logging.CategoryAudio, "Could not restart without sound: %v", err)
+
+		return false
+	}
+	logging.Warnf(logging.CategoryAudio, "No sound device could be opened (%v); restarting without sound.", failure)
+	process, err := os.StartProcess(executable, []string{executable, "--" + soundUnavailableFlag},
+		&os.ProcAttr{Dir: "", Env: nil, Files: []*os.File{nil, os.Stdout, os.Stderr}, Sys: nil})
+	if err != nil {
+		logging.Warnf(logging.CategoryAudio, "Could not restart without sound: %v", err)
+
+		return false
+	}
+	if err := process.Release(); err != nil {
+		logging.Warnf(logging.CategoryAudio, "Releasing the restarted game: %v", err)
+	}
+
+	return true
+}
+
+// launchFailureMessage adds the way out when the sound device is what failed.
+func launchFailureMessage(err error) string {
+	message := err.Error()
+	if soundDeviceFailed(err) {
+		message += "\nSound could not start. Run the game with --no-sound to play without it."
+	}
+
+	return message
 }
 
 //nolint:cyclop,funlen,gocognit,gocyclo,maintidx // Ordered launch/recovery and diagnostic cleanup.
@@ -93,7 +157,9 @@ func runApplication() error {
 	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	var memprofile = flag.String("memprofile", "", "write memory profile to file")
 	var webprofile = flag.Bool("webprofile", false, "enable web-based profiling on :6060")
-	var noSound = flag.Bool("no-sound", false, "disable music, sound effects, and ambient audio for this session")
+	var soundOff = flag.Bool(noSoundFlag, false, "disable music, sound effects, and ambient audio for this session")
+	var soundUnavailable = flag.Bool(soundUnavailableFlag, false,
+		"set by the game when it restarts itself because no sound device could be opened")
 	var debugWorkbench = flag.Bool("debug-workbench", false, "enable browser debug workbench")
 	var showVersion = flag.Bool("version", false, "print the game version and exit")
 	var debugWorkbenchPort = flag.Int(
@@ -166,7 +232,9 @@ func runApplication() error {
 		return fmt.Errorf("loading startup configuration: %w", startup.ConfigurationError)
 	}
 	applySavedLoggingConfiguration(gameConfig)
-	gameConfig.SoundDisabled = *noSound
+	noSound := *soundOff || *soundUnavailable
+	gameConfig.SoundDisabled, gameConfig.SoundUnavailable = noSound, *soundUnavailable
+	gameConfig.DeveloperTools = *debugWorkbench
 	windowWidth := gameConfig.DisplayConfiguration.WindowWidth
 	windowHeight := gameConfig.DisplayConfiguration.WindowHeight
 	displayManager := display.GetManager()
@@ -195,7 +263,8 @@ func runApplication() error {
 		if loadErr != nil {
 			startupError = loadErr
 		} else {
-			playable.SoundDisabled = *noSound
+			playable.SoundDisabled, playable.SoundUnavailable = noSound, *soundUnavailable
+			playable.DeveloperTools = *debugWorkbench
 			gameConfig = playable
 		}
 	}
@@ -217,7 +286,7 @@ func runApplication() error {
 			startup.OriginalDataError,
 			host,
 			dataSetupFirstRun,
-			*noSound,
+			noSound,
 			func(game *Game, playable *config.UltimaVConfiguration) error {
 				if err := game.ReplaceScene(func() (Scene, error) {
 					return CreateIntroMenuScene(playable)
