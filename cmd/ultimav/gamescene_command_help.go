@@ -68,7 +68,7 @@ func commandHelpEntries(context references.GeneralMapType) []widgets.CommandHelp
 		{Key: "E", Purpose: "Enter a location", NextInput: "Stand on a town, dungeon or other entrance."},
 		{Key: "F", Purpose: "Fire a cannon", NextInput: direction},
 		{Key: "G", Purpose: "Get an item", NextInput: direction},
-		{Key: "H", Purpose: "Hole up and camp", NextInput: "Follow the camp prompts. While the party sleeps, Space hurries the rest along."},
+		{Key: "H", Purpose: "Hole up and camp", NextInput: "Follow the camp prompts. While the party sleeps, Space hurries the rest along. Press again to sleep straight through."},
 		{Key: "I", Purpose: "Ignite a torch", NextInput: "Lights one of your torches."},
 		{Key: "J", Purpose: "Jimmy a lock", NextInput: direction + " Choose a character when asked."},
 		{Key: "K", Purpose: "Klimb", NextInput: "Use a ladder or climbable terrain; choose direction when asked."},

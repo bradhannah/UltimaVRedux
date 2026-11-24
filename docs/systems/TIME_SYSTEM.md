@@ -196,7 +196,8 @@ Authentic action cost is a gameplay rule, not a property of `ElapsedMs`.
   one-way accelerated 50 ms presentation delay is independent of that cost.
   Space changes only subsequent inter-cycle scheduling for the current sleeping
   phase. A previously scheduled interval may finish, and a hitch never skips or
-  catches up logical cycles. Setup/Bard and results/Wanderer timing is separate.
+  catches up logical cycles. A second Space sets the interval to zero, so the
+  remaining cycles run in order without waiting. Setup/Bard and results/Wanderer timing is separate.
   Production wind still consumes the shared RNG before queues, so differently
   paced rests do not promise unconditional seed-only result equality.
 - A complete merchant Talk owns one minute, including repeated family actions

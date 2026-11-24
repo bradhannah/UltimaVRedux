@@ -64,6 +64,41 @@ func TestCampingAccelerationPreservesControlledCycleTraceAndCleanup(t *testing.T
 	}
 }
 
+func TestCampingSkipSleepsThroughInOneUpdateWithTheSameOrderedDecisions(t *testing.T) {
+	for _, dungeon := range []bool{false, true} {
+		var baseline [3]uint64
+		for _, skip := range []bool{false, true} {
+			state, _, scene, completions := startPacingCamp(t, dungeon)
+			require.False(t, state.RequestCampingSkip(), "setup is not sleep")
+			for updates := 0; updates < 20000 && state.EventQueueManager.HasActiveWorkflows(); updates++ {
+				if skip && scene.IsSleeping() && scene.CurrentCycle == 3 {
+					before := state.GetRNG().Calls()
+					require.True(t, state.RequestCampingSkip())
+					require.Equal(t, before, state.GetRNG().Calls())
+					state.ElapsedMs += CampingCycleDelayMs
+					state.EventQueueManager.Update()
+					require.Equal(t, scene.TotalCycles, scene.CurrentCycle, "one update runs every remaining cycle")
+					require.False(t, scene.IsSleeping())
+					require.False(t, scene.IsSkipping())
+				}
+				state.ElapsedMs += 50
+				state.EventQueueManager.Update()
+			}
+			require.Equal(t, 1, *completions)
+			got := [3]uint64{
+				state.GetRNG().Calls(), uint64(state.PartyState.GetCharacter(1).GetCurrentHp()),
+				uint64(state.DateTime.Hour)*60 + uint64(state.DateTime.Minute),
+			}
+			if !skip {
+				baseline = got
+
+				continue
+			}
+			require.Equal(t, baseline, got, "skipping changes pacing, never the ordered camp decisions")
+		}
+	}
+}
+
 func startPacingCamp(t *testing.T, dungeon bool) (*GameState, *MockSystemCallbacks, *camping.CampingScene, *int) {
 	t.Helper()
 	if !dungeon {

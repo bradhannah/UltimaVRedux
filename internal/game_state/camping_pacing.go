@@ -8,10 +8,19 @@ func (g *GameState) RequestCampingAcceleration() bool {
 	return g.CampingScene.RequestAcceleration()
 }
 
-func campingCycleDelay(scene *camping.CampingScene) int64 {
-	if scene.IsAccelerated() {
-		return CampingFastCycleDelayMs
-	}
+// RequestCampingSkip sleeps through the remaining cycles at once. Each cycle's
+// calendar step and random decisions still run, in order, so the night is the same.
+func (g *GameState) RequestCampingSkip() bool {
+	return g.CampingScene.RequestSkip()
+}
 
-	return CampingCycleDelayMs
+func campingCycleDelay(scene *camping.CampingScene) int64 {
+	switch {
+	case scene.IsSkipping():
+		return 0
+	case scene.IsAccelerated():
+		return CampingFastCycleDelayMs
+	default:
+		return CampingCycleDelayMs
+	}
 }
