@@ -79,6 +79,9 @@ func (g *GameScene) captureTransientCommandInput() {
 	if g.quickLoadChordHeld {
 		return
 	}
+	// A held A may be taken up while its own attack still plays, before the aim
+	// that launched it has closed, so this runs ahead of the ownership check.
+	g.adoptEarlyCombatRepeatKey()
 	if g.transientInputOwnedElsewhere() {
 		g.clearPendingCombatCommand()
 

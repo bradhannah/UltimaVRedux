@@ -743,7 +743,8 @@ func (g *GameScene) handleCombatAttackTargetInput() {
 }
 
 func (g *GameScene) handleCombatAttackConfirmation(targeting *game_state.CombatAttackTargeting) {
-	confirm := g.keyboard.IsKeyPressedAndRegister(ebiten.KeyA) ||
+	confirmedWithA := g.keyboard.IsKeyPressedAndRegister(ebiten.KeyA)
+	confirm := confirmedWithA ||
 		g.keyboard.IsKeyPressedAndRegister(ebiten.KeyEnter) ||
 		g.keyboard.IsKeyPressedAndRegister(ebiten.KeyNumpadEnter)
 	if g.keyboard.IsKeyPressedAndRegister(ebiten.KeySpace) {
@@ -756,6 +757,9 @@ func (g *GameScene) handleCombatAttackConfirmation(targeting *game_state.CombatA
 		confirm = true
 	}
 	if confirm {
+		if confirmedWithA && targeting.Cursor != targeting.Origin {
+			g.repeatConfirmingAttackKey()
+		}
 		g.confirmCombatAttack(targeting)
 	}
 }

@@ -182,7 +182,11 @@ As a Redux input convenience, Combat Key Repeat (Gameplay, Measured by
 default) lets a held arrow or Tab, and at its Fast rates A, act again on each
 later party turn after a 300 ms hold, capped at Measured (one action per 165 ms)
 or 10, 20 or 30 actions per second. Each repeat is an ordinary command for the
-actor whose turn it is. Original held-key behavior in combat is not established
+actor whose turn it is. A repeat key that goes down while an enemy turn or the
+party's own action is still playing is taken up as well, acting after the same
+hold counted from the next ready turn, as is the A that confirms an attack by
+hand. A key that was already down, or that went down in an aim or another
+prompt, still waits for release. Original held-key behavior in combat is not established
 here; Off keeps one action per press. Blocked, an unavailable Tab or Attack,
 another key, prompts and the end of the encounter stop it until release. See
 [combat key repeat](../systems/INPUT_HANDLING.md#combat-key-repeat).

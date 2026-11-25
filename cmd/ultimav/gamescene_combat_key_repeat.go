@@ -11,10 +11,13 @@ import (
 const combatKeyRepeatMsPerSecond int64 = 1000
 
 // combatKeyRepeat is the Combat Key Repeat (Measured by default). It owns one physical key from
-// a fresh press at a ready party turn until release, never outlives its
-// encounter, and only ever replays the key through the ordinary command route.
+// a fresh press until release, never outlives its encounter, and only ever
+// replays the key through the ordinary command route. The press may come at a
+// ready party turn, while an enemy turn or the party's own action is still
+// playing, or as the A that confirms an attack.
 type combatKeyRepeat struct {
 	active    bool
+	early     bool // pressed before the turn was ready; its first hold starts when it is
 	key       ebiten.Key
 	nextAt    int64 // the next repeated action may start at or after this time
 	confirmAt int64 // a held A confirms an open aim at or after this time
@@ -86,6 +89,11 @@ func (g *GameScene) combatRepeatKey() (*ebiten.Key, bool) {
 	if !repeat.active {
 		return nil, false
 	}
+	if repeat.early {
+		repeat.early = false
+		repeat.nextAt = now + max(passInitialDelayMs, combatKeyRepeatIntervalMs(rate))
+		repeat.confirmAt = now + passInitialDelayMs
+	}
 	if now < repeat.nextAt {
 		return nil, true
 	}
@@ -94,6 +102,54 @@ func (g *GameScene) combatRepeatKey() (*ebiten.Key, bool) {
 	key := repeat.key
 
 	return &key, true
+}
+
+// adoptEarlyCombatRepeatKey makes a repeat key that goes down while an enemy
+// turn or the party's own action is still playing the repeat's key. Without
+// it the press is lost and, while the key stays down, every hand-over waits
+// for its release, so the battle stands still. Only a fresh press of a key
+// this rate repeats is taken, alone, with no prompt, reader or dialog open and
+// no queued solo command. A key that was already down before, or that went
+// down in an aim or another prompt, keeps waiting for its release as before.
+// It acts only after the usual first hold, counted from the ready turn.
+func (g *GameScene) adoptEarlyCombatRepeatKey() {
+	state := &g.transientCommandInput
+	rate := g.combatKeyRepeatRate()
+	combat := g.gameState.CombatScene
+	if rate == 0 || combat == nil || !combat.CombatTurnsStarted() || !g.combatActionPlaying() ||
+		state.combatRepeat.active || state.pending.active || state.sample.HasModifiers() {
+		return
+	}
+	for _, key := range boundKeysGame {
+		if !state.sample.Pressed[key] {
+			continue
+		}
+		if combatRepeatableKey(key, rate) && !g.freshPressOtherThan(key) && !g.combatKeyRepeatInterrupted(key) &&
+			!g.keyboard.IsSuppressedUntilRelease(key) && g.keyboard.ConsumePressEdge(state.sample, key) {
+			state.combatRepeat = combatKeyRepeat{
+				active: true, early: true, key: key, nextAt: 0, confirmAt: 0, encounter: combat,
+			}
+		}
+
+		return
+	}
+}
+
+// repeatConfirmingAttackKey makes the A that confirms an attack by hand the
+// repeat's key at a rate that repeats A, so holding it attacks again at the
+// next turn, as an A held from the ready turn does.
+func (g *GameScene) repeatConfirmingAttackKey() {
+	state := &g.transientCommandInput
+	rate := g.combatKeyRepeatRate()
+	if state.combatRepeat.active || !combatRepeatableKey(ebiten.KeyA, rate) || state.sample.HasModifiers() {
+		return
+	}
+	now := g.getElapsedMs()
+	state.combatRepeat = combatKeyRepeat{
+		active: true, early: false, key: ebiten.KeyA, encounter: g.gameState.CombatScene,
+		nextAt:    now + max(passInitialDelayMs, combatKeyRepeatIntervalMs(rate)),
+		confirmAt: now + passInitialDelayMs,
+	}
 }
 
 // observeCombatKeyRepeat runs every frame. Release ends a repeat; another
@@ -125,10 +181,18 @@ func (g *GameScene) freshPressOtherThan(key ebiten.Key) bool {
 	return false
 }
 
+// combatActionPlaying reports an enemy turn or a party action still playing:
+// the battle is taking no command.
+func (g *GameScene) combatActionPlaying() bool {
+	return g.inputBlocked || g.gameState.EventQueueManager.HasInputBlockingWorkflows()
+}
+
 // combatKeyRepeatInterrupted reports a prompt, reader or dialog. Only a held A
-// may continue through its own attack aim.
+// may continue through its own attack aim. Any repeat key may wait out an
+// attack that is still playing from that aim; if the aim then asks again, for
+// a second weapon, the key is interrupted like any other.
 func (g *GameScene) combatKeyRepeatInterrupted(key ebiten.Key) bool {
-	aiming := key == ebiten.KeyA && g.secondaryKeyState == CombatAttackTargetInput
+	aiming := g.secondaryKeyState == CombatAttackTargetInput && (key == ebiten.KeyA || g.combatActionPlaying())
 
 	return g.secondaryKeyState != PrimaryInput && !aiming || g.atlasSession != nil || g.journalSession != nil ||
 		g.finalePresentation != nil || g.dialogStack.HasModalDialog()
