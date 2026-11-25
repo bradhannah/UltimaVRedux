@@ -237,6 +237,20 @@ held repeat key as released (`HasUnprotectedHeldKeyExcept`); any other held key
 still holds them. A held A opens aim on the remembered target and confirms it
 in the next update; an aim that opens on the attacker stops the repeat.
 
+A repeat can also begin away from the ready turn. A fresh, lone, unmodified
+press of a key the rate repeats, made while an enemy turn or a party action is
+still playing (`combatActionPlaying`: input is blocked), is taken up by
+`adoptEarlyCombatRepeatKey`; its 300 ms first hold is counted from the ready
+turn, so nothing acts the instant the turn arrives. The A that confirms an
+attack by hand on a target becomes the repeat key in the same way
+(`repeatConfirmingAttackKey`). Without these the press was lost and, while the
+key stayed down, every hand-over waited for its release. Nothing else is taken
+up: a key that was already down before the action began, one that went down in
+an interactive aim or any other prompt, reader or dialog, a press alongside
+another key, or one made while a solo command is queued keeps waiting for
+release as before. A repeat key may wait out an attack still playing from the
+aim; if the aim then asks again for a second weapon, only A continues.
+
 Release ends a repeat. Blocked!, No reachable enemy., a failed Attack, another
 fresh key, a prompt or reader, a dialog, focus loss, turning the setting Off or
 the end of its encounter stop it and suppress the key until release, so it can
