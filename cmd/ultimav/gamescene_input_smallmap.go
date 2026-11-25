@@ -83,7 +83,7 @@ func (g *GameScene) smallMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		result = surfaceResultFromSuccess(g.gameState.ActionExit(), originMapType)
 	case ebiten.KeyG:
 		// get the thing - direction
-		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Get-")
+		g.gameState.SystemCallbacks.Message.ShowCommandPrompt(g.getPrompt())
 		g.secondaryKeyState = GetDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyE:
@@ -366,6 +366,11 @@ func (g *GameScene) smallMapJimmySecondary(
 
 func (g *GameScene) smallMapGetSecondary(direction references.Direction) {
 	// Delegate all logic to GameState - it handles all feedback via SystemCallbacks
+	if g.getAll {
+		g.gameState.ActionGetAllSmallMap(direction)
+
+		return
+	}
 	g.gameState.ActionGetSmallMap(direction)
 }
 

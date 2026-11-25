@@ -99,3 +99,40 @@ func TestCombatChestTrapPublishesActualConsequence(t *testing.T) {
 		assert.Equal(t, result, callbacks.CombatEvents[0].ChestTrap)
 	}
 }
+
+func TestGetAllCombatItemsClearsTheSquareAndOpensOnlyAChestFromAChest(t *testing.T) {
+	state, callbacks := NewIntegrationTestBuilder(t).WithLocation(references.Britain).WithSystemCallbacks().WithRandomSeed(42).Build()
+	require.NoError(t, state.TransitionToCombatMap(0, references.BritanniaCombatTerritory, CombatEntryNorth))
+	combat := state.CombatScene
+	actor := combat.GetPartyMemberPosition(combat.GetActiveCombatantIndex())
+	position := *references.Down.GetNewPositionInDirection(&actor)
+	gems, gold := state.PartyState.Inventory.Provisions.Gems.Get(), state.PartyState.Inventory.Gold.Get()
+	require.True(t, state.addCombatLooseItem(position, references.Gem, 2))
+	require.True(t, state.admitCombatChestLoot(position, references.ChestLoot{ChestValue: 10}))
+	require.True(t, state.addCombatLooseItem(position, references.Gold, 38))
+
+	state.GetAllCombatItems(references.Down)
+
+	_, left := combat.firstGettableObjectAt(position)
+	require.False(t, left, "the loose items, the inner chest and its loot are all gone")
+	assert.Equal(t, gems+2, state.PartyState.Inventory.Provisions.Gems.Get())
+	assert.GreaterOrEqual(t, state.PartyState.Inventory.Gold.Get(), gold+38)
+	assert.Equal(t, 1, callbacks.PlaybackRequestCount(SoundItemPickup, SoundPlaybackOneShot), "the lot sounds once")
+	for _, event := range callbacks.CombatEvents {
+		assert.Equal(t, CombatEventPickup, event.Kind)
+		assert.True(t, event.Pickup.Result.Handled, "an emptied square is not asked for more")
+	}
+
+	// A chest worth 1 holds nothing; opening it is the whole outcome.
+	require.True(t, state.admitCombatChestLoot(position, references.ChestLoot{ChestValue: 1}))
+	assert.True(t, state.GetAllCombatItems(references.Down).Handled)
+	assert.True(t, callbacks.MessagesContain("Chest empty!"))
+	assert.False(t, callbacks.MessagesContain("Nothing to get!"))
+
+	// A chest of any other origin keeps its trap for the player to face.
+	require.True(t, combat.AddObject(NewCombatChest(position, 10, true)))
+	assert.Equal(t, "Open it first!", state.GetAllCombatItems(references.Down).Message)
+	chest, found := combat.firstGettableObjectAt(position)
+	require.True(t, found)
+	assert.True(t, chest.IsLockedAndTrapped())
+}

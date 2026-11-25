@@ -564,6 +564,13 @@ slot; an unopened selected chest requires Open. Collection never removes the par
 body or changes the dead character. Each chest-generated item requires a free
 shared object slot.
 
+Ctrl+G is a Redux-only whole-pile tactical Get, where the original takes one
+object per action. One action applies the same selection until the square is
+clear or a pickup is refused, reporting each pickup. A chest that was itself
+generated from a chest is always safe, so this Get opens it and continues with
+its loot; every other chest still answers "Open it first!", whatever its trap
+state, so the command reveals nothing about an unopened chest.
+
 When no object claims the target square, tactical Get reaches the same terrain
 pickups as the town command: a wall torch leaves brick floor and lights the
 party for the borrowed burn in LIGHT-0004, and a reachable plate follows

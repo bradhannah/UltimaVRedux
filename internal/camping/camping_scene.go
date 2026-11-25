@@ -38,6 +38,7 @@ type CampingScene struct {
 	LastHourMessage int // Last hour we showed a time message
 	sleeping        bool
 	accelerated     bool
+	skipping        bool
 
 	// Original player location (to return to after camping)
 	OriginalPlayerLocation references.PlayerLocation
@@ -68,6 +69,7 @@ func NewCampingSceneWithCombatRef(
 		OriginalPlayerLocation: originalPlayerLocation,
 		sleeping:               false,
 		accelerated:            false,
+		skipping:               false,
 		WandererPresent:        false,
 		WandererDissolveLevel:  0,
 	}
@@ -103,6 +105,7 @@ func NewDungeonCampingScene(
 		WandererDissolveLevel:  0,
 		sleeping:               false,
 		accelerated:            false,
+		skipping:               false,
 	}
 }
 
@@ -147,13 +150,13 @@ func (cs *CampingScene) InterruptCamping() {
 // BeginSleeping opens the transient pacing window after setup and Bard music.
 func (cs *CampingScene) BeginSleeping() {
 	cs.sleeping = cs.IsActive && cs.CurrentCycle < cs.TotalCycles
-	cs.accelerated = false
+	cs.accelerated, cs.skipping = false, false
 }
 
 // EndSleeping closes the window before results, ambush or Wanderer presentation.
 func (cs *CampingScene) EndSleeping() {
 	cs.sleeping = false
-	cs.accelerated = false
+	cs.accelerated, cs.skipping = false, false
 }
 
 // IsSleeping distinguishes logical sleep from setup and post-rest presentation.
@@ -168,6 +171,19 @@ func (cs *CampingScene) RequestAcceleration() bool {
 		return false
 	}
 	cs.accelerated = true
+
+	return true
+}
+
+// IsSkipping reports that the rest of this sleep runs with no wait between cycles.
+func (cs *CampingScene) IsSkipping() bool { return cs != nil && cs.sleeping && cs.skipping }
+
+// RequestSkip changes pacing only, as acceleration does: every cycle still runs in order.
+func (cs *CampingScene) RequestSkip() bool {
+	if !cs.IsSleeping() {
+		return false
+	}
+	cs.skipping = true
 
 	return true
 }

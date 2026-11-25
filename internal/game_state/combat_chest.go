@@ -24,7 +24,10 @@ func (g *GameState) generateCombatChestContents(position references.Position, ma
 
 func (g *GameState) admitCombatChestLoot(position references.Position, entry references.ChestLoot) bool {
 	if entry.ChestValue != 0 {
-		return g.CombatScene.addLootObject(NewCombatChest(position, int(entry.ChestValue), false))
+		chest := NewCombatChest(position, int(entry.ChestValue), false)
+		chest.fromChest = true
+
+		return g.CombatScene.addLootObject(chest)
 	}
 
 	return g.addCombatChestLooseItem(position, entry.Item.Item, entry.Item.Quantity)

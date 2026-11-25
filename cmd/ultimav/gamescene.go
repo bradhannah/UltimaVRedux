@@ -209,6 +209,7 @@ type GameScene struct {
 	lastEffectsUpdate time.Time
 
 	secondaryKeyState             InputState
+	getAll                        bool // The pending Get was asked for with Ctrl: take the whole pile.
 	transientCommandInput         transientCommandInputState
 	observedSailingStopEpoch      uint64
 	surfaceSpellWorkflowOwnsCycle bool

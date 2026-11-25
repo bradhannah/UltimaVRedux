@@ -249,7 +249,7 @@ unmodified Space edge sampled during logical sleeping can request acceleration;
 setup/Bard holds are suppressed through release. The post-queue check rejects a
 request if the same Update completed or interrupted sleep. Acceleration is silent:
 it adds no hint/status box, message, sound, or acknowledgement.
-Additional fast-sleep presses are consumed,
+A second fresh press asks to sleep straight through; later presses are consumed,
 and raw any-key waits keep their release-before-press contract. No command cycle,
 calendar charge or RNG draw belongs to this input intent. See
 [camping acceleration](CAMPING_SYSTEM.md#on-demand-sleeping-acceleration).
@@ -829,6 +829,12 @@ g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Open-")
 g.secondaryKeyState = OpenDirectionInput
 g.keyboard.SetAllowKeyPressImmediately()
 ```
+
+Town, overworld and combat Get read Control at the G press. `Ctrl+G` shows
+`Get all-` and marks the pending direction as a whole-pile Get; a plain G clears
+that mark, so a cancelled Ctrl+G cannot change a later Get. The direction step is
+otherwise the ordinary one. In a dungeon corridor Ctrl+G is plain G, since an
+open chest there already gives everything.
 
 `SetAllowKeyPressImmediately` is important when the player presses the command and direction in quick succession. New directional transitions should use it unless the command deliberately requires release or a modal handoff.
 

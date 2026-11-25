@@ -94,7 +94,7 @@ func (g *GameScene) combatMapInputHandler(key ebiten.Key) {
 		movementAction = g.handleCombatMovement(references.Right)
 		skipFinishTurn = !movementAction
 	case ebiten.KeyG:
-		g.appendToCurrentRowStr("Get-")
+		g.appendToCurrentRowStr(g.getPrompt())
 		g.secondaryKeyState = GetDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyP:
@@ -1089,7 +1089,11 @@ func (g *GameScene) combatMapJimmySecondary(direction references.Direction) {
 }
 
 func (g *GameScene) combatMapGetSecondary(direction references.Direction) {
-	result := g.gameState.GetCombatItem(direction)
+	get := g.gameState.GetCombatItem
+	if g.getAll {
+		get = g.gameState.GetAllCombatItems
+	}
+	result := get(direction)
 	if !result.Handled {
 		g.addRowStr(result.Message)
 	}

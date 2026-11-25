@@ -122,7 +122,7 @@ func (g *GameScene) largeMapInputHandlerWithGame(game *Game, key ebiten.Key) {
 		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Klimb-")
 		g.secondaryKeyState = KlimbDirectionInput
 	case ebiten.KeyG:
-		g.gameState.SystemCallbacks.Message.ShowCommandPrompt("Get-")
+		g.gameState.SystemCallbacks.Message.ShowCommandPrompt(g.getPrompt())
 		g.secondaryKeyState = GetDirectionInput
 		g.keyboard.SetAllowKeyPressImmediately()
 	case ebiten.KeyX:
@@ -313,7 +313,11 @@ func (g *GameScene) largeMapHandleSecondaryInput() {
 		result = surfaceResultFromSuccess(g.gameState.ActionLookLargeMap(direction), originMapType)
 		g.secondaryKeyState = PrimaryInput
 	case GetDirectionInput:
-		result = surfaceResultFromSuccess(g.gameState.ActionGetLargeMap(direction), originMapType)
+		get := g.gameState.ActionGetLargeMap
+		if g.getAll {
+			get = g.gameState.ActionGetAllLargeMap
+		}
+		result = surfaceResultFromSuccess(get(direction), originMapType)
 		g.secondaryKeyState = PrimaryInput
 	case PushDirectionInput:
 		result = surfaceResultFromSuccess(g.gameState.ActionPushLargeMap(direction), originMapType)

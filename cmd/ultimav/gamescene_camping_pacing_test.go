@@ -184,6 +184,8 @@ func TestCampingSpaceThroughUpdateRequiresSleepingEdgeAndLatchesUntilResults(t *
 			require.True(t, camp.IsAccelerated(), "release does not toggle speed")
 			require.Zero(t, scene.dialogStack.Count())
 			held[ebiten.KeySpace] = true
+			update()
+			require.True(t, camp.IsSkipping(), "a second press sleeps straight through")
 			for range 1000 {
 				update()
 				if !camp.IsSleeping() {

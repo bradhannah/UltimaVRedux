@@ -132,7 +132,10 @@ Outdoor and dungeon camping schedule each sleep-cycle presentation interval at
 intervals for the rest of that camp. It takes effect when the next interval is
 scheduled; an already-scheduled deadline is not shortened. A hitch runs the due
 cycle and schedules from its execution time, rather than catching up multiple
-cycles. The press does not advance a cycle or consume RNG, and a held key does not
+cycles. A second fresh press sleeps straight through: once the scheduled cycle
+runs, every remaining cycle follows in order with no interval, ending at
+completion or the first ambush. Neither press itself advances a cycle or
+consumes RNG, and a held key does not
 repeat or become an acknowledgement of the later result. Setup, Bard performance,
 ambush, Wanderer presentation, and results are outside this acceleration window.
 Completion/interruption and final cleanup reset the latch.

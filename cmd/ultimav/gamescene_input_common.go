@@ -4,6 +4,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/bradhannah/UltimaVRedux/internal/references"
+	"github.com/bradhannah/UltimaVRedux/pkg/input"
 )
 
 type ordinaryDirectionOutcome uint8
@@ -51,6 +52,18 @@ func (g *GameScene) ordinaryDirectionInput() ordinaryDirectionResult {
 	}
 
 	return ordinaryDirectionResult{Outcome: ordinaryDirectionActive}
+}
+
+// getPrompt notes whether this Get was asked for with Ctrl held, which takes
+// the whole pile, and returns the prompt to show. Every Get press sets the
+// note afresh, so a cancelled Ctrl+G cannot colour a later plain Get.
+func (g *GameScene) getPrompt() string {
+	g.getAll = g.keyboard.IsModifierComboPressed(input.ModifierCtrl, ebiten.KeyG)
+	if g.getAll {
+		return "Get all-"
+	}
+
+	return "Get-"
 }
 
 // appendOrdinaryDirectionHint retains the ordinary combat reader's guidance.

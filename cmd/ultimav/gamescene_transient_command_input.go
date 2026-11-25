@@ -99,11 +99,19 @@ func (g *GameScene) captureTransientCommandInput() {
 
 // handleCampingAcceleration runs after queue advancement and top-modal routing.
 // A completion/ambush in this frame must not accept a stale sleeping request.
+// The first Space hurries the rest; a second press sleeps straight through.
 func (g *GameScene) handleCampingAcceleration() {
 	state := &g.transientCommandInput
-	if camp := g.sleepingInputCamp(); camp != nil && camp == state.campAtEntry && state.campRequest {
-		g.gameState.RequestCampingAcceleration()
+	camp := g.sleepingInputCamp()
+	if camp == nil || camp != state.campAtEntry || !state.campRequest {
+		return
 	}
+	if camp.IsAccelerated() {
+		g.gameState.RequestCampingSkip()
+
+		return
+	}
+	g.gameState.RequestCampingAcceleration()
 }
 
 // Stop the old hold before a modal newly installed by a queue gets its first

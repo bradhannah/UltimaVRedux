@@ -461,10 +461,14 @@ when later object admission lacks space; bounds do not prove original uniformity
 **REDUX DEVIATION:** A bounded adapter counts active-floor visible units and
 unmerged loose entries against 31 usable slots across existing storage authorities,
 rather than the original shared object array. It preserves pickup order. Open
-reveals ground contents; Get transfers subject to inventory limits. Children
+reveals ground contents; Get transfers subject to inventory limits. Ctrl+G is a
+Redux-only whole-pile Get, where the original takes one object per command: it
+takes the pile from the top until it is empty or an entry cannot be carried,
+charges a minute for each entry taken, reports them together, and leaves a
+child chest closed so the karma for opening it stays the player's choice. Children
 and loose loot are discarded on real floor/location departure; active saved
 objects continue. Daily history survives outside the castle. Other chest, fixed
 Search and skull-key policies are not implicitly made daily.
 
-**Implementation:** `internal/game_state/basement_chests.go`, `internal/references/basement_chests.go`, `internal/references/chest_loot.go`, `internal/map_units/transient_surface_chest.go`
-**Tests:** `internal/game_state/basement_chests_test.go`
+**Implementation:** `internal/game_state/basement_chests.go`, `internal/references/basement_chests.go`, `internal/references/chest_loot.go`, `internal/map_units/transient_surface_chest.go`, `internal/game_state/action_get.go`
+**Tests:** `internal/game_state/basement_chests_test.go`, `internal/game_state/action_get_all_test.go`

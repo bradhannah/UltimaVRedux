@@ -130,17 +130,20 @@ Gameplay randomness uses `GameState` RNG helpers, and presentation timing uses `
 
 Each outdoor or dungeon camp begins normally. During logical sleeping, a fresh
 **Space** press silently accelerates the remaining cycles. There is no hint box,
-status box, or acknowledgement. Releasing Space leaves that camp fast; further presses are
+status box, or acknowledgement. Releasing Space leaves that camp fast. A second
+fresh press sleeps straight through: the remaining cycles run in order with no
+wait between them, to the results or the first ambush. Later presses are
 idempotent. Setup/fades, Bard music, results, ambush combat, and Wanderer
 presentation retain their existing timing and ownership. This is a Redux
 presentation control, not an original-game command or a saved preference.
 
-`CampingScene` owns the sleeping phase and one-way acceleration latch.
-`RequestCampingAcceleration` changes intent only. Both workflows use
+`CampingScene` owns the sleeping phase and the one-way acceleration and skip
+latches. `RequestCampingAcceleration` and `RequestCampingSkip` change intent only. Both workflows use
 `RepeatWithRuntimeDelay`, evaluating the delay at admission and between cycles.
 An already scheduled 200 ms interval may finish; following intervals use 50 ms.
 Deadlines advance from execution time, so a slow frame never catches up by
-draining multiple sleep cycles. All required five-minute cycles, ring sweeps,
+draining multiple sleep cycles; only a requested skip, whose interval is zero,
+runs the remaining cycles in one update. All required five-minute cycles, ring sweeps,
 guard rolls/steps, hour-crossing checks and final completion remain authoritative.
 
 The scene admits only a fresh Space edge while the exact sleeping workflow owns
